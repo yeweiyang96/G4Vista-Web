@@ -24,9 +24,8 @@
     ]
   },
   "lint-staged": {
-    "src/**/*.{ts,html,scss}": [
+    "src/**/*.{ts,html,scss,json}": [
       "prettier --write",
-      "ng lint",
       "git add"
     ]
   },
