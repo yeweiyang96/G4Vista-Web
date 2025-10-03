@@ -1,5 +1,5 @@
 @use '@angular/material' as mat;
-@use './theme-colors' as my-theme;
+// @use './theme-colors' as my-theme;
 
 html {
   color-scheme: light dark;
@@ -38,8 +38,7 @@ body {
   margin: 0;
   font: var(--mat-sys-body-large);
   font-family:
-    Roboto, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande',
-    sans-serif;
+    Roboto, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
   color: var(--mat-sys-on-surface);
   background: var(--mat-sys-surface);
 }
