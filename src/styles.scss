@@ -1,1 +1,88 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+@use './theme-colors' as my-theme;
+
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: mat.$azure-palette,
+      typography: Roboto,
+      density: 0,
+    )
+  );
+  // @include mat.theme(
+  //   (
+  //     color: (
+  //       primary: my-theme.$primary-palette,
+  //       tertiary: my-theme.$tertiary-palette,
+  //     ),
+  //     typography: Roboto,
+  //     density: 0,
+  //   )
+  // );
+}
+
+html.dark_mode {
+  color-scheme: dark;
+}
+
+html.light_mode {
+  color-scheme: light;
+}
+
+html.brightness_medium {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  font: var(--mat-sys-body-large);
+  font-family:
+    Roboto, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande',
+    sans-serif;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+h1 {
+  font: var(--mat-sys-headline-large);
+}
+
+h2 {
+  font: var(--mat-sys-headline-medium);
+}
+
+h3 {
+  font: var(--mat-sys-headline-small);
+}
+
+p {
+  font: var(--mat-sys-body-large);
+}
+
+@media screen and (width <= 600px) {
+  body {
+    font: var(--mat-sys-body-medium);
+  }
+
+  h1 {
+    font: var(--mat-sys-headline-medium);
+  }
+
+  h2 {
+    font: var(--mat-sys-headline-small);
+  }
+
+  h3 {
+    font: var(--mat-sys-title-large);
+  }
+
+  p {
+    font: var(--mat-sys-body-medium);
+  }
+}

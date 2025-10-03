@@ -9,6 +9,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "format": "prettier --write .",
+    "lint:scss": "stylelint \"src/**/*.scss\" --fix",
     "prepare": "husky"
   },
   "prettier": {
@@ -23,20 +24,20 @@
       }
     ]
   },
-  "lint-staged": {
-    "src/**/*.{ts,html,scss,json}": [
-      "prettier --write",
-      "git add"
-    ]
-  },
   "private": true,
   "dependencies": {
+    "@angular/cdk": "20.2.5",
     "@angular/common": "^20.3.0",
     "@angular/compiler": "^20.3.0",
     "@angular/core": "^20.3.0",
     "@angular/forms": "^20.3.0",
+    "@angular/material": "20.2.5",
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
+    "@jbrowse/react-linear-genome-view2": "^3.6.5",
+    "@ng-matero/extensions": "^20.3.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -45,8 +46,12 @@
     "@angular/build": "^20.3.3",
     "@angular/cli": "^20.3.3",
     "@angular/compiler-cli": "^20.3.0",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.35.0",
     "@types/jasmine": "~5.1.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
     "angular-eslint": "20.3.0",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
@@ -60,7 +65,16 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "lint-staged": "^16.2.3",
     "prettier": "^3.6.2",
+    "stylelint": "^16.24.0",
+    "stylelint-config-recess-order": "^7.3.0",
+    "stylelint-config-recommended-scss": "^16.0.2",
+    "stylelint-config-standard": "^39.0.0",
+    "stylelint-order": "^7.0.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.40.0"
+  },
+  "volta": {
+    "node": "24.9.0",
+    "pnpm": "10.18.0"
   }
 }
