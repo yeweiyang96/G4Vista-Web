@@ -1,7 +1,7 @@
 {
   "servers": {
     "angular-cli": {
-      "command": "npx",
+      "command": "/Users/wzk/.volta/bin/npx",
       "args": ["-y", "@angular/cli", "mcp"]
     }
   }
