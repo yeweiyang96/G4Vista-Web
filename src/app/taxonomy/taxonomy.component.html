@@ -1,0 +1,109 @@
+<section class="taxonomy-page" aria-label="Taxonomy">
+  <header class="page-header">
+    <h1>Taxonomy</h1>
+    <p class="subtitle">Search by taxonomic name, taxonomy ID, or anything else</p>
+  </header>
+  <form>
+    <mat-form-field appearance="outline" class="search-bar">
+      <mat-label for="search-box">Search</mat-label>
+      <input
+        matInput
+        placeholder="Search"
+        [formControl]="searchControl"
+        type="search"
+        [matAutocomplete]="auto"
+      />
+      <mat-autocomplete
+        #auto="matAutocomplete"
+        [displayWith]="displayFn"
+        (optionSelected)="loadLineage($event)"
+        autoActiveFirstOption
+      >
+        @if (filteredOptions$ | async; as filteredOptions) {
+          @if (filteredOptions.length > 0) {
+            @for (option of filteredOptions; track $index) {
+              <mat-option [value]="option">
+                <div>
+                  <span class="tax-scientific-name">{{ option.scientific_name }}</span>
+                  <span class="tax-name">({{ option.name }})</span>
+                </div>
+                <div>
+                  <span class="tax-rank">{{ option.rank }}</span>
+                </div>
+              </mat-option>
+            }
+          } @else {
+            <mat-option>
+              <mat-icon>error</mat-icon>
+              <div mat-line>0 results</div>
+              <span mat-line class="no-match"> No matching taxon found.</span>
+            </mat-option>
+          }
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+  </form>
+
+  <mat-divider />
+  <div class="page-content">
+    @if (isDisplay) {
+      <div class="tree-head">
+        <span>Taxonomic name</span>
+        <span>Genomes</span>
+      </div>
+
+      <mat-tree
+        class="tree"
+        #tree
+        [dataSource]="dataSource"
+        [childrenAccessor]="childrenAccessor"
+        [trackBy]="trackBy"
+      >
+        <!-- This is the tree node template for leaf nodes -->
+        <mat-tree-node class="node" *matTreeNodeDef="let node" matTreeNodePadding>
+          <div class="node-continer-left">
+            <!-- use a disabled button to provide padding for tree leaf -->
+            <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
+            <button mat-icon-button disabled></button>
+            <a mat-button [routerLink]="node.taxon_id" [matTooltip]="node.rank">{{ node.name }}</a>
+          </div>
+
+          <a
+            mat-button
+            class="genome-count"
+            [href]="'taxonomy/' + node.taxon_id"
+            [matTooltip]="'G4 information was calculated for ' + node.genome_count + ' genomes'"
+            >{{ node.genome_count }}</a
+          >
+        </mat-tree-node>
+
+        <!-- This is the tree node template for expandable nodes -->
+        <mat-tree-node
+          class="node"
+          *matTreeNodeDef="let node; when: hasChild"
+          matTreeNodePadding
+          matTreeNodeToggle
+          [cdkTreeNodeTypeaheadLabel]="node.name"
+        >
+          <div class="node-continer-left">
+            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
+              <mat-icon class="mat-icon-rtl-mirror">
+                {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+              </mat-icon>
+            </button>
+            <a mat-button [href]="'taxonomy/' + node.taxon_id" [matTooltip]="node.rank">{{
+              node.name
+            }}</a>
+          </div>
+          <a
+            mat-button
+            class="genome-count"
+            [routerLink]="node.taxon_id"
+            [matTooltip]="'G4 information was calculated for ' + node.genome_count + ' genomes'"
+            >{{ node.genome_count }}</a
+          >
+        </mat-tree-node>
+      </mat-tree>
+    }
+  </div>
+</section>
