@@ -1,0 +1,77 @@
+.taxonomy-details-page {
+  display: grid;
+  grid-template-columns: 3fr 1fr; /* 默认左右布局 */
+  gap: 16px;
+  width: 70%;
+  max-width: 1920px;
+  min-height: 70vh;
+  padding: 2rem 1rem;
+  margin: 0 auto;
+}
+@media (width <= 599.98px) {
+  .taxonomy-details-page {
+    grid-template-columns: 1fr; /* 垂直布局 */
+  }
+}
+
+.lineage-card {
+  background: var(--mat-sys-surface-container-low);
+}
+
+.lineage-tax-a {
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.lineage-tax-rank {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.description_list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  border-bottom: 1px solid rgb(241, 241, 241);
+}
+
+.description_list dt {
+  width: 33%;
+  padding: 0.5em 0;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-secondary-container);
+  border-top: 1px solid rgb(241, 241, 241);
+}
+
+.description_list dd {
+  width: 67%;
+  padding: 0.5em 0;
+  margin-left: auto;
+  font: var(--mat-sys-body-large);
+  border-top: 1px solid rgb(241, 241, 241);
+}
+@media (width <= 599.98px) {
+  .description_list dt {
+    width: 100%;
+    margin: 0;
+  }
+
+  .description_list dd {
+    width: 100%;
+    padding-left: 2em;
+  }
+
+  .description_list {
+    flex-direction: column;
+    margin: 0;
+  }
+}
+
+.genome-footer {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}

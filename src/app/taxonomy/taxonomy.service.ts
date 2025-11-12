@@ -39,7 +39,7 @@ export interface TaxonomyNode {
 })
 export class TaxonomyService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://g4vista-api.med.niigata-u.ac.jp/api/v1/taxa';
+  private apiUrl = '/api/v1/taxa';
   searchTaxonomy(query: string): Observable<TaxonomySearch[]> {
     return this.http.get<TaxonomySearch[]>(`${this.apiUrl}/?name=${query}`);
   }

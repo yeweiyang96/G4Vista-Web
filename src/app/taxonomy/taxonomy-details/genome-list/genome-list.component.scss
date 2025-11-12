@@ -1,0 +1,29 @@
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.footer-row {
+  font-weight: bold;
+}
+
+.genome-link {
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--mat-sys-primary);
+    text-decoration: underline;
+  }
+}
+
+table {
+  width: 100%;
+  @include mat.table-overrides(
+    (
+      header-headline-weight: var(--mat-sys-title-medium-weight),
+      row-item-label-text-weight: var(--mat-sys-title-medium-weight),
+      footer-supporting-text-weight: var(--mat-sys-title-medium-weight),
+    )
+  );
+}

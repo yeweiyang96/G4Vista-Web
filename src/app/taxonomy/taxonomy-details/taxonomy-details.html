@@ -1,0 +1,95 @@
+<div class="taxonomy-details-page">
+  <!-- main content -->
+  @if (taxonomy$ | async; as taxonomy) {
+    <div #check>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title-group>
+            <mat-card-title class="title"
+              ><h1>{{ taxonomy.name }}</h1></mat-card-title
+            >
+            @if (taxonomy.image_url) {
+              <img
+                mat-card-image
+                [src]="taxonomy.image_url"
+                alt="Taxonomy icon"
+                loading="lazy"
+                style="filter: saturate(70%) contrast(70%)"
+              />
+            }
+          </mat-card-title-group>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- <p class="introduction">some introduction</p> -->
+          <dl class="description_list">
+            <dt>Taxon ID</dt>
+            <dd>
+              <span>{{ taxonomy.taxon_id }}</span>
+            </dd>
+            <dt>Rank</dt>
+            <dd>
+              <span>{{ taxonomy.rank }}</span>
+            </dd>
+            @if (taxonomy.temperature) {
+              <dt>Temperature</dt>
+              <dd
+                matTooltip="Optimum temperature or Average growth temperature"
+                [matTooltipPositionAtOrigin]="'below'"
+              >
+                0<span>°C</span>
+              </dd>
+            }
+          </dl>
+        </mat-card-content>
+      </mat-card>
+      <br />
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title><h2>Genome</h2></mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <app-genome-list [genomes]="taxonomy.genomes"></app-genome-list>
+        </mat-card-content>
+      </mat-card>
+      <br />
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title><h2>G4 statistics</h2></mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (hasG4) {
+            <p>G4 information is available.</p>
+          } @else {
+            <p>G4 information is not available.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- lineage -->
+    <div>
+      <mat-card appearance="outlined" class="lineage-card">
+        <mat-card-header>
+          <mat-card-title>Lineage</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-nav-list>
+            @for (taxonomyNode of taxonomy.lineage; track taxonomyNode.taxon_id) {
+              <mat-list-item>
+                <a
+                  matListItemTitle
+                  [href]="'/taxonomy/' + taxonomyNode.taxon_id"
+                  class="lineage-tax-a"
+                  >{{ taxonomyNode.name
+                  }}<span matListItemLine class="lineage-tax-rank">{{ taxonomyNode.rank }}</span></a
+                >
+              </mat-list-item>
+            }
+          </mat-nav-list>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  } @else {
+    <mat-spinner></mat-spinner>
+  }
+</div>
