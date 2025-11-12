@@ -1,5 +1,4 @@
 @use '@angular/material' as mat;
-// @use './theme-colors' as my-theme;
 
 html {
   color-scheme: light dark;
@@ -10,16 +9,6 @@ html {
       density: 0,
     )
   );
-  // @include mat.theme(
-  //   (
-  //     color: (
-  //       primary: my-theme.$primary-palette,
-  //       tertiary: my-theme.$tertiary-palette,
-  //     ),
-  //     typography: Roboto,
-  //     density: 0,
-  //   )
-  // );
 }
 
 html.dark_mode {

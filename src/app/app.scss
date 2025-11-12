@@ -1,0 +1,130 @@
+@use '@angular/material' as mat;
+//header
+.navbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px 16px;
+  color: var(--mat-sys-on-primary-container);
+  background: var(--mat-sys-primary-container);
+
+  > .mat-mdc-button {
+    &:last-child {
+      margin-left: auto;
+    }
+  }
+}
+
+.icon {
+  color: (var(--mat-sys-primary));
+}
+
+.github-logo,
+.navbar-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.selected {
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+}
+
+.flex-spacer {
+  flex-grow: 1;
+}
+
+.navbar-link {
+  flex: 1;
+  text-decoration: inherit;
+}
+
+.small-screen {
+  display: none;
+}
+
+// Rules for when the device is detected to be a small screen.
+// Moves content two rows instead of one.
+@media (width <= 599.98px) {
+  .navbar-items {
+    display: none;
+  }
+
+  .small-screen {
+    display: flex;
+  }
+
+  .github-logo {
+    margin: 0;
+  }
+}
+
+//footer
+.footer {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  padding: 8px;
+  font-size: 12px;
+  border-top: solid 1px var(--mat-sys-outline-variant);
+
+  &,
+  a {
+    color: var(--mat-sys-on-surface);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+    }
+  }
+}
+
+.footer-left {
+  display: flex;
+  flex: 1;
+  align-items: center;
+
+  .logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  a {
+    display: inline-block;
+    margin: 0 16px;
+    font-size: 16px;
+    line-height: 50px;
+    vertical-align: bottom;
+  }
+}
+
+.footer-right {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 225px;
+  margin-top: 16px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-end;
+    text-align: center;
+  }
+
+  @media (width >= 599.98px) {
+    margin-top: 0;
+  }
+}
+
+@media screen and (width <= 599.98px) {
+  .footer {
+    flex-direction: column;
+  }
+}
