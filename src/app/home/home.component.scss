@@ -117,41 +117,6 @@ $margin-promotion-sections-small: 15px;
   }
 }
 
-.link {
-  display: inline-flex;
-  align-items: center;
-}
-
-.homepage-featured-components {
-  .featured-components-carousel-item {
-    box-sizing: border-box;
-    font-size: 18px;
-    text-align: center;
-
-    .homepage-img-container {
-      max-height: 200px;
-      margin-bottom: 16px;
-      overflow: hidden;
-    }
-
-    img {
-      width: 100%;
-      transition: 0.3s ease-in-out;
-
-      :host(.animations-disabled) & {
-        transition: none;
-      }
-    }
-
-    &:hover,
-    &:focus {
-      img {
-        transform: scale(1.1);
-      }
-    }
-  }
-}
-
 .homepage-row-column {
   display: flex;
   flex-direction: column;
@@ -161,19 +126,6 @@ $margin-promotion-sections-small: 15px;
     margin-left: 2%;
   }
 }
-
-// .header-start {
-//   display: none;
-//   justify-content: space-between;
-//   flex-wrap: wrap;
-//   margin: $margin-promotion-sections 0 0 0;
-//   width: 20%;
-//   margin-left: 40%;
-
-//   .mat-mdc-raised-button {
-//     font-size: medium;
-//   }
-// }
 
 @media (width <= 1200px) {
   .header-background {
@@ -207,45 +159,13 @@ $margin-promotion-sections-small: 15px;
   * Rules for when the device is detected to be a small screen.
   */
 @media (width <= 720px) {
-  .header-start {
-    margin: $margin-promotion-sections-small 0 0 0;
-  }
-
   .homepage-row,
   .homepage-carousel-row {
     margin: $margin-promotion-sections-small 0;
   }
 }
 
-[nz-carousel-content] {
-  width: 100%;
-  height: 400px;
-  overflow: hidden;
-  line-height: 50px;
-  color: #fff;
-  text-align: center;
-}
-
-.img-title {
-  // color: #000;
-  margin: 0;
-  user-select: none;
-  // text-shadow: 2px 2px 4px #000000;
-}
-
-.img {
-  width: 100%; /* 宽度充满父容器 */
-  height: 400px;
-  object-fit: cover; /* 填充模式，裁剪多余部分 */
-  border: #989797;
-  border-radius: 8px; /* 可选：圆角效果 */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
 .homepage-row,
-.homepage-carousel-row h2,
-a.featured-components-carousel-item,
-.homepage-guides-card,
-a.link:hover {
+.homepage-carousel-row h2 {
   color: var(--mat-sys-on-surface-variant);
 }
