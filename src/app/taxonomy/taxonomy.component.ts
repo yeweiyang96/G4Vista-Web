@@ -34,11 +34,18 @@ const EXAMPLE_DATA: TaxonomySearch[] = [
     scientific_name: 'Homo sapiens',
   },
   {
-    name: 'Homo',
-    rank: 'genus',
-    taxon_id: 9605,
+    name: 'Arabidopsis thaliana',
+    rank: 'species',
+    taxon_id: 3702,
     name_class: 'scientific_name',
-    scientific_name: 'Homo',
+    scientific_name: 'Arabidopsis thaliana',
+  },
+  {
+    name: 'Escherichia coli',
+    rank: 'species',
+    taxon_id: 562,
+    name_class: 'scientific_name',
+    scientific_name: 'Escherichia coli',
   },
 ];
 
