@@ -44,7 +44,6 @@
     </mat-form-field>
   </form>
 
-  <mat-divider />
   <div class="page-content">
     @if (isDisplay) {
       <div class="tree-head">
@@ -104,8 +103,7 @@
           >
         </mat-tree-node>
       </mat-tree>
-    } @else {
-      <mat-spinner></mat-spinner>
     }
+    <app-taxonomy-statistics></app-taxonomy-statistics>
   </div>
 </section>

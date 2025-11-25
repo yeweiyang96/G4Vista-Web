@@ -34,6 +34,11 @@ export interface TaxonomyNode {
   children?: TaxonomyNode[];
 }
 
+export interface GenomeCount {
+  taxon_id: number;
+  genome_count: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -50,5 +55,10 @@ export class TaxonomyService {
 
   getTaxonomyData(taxon_id: number): Observable<Taxonomy> {
     return this.http.get<Taxonomy>(`${this.apiUrl}/${taxon_id}`);
+  }
+
+  getGenomeCounts(taxon_ids: number[]): Observable<GenomeCount[]> {
+    const params = taxon_ids.map((id) => `taxon_ids=${id}`).join('&');
+    return this.http.get<GenomeCount[]>(`${this.apiUrl}/genomes/counts?${params}`);
   }
 }

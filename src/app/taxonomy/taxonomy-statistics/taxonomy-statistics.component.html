@@ -1,0 +1,12 @@
+<div class="taxonomy-statistics">
+  <!-- <h2 class="title">分类统计</h2> -->
+  <div class="stats-grid">
+    @for (stat of taxonomyStats(); track stat.category) {
+      <a [routerLink]="['/taxonomy', stat.taxon_id]" class="stat-card">
+        <div class="category">{{ stat.category }}</div>
+        <div class="count">{{ stat.genomeCount }}</div>
+        <div class="label">genomes</div>
+      </a>
+    }
+  </div>
+</div>

@@ -22,8 +22,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { TaxonomyNode, TaxonomySearch, TaxonomyService } from './taxonomy.service';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TaxonomyStatisticsComponent } from './taxonomy-statistics/taxonomy-statistics.component';
 
 const EXAMPLE_DATA: TaxonomySearch[] = [
   {
@@ -63,8 +62,7 @@ const EXAMPLE_DATA: TaxonomySearch[] = [
     MatButtonModule,
     MatTooltipModule,
     RouterLink,
-    MatDividerModule,
-    MatProgressSpinnerModule,
+    TaxonomyStatisticsComponent,
   ],
   templateUrl: './taxonomy.component.html',
   styleUrl: './taxonomy.component.scss',
@@ -99,20 +97,13 @@ export class TaxonomyComponent implements OnInit {
       ),
       switchMap((value) => {
         // 只有当变化的值不是自动补齐的值时,才刷新lineage
-        // if (typeof value === 'string') {
-        //   this.isDisplay = false;
-        // }
+        if (typeof value === 'string') {
+          this.isDisplay = false;
+        }
         const name = typeof value === 'string' ? value.trim() : value?.scientific_name;
         return name ? this._filter(name as string) : of(this.options.slice());
       }),
     );
-    this.taxonomyService.getLineage(1).subscribe((data: TaxonomyNode) => {
-      this.dataSource = [data];
-      this.isDisplay = true;
-      // 手动触发视图检查，确保 tree 被渲染
-      this.cdr.detectChanges();
-      this.tree.expandAll();
-    });
   }
 
   displayFn(taxa: TaxonomySearch): string {
