@@ -1,2 +1,1 @@
-export PATH="$HOME/.volta/bin:$PATH"
-pnpm dlx commitlint --edit "$1"
+pnpm exec commitlint --edit "$1"

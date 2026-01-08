@@ -1,0 +1,24 @@
+[tools]
+node = '24' # 锁定项目所需的 Node.js 版本
+
+[settings]
+experimental = true # 启用实验性功能以支持高级 Hook [11, 23]
+
+[hooks]
+# 核心迁移点：利用 Corepack 管理 pnpm [11, 23, 24]
+postinstall = 'npx corepack enable'
+
+[env]
+# 将项目本地依赖的二进制目录注入 PATH
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[tasks.pnpm-install]
+description = 'Installs dependencies with pnpm'
+run = 'pnpm install'
+sources = ['package.json', 'pnpm-lock.yaml', 'mise.toml']
+outputs = ['node_modules/.pnpm/lock.yaml']
+
+[tasks.dev]
+description = 'Calls your dev script in `package.json`'
+run = 'node --run dev'
+depends = ['pnpm-install']
