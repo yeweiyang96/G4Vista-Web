@@ -19,6 +19,6 @@ sources = ['package.json', 'pnpm-lock.yaml', 'mise.toml']
 outputs = ['node_modules/.pnpm/lock.yaml']
 
 [tasks.dev]
-description = 'Calls your dev script in `package.json`'
-run = 'node --run start'
+description = 'Starts the development server'
+run = 'ng serve'
 depends = ['pnpm-install']

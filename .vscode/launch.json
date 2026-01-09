@@ -3,18 +3,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng start",
+      "name": "ng start (mise)",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
-    },
-    {
-      "name": "ng test",
-      "type": "chrome",
-      "request": "launch",
-      "preLaunchTask": "npm: test",
-      "url": "http://localhost:9876/debug.html"
+      "preLaunchTask": "mise: dev", // 关键修改点：调用 mise 任务 [1, 2]
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}"
     }
   ]
 }

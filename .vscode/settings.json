@@ -17,5 +17,8 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.fixAll.stylelint": "explicit"
+  },
+  "debug.javascript.defaultRuntimeExecutable": {
+    "pwa-node": "/Users/wzk/.local/share/mise/shims/node"
   }
 }
