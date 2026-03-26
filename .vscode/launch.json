@@ -4,9 +4,9 @@
   "configurations": [
     {
       "name": "ng start (mise)",
-      "type": "chrome",
+      "type": "pwa-chrome",
       "request": "launch",
-      "preLaunchTask": "mise: dev", // 关键修改点：调用 mise 任务 [1, 2]
+      "preLaunchTask": "mise: dev",
       "url": "http://localhost:4200/",
       "webRoot": "${workspaceFolder}"
     }

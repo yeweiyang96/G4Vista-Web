@@ -3,6 +3,25 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "mise: dev",
+      "type": "shell",
+      "command": "mise run dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "bundle generation complete"
+          }
+        }
+      }
+    },
+    {
       "type": "npm",
       "script": "start",
       "isBackground": true,
