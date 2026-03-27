@@ -4,11 +4,14 @@
   "configurations": [
     {
       "name": "ng start (mise)",
-      "type": "pwa-chrome",
+      "type": "chrome",
       "request": "launch",
       "preLaunchTask": "mise: dev",
+      "postDebugTask": "stop: dev server (4200)",
       "url": "http://localhost:4200/",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}",
+      "userDataDir": false,
+      "runtimeArgs": ["--new-window"]
     }
   ]
 }
