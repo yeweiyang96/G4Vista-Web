@@ -1,123 +1,75 @@
-# Persona
+# Project Guidelines
 
-You are a dedicated Angular developer who thrives on leveraging the absolute latest features of the framework to build cutting-edge applications. You are currently immersed in Angular v20+, passionately adopting signals for reactive state management, embracing standalone components for streamlined architecture, and utilizing the new control flow for more intuitive template logic. Performance is paramount to you, who constantly seeks to optimize change detection and improve user experience through these modern Angular paradigms. When prompted, assume You are familiar with all the newest APIs and best practices, valuing clean, efficient, and maintainable code.
+## Code Style
 
-## Examples
+- Use Angular 20+ modern style: standalone components, signals (`signal`, `computed`), and built-in control flow (`@if`, `@for`, `@switch`).
+- Do not set `standalone: true` in Angular decorators; standalone is default in Angular 20+.
+- Keep strict TypeScript discipline: avoid `any`, prefer explicit types for public APIs, and preserve existing strict compiler behavior.
+- Set `changeDetection: ChangeDetectionStrategy.OnPush` for components.
+- Use `input()` and `output()` APIs instead of decorator-based `@Input`/`@Output` where applicable.
+- Use `inject()` for dependency injection instead of constructor injection.
+- Do not use `@HostBinding` or `@HostListener`; define host bindings in the decorator `host` object.
+- Use class/style bindings instead of `ngClass`/`ngStyle`.
+- Keep component structure split by responsibility: logic in `.ts`, template in `.html`, styles in `.scss`.
+- Do not write arrow functions in templates.
+- Maintain accessibility baseline: changes should pass AXE checks and WCAG AA requirements.
 
-These are modern examples of how to write an Angular 20 component with signals
+## Architecture
 
-```ts
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+- This is a standalone Angular app rooted at `src/app`.
+- The app includes a React-based integration boundary for JBrowse (`@jbrowse/react-linear-genome-view2`) and must remain interoperable with `react`/`react-dom`.
+- Feature boundaries:
+  - `src/app/home`: landing page feature.
+  - `src/app/taxonomy`: taxonomy search/details/statistics feature.
+  - `src/app/logo`: reusable logo UI.
+- Routing uses lazy loading via `loadComponent()` in `src/app/app.routes.ts`.
+- Application-wide providers are configured in `src/app/app.config.ts` and include zoneless change detection; prefer signal-driven state updates.
+- Keep service responsibilities narrow and colocated with their feature when possible (for example `src/app/taxonomy/taxonomy.service.ts`).
 
+## Build and Test
 
-@Component({
-  selector: '{{tag-name}}-root',
-  templateUrl: '{{tag-name}}.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class {{ClassName}} {
-  protected readonly isServerRunning = signal(true);
-  toggleServerStatus() {
-    this.isServerRunning.update(isServerRunning => !isServerRunning);
-  }
-}
-```
+- Preferred package manager: `pnpm`.
+- Install deps: `pnpm install`.
+- Dev server: `pnpm start` (or `mise run dev`).
+- Build: `pnpm build`.
+- Unit tests: `pnpm test`.
+- Lint: `pnpm lint`.
+- Format: `pnpm format`.
+- SCSS lint/fix: `pnpm lint:scss`.
 
-```css
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+## Conventions
 
-  button {
-    margin-top: 10px;
-  }
-}
-```
+- Keep routes and matcher behavior intact unless the task explicitly changes navigation semantics (see `src/app/app.routes.ts`).
+- API calls currently target `/api/v1/`; in local dev this depends on `proxy.config.json` forwarding to backend at `localhost:8000`.
+- Import Angular Material/CDK dependencies directly in standalone component `imports` arrays.
+- Prefer reactive forms for non-trivial forms.
+- Use `NgOptimizedImage` for static images; do not use it for inline base64 images.
+- Treat React/JBrowse as a dependency boundary during Angular-focused tasks:
+  - Do not remove, replace, or downgrade `react`, `react-dom`, `@types/react`, `@types/react-dom`, or `@jbrowse/react-linear-genome-view2` unless the task explicitly requests React/JBrowse migration work.
+  - Do not change TypeScript JSX settings (for example `compilerOptions.jsx`) in Angular-only tasks.
+  - Keep Angular-to-React integration code minimal and isolated; avoid spreading React-specific patterns into general Angular components.
+  - If a task requires cross-framework changes, update Angular and React integration points together and verify `pnpm build` still passes.
 
-```html
-<section class="container">
-  @if (isServerRunning()) {
-  <span>Yes, the server is running</span>
-  } @else {
-  <span>No, the server is not running</span>
-  }
-  <button (click)="toggleServerStatus()">Toggle Server Status</button>
-</section>
-```
+## Git Commit Messages
 
-When you update a component, be sure to put the logic in the ts file, the styles in the css file and the html template in the html file.
+- Always follow Conventional Commits format: `type(scope): subject`.
+- Allowed `type` values: `build`, `ci`, `chore`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`.
+- Keep header length within 72 characters.
+- Use lower-case for `type`.
+- Use imperative present tense in `subject` (for example `add`, `fix`, `refactor`).
+- Start `subject` with lower-case and do not end `subject` with a period.
+- Keep commit message language concise and technical; avoid vague text like `update code`.
+- Prefer adding a scope when it is clear (for example `taxonomy`, `home`, `logo`, `ci`, `deps`).
 
-## Resources
+Examples:
 
-Here are some links to the essentials for building Angular applications. Use these to get an understanding of how some of the core functionality works
-https://angular.dev/essentials/components
-https://angular.dev/essentials/signals
-https://angular.dev/essentials/templates
-https://angular.dev/essentials/dependency-injection
+- `feat(taxonomy): add rank filter for search results`
+- `fix(home): handle empty hero image metadata`
+- `chore(deps): update angular material to 20.2.12`
 
-## Best practices & Style guide
+## References
 
-Here are the best practices and the style guide information.
-
-### Coding Style guide
-
-Here is a link to the most recent Angular style guide https://angular.dev/style-guide
-
-### TypeScript Best Practices
-
-- Use strict type checking
-- Prefer type inference when the type is obvious
-- Avoid the `any` type; use `unknown` when type is uncertain
-
-### Angular Best Practices
-
-- Always use standalone components over `NgModules`
-- Do NOT set `standalone: true` inside the `@Component`, `@Directive` and `@Pipe` decorators
-- Use signals for state management
-- Implement lazy loading for feature routes
-- Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
-- Use `NgOptimizedImage` for all static images.
-  - `NgOptimizedImage` does not work for inline base64 images.
-
-### Accessibility Requirements
-
-- It MUST pass all AXE checks.
-- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
-
-### Components
-
-- Keep components small and focused on a single responsibility
-- Use `input()` signal instead of decorators, learn more here https://angular.dev/guide/components/inputs
-- Use `output()` function instead of decorators, learn more here https://angular.dev/guide/components/outputs
-- Use `computed()` for derived state learn more about signals here https://angular.dev/guide/signals.
-- Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
-- Prefer inline templates for small components
-- Prefer Reactive forms instead of Template-driven ones
-- Do NOT use `ngClass`, use `class` bindings instead, for context: https://angular.dev/guide/templates/binding#css-class-and-style-property-bindings
-- Do NOT use `ngStyle`, use `style` bindings instead, for context: https://angular.dev/guide/templates/binding#css-class-and-style-property-bindings
-
-### State Management
-
-- Use signals for local component state
-- Use `computed()` for derived state
-- Keep state transformations pure and predictable
-- Do NOT use `mutate` on signals, use `update` or `set` instead
-
-### Templates
-
-- Keep templates simple and avoid complex logic
-- Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Do not assume globals like (`new Date()`) are available.
-- Do not write arrow functions in templates (they are not supported).
-- Use the async pipe to handle observables
-- Use built in pipes and import pipes when being used in a template, learn more https://angular.dev/guide/templates/pipes#
-- When using external templates/styles, use paths relative to the component TS file.
-
-### Services
-
-- Design services around a single responsibility
-- Use the `providedIn: 'root'` option for singleton services
-- Use the `inject()` function instead of constructor injection
+- Project overview and tooling notes: `README.md`.
+- Angular style guide: https://angular.dev/style-guide
+- Angular essentials: https://angular.dev/essentials
+- Signals guide: https://angular.dev/guide/signals
