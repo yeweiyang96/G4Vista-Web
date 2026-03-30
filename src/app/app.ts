@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LogoComponent } from './logo/logo.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,6 +25,7 @@ const GITHUB_ICON = `
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App implements OnInit {
   title = 'G4Vista';

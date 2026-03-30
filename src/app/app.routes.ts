@@ -14,7 +14,7 @@ export const routes: Routes = [
         return {
           consumed: url,
           posParams: {
-            taxon_id: url[1],
+            taxonId: url[1],
           },
         };
       }

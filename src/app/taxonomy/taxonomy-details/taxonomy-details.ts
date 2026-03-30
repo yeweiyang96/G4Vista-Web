@@ -1,6 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
-import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+  OnInit,
+} from '@angular/core';
 import { Taxonomy, TaxonomyService } from '../taxonomy.service';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCardModule } from '@angular/material/card';
@@ -29,8 +36,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaxonomyDetails implements OnInit {
-  @Input()
-  taxon_id!: number;
+  readonly taxonId = input.required<number, string>({ transform: numberAttribute });
   taxonomy$!: Observable<Taxonomy>;
   lineage: [TaxonomyNode] = [{ name: 'root', rank: 'no rank', taxon_id: 1 }];
   hasTemp = true;
@@ -43,6 +49,6 @@ export class TaxonomyDetails implements OnInit {
   }
 
   fetchTaxonomyData(): void {
-    this.taxonomy$ = this.taxonomyService.getTaxonomyData(this.taxon_id);
+    this.taxonomy$ = this.taxonomyService.getTaxonomyData(this.taxonId());
   }
 }

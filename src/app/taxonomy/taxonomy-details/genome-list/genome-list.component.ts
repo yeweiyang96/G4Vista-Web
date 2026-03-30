@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, input, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -19,6 +26,7 @@ export interface Genome {
   styleUrl: './genome-list.component.scss',
   templateUrl: './genome-list.component.html',
   imports: [MatFormFieldModule, MatInputModule, MatTableModule, MatSortModule, MatPaginatorModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GenomeListComponent implements AfterViewInit, OnInit {
   displayedColumns: string[] = ['name', 'g4_count'];
