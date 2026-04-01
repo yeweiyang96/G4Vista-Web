@@ -1,5 +1,5 @@
 import { Component, signal, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { TaxonomyService } from '../taxonomy.service';
 
@@ -24,7 +24,7 @@ const TAXONOMY_CATEGORIES: { category: string; taxon_id: number }[] = [
 
 @Component({
   selector: 'app-taxonomy-statistics',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './taxonomy-statistics.component.html',
   styleUrl: './taxonomy-statistics.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

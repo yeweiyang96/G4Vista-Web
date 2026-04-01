@@ -15,8 +15,7 @@
     "target": "ES2022",
     "module": "preserve",
     /* Type React Settings */
-    "jsx": "react-jsx",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "jsx": "react-jsx"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
