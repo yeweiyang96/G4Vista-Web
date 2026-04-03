@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Genome {
-  assembly_name: string;
-  name: string;
+  assembly_accession: string;
+  organism_name: string;
   g4_count?: number;
 }
 

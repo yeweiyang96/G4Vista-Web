@@ -13,8 +13,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
 export interface Genome {
-  assembly_name: string;
-  name: string;
+  assembly_accession: string;
+  organism_name: string;
   g4_count?: number;
 }
 
@@ -29,7 +29,7 @@ export interface Genome {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GenomeListComponent implements AfterViewInit, OnInit {
-  displayedColumns: string[] = ['name', 'g4_count'];
+  displayedColumns: string[] = ['organism_name', 'g4_count'];
   dataSource!: MatTableDataSource<Genome>;
   genomes = input<Genome[]>();
 
