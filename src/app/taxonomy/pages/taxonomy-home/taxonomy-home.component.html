@@ -70,8 +70,10 @@
           <a
             mat-button
             class="genome-count"
-            [href]="'taxonomy/' + node.taxon_id"
-            [matTooltip]="'G4 information was calculated for ' + node.assembly_count + ' assemblies'"
+            [routerLink]="node.taxon_id"
+            [matTooltip]="
+              'G4 information was calculated for ' + node.assembly_count + ' assemblies'
+            "
             >{{ node.assembly_count }}</a
           >
         </mat-tree-node>
@@ -90,15 +92,15 @@
                 {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
               </mat-icon>
             </button>
-            <a mat-button [href]="'taxonomy/' + node.taxon_id" [matTooltip]="node.rank">{{
-              node.name
-            }}</a>
+            <a mat-button [routerLink]="node.taxon_id" [matTooltip]="node.rank">{{ node.name }}</a>
           </div>
           <a
             mat-button
             class="genome-count"
             [routerLink]="node.taxon_id"
-            [matTooltip]="'G4 information was calculated for ' + node.assembly_count + ' assemblies'"
+            [matTooltip]="
+              'G4 information was calculated for ' + node.assembly_count + ' assemblies'
+            "
             >{{ node.assembly_count }}</a
           >
         </mat-tree-node>

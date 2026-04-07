@@ -1,0 +1,32 @@
+<section class="genome-detail" aria-label="Genome detail">
+  <mat-card appearance="outlined" class="panel">
+    <mat-card-header>
+      <mat-card-title>Genome Browser</mat-card-title>
+      <mat-card-subtitle>Assembly: {{ assemblyName() }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="controls">
+        <mat-form-field appearance="outline" class="region-field">
+          <mat-label>Location</mat-label>
+          <input matInput [formControl]="locationControl" placeholder="NC_000001.11:1..100000" />
+        </mat-form-field>
+
+        <div class="buttons">
+          <button mat-button (click)="applyLocation()">Apply</button>
+          <button mat-button (click)="jumpToPresetRegion('NC_000001.11:1..200000')">
+            1..200000
+          </button>
+          <button mat-button (click)="jumpToPresetRegion('NC_000001.11:200000..400000')">
+            200000..400000
+          </button>
+          <button mat-button (click)="resetSession()">Reset</button>
+        </div>
+      </div>
+
+      @if (viewerConfig(); as config) {
+        <app-jbrowse-host [viewerConfig]="config" [location]="region()" />
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

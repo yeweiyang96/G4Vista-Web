@@ -1,0 +1,25 @@
+.genome-detail {
+  padding: 16px;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.region-field {
+  flex: 1 1 320px;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

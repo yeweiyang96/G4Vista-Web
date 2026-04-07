@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export interface AssemblySummary {
   assembly_accession: string;
   organism_name: string;
-  g4_count?: number;
+  asm_name: string;
 }
 
 export interface Taxonomy {

@@ -11,11 +11,12 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { RouterLink } from '@angular/router';
 
 export interface AssemblySummary {
   assembly_accession: string;
+  asm_name: string;
   organism_name: string;
-  g4_count?: number;
 }
 
 /**
@@ -25,11 +26,18 @@ export interface AssemblySummary {
   selector: 'app-assembly-list',
   styleUrl: './genome-list.component.scss',
   templateUrl: './genome-list.component.html',
-  imports: [MatFormFieldModule, MatInputModule, MatTableModule, MatSortModule, MatPaginatorModule],
+  imports: [
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    RouterLink,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssemblyListComponent implements AfterViewInit, OnInit {
-  displayedColumns: string[] = ['organism_name', 'g4_count'];
+  displayedColumns: string[] = ['organism_name', 'asm_name', 'assembly_accession'];
   dataSource!: MatTableDataSource<AssemblySummary>;
   assemblies = input<AssemblySummary[]>();
 
@@ -51,8 +59,5 @@ export class AssemblyListComponent implements AfterViewInit, OnInit {
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
-  }
-  getTotalG4Count() {
-    return this.assemblies()?.reduce((acc, assembly) => acc + (assembly.g4_count || 0), 0);
   }
 }

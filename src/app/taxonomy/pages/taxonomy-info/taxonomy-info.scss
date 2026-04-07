@@ -1,4 +1,4 @@
-.taxonomy-details-page {
+.taxonomy-info-page {
   display: grid;
   grid-template-columns: 3fr 1fr; /* 默认左右布局 */
   gap: 16px;
@@ -9,7 +9,7 @@
   margin: 0 auto;
 }
 @media (width <= 599.98px) {
-  .taxonomy-details-page {
+  .taxonomy-info-page {
     grid-template-columns: 1fr; /* 垂直布局 */
   }
 }

@@ -1,0 +1,24 @@
+<section class="genome-home" aria-label="Genome">
+  <header class="page-header">
+    <h1>Genome</h1>
+    <p class="subtitle">Search by assembly accession to open a genome browser subpage.</p>
+  </header>
+
+  <mat-card appearance="outlined" class="search-card">
+    <mat-card-content>
+      <form class="search-form" (ngSubmit)="openGenome()">
+        <mat-form-field appearance="outline" class="assembly-field">
+          <mat-label>Assembly accession</mat-label>
+          <input
+            matInput
+            [formControl]="assemblyAccessionControl"
+            placeholder="e.g. GCF_000001405.40"
+          />
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="!assemblyAccessionControl.value.trim()">
+          Open genome
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</section>

@@ -1,7 +1,7 @@
 import { Component, signal, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
-import { TaxonomyService } from '../taxonomy.service';
+import { TaxonomyService } from '../../../service/taxonomy.service';
 
 interface TaxonomyStats {
   category: string;

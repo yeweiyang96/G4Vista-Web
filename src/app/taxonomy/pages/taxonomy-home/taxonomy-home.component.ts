@@ -21,7 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { TaxonomyNode, TaxonomySearch, TaxonomyService } from './taxonomy.service';
+import { TaxonomyNode, TaxonomySearch, TaxonomyService } from '../../service/taxonomy.service';
 import { TaxonomyStatisticsComponent } from './taxonomy-statistics/taxonomy-statistics.component';
 
 const EXAMPLE_DATA: TaxonomySearch[] = [
@@ -64,11 +64,11 @@ const EXAMPLE_DATA: TaxonomySearch[] = [
     RouterLink,
     TaxonomyStatisticsComponent,
   ],
-  templateUrl: './taxonomy.component.html',
-  styleUrl: './taxonomy.component.scss',
+  templateUrl: './taxonomy-home.component.html',
+  styleUrl: './taxonomy-home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaxonomyComponent implements OnInit {
+export class TaxonomyHomeComponent implements OnInit {
   // 搜索框部分变量声明
   searchControl = new FormControl<string | TaxonomySearch>('');
   //Example options

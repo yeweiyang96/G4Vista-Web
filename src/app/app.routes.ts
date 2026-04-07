@@ -6,7 +6,10 @@ export const routes: Routes = [
   {
     path: 'taxonomy',
     title: 'Taxonomy',
-    loadComponent: () => import('./taxonomy/taxonomy.component').then((m) => m.TaxonomyComponent),
+    loadComponent: () =>
+      import('./taxonomy/pages/taxonomy-home/taxonomy-home.component').then(
+        (m) => m.TaxonomyHomeComponent,
+      ),
   },
   {
     matcher: (url: UrlSegment[]): UrlMatchResult | null => {
@@ -22,6 +25,18 @@ export const routes: Routes = [
     },
     title: 'Taxonomy',
     loadComponent: () =>
-      import('./taxonomy/taxonomy-details/taxonomy-details').then((m) => m.TaxonomyDetails),
+      import('./taxonomy/pages/taxonomy-info/taxonomy-info').then((m) => m.TaxonomyInfoComponent),
+  },
+  {
+    path: 'genome',
+    title: 'Genome',
+    loadComponent: () =>
+      import('./genome/pages/genome-home/genome-home.component').then((m) => m.GenomeHomeComponent),
+  },
+  {
+    path: 'genome/:assemblyAccession',
+    title: 'Genome',
+    loadComponent: () =>
+      import('./genome/pages/genome-info/genome-info.component').then((m) => m.GenomeInfoComponent),
   },
 ];

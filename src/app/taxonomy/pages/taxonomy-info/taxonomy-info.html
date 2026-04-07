@@ -1,4 +1,4 @@
-<div class="taxonomy-details-page">
+<div class="taxonomy-info-page">
   <!-- main content -->
   @if (taxonomy$ | async; as taxonomy) {
     <div #check>
@@ -45,7 +45,7 @@
       <br />
       <mat-card appearance="outlined">
         <mat-card-header>
-          <mat-card-title><h2>Assemblies</h2></mat-card-title>
+          <mat-card-title><h2>Genome</h2></mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <app-assembly-list [assemblies]="taxonomy.assemblies"></app-assembly-list>
@@ -78,7 +78,7 @@
               <mat-list-item>
                 <a
                   matListItemTitle
-                  [href]="'/taxonomy/' + taxonomyNode.taxon_id"
+                  [routerLink]="['/taxonomy', taxonomyNode.taxon_id]"
                   class="lineage-tax-a"
                   >{{ taxonomyNode.name
                   }}<span matListItemLine class="lineage-tax-rank">{{ taxonomyNode.rank }}</span></a

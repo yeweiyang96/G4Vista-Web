@@ -8,19 +8,20 @@ import {
   numberAttribute,
   OnInit,
 } from '@angular/core';
-import { Taxonomy, TaxonomyService } from '../taxonomy.service';
+import { Taxonomy, TaxonomyService } from '../../service/taxonomy.service';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
-import { TaxonomyNode } from '../taxonomy.service';
+import { TaxonomyNode } from '../../service/taxonomy.service';
 
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AssemblyListComponent } from './genome-list/genome-list.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-taxonomy-details',
+  selector: 'app-taxonomy-info',
   imports: [
     MatProgressSpinnerModule,
     MatGridListModule,
@@ -30,12 +31,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatTooltipModule,
     AsyncPipe,
     AssemblyListComponent,
+    RouterLink,
   ],
-  templateUrl: './taxonomy-details.html',
-  styleUrl: './taxonomy-details.scss',
+  templateUrl: './taxonomy-info.html',
+  styleUrl: './taxonomy-info.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaxonomyDetails implements OnInit {
+export class TaxonomyInfoComponent implements OnInit {
   readonly taxonId = input.required<number, string>({ transform: numberAttribute });
   taxonomy$!: Observable<Taxonomy>;
   lineage: [TaxonomyNode] = [{ name: 'root', rank: 'no rank', taxon_id: 1 }];
