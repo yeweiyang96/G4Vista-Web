@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface Genome {
+export interface AssemblySummary {
   assembly_accession: string;
   organism_name: string;
   g4_count?: number;
@@ -13,7 +13,7 @@ export interface Taxonomy {
   name: string;
   rank: string;
   lineage?: TaxonomyNode[];
-  genomes?: Genome[];
+  assemblies?: AssemblySummary[];
   image_url?: string;
   temperature?: number;
 }
@@ -30,13 +30,13 @@ export interface TaxonomyNode {
   name: string;
   rank: string;
   taxon_id: number;
-  genome_count?: number;
+  assembly_count?: number;
   children?: TaxonomyNode[];
 }
 
-export interface GenomeCount {
+export interface AssemblyCount {
   taxon_id: number;
-  genome_count: number;
+  assembly_count: number;
 }
 
 @Injectable({
@@ -57,8 +57,8 @@ export class TaxonomyService {
     return this.http.get<Taxonomy>(`${this.apiUrl}/${taxon_id}`);
   }
 
-  getGenomeCounts(taxon_ids: number[]): Observable<GenomeCount[]> {
+  getAssemblyCounts(taxon_ids: number[]): Observable<AssemblyCount[]> {
     const params = taxon_ids.map((id) => `taxon_ids=${id}`).join('&');
-    return this.http.get<GenomeCount[]>(`${this.apiUrl}/genomes/counts?${params}`);
+    return this.http.get<AssemblyCount[]>(`${this.apiUrl}/genomes/counts?${params}`);
   }
 }

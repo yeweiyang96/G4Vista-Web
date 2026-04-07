@@ -6,7 +6,7 @@ import { TaxonomyService } from '../taxonomy.service';
 interface TaxonomyStats {
   category: string;
   taxon_id: number;
-  genomeCount: number;
+  assemblyCount: number;
 }
 
 // 分类名称到 taxon_id 的映射
@@ -36,31 +36,31 @@ export class TaxonomyStatisticsComponent implements OnInit {
     TAXONOMY_CATEGORIES.map(({ category, taxon_id }) => ({
       category,
       taxon_id,
-      genomeCount: 0,
+      assemblyCount: 0,
     })),
   );
 
   ngOnInit() {
-    this.loadGenomeCounts();
+    this.loadAssemblyCounts();
   }
 
-  private loadGenomeCounts() {
+  private loadAssemblyCounts() {
     const taxon_ids = TAXONOMY_CATEGORIES.map(({ taxon_id }) => taxon_id);
 
-    this.taxonomyService.getGenomeCounts(taxon_ids).subscribe({
+    this.taxonomyService.getAssemblyCounts(taxon_ids).subscribe({
       next: (counts) => {
-        const countMap = new Map(counts.map((c) => [c.taxon_id, c.genome_count]));
+        const countMap = new Map(counts.map((c) => [c.taxon_id, c.assembly_count]));
 
         this.taxonomyStats.set(
           TAXONOMY_CATEGORIES.map(({ category, taxon_id }) => ({
             category,
             taxon_id,
-            genomeCount: countMap.get(taxon_id) || 0,
+            assemblyCount: countMap.get(taxon_id) || 0,
           })),
         );
       },
       error: (err) => {
-        console.error('Failed to load genome counts:', err);
+        console.error('Failed to load assembly counts:', err);
       },
     });
   }

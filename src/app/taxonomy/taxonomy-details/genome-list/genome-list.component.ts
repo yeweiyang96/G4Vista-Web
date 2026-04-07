@@ -12,7 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
-export interface Genome {
+export interface AssemblySummary {
   assembly_accession: string;
   organism_name: string;
   g4_count?: number;
@@ -22,22 +22,22 @@ export interface Genome {
  * @title Data table with sorting, pagination, and filtering.
  */
 @Component({
-  selector: 'app-genome-list',
+  selector: 'app-assembly-list',
   styleUrl: './genome-list.component.scss',
   templateUrl: './genome-list.component.html',
   imports: [MatFormFieldModule, MatInputModule, MatTableModule, MatSortModule, MatPaginatorModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GenomeListComponent implements AfterViewInit, OnInit {
+export class AssemblyListComponent implements AfterViewInit, OnInit {
   displayedColumns: string[] = ['organism_name', 'g4_count'];
-  dataSource!: MatTableDataSource<Genome>;
-  genomes = input<Genome[]>();
+  dataSource!: MatTableDataSource<AssemblySummary>;
+  assemblies = input<AssemblySummary[]>();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
   ngOnInit() {
-    this.dataSource = new MatTableDataSource(this.genomes());
+    this.dataSource = new MatTableDataSource(this.assemblies());
   }
 
   ngAfterViewInit() {
@@ -53,6 +53,6 @@ export class GenomeListComponent implements AfterViewInit, OnInit {
     }
   }
   getTotalG4Count() {
-    return this.genomes()?.reduce((acc, genome) => acc + (genome.g4_count || 0), 0);
+    return this.assemblies()?.reduce((acc, assembly) => acc + (assembly.g4_count || 0), 0);
   }
 }

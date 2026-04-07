@@ -48,7 +48,7 @@
     @if (isDisplay) {
       <div class="tree-head">
         <span>Taxonomic name</span>
-        <span>Genomes</span>
+        <span>Assemblies</span>
       </div>
 
       <mat-tree
@@ -71,8 +71,8 @@
             mat-button
             class="genome-count"
             [href]="'taxonomy/' + node.taxon_id"
-            [matTooltip]="'G4 information was calculated for ' + node.genome_count + ' genomes'"
-            >{{ node.genome_count }}</a
+            [matTooltip]="'G4 information was calculated for ' + node.assembly_count + ' assemblies'"
+            >{{ node.assembly_count }}</a
           >
         </mat-tree-node>
 
@@ -98,8 +98,8 @@
             mat-button
             class="genome-count"
             [routerLink]="node.taxon_id"
-            [matTooltip]="'G4 information was calculated for ' + node.genome_count + ' genomes'"
-            >{{ node.genome_count }}</a
+            [matTooltip]="'G4 information was calculated for ' + node.assembly_count + ' assemblies'"
+            >{{ node.assembly_count }}</a
           >
         </mat-tree-node>
       </mat-tree>

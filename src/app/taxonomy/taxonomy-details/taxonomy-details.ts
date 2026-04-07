@@ -16,7 +16,7 @@ import { MatListModule } from '@angular/material/list';
 import { TaxonomyNode } from '../taxonomy.service';
 
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { GenomeListComponent } from './genome-list/genome-list.component';
+import { AssemblyListComponent } from './genome-list/genome-list.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
@@ -29,7 +29,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatListModule,
     MatTooltipModule,
     AsyncPipe,
-    GenomeListComponent,
+    AssemblyListComponent,
   ],
   templateUrl: './taxonomy-details.html',
   styleUrl: './taxonomy-details.scss',
