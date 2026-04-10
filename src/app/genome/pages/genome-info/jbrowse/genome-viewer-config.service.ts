@@ -19,7 +19,7 @@ export interface GenomeViewerConfig extends JBrowseConfig {
 }
 
 function buildAssemblyAssetUrl(assemblyName: string, fileName: string): string {
-  return `https://g4vista.med.niigata-u.ac.jp/jbrowse/${assemblyName}/${fileName}`;
+  return `https://g4vista.med.niigata-u.ac.jp/api/jbrowse/${assemblyName}/${fileName}`;
 }
 
 function createViewerConfigFromAssembly(
