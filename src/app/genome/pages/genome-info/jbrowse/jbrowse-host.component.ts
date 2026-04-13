@@ -13,6 +13,7 @@ import { createElement } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { JBrowseReactView } from './jbrowse-react-view';
 import { GenomeViewerConfig } from './genome-viewer-config.service';
+import { GenomeNavCommand } from './genome-viewer-state.service';
 
 @Component({
   selector: 'app-jbrowse-host',
@@ -22,7 +23,7 @@ import { GenomeViewerConfig } from './genome-viewer-config.service';
 })
 export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy {
   readonly viewerConfig = input.required<GenomeViewerConfig>();
-  readonly location = input<string>('NC_000001.11:1..100000');
+  readonly navigationCommand = input<GenomeNavCommand | null>(null);
 
   @ViewChild('container', { static: true })
   private readonly containerRef!: ElementRef<HTMLDivElement>;
@@ -34,7 +35,7 @@ export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['viewerConfig'] || changes['location']) && this.root) {
+    if ((changes['viewerConfig'] || changes['navigationCommand']) && this.root) {
       this.renderReactTree();
     }
   }
@@ -49,10 +50,13 @@ export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy
       this.root = createRoot(this.containerRef.nativeElement);
     }
 
+    const viewerConfig = this.viewerConfig();
+
     this.root.render(
       createElement(JBrowseReactView, {
-        viewerConfig: this.viewerConfig(),
-        location: this.location() || undefined,
+        key: viewerConfig.assembly.name,
+        viewerConfig,
+        navigationCommand: this.navigationCommand() ?? undefined,
       }),
     );
   }

@@ -1,14 +1,23 @@
 import { Injectable, signal } from '@angular/core';
 
+export interface GenomeNavCommand {
+  id: number;
+  location: string;
+  assemblyName: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class GenomeViewerStateService {
   private readonly assemblyNameSignal = signal('GCF_000001405.40');
   private readonly regionSignal = signal('NC_000001.11:1..100000');
+  private readonly navCommandSignal = signal<GenomeNavCommand | null>(null);
+  private navCommandId = 0;
 
   readonly assemblyName = this.assemblyNameSignal.asReadonly();
   readonly region = this.regionSignal.asReadonly();
+  readonly navCommand = this.navCommandSignal.asReadonly();
 
   setAssemblyName(assemblyName: string): void {
     this.assemblyNameSignal.set(assemblyName);
@@ -16,6 +25,15 @@ export class GenomeViewerStateService {
 
   setRegion(region: string): void {
     this.regionSignal.set(region);
+  }
+
+  requestNavToLocation(location: string): void {
+    this.regionSignal.set(location);
+    this.navCommandSignal.set({
+      id: ++this.navCommandId,
+      location,
+      assemblyName: this.assemblyNameSignal(),
+    });
   }
 
   resetSession(assemblyName = 'GCF_000001405.40', region = 'NC_000001.11:1..100000'): void {

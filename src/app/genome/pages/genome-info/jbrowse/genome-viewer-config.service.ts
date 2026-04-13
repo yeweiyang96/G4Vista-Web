@@ -19,16 +19,16 @@ export interface GenomeViewerConfig extends JBrowseConfig {
 }
 
 function buildAssemblyAssetUrl(assemblyName: string, fileName: string): string {
-  return `https://g4vista.med.niigata-u.ac.jp/api/jbrowse/${assemblyName}/${fileName}`;
+  return `http://localhost:8000/jbrowse/${assemblyName}/jbrowse/${fileName}`;
 }
 
 function createViewerConfigFromAssembly(
   assemblyAccession: string,
   firstChromosome: string,
 ): GenomeViewerConfig {
-  const geneTrackId = `${assemblyAccession}.gff.gz`;
-  const gRichTrackId = `${assemblyAccession}_g.gff.gz`;
-  const cRichTrackId = `${assemblyAccession}_c.gff.gz`;
+  const geneTrackId = `${assemblyAccession}_annotation`;
+  const gRichTrackId = `${assemblyAccession}_g4`;
+  const cRichTrackId = `${assemblyAccession}_g4_revcomp`;
 
   return {
     assembly: {
@@ -39,13 +39,13 @@ function createViewerConfigFromAssembly(
         adapter: {
           type: 'BgzipFastaAdapter',
           fastaLocation: {
-            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.fa.gz`),
+            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.fna.gz`),
           },
           faiLocation: {
-            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.fa.gz.fai`),
+            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.fna.gz.fai`),
           },
           gziLocation: {
-            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.fa.gz.gzi`),
+            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.fna.gz.gzi`),
           },
         },
       },
@@ -59,12 +59,18 @@ function createViewerConfigFromAssembly(
         adapter: {
           type: 'Gff3TabixAdapter',
           gffGzLocation: {
-            uri: buildAssemblyAssetUrl(assemblyAccession, geneTrackId),
+            uri: buildAssemblyAssetUrl(
+              assemblyAccession,
+              `${assemblyAccession}.annotation.sorted.gff.gz`,
+            ),
           },
           index: {
             indexType: 'TBI',
             location: {
-              uri: buildAssemblyAssetUrl(assemblyAccession, `${geneTrackId}.tbi`),
+              uri: buildAssemblyAssetUrl(
+                assemblyAccession,
+                `${assemblyAccession}.annotation.sorted.gff.gz.tbi`,
+              ),
             },
           },
         },
@@ -72,17 +78,20 @@ function createViewerConfigFromAssembly(
       {
         type: 'FeatureTrack',
         trackId: gRichTrackId,
-        name: 'G-Rich Sequences',
+        name: 'G-quadruplexs',
         assemblyNames: [assemblyAccession],
         adapter: {
           type: 'Gff3TabixAdapter',
           gffGzLocation: {
-            uri: buildAssemblyAssetUrl(assemblyAccession, gRichTrackId),
+            uri: buildAssemblyAssetUrl(assemblyAccession, `${assemblyAccession}.g4.sorted.gff.gz`),
           },
           index: {
             indexType: 'TBI',
             location: {
-              uri: buildAssemblyAssetUrl(assemblyAccession, `${gRichTrackId}.tbi`),
+              uri: buildAssemblyAssetUrl(
+                assemblyAccession,
+                `${assemblyAccession}.g4.sorted.gff.gz.tbi`,
+              ),
             },
           },
         },
@@ -90,24 +99,30 @@ function createViewerConfigFromAssembly(
       {
         type: 'FeatureTrack',
         trackId: cRichTrackId,
-        name: 'C-Rich Sequences',
+        name: 'G-quadruplexs on reverse complement',
         assemblyNames: [assemblyAccession],
         adapter: {
           type: 'Gff3TabixAdapter',
           gffGzLocation: {
-            uri: buildAssemblyAssetUrl(assemblyAccession, cRichTrackId),
+            uri: buildAssemblyAssetUrl(
+              assemblyAccession,
+              `${assemblyAccession}.g4.revcomp.sorted.gff.gz`,
+            ),
           },
           index: {
             indexType: 'TBI',
             location: {
-              uri: buildAssemblyAssetUrl(assemblyAccession, `${cRichTrackId}.tbi`),
+              uri: buildAssemblyAssetUrl(
+                assemblyAccession,
+                `${assemblyAccession}.g4.revcomp.sorted.gff.gz.tbi`,
+              ),
             },
           },
         },
       },
     ],
     defaultVisibleTrackIds: ['ReferenceSequenceTrack', geneTrackId, gRichTrackId, cRichTrackId],
-    defaultRegion: `${firstChromosome}:1..100000`,
+    defaultRegion: `${firstChromosome}:1..1000`,
   };
 }
 

@@ -25,7 +25,7 @@
       </div>
 
       @if (viewerConfig(); as config) {
-        <app-jbrowse-host [viewerConfig]="config" [location]="region()" />
+        <app-jbrowse-host [viewerConfig]="config" [navigationCommand]="navCommand()" />
       }
     </mat-card-content>
   </mat-card>
