@@ -14,6 +14,12 @@ export function JBrowseReactView({ viewerConfig, navigationCommand }: JBrowseRea
   const [viewState] = useState<ViewState>(() => createViewState({ ...viewerConfig }));
 
   useEffect(() => {
+    for (const trackId of viewerConfig.defaultVisibleTrackIds) {
+      viewState.session.view.showTrack(trackId);
+    }
+  }, [viewerConfig.defaultVisibleTrackIds, viewState]);
+
+  useEffect(() => {
     if (!navigationCommand) {
       return;
     }

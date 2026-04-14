@@ -1,5 +1,10 @@
 import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
+import { isDevMode } from '@angular/core';
 import { HomeComponent } from './home/home.component';
+
+const JBROWSE_BASE_URL = isDevMode()
+  ? 'http://localhost:8000/jbrowse'
+  : 'https://g4vista.med.niigata-u.ac.jp/api/jbrowse';
 
 export const routes: Routes = [
   { path: '', title: 'G4Vista', component: HomeComponent },
@@ -36,6 +41,9 @@ export const routes: Routes = [
   {
     path: 'genome/:assemblyAccession',
     title: 'Genome',
+    data: {
+      dataBaseUrl: JBROWSE_BASE_URL,
+    },
     loadComponent: () =>
       import('./genome/pages/genome-info/genome-info.component').then((m) => m.GenomeInfoComponent),
   },
