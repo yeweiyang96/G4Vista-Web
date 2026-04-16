@@ -20,7 +20,7 @@ describe('G4Service', () => {
     httpMock.verify();
   });
 
-  it('uses the canonical g4 type in page requests and keeps the response untouched', () => {
+  it('uses the canonical g4 type in browse requests and keeps the response untouched', () => {
     const responseSpy = jasmine.createSpy();
 
     service
@@ -33,15 +33,13 @@ describe('G4Service', () => {
         sort: 'start',
         order: 'asc',
         tetrads: [2, 3],
-        selectedPosition: 'insideOf_gene_revcomp',
-        geneQuery: 'geneA',
         minGscore: 12,
         maxGscore: 44,
       })
       .subscribe(responseSpy);
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/NC_000001.1/revcomp?offset=0&limit=10&sort=start&order=asc&selected_position=insideOf_gene_revcomp&tetrad=2&tetrad=3&min_gscore=12&max_gscore=44&search_gene=geneA',
+      '/api/v1/g4/GCF_000021765.1/NC_000001.1/revcomp?offset=0&limit=10&sort=start&order=asc&tetrad=2&tetrad=3&min_gscore=12&max_gscore=44',
     );
 
     expect(request.request.method).toBe('GET');
@@ -72,6 +70,47 @@ describe('G4Service', () => {
     expect(responseSpy).toHaveBeenCalledWith(
       jasmine.objectContaining({
         g4s: [jasmine.objectContaining({ g4_type: 'revcomp' })],
+      }),
+    );
+  });
+
+  it('uses the assembly-scoped gene search endpoint and keeps the response untouched', () => {
+    const responseSpy = jasmine.createSpy();
+
+    service
+      .getGeneSearchPage({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'normal',
+        pageIndex: 2,
+        pageSize: 20,
+        sort: 'gscore',
+        order: 'desc',
+        tetrads: [3],
+        minGscore: 17,
+        maxGscore: 90,
+        searchTerm: 'geneA',
+        selectedPosition: 'insideOf_gene_normal',
+      })
+      .subscribe(responseSpy);
+
+    const request = httpMock.expectOne(
+      '/api/v1/g4/GCF_000021765.1/normal/gene-search?offset=2&limit=20&sort=gscore&order=desc&tetrad=3&min_gscore=17&max_gscore=90&search_term=geneA&selected_position=insideOf_gene_normal',
+    );
+
+    expect(request.request.method).toBe('GET');
+
+    request.flush({
+      count: 0,
+      tetrads_list: [3],
+      max_gscore: 90,
+      min_gscore: 17,
+      g4s: [],
+    });
+
+    expect(responseSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        count: 0,
+        tetrads_list: [3],
       }),
     );
   });

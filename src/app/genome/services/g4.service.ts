@@ -106,7 +106,20 @@ export interface G4PageRequest {
   tetrads: number[];
   minGscore?: number;
   maxGscore?: number;
-  geneQuery?: string;
+  overlap?: boolean;
+}
+
+export interface G4GeneSearchRequest {
+  assemblyAccession: string;
+  g4Type: G4Type;
+  pageIndex: number;
+  pageSize: number;
+  sort: G4SortField;
+  order: 'asc' | 'desc';
+  tetrads: number[];
+  minGscore?: number;
+  maxGscore?: number;
+  searchTerm: string;
   selectedPosition: G4GenePosition;
   overlap?: boolean;
 }
@@ -148,13 +161,24 @@ export class G4Service {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/g4';
 
-  getG4Page(request: G4PageRequest): Observable<G4PageResponse> {
+  private buildCommonPageParams(
+    request: Pick<
+      G4PageRequest | G4GeneSearchRequest,
+      | 'pageIndex'
+      | 'pageSize'
+      | 'sort'
+      | 'order'
+      | 'tetrads'
+      | 'minGscore'
+      | 'maxGscore'
+      | 'overlap'
+    >,
+  ): HttpParams {
     let params = new HttpParams()
       .set('offset', request.pageIndex)
       .set('limit', request.pageSize)
       .set('sort', SORT_FIELD_PARAM_MAP[request.sort])
-      .set('order', request.order)
-      .set('selected_position', request.selectedPosition);
+      .set('order', request.order);
 
     for (const tetrad of request.tetrads) {
       params = params.append('tetrad', tetrad);
@@ -165,15 +189,28 @@ export class G4Service {
     if (request.maxGscore !== undefined) {
       params = params.set('max_gscore', request.maxGscore);
     }
-    if (request.geneQuery) {
-      params = params.set('search_gene', request.geneQuery);
-    }
     if (request.overlap) {
-      params = params.set('overlap', false);
+      params = params.set('overlap', true);
     }
+    return params;
+  }
+
+  getG4Page(request: G4PageRequest): Observable<G4PageResponse> {
+    const params = this.buildCommonPageParams(request);
 
     return this.http.get<G4PageResponse>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}`,
+      { params },
+    );
+  }
+
+  getGeneSearchPage(request: G4GeneSearchRequest): Observable<G4PageResponse> {
+    const params = this.buildCommonPageParams(request)
+      .set('search_term', request.searchTerm)
+      .set('selected_position', request.selectedPosition);
+
+    return this.http.get<G4PageResponse>(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-search`,
       { params },
     );
   }

@@ -19,11 +19,13 @@ describe('G4TableComponent', () => {
 
     fixture.componentRef.setInput('page', EMPTY_G4_PAGE);
     fixture.componentRef.setInput('selectedSeqid', '');
+    fixture.componentRef.setInput('isAssemblyScoped', false);
+    fixture.componentRef.setInput('geneSearchTerm', '');
     fixture.componentRef.setInput('selectedPositionLabel', 'Inside gene(G-rich)');
     fixture.componentRef.setInput('sortState', { active: 'start', direction: 'asc' });
     fixture.componentRef.setInput('pageIndex', 0);
     fixture.componentRef.setInput('pageSize', 10);
-    fixture.componentRef.setInput('geneRelationsByStart', new Map());
+    fixture.componentRef.setInput('geneRelationsByRowKey', new Map());
     fixture.componentRef.setInput('genePositionOptions', G4_GENE_POSITION_OPTIONS_BY_TYPE.normal);
     fixture.detectChanges();
   });
@@ -73,5 +75,49 @@ describe('G4TableComponent', () => {
 
     expect(insideGeneColumn?.show).toBeFalse();
     expect(upstreamGeneColumn?.show).toBeTrue();
+  });
+
+  it('shows the SeqID column when the table is assembly scoped', () => {
+    fixture.componentRef.setInput('isAssemblyScoped', true);
+    fixture.detectChanges();
+
+    expect(component.columns().some((column) => column.field === 'seqid')).toBeTrue();
+  });
+
+  it('uses seqid:start composite keys for relation hits', () => {
+    fixture.componentRef.setInput(
+      'geneRelationsByRowKey',
+      new Map([
+        [
+          'NC_000001.1:100',
+          {
+            insideOf_gene_normal: [
+              { feature_id: 'geneA', label: 'Gene A', gene_biotype: 'protein_coding' },
+            ],
+          },
+        ],
+      ]),
+    );
+    fixture.detectChanges();
+
+    expect(
+      component.relationHits(
+        {
+          assembly_accession: 'GCF_1',
+          seqid: 'NC_000001.1',
+          g4_type: 'normal',
+          start: 100,
+          end: 120,
+          length: 21,
+          tetrads: 3,
+          y1: 1,
+          y2: 1,
+          y3: 1,
+          gscore: 18,
+          sequence: 'GGGTTAGGGTTAGGGTTAGGG',
+        },
+        'insideOf_gene_normal',
+      ),
+    ).toEqual([{ feature_id: 'geneA', label: 'Gene A', gene_biotype: 'protein_coding' }]);
   });
 });

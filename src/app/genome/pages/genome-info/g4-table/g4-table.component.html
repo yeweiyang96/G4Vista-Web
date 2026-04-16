@@ -1,6 +1,9 @@
 <div class="table-meta">
   <mat-chip-set>
-    <mat-chip>Scope: {{ selectedPositionLabel() }}</mat-chip>
+    @if (isAssemblyScoped()) {
+      <mat-chip>Scope: {{ selectedPositionLabel() }}</mat-chip>
+      <mat-chip>Gene: {{ geneSearchTerm() }}</mat-chip>
+    }
     <mat-chip>Gscore {{ displayedPage().min_gscore }}-{{ displayedPage().max_gscore }}</mat-chip>
   </mat-chip-set>
 </div>
@@ -36,7 +39,7 @@
   }
 </ng-template>
 
-@if (!selectedSeqid()) {
+@if (!isAssemblyScoped() && !selectedSeqid()) {
   <div class="empty-state">No SeqID metadata is available for this assembly.</div>
 } @else {
   <mtx-grid

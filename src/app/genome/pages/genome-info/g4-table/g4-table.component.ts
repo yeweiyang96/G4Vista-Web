@@ -79,29 +79,34 @@ export class G4TableComponent {
 
   readonly page = input.required<G4PageResponse>();
   readonly selectedSeqid = input.required<string>();
+  readonly isAssemblyScoped = input(false);
+  readonly geneSearchTerm = input('');
   readonly selectedPositionLabel = input.required<string>();
   readonly sortState = input.required<{ active: G4SortField; direction: 'asc' | 'desc' }>();
   readonly pageIndex = input.required<number>();
   readonly pageSize = input.required<number>();
   readonly isLoading = input(false);
-  readonly geneRelationsByStart =
+  readonly geneRelationsByRowKey =
     input.required<Map<string, Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>>();
   readonly genePositionOptions = input.required<readonly G4GenePositionOption[]>();
 
   private readonly columnVisibility = signal<Record<string, boolean>>({});
   private readonly cachedPage = signal<G4PageResponse>(EMPTY_G4_PAGE);
-  private readonly cachedGeneRelationsByStart = signal<
+  private readonly cachedGeneRelationsByRowKey = signal<
     Map<string, Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>
   >(new Map());
 
   readonly displayedPage = computed(() => (this.isLoading() ? this.cachedPage() : this.page()));
-  readonly displayedGeneRelationsByStart = computed(() =>
-    this.isLoading() ? this.cachedGeneRelationsByStart() : this.geneRelationsByStart(),
+  readonly displayedGeneRelationsByRowKey = computed(() =>
+    this.isLoading() ? this.cachedGeneRelationsByRowKey() : this.geneRelationsByRowKey(),
   );
 
   readonly columns = computed<MtxGridColumn<G4PageItem>[]>(() => {
     const visibility = this.columnVisibility();
     const baseColumns = [
+      ...(this.isAssemblyScoped()
+        ? [{ header: 'SeqID', field: 'seqid', disabled: true } satisfies MtxGridColumn<G4PageItem>]
+        : []),
       { header: 'Start', field: 'start', sortable: true, type: 'number', disabled: true },
       { header: 'End', field: 'end', sortable: true, type: 'number', disabled: true },
       { header: 'Length', field: 'length', sortable: true, type: 'number', disabled: true },
@@ -141,11 +146,11 @@ export class G4TableComponent {
   constructor() {
     effect(() => {
       const page = this.page();
-      const relations = this.geneRelationsByStart();
+      const relations = this.geneRelationsByRowKey();
 
       if (!this.isLoading()) {
         this.cachedPage.set(page);
-        this.cachedGeneRelationsByStart.set(relations);
+        this.cachedGeneRelationsByRowKey.set(relations);
       }
     });
   }
@@ -183,7 +188,9 @@ export class G4TableComponent {
   }
 
   relationHits(item: G4PageItem, position: G4GenePosition): G4GeneRelationHit[] {
-    return this.displayedGeneRelationsByStart().get(String(item.start))?.[position] ?? [];
+    return (
+      this.displayedGeneRelationsByRowKey().get(`${item.seqid}:${item.start}`)?.[position] ?? []
+    );
   }
 
   trackByG4(_index: number, item: G4PageItem): string {

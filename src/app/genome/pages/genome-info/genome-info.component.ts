@@ -22,13 +22,13 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Sort } from '@angular/material/sort';
-import { of } from 'rxjs';
+import { forkJoin, map, of } from 'rxjs';
 import { G4TableComponent } from './g4-table/g4-table.component';
 import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome-detail.service';
 import {
-  EMPTY_G4_GENE_RELATIONS,
   EMPTY_G4_PAGE,
   G4_GENE_POSITION_OPTIONS_BY_TYPE,
+  G4GeneSearchRequest,
   G4GeneRelationHit,
   G4GeneRelationsResponse,
   G4GenePosition,
@@ -53,6 +53,22 @@ interface G4FilterModel {
   maxGscore: string;
 }
 
+interface G4PageResourceRequest {
+  mode: 'browse' | 'gene-search';
+  request: G4PageRequest | G4GeneSearchRequest;
+}
+
+interface GeneRelationBatchRequest {
+  assemblyAccession: string;
+  g4Type: G4Type;
+  startsBySeqid: { seqid: string; starts: number[] }[];
+}
+
+interface GeneRelationBatchResponse {
+  seqid: string;
+  relations: G4GeneRelationsResponse;
+}
+
 const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.normal[0].value;
 const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   start: 'start',
@@ -61,6 +77,7 @@ const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   tetrads: 'tetrads',
   gscore: 'gscore',
 };
+const GENE_QUERY_DEBOUNCE_MS = 300;
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 
 function createInitialFilterModel(): G4FilterModel {
@@ -97,6 +114,10 @@ function buildSeqidStartLocation(seqid: string): string {
   return `${seqid}:1..1000`;
 }
 
+function buildG4RowKey(seqid: string, start: number): string {
+  return `${seqid}:${start}`;
+}
+
 function formatGeneRelationLabel(label: string): string {
   return label.replace('(G-rich)', ' (G-rich)').replace('(iMotif)', ' (iMotif)');
 }
@@ -104,6 +125,24 @@ function formatGeneRelationLabel(label: string): string {
 function parseSeqidFromRegion(region: string): string | undefined {
   const match = region.match(/^(.*):[\d,]+\.\.[\d,]+$/);
   return match?.[1] || undefined;
+}
+
+function groupStartsBySeqid(items: readonly G4PageItem[]): { seqid: string; starts: number[] }[] {
+  const groupedStarts = new Map<string, number[]>();
+
+  for (const item of items) {
+    const starts = groupedStarts.get(item.seqid);
+    if (starts) {
+      starts.push(item.start);
+      continue;
+    }
+    groupedStarts.set(item.seqid, [item.start]);
+  }
+
+  return Array.from(groupedStarts.entries()).map(([seqid, starts]) => ({
+    seqid,
+    starts: Array.from(new Set(starts)),
+  }));
 }
 
 @Component({
@@ -150,6 +189,7 @@ export class GenomeInfoComponent {
   });
   readonly filterModel = signal(createInitialFilterModel());
   readonly filterForm = form(this.filterModel);
+  readonly debouncedGeneQuery = signal('');
 
   readonly assemblyResource = rxResource<GenomeAssemblyDetail, string>({
     params: () => this.assemblyAccession(),
@@ -202,24 +242,40 @@ export class GenomeInfoComponent {
     stream: ({ params }) => this.genomeViewerConfigService.resolveDefaultRegion(params),
     defaultValue: '1..1000',
   });
+  readonly browseFilters = computed(() => {
+    const filters = this.filterForm().value();
+    return {
+      tetrads: filters.selectedTetrads,
+      minGscore: parseOptionalInteger(filters.minGscore),
+      maxGscore: parseOptionalInteger(filters.maxGscore),
+    };
+  });
+  readonly isGeneSearchMode = computed(() => this.debouncedGeneQuery().length > 0);
   readonly pageIndex = linkedSignal({
     source: () => ({
       assemblyAccession: this.assemblyAccession(),
       g4Type: this.g4Type(),
-      seqid: this.selectedSeqid(),
-      filters: this.filterForm().value(),
+      mode: this.isGeneSearchMode() ? 'gene-search' : 'browse',
+      seqid: this.isGeneSearchMode() ? null : this.selectedSeqid(),
+      query: this.debouncedGeneQuery(),
+      selectedPosition: this.filterForm().value().selectedPosition,
+      filters: this.browseFilters(),
       sort: this.sortState(),
       pageSize: this.pageSize(),
     }),
     computation: () => 0,
   });
-  readonly g4PageRequest = computed<G4PageRequest | undefined>(() => {
+  readonly browsePageRequest = computed<G4PageRequest | undefined>(() => {
+    if (this.isGeneSearchMode()) {
+      return undefined;
+    }
+
     const seqid = this.selectedSeqid();
     if (!seqid) {
       return undefined;
     }
 
-    const filters = this.filterForm().value();
+    const filters = this.browseFilters();
     return {
       assemblyAccession: this.assemblyAccession(),
       g4Type: this.g4Type(),
@@ -228,68 +284,104 @@ export class GenomeInfoComponent {
       pageSize: this.pageSize(),
       sort: this.sortState().active,
       order: this.sortState().direction,
-      tetrads: filters.selectedTetrads,
-      minGscore: parseOptionalInteger(filters.minGscore),
-      maxGscore: parseOptionalInteger(filters.maxGscore),
-      geneQuery: filters.geneQuery.trim() || undefined,
-      selectedPosition: filters.selectedPosition,
+      tetrads: filters.tetrads,
+      minGscore: filters.minGscore,
+      maxGscore: filters.maxGscore,
     };
   });
-  readonly g4PageResource = rxResource<G4PageResponse, G4PageRequest | undefined>({
-    params: () => this.g4PageRequest(),
-    stream: ({ params }) => (params ? this.g4Service.getG4Page(params) : of(EMPTY_G4_PAGE)),
+  readonly geneSearchPageRequest = computed<G4GeneSearchRequest | undefined>(() => {
+    const searchTerm = this.debouncedGeneQuery();
+    if (!searchTerm) {
+      return undefined;
+    }
+
+    const filters = this.browseFilters();
+    return {
+      assemblyAccession: this.assemblyAccession(),
+      g4Type: this.g4Type(),
+      pageIndex: this.pageIndex(),
+      pageSize: this.pageSize(),
+      sort: this.sortState().active,
+      order: this.sortState().direction,
+      tetrads: filters.tetrads,
+      minGscore: filters.minGscore,
+      maxGscore: filters.maxGscore,
+      searchTerm,
+      selectedPosition: this.filterForm().value().selectedPosition,
+    };
+  });
+  readonly g4PageResource = rxResource<G4PageResponse, G4PageResourceRequest | undefined>({
+    params: () => {
+      const browseRequest = this.browsePageRequest();
+      if (browseRequest) {
+        return { mode: 'browse', request: browseRequest };
+      }
+
+      const geneSearchRequest = this.geneSearchPageRequest();
+      if (geneSearchRequest) {
+        return { mode: 'gene-search', request: geneSearchRequest };
+      }
+
+      return undefined;
+    },
+    stream: ({ params }) => {
+      if (!params) {
+        return of(EMPTY_G4_PAGE);
+      }
+
+      return params.mode === 'browse'
+        ? this.g4Service.getG4Page(params.request as G4PageRequest)
+        : this.g4Service.getGeneSearchPage(params.request as G4GeneSearchRequest);
+    },
     defaultValue: EMPTY_G4_PAGE,
   });
   readonly g4Page = computed<G4PageResponse>(() => this.g4PageResource.value());
   readonly geneRelationsResource = rxResource<
-    G4GeneRelationsResponse,
-    { assemblyAccession: string; g4Type: G4Type; seqid: string; starts: number[] } | undefined
+    GeneRelationBatchResponse[],
+    GeneRelationBatchRequest | undefined
   >({
     params: () => {
-      const request = this.g4PageRequest();
-      const starts = this.g4Page().g4s.map((item) => item.start);
-      if (!request || !starts.length) {
+      const page = this.g4Page();
+      if (!page.g4s.length) {
         return undefined;
       }
 
       return {
-        assemblyAccession: request.assemblyAccession,
-        g4Type: request.g4Type,
-        seqid: request.seqid,
-        starts,
+        assemblyAccession: this.assemblyAccession(),
+        g4Type: this.g4Type(),
+        startsBySeqid: groupStartsBySeqid(page.g4s),
       };
     },
-    stream: ({ params }) =>
-      params ? this.g4Service.getGeneRelations(params) : of(EMPTY_G4_GENE_RELATIONS),
-    defaultValue: EMPTY_G4_GENE_RELATIONS,
+    stream: ({ params }) => {
+      if (!params || !params.startsBySeqid.length) {
+        return of([]);
+      }
+
+      return forkJoin(
+        params.startsBySeqid.map((group) =>
+          this.g4Service
+            .getGeneRelations({
+              assemblyAccession: params.assemblyAccession,
+              g4Type: params.g4Type,
+              seqid: group.seqid,
+              starts: group.starts,
+            })
+            .pipe(map((relations) => ({ seqid: group.seqid, relations }))),
+        ),
+      );
+    },
+    defaultValue: [],
   });
 
-  readonly geneRelationsByStart = computed(() => {
+  readonly geneRelationsByRowKey = computed(() => {
     const relationMap = new Map<string, Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>();
-    for (const item of this.geneRelationsResource.value().relations) {
-      relationMap.set(String(item.start), item.positions);
+    for (const batch of this.geneRelationsResource.value()) {
+      for (const item of batch.relations.relations) {
+        relationMap.set(buildG4RowKey(batch.seqid, item.start), item.positions);
+      }
     }
     return relationMap;
   });
-  readonly visibleGenePositionOptions = computed(() => {
-    const options = this.genePositionOptions();
-    const relationMap = this.geneRelationsByStart();
-    if (!relationMap.size) {
-      return [];
-    }
-
-    const availablePositions = new Set<G4GenePosition>();
-    for (const positions of relationMap.values()) {
-      for (const option of options) {
-        if (positions[option.value]?.length) {
-          availablePositions.add(option.value);
-        }
-      }
-    }
-
-    return options.filter((option) => availablePositions.has(option.value));
-  });
-  readonly showGeneRelationFilter = computed(() => this.visibleGenePositionOptions().length > 0);
   readonly viewerRegion = this.viewerState.region;
   readonly navCommand = this.viewerState.navCommand;
   readonly selectedPositionLabel = computed(
@@ -298,15 +390,37 @@ export class GenomeInfoComponent {
         (option) => option.value === this.filterForm().value().selectedPosition,
       )?.label ?? 'Gene scope',
   );
+  readonly explorerSubtitle = computed(() => {
+    if (this.isGeneSearchMode()) {
+      return `${this.g4Page().count} PQS matched in ${this.assemblyAccession()}`;
+    }
+
+    return `${this.g4Page().count} PQS on ${this.selectedSeqid() || 'current assembly'}`;
+  });
   readonly geneSearchScopeHint = computed(() => {
     const label = this.selectedPositionLabel();
     return label === 'Gene scope'
-      ? 'Matches genes within the selected scope.'
-      : `Matches genes in ${label}.`;
+      ? 'Matches genes within the selected scope in the current assembly.'
+      : `Matches genes in ${label} across the current assembly.`;
   });
+  readonly activeGeneSearchTerm = computed(() => this.debouncedGeneQuery());
   private lastViewerSessionKey: string | null = null;
 
   constructor() {
+    effect((onCleanup) => {
+      const rawGeneQuery = this.filterForm().value().geneQuery.trim();
+      if (!rawGeneQuery) {
+        this.debouncedGeneQuery.set('');
+        return;
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        this.debouncedGeneQuery.set(rawGeneQuery);
+      }, GENE_QUERY_DEBOUNCE_MS);
+
+      onCleanup(() => window.clearTimeout(timeoutId));
+    });
+
     effect(() => {
       const assemblyAccession = this.assemblyAccession();
       if (this.defaultRegionResource.isLoading()) {
