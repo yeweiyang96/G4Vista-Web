@@ -1,10 +1,28 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LogoComponent } from './logo/logo.component';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+
+type ThemeMode = 'brightness_medium' | 'dark_mode' | 'light_mode';
+const THEME_STORAGE_KEY = 'theme';
+
+function isThemeMode(value: string | null): value is ThemeMode {
+  return value === 'brightness_medium' || value === 'dark_mode' || value === 'light_mode';
+}
+
+function getNextTheme(current: ThemeMode): ThemeMode {
+  if (current === 'brightness_medium') {
+    return 'dark_mode';
+  }
+  if (current === 'dark_mode') {
+    return 'light_mode';
+  }
+  return 'brightness_medium';
+}
+
 const GITHUB_ICON = `
 <svg viewBox="0 0 20 20" class="github-logo" aria-hidden="true">
       <path
@@ -27,47 +45,73 @@ const GITHUB_ICON = `
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App implements OnInit {
-  title = 'G4Vista';
-  year = new Date().getFullYear();
-  sections = [
+export class App {
+  readonly title = 'G4Vista';
+  readonly year = new Date().getFullYear();
+  readonly sections = [
     { name: 'Taxonomy', route: '/taxonomy' },
     { name: 'Genome', route: '/genome' },
     { name: 'Gene', route: '/gene' },
     { name: 'Environment', route: '/environment' },
   ];
-  theme: 'brightness_medium' | 'dark_mode' | 'light_mode' = 'brightness_medium';
+  readonly theme = signal<ThemeMode>('brightness_medium');
+
+  private readonly iconRegistry = inject(MatIconRegistry);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly hasThemePreference = signal(false);
 
   constructor() {
-    const iconRegistry = inject(MatIconRegistry);
-    const sanitizer = inject(DomSanitizer);
-    iconRegistry.addSvgIconLiteral('github', sanitizer.bypassSecurityTrustHtml(GITHUB_ICON));
+    this.iconRegistry.addSvgIconLiteral(
+      'github',
+      this.sanitizer.bypassSecurityTrustHtml(GITHUB_ICON),
+    );
+
+    const savedTheme = this.readSavedTheme();
+    if (savedTheme) {
+      this.theme.set(savedTheme);
+      this.hasThemePreference.set(true);
+    }
+
+    effect(() => {
+      if (!this.hasThemePreference()) {
+        return;
+      }
+
+      const currentTheme = this.theme();
+      this.setTheme(currentTheme);
+      this.saveTheme(currentTheme);
+    });
   }
 
-  ngOnInit() {
-    const savedTheme = localStorage.getItem('theme') as
-      | 'brightness_medium'
-      | 'dark_mode'
-      | 'light_mode';
-    if (savedTheme) {
-      this.theme = savedTheme;
-      this.setTheme(this.theme);
-    }
+  toggleTheme(): void {
+    this.theme.set(getNextTheme(this.theme()));
+    this.hasThemePreference.set(true);
   }
-  toggleTheme() {
-    if (this.theme === 'brightness_medium') {
-      this.theme = 'dark_mode';
-    } else if (this.theme === 'dark_mode') {
-      this.theme = 'light_mode';
-    } else {
-      this.theme = 'brightness_medium';
+
+  private setTheme(theme: ThemeMode): void {
+    if (typeof document === 'undefined') {
+      return;
     }
-    localStorage.setItem('theme', this.theme);
-    this.setTheme(this.theme);
-  }
-  setTheme(theme: 'brightness_medium' | 'dark_mode' | 'light_mode') {
+
     const root = document.documentElement;
     root.classList.remove('dark_mode', 'light_mode', 'brightness_medium');
     root.classList.add(theme);
+  }
+
+  private readSavedTheme(): ThemeMode | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isThemeMode(savedTheme) ? savedTheme : null;
+  }
+
+  private saveTheme(theme: ThemeMode): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }
 }

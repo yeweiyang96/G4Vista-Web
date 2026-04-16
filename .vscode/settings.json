@@ -26,5 +26,10 @@
       "file": ".github/instructions/commit-message.instructions.md"
     }
   ],
-  "python.defaultInterpreterPath": "/Users/wzk/.local/share/mise/installs/python/3.14.3/bin/python"
+  "python.defaultInterpreterPath": "/Users/wzk/.local/share/mise/installs/python/3.14.3/bin/python",
+  "chat.mcp.serverSampling": {
+    "G4Vista-Web/.vscode/mcp.json: angular-cli": {
+      "allowedDuringChat": true
+    }
+  }
 }

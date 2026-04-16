@@ -1,0 +1,46 @@
+.table-meta {
+  margin: 12px 0;
+}
+
+.g4-grid {
+  width: 100%;
+}
+
+.sequence-button {
+  justify-content: flex-start;
+  padding: 0;
+  font-family: 'IBM Plex Mono', SFMono-Regular, Consolas, monospace;
+  text-align: left;
+}
+
+.sequence {
+  white-space-collapse: discard;
+}
+
+.sequence-highlight {
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+.relation-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0;
+}
+
+.gene-link {
+  min-width: 0;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 30vh;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.muted-text {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}

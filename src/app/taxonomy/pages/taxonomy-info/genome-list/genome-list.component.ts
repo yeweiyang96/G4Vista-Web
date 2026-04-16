@@ -2,8 +2,8 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  effect,
   input,
-  OnInit,
   ViewChild,
 } from '@angular/core';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -36,19 +36,25 @@ export interface AssemblySummary {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AssemblyListComponent implements AfterViewInit, OnInit {
+export class AssemblyListComponent implements AfterViewInit {
   displayedColumns: string[] = ['organism_name', 'asm_name', 'assembly_accession'];
-  dataSource!: MatTableDataSource<AssemblySummary>;
-  assemblies = input<AssemblySummary[]>();
+  dataSource = new MatTableDataSource<AssemblySummary>([]);
+  assemblies = input<AssemblySummary[]>([]);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  ngOnInit() {
-    this.dataSource = new MatTableDataSource(this.assemblies());
+  constructor() {
+    effect(() => {
+      this.dataSource.data = this.assemblies();
+
+      if (this.dataSource.paginator) {
+        this.dataSource.paginator.firstPage();
+      }
+    });
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }

@@ -1,0 +1,59 @@
+<section class="gene-page" aria-label="Gene detail">
+  @if (geneDetail(); as gene) {
+    <div class="gene-layout">
+      <mat-card appearance="outlined" class="summary-card">
+        <mat-card-header>
+          <mat-card-title>{{ gene.gene_name || gene.locus_tag || gene.feature_id }}</mat-card-title>
+          <mat-card-subtitle>{{ gene.feature_id }}</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <dl class="detail-list">
+            <dt>Assembly</dt>
+            <dd>
+              <a mat-button [routerLink]="['/genome', assemblyAccession()]">{{
+                assemblyAccession()
+              }}</a>
+            </dd>
+            <dt>SeqID</dt>
+            <dd>{{ gene.seqid }}</dd>
+            <dt>Feature</dt>
+            <dd>{{ gene.feature || 'gene' }}</dd>
+            <dt>Range</dt>
+            <dd>
+              @if (gene.feature_start !== null && gene.feature_end !== null) {
+                {{ gene.feature_start }}..{{ gene.feature_end }}
+              } @else {
+                Unavailable
+              }
+            </dd>
+            <dt>Biotype</dt>
+            <dd>{{ gene.gene_biotype || 'Unspecified' }}</dd>
+            <dt>Strand</dt>
+            <dd>{{ gene.strand || 'Unspecified' }}</dd>
+            <dt>Locus tag</dt>
+            <dd>{{ gene.locus_tag || 'Unavailable' }}</dd>
+            <dt>Related G4 starts</dt>
+            <dd>{{ relatedStartCount() }}</dd>
+          </dl>
+
+          @if (relationSummaries().length) {
+            <mat-divider></mat-divider>
+            <div class="relation-section">
+              <p class="section-label">Linked G4 windows</p>
+              <mat-chip-listbox aria-label="Linked G4 windows">
+                @for (summary of relationSummaries(); track summary.key) {
+                  <mat-chip>{{ summary.label }}: {{ summary.count }}</mat-chip>
+                }
+              </mat-chip-listbox>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  } @else {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+</section>

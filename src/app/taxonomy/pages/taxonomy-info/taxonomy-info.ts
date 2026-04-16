@@ -1,19 +1,12 @@
-import { AsyncPipe } from '@angular/common';
-import { Observable } from 'rxjs';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  numberAttribute,
-  OnInit,
-} from '@angular/core';
-import { Taxonomy, TaxonomyService } from '../../service/taxonomy.service';
+import { computed } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, input, numberAttribute } from '@angular/core';
+import { Taxonomy, TaxonomyService } from '../../services/taxonomy.service';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
-import { TaxonomyNode } from '../../service/taxonomy.service';
+import { TaxonomyNode } from '../../services/taxonomy.service';
 
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AssemblyListComponent } from './genome-list/genome-list.component';
@@ -29,7 +22,6 @@ import { RouterLink } from '@angular/router';
     MatButtonModule,
     MatListModule,
     MatTooltipModule,
-    AsyncPipe,
     AssemblyListComponent,
     RouterLink,
   ],
@@ -37,20 +29,19 @@ import { RouterLink } from '@angular/router';
   styleUrl: './taxonomy-info.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaxonomyInfoComponent implements OnInit {
+export class TaxonomyInfoComponent {
   readonly taxonId = input.required<number, string>({ transform: numberAttribute });
-  taxonomy$!: Observable<Taxonomy>;
+  readonly taxonomyResource = rxResource<Taxonomy, number>({
+    params: () => this.taxonId(),
+    stream: ({ params }) => this.taxonomyService.getTaxonomyData(params),
+  });
+  readonly taxonomy = computed<Taxonomy | undefined>(() => {
+    const current = this.taxonomyResource.value();
+    return current?.taxon_id === this.taxonId() ? current : undefined;
+  });
   lineage: [TaxonomyNode] = [{ name: 'root', rank: 'no rank', taxon_id: 1 }];
   hasTemp = true;
   hasG4 = true;
 
   private readonly taxonomyService = inject(TaxonomyService);
-
-  ngOnInit(): void {
-    this.fetchTaxonomyData();
-  }
-
-  fetchTaxonomyData(): void {
-    this.taxonomy$ = this.taxonomyService.getTaxonomyData(this.taxonId());
-  }
 }

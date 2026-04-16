@@ -1,32 +1,204 @@
-<section class="genome-detail" aria-label="Genome detail">
-  <mat-card appearance="outlined" class="panel">
-    <mat-card-header>
-      <mat-card-title>Genome Browser</mat-card-title>
-      <mat-card-subtitle>Assembly: {{ assemblyName() }}</mat-card-subtitle>
-    </mat-card-header>
+<section class="genome-page" aria-label="Genome detail">
+  @if (assemblyDetail(); as assembly) {
+    <div class="genome-layout">
+      <div class="main-column">
+        <mat-card appearance="outlined" class="overview-card">
+          <mat-card-header>
+            <mat-card-title>{{ assembly.asm_name || assembly.assembly_accession }}</mat-card-title>
+            <mat-card-subtitle>{{ assembly.organism_name }}</mat-card-subtitle>
+          </mat-card-header>
 
-    <mat-card-content>
-      <div class="controls">
-        <mat-form-field appearance="outline" class="region-field">
-          <mat-label>Location</mat-label>
-          <input matInput [formControl]="locationControl" placeholder="NC_000001.11:1..100000" />
-        </mat-form-field>
+          <mat-card-content>
+            <dl class="detail-list">
+              <dt>Assembly accession</dt>
+              <dd>{{ assembly.assembly_accession }}</dd>
+              <dt>Scientific name</dt>
+              <dd>
+                @if (assembly.taxon_id !== null) {
+                  <a mat-button [routerLink]="['/taxonomy', assembly.taxon_id]">
+                    {{ assembly.species_name }}
+                  </a>
+                } @else {
+                  {{ assembly.species_name }}
+                }
+              </dd>
+              <dt>Assembly name</dt>
+              <dd>{{ assembly.asm_name || 'Unavailable' }}</dd>
+              <dt>Release date</dt>
+              <dd>{{ assembly.seq_rel_date || 'Unavailable' }}</dd>
+              <dt>Taxon ID</dt>
+              <dd>{{ assembly.taxon_id ?? 'Unavailable' }}</dd>
+              <dt>Topt ave</dt>
+              <dd>
+                @if (assembly.topt_ave !== null) {
+                  {{ assembly.topt_ave }} °C
+                } @else {
+                  Unavailable
+                }
+              </dd>
+              <dt>SeqIDs</dt>
+              <dd>{{ assembly.seqids.length }}</dd>
+            </dl>
+          </mat-card-content>
+        </mat-card>
 
-        <div class="buttons">
-          <button mat-button (click)="applyLocation()">Apply</button>
-          <button mat-button (click)="jumpToPresetRegion('NC_000001.11:1..200000')">
-            1..200000
-          </button>
-          <button mat-button (click)="jumpToPresetRegion('NC_000001.11:200000..400000')">
-            200000..400000
-          </button>
-          <button mat-button (click)="resetSession()">Reset</button>
-        </div>
+        <mat-card appearance="outlined" class="explorer-card">
+          <mat-card-header>
+            <mat-card-title>G4 Explorer</mat-card-title>
+            <mat-card-subtitle>
+              {{ g4Page().count }} PQS on {{ selectedSeqid() || 'current assembly' }}
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="selector-row">
+              <mat-form-field appearance="outline" class="selector-field">
+                <mat-label>SeqID</mat-label>
+                <mat-select [value]="selectedSeqid()" (valueChange)="selectSeqid($event)">
+                  @for (seqid of assembly.seqids; track seqid) {
+                    <mat-option [value]="seqid">{{ seqid }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <div class="type-switch">
+                <!-- <span class="selector-caption">G4 type</span> -->
+                <mat-button-toggle-group
+                  [value]="g4Type()"
+                  (change)="selectG4Type($event.value)"
+                  aria-label="G4 type selector"
+                >
+                  <mat-button-toggle value="normal">G rich</mat-button-toggle>
+                  <mat-button-toggle value="revcomp">C rich</mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+            </div>
+            <form class="filters" aria-label="G4 filters">
+              <section class="filter-group filter-group-gene" aria-labelledby="gene-filter-title">
+                <div class="filter-group-header">
+                  <p class="filter-group-eyebrow">Gene filter</p>
+                  <h3 id="gene-filter-title" class="filter-group-title">
+                    Find genes around each PQS
+                  </h3>
+                  @if (showGeneRelationFilter()) {
+                    <p class="filter-group-description">
+                      Choose where the gene sits relative to the PQS, then search by feature ID,
+                      gene name, or locus tag within that scope.
+                    </p>
+                  } @else {
+                    <p class="filter-group-description">
+                      Search by feature ID, gene name, or locus tag for the current PQS set.
+                    </p>
+                  }
+                </div>
+
+                <div class="filter-group-fields">
+                  @if (showGeneRelationFilter()) {
+                    <mat-form-field appearance="outline" class="filter-field filter-field-scope">
+                      <mat-label>Search scope</mat-label>
+                      <mat-select [formField]="filterForm.selectedPosition">
+                        @for (option of visibleGenePositionOptions(); track option.value) {
+                          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                      </mat-select>
+                      <mat-hint>Defines where the matched gene sits relative to the PQS.</mat-hint>
+                    </mat-form-field>
+                  }
+
+                  <mat-form-field
+                    appearance="outline"
+                    class="filter-field filter-field-gene-search"
+                  >
+                    <mat-label>Gene keyword</mat-label>
+                    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                    <input
+                      matInput
+                      type="search"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="Feature ID, gene name, or locus tag…"
+                      [formField]="filterForm.geneQuery"
+                    />
+                    <mat-hint>{{ geneSearchScopeHint() }}</mat-hint>
+                  </mat-form-field>
+                </div>
+              </section>
+
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Tetrads</mat-label>
+                <mat-select [formField]="filterForm.selectedTetrads" multiple>
+                  @for (option of g4Page().tetrads_list; track option) {
+                    <mat-option [value]="option">{{ option }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Min gscore</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  inputmode="numeric"
+                  step="1"
+                  placeholder="{{ g4Page().min_gscore }}"
+                  [formField]="filterForm.minGscore"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Max gscore</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  inputmode="numeric"
+                  step="1"
+                  placeholder="{{ g4Page().max_gscore }}"
+                  [formField]="filterForm.maxGscore"
+                />
+              </mat-form-field>
+
+              <div class="filter-actions">
+                <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
+              </div>
+            </form>
+
+            <app-g4-table
+              [page]="g4Page()"
+              [selectedSeqid]="selectedSeqid()"
+              [selectedPositionLabel]="selectedPositionLabel()"
+              [sortState]="sortState()"
+              [pageIndex]="pageIndex()"
+              [pageSize]="pageSize()"
+              [isLoading]="g4PageResource.isLoading()"
+              [geneRelationsByStart]="geneRelationsByStart()"
+              [genePositionOptions]="genePositionOptions()"
+              (sortChanged)="changeSort($event)"
+              (pageChanged)="changePage($event)"
+              (navigateToG4)="navigateToG4($event)"
+            />
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card appearance="outlined" class="browser-card">
+          <mat-card-header>
+            <mat-card-title>Genome Browser</mat-card-title>
+            <mat-card-subtitle>{{ viewerRegion() }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="browser-actions">
+              <button mat-button type="button" (click)="resetBrowser()">
+                Reset to default region
+              </button>
+            </div>
+            <app-jbrowse-host [viewerConfig]="viewerConfig()" [navigationCommand]="navCommand()" />
+          </mat-card-content>
+        </mat-card>
       </div>
-
-      @if (viewerConfig(); as config) {
-        <app-jbrowse-host [viewerConfig]="config" [navigationCommand]="navCommand()" />
-      }
-    </mat-card-content>
-  </mat-card>
+    </div>
+  } @else {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
 </section>

@@ -1,0 +1,63 @@
+<div class="table-meta">
+  <mat-chip-set>
+    <mat-chip>Scope: {{ selectedPositionLabel() }}</mat-chip>
+    <mat-chip>Gscore {{ displayedPage().min_gscore }}-{{ displayedPage().max_gscore }}</mat-chip>
+  </mat-chip-set>
+</div>
+
+<ng-template #sequenceTpl let-row="rowData">
+  <button mat-button type="button" class="sequence-button" (click)="onNavigateToG4(row)">
+    @for (segment of sequenceSegments(row); track $index) {
+      <span [class.sequence-highlight]="segment.highlighted" class="sequence">{{ segment.text }}</span>
+    }
+  </button>
+</ng-template>
+
+<ng-template #relationTpl let-row="rowData" let-col="colDef">
+  @if (relationColumnPosition(col); as position) {
+    @if (relationHits(row, position).length) {
+      <div class="relation-links">
+        @for (gene of relationHits(row, position); track trackByFeatureId($index, gene)) {
+          <a
+            mat-button
+            class="gene-link"
+            [routerLink]="['/gene', row.assembly_accession, row.seqid, gene.feature_id]"
+            (click)="$event.stopPropagation()"
+          >
+            {{ gene.label }}
+          </a>
+        }
+      </div>
+    } @else {
+      <span class="muted-text">—</span>
+    }
+  } @else {
+    <span class="muted-text">—</span>
+  }
+</ng-template>
+
+@if (!selectedSeqid()) {
+  <div class="empty-state">No SeqID metadata is available for this assembly.</div>
+} @else {
+  <mtx-grid
+    class="g4-grid"
+    [data]="displayedPage().g4s"
+    [columns]="columns()"
+    [length]="displayedPage().count"
+    [loading]="isLoading()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 20, 50]"
+    [columnHideable]="true"
+    [columnHideableChecked]="'show'"
+    [pageOnFront]="false"
+    [showColumnMenuButton]="true"
+    [sortDisableClear]="true"
+    [showToolbar]="true"
+    [sortActive]="sortState().active"
+    [sortDirection]="sortState().direction"
+    (columnChange)="onColumnChange($event)"
+    (page)="onPageChange($event)"
+    (sortChange)="onSortChange($event)"
+  ></mtx-grid>
+}

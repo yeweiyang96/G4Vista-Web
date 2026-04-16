@@ -45,7 +45,7 @@
   </form>
 
   <div class="page-content">
-    @if (isDisplay) {
+    @if (isDisplay()) {
       <div class="tree-head">
         <span>Taxonomic name</span>
         <span>Assemblies</span>
@@ -54,7 +54,7 @@
       <mat-tree
         class="tree"
         #tree
-        [dataSource]="dataSource"
+        [dataSource]="dataSource()"
         [childrenAccessor]="childrenAccessor"
         [trackBy]="trackBy"
       >

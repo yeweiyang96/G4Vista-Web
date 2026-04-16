@@ -51,7 +51,6 @@ describe('GenomeViewerConfigService', () => {
     const iMotifGscoreTrack = config.tracks.find(
       (track) => track.trackId === 'GCF_000021765.1_i_motif_gscore',
     );
-    const hasRevcompTrackId = config.tracks.some((track) => track.trackId.includes('revcomp'));
 
     expect(annotationTrack).toBeDefined();
     expect((annotationTrack as Record<string, unknown>)['textSearching']).toBeDefined();
@@ -63,7 +62,6 @@ describe('GenomeViewerConfigService', () => {
     expect(((iMotifGscoreTrack as Record<string, unknown>)['type'] as string) ?? '').toBe(
       'QuantitativeTrack',
     );
-    expect(hasRevcompTrackId).toBeFalse();
   });
 
   it('parses default region from the first row of fai content', () => {

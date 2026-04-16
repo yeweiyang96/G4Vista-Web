@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng start (mise)",
+      "name": "Angular: launch Chrome on localhost:4200",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "mise: dev",
@@ -11,7 +11,21 @@
       "url": "http://localhost:4200/",
       "webRoot": "${workspaceFolder}",
       "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
+      "sourceMaps": true,
+      "smartStep": true,
+      "trace": true,
       "runtimeArgs": ["--new-window"]
+    },
+    {
+      "name": "Angular: launch integrated browser",
+      "type": "editor-browser",
+      "request": "launch",
+      "preLaunchTask": "mise: dev",
+      "postDebugTask": "stop: dev server (4200)",
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "smartStep": true
     }
   ]
 }

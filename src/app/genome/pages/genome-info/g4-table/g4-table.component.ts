@@ -1,0 +1,196 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  TemplateRef,
+  ViewChild,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { PageEvent } from '@angular/material/paginator';
+import { Sort } from '@angular/material/sort';
+import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
+import {
+  G4GenePosition,
+  G4GenePositionOption,
+  G4GeneRelationHit,
+  G4PageItem,
+  G4PageResponse,
+  G4SortField,
+  EMPTY_G4_PAGE,
+} from '../../../services/g4.service';
+interface SequenceSegment {
+  text: string;
+  highlighted: boolean;
+}
+
+const RELATION_COLUMN_FIELD_PREFIX = 'gene_relation:';
+
+function buildG4SequenceSegments(item: G4PageItem): SequenceSegment[] {
+  const boundaries = [
+    0,
+    item.tetrads,
+    item.tetrads + item.y1,
+    item.tetrads * 2 + item.y1,
+    item.tetrads * 2 + item.y1 + item.y2,
+    item.tetrads * 3 + item.y1 + item.y2,
+    item.tetrads * 3 + item.y1 + item.y2 + item.y3,
+    item.sequence.length,
+  ];
+  const highlights = [true, false, true, false, true, false, true];
+
+  return highlights.flatMap((highlighted, index) => {
+    const segment = item.sequence.slice(boundaries[index], boundaries[index + 1]);
+    return segment ? [{ text: segment, highlighted }] : [];
+  });
+}
+
+function buildRelationColumnField(position: G4GenePosition): string {
+  return `${RELATION_COLUMN_FIELD_PREFIX}${position}`;
+}
+
+function parseRelationColumnField(field: string): G4GenePosition | null {
+  if (!field.startsWith(RELATION_COLUMN_FIELD_PREFIX)) {
+    return null;
+  }
+
+  return field.slice(RELATION_COLUMN_FIELD_PREFIX.length) as G4GenePosition;
+}
+
+function isDefaultRelationPosition(position: G4GenePosition): boolean {
+  return position.startsWith('insideOf_gene_');
+}
+
+@Component({
+  selector: 'app-g4-table',
+  imports: [MatButtonModule, MatChipsModule, MtxGridModule, RouterLink],
+  templateUrl: './g4-table.component.html',
+  styleUrl: './g4-table.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class G4TableComponent {
+  @ViewChild('sequenceTpl', { static: true }) sequenceTpl!: TemplateRef<unknown>;
+  @ViewChild('relationTpl', { static: true }) relationTpl!: TemplateRef<unknown>;
+
+  readonly page = input.required<G4PageResponse>();
+  readonly selectedSeqid = input.required<string>();
+  readonly selectedPositionLabel = input.required<string>();
+  readonly sortState = input.required<{ active: G4SortField; direction: 'asc' | 'desc' }>();
+  readonly pageIndex = input.required<number>();
+  readonly pageSize = input.required<number>();
+  readonly isLoading = input(false);
+  readonly geneRelationsByStart =
+    input.required<Map<string, Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>>();
+  readonly genePositionOptions = input.required<readonly G4GenePositionOption[]>();
+
+  private readonly columnVisibility = signal<Record<string, boolean>>({});
+  private readonly cachedPage = signal<G4PageResponse>(EMPTY_G4_PAGE);
+  private readonly cachedGeneRelationsByStart = signal<
+    Map<string, Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>
+  >(new Map());
+
+  readonly displayedPage = computed(() => (this.isLoading() ? this.cachedPage() : this.page()));
+  readonly displayedGeneRelationsByStart = computed(() =>
+    this.isLoading() ? this.cachedGeneRelationsByStart() : this.geneRelationsByStart(),
+  );
+
+  readonly columns = computed<MtxGridColumn<G4PageItem>[]>(() => {
+    const visibility = this.columnVisibility();
+    const baseColumns = [
+      { header: 'Start', field: 'start', sortable: true, type: 'number', disabled: true },
+      { header: 'End', field: 'end', sortable: true, type: 'number', disabled: true },
+      { header: 'Length', field: 'length', sortable: true, type: 'number', disabled: true },
+      { header: 'Tetrads', field: 'tetrads', sortable: true, type: 'number', disabled: true },
+      { header: 'Gscore', field: 'gscore', sortable: true, type: 'number', disabled: true },
+      {
+        header: 'Sequence',
+        field: 'sequence',
+        cellTemplate: this.sequenceTpl as unknown as never,
+        disabled: true,
+      },
+    ] satisfies MtxGridColumn<G4PageItem>[];
+
+    const visibleBaseColumns = baseColumns.map((column) => ({
+      ...column,
+      show: visibility[column.field] ?? true,
+    }));
+
+    const relationColumns = this.genePositionOptions().map((option) => {
+      const field = buildRelationColumnField(option.value);
+
+      return {
+        header: option.label,
+        field,
+        cellTemplate: this.relationTpl as unknown as never,
+        show: visibility[field] ?? isDefaultRelationPosition(option.value),
+      } satisfies MtxGridColumn<G4PageItem>;
+    });
+
+    return [...visibleBaseColumns, ...relationColumns];
+  });
+
+  readonly sortChanged = output<Sort>();
+  readonly pageChanged = output<PageEvent>();
+  readonly navigateToG4 = output<G4PageItem>();
+
+  constructor() {
+    effect(() => {
+      const page = this.page();
+      const relations = this.geneRelationsByStart();
+
+      if (!this.isLoading()) {
+        this.cachedPage.set(page);
+        this.cachedGeneRelationsByStart.set(relations);
+      }
+    });
+  }
+
+  onSortChange(sort: Sort): void {
+    this.sortChanged.emit(sort);
+  }
+
+  onColumnChange(columns: MtxGridColumn<G4PageItem>[]): void {
+    this.columnVisibility.update((current) => {
+      const next = { ...current };
+      for (const column of columns) {
+        next[column.field] = column.show ?? false;
+      }
+      return next;
+    });
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.pageChanged.emit(event);
+  }
+
+  onNavigateToG4(item: G4PageItem): void {
+    this.navigateToG4.emit(item);
+  }
+
+  sequenceSegments(item: G4PageItem): SequenceSegment[] {
+    return buildG4SequenceSegments(item);
+  }
+
+  relationColumnPosition(
+    column: MtxGridColumn<G4PageItem> | null | undefined,
+  ): G4GenePosition | null {
+    return column ? parseRelationColumnField(column.field) : null;
+  }
+
+  relationHits(item: G4PageItem, position: G4GenePosition): G4GeneRelationHit[] {
+    return this.displayedGeneRelationsByStart().get(String(item.start))?.[position] ?? [];
+  }
+
+  trackByG4(_index: number, item: G4PageItem): string {
+    return `${item.seqid}:${item.start}:${item.g4_type}`;
+  }
+
+  trackByFeatureId(_index: number, item: G4GeneRelationHit): string {
+    return item.feature_id;
+  }
+}

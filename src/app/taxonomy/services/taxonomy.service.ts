@@ -46,7 +46,7 @@ export class TaxonomyService {
   private http = inject(HttpClient);
   private apiUrl = '/api/v1/taxa';
   searchTaxonomy(query: string): Observable<TaxonomySearch[]> {
-    return this.http.get<TaxonomySearch[]>(`${this.apiUrl}/?name=${query}`);
+    return this.http.get<TaxonomySearch[]>(`${this.apiUrl}/?query=${query}`);
   }
 
   getLineage(taxon_id: number): Observable<TaxonomyNode> {

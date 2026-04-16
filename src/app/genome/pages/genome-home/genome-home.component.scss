@@ -1,18 +1,33 @@
-.genome-home {
-  padding: 16px;
+.main {
+  width: 80%;
+  min-height: 70vh;
+  margin: 2rem auto;
+  @media screen and (width <= 669.98px) {
+    width: 95%;
+    margin: 10px auto;
+  }
 }
 
-.search-card {
-  max-width: 640px;
+a {
+  margin-left: 1em;
+  text-decoration: none;
 }
 
-.search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
+.search-bar {
+  width: 100%;
 }
 
-.assembly-field {
-  flex: 1 1 360px;
+.title,
+.p {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+.statistic {
+  margin-top: 2rem;
+}
+
+.img {
+  width: 100%; /* 宽度充满父容器 */
+  object-fit: cover; /* 填充模式，裁剪多余部分 */
 }

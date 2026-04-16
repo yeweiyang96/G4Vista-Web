@@ -1,7 +1,9 @@
-import { Component, signal, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 
 import { RouterLink } from '@angular/router';
-import { TaxonomyService } from '../../../service/taxonomy.service';
+import { AssemblyCount, TaxonomyService } from '../../../services/taxonomy.service';
 
 interface TaxonomyStats {
   category: string;
@@ -21,6 +23,7 @@ const TAXONOMY_CATEGORIES: { category: string; taxon_id: number }[] = [
   { category: 'Vertebrata', taxon_id: 7742 },
   { category: 'Viruses', taxon_id: 10239 },
 ];
+const TAXON_IDS = TAXONOMY_CATEGORIES.map(({ taxon_id }) => taxon_id);
 
 @Component({
   selector: 'app-taxonomy-statistics',
@@ -29,39 +32,27 @@ const TAXONOMY_CATEGORIES: { category: string; taxon_id: number }[] = [
   styleUrl: './taxonomy-statistics.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaxonomyStatisticsComponent implements OnInit {
+export class TaxonomyStatisticsComponent {
   private readonly taxonomyService = inject(TaxonomyService);
-
-  readonly taxonomyStats = signal<TaxonomyStats[]>(
-    TAXONOMY_CATEGORIES.map(({ category, taxon_id }) => ({
-      category,
-      taxon_id,
-      assemblyCount: 0,
-    })),
+  private readonly assemblyCounts = toSignal(
+    this.taxonomyService.getAssemblyCounts(TAXON_IDS).pipe(
+      catchError((error) => {
+        console.error('Failed to load assembly counts:', error);
+        return of([] as AssemblyCount[]);
+      }),
+    ),
+    { initialValue: [] as AssemblyCount[] },
   );
 
-  ngOnInit() {
-    this.loadAssemblyCounts();
-  }
+  readonly taxonomyStats = computed<TaxonomyStats[]>(() => {
+    const countMap = new Map(
+      this.assemblyCounts().map((count) => [count.taxon_id, count.assembly_count]),
+    );
 
-  private loadAssemblyCounts() {
-    const taxon_ids = TAXONOMY_CATEGORIES.map(({ taxon_id }) => taxon_id);
-
-    this.taxonomyService.getAssemblyCounts(taxon_ids).subscribe({
-      next: (counts) => {
-        const countMap = new Map(counts.map((c) => [c.taxon_id, c.assembly_count]));
-
-        this.taxonomyStats.set(
-          TAXONOMY_CATEGORIES.map(({ category, taxon_id }) => ({
-            category,
-            taxon_id,
-            assemblyCount: countMap.get(taxon_id) || 0,
-          })),
-        );
-      },
-      error: (err) => {
-        console.error('Failed to load assembly counts:', err);
-      },
-    });
-  }
+    return TAXONOMY_CATEGORIES.map(({ category, taxon_id }) => ({
+      category,
+      taxon_id,
+      assemblyCount: countMap.get(taxon_id) ?? 0,
+    }));
+  });
 }

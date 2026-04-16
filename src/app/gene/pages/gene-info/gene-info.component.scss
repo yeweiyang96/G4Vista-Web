@@ -1,0 +1,47 @@
+.gene-page {
+  width: min(1400px, calc(100% - 32px));
+  padding: 24px 0 40px;
+  margin: 0 auto;
+}
+
+.gene-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.summary-card {
+  overflow: hidden;
+}
+
+.detail-list {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.detail-list dt {
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail-list dd {
+  margin: 0;
+  font: var(--mat-sys-body-large);
+}
+
+.relation-section {
+  margin-top: 20px;
+}
+
+.section-label {
+  margin: 0 0 12px;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.loading-state {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+}

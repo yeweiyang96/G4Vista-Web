@@ -1,6 +1,6 @@
 <div class="taxonomy-info-page">
   <!-- main content -->
-  @if (taxonomy$ | async; as taxonomy) {
+  @if (taxonomy(); as taxonomy) {
     <div #check>
       <mat-card appearance="outlined">
         <mat-card-header>
@@ -48,7 +48,7 @@
           <mat-card-title><h2>Genome</h2></mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <app-assembly-list [assemblies]="taxonomy.assemblies"></app-assembly-list>
+          <app-assembly-list [assemblies]="taxonomy.assemblies ?? []"></app-assembly-list>
         </mat-card-content>
       </mat-card>
       <br />

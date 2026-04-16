@@ -1,0 +1,36 @@
+<form>
+  <mat-form-field appearance="outline" class="search-bar">
+    <mat-label for="search-box">Search</mat-label>
+    <input
+      matInput
+      placeholder="Search"
+      [formControl]="searchControl"
+      type="search"
+      [matAutocomplete]="auto"
+    />
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      autoActiveFirstOption
+      (optionSelected)="onClick($event)"
+    >
+      @if (filter_result$ | async; as result) {
+        @if (result.length > 0) {
+          @for (one of result; track one.asm_name) {
+            <mat-option [value]="one.asm_name" [routerLink]="one.assembly_accession">
+              <div mat-line>
+                {{ one.asm_name }} <span class="no-match">{{ one.assembly_accession }}</span>
+              </div>
+              <span mat-line class="no-match"> {{ one.organism_name }}</span>
+            </mat-option>
+          }
+        } @else {
+          <mat-option>
+            <mat-icon>error</mat-icon>
+            <div mat-line>0 results</div>
+            <span mat-line class="no-match"> No matching genomes found.</span>
+          </mat-option>
+        }
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</form>
