@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -59,12 +59,30 @@ export interface GeneDetail {
   insideOf_genes_downstream_5k_revcomp: number[];
 }
 
+export interface GeneSearchItem {
+  assembly_accession: string;
+  organism_name: string;
+  seqid: string;
+  feature_id: string | null;
+  gene_id: string | null;
+  gene_name: string | null;
+  gene_biotype: string | null;
+  insideOf_gene_normal_count: number;
+  insideOf_genes_upstream_1k_normal_count: number;
+  insideOf_genes_downstream_1k_normal_count: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class GeneService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/gene';
+
+  searchGenes(searchTerm: string): Observable<GeneSearchItem[]> {
+    const params = new HttpParams().set('search_term', searchTerm);
+    return this.http.get<GeneSearchItem[]>(`${this.apiUrl}/`, { params });
+  }
 
   getGene(assemblyAccession: string, seqid: string, featureId: string): Observable<GeneDetail> {
     return this.http.get<GeneDetail>(

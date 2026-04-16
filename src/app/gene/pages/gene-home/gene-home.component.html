@@ -1,0 +1,87 @@
+<section class="gene-page" aria-label="Gene search">
+  <header class="page-header">
+    <h1>Gene</h1>
+    <p class="subtitle">Search by feature ID, gene ID, or gene name</p>
+  </header>
+
+  <form class="search-container" (submit)="onSubmit($event)">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label for="search-box">Search</mat-label>
+      <input
+        id="search-box"
+        matInput
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Ex. gene-ATP6, TP53, ATCG0001"
+      />
+    </mat-form-field>
+
+    <button mat-fab type="submit" class="search-button" aria-label="Search genes">
+      <mat-icon>search</mat-icon>
+    </button>
+  </form>
+
+  @if (showPromptMessage()) {
+    <p class="state-message">Enter a gene keyword to start searching.</p>
+  }
+
+  @if (showNoResultMessage()) {
+    <p class="state-message">0 results. No matching genes found.</p>
+  }
+
+  @if (isLoading() || results().length > 0) {
+    <mtx-grid
+      class="gene-grid"
+      [data]="results()"
+      [columns]="columns()"
+      [length]="results().length"
+      [loading]="isLoading()"
+      [pageOnFront]="true"
+      [pageSize]="20"
+      [pageSizeOptions]="pageSizeOptions"
+      [showToolbar]="true"
+      [showColumnMenuButton]="true"
+      [columnHideable]="true"
+      [columnHideableChecked]="'show'"
+    ></mtx-grid>
+  }
+</section>
+
+<ng-template #assemblyTpl let-row="rowData">
+  <a mat-button class="assembly-link" [routerLink]="['/genome', row.assembly_accession]">
+    {{ row.assembly_accession }}
+  </a>
+  <span class="secondary-text">{{ row.organism_name }}</span>
+</ng-template>
+
+<ng-template #featureTpl let-row="rowData">
+  @if (row.feature_id) {
+    <a
+      mat-button
+      class="feature-link"
+      [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
+    >
+      {{ row.feature_id }}
+    </a>
+  } @else {
+    <span class="muted-text">—</span>
+  }
+</ng-template>
+
+<ng-template #geneTpl let-row="rowData" let-col="colDef">
+  @if (row[col.field] && row.feature_id) {
+    <a
+      mat-button
+      class="gene-link"
+      [class.gene-id-link]="col.field === 'gene_id'"
+      [class.gene-name-link]="col.field === 'gene_name'"
+      [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
+    >
+      {{ row[col.field] }}
+    </a>
+  } @else if (row[col.field]) {
+    <span>{{ row[col.field] }}</span>
+  } @else {
+    <span class="muted-text">—</span>
+  }
+</ng-template>

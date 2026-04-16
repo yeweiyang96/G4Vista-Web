@@ -6,13 +6,15 @@
 
 .genome-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  grid-template-columns: minmax(0, 1080px);
   gap: 16px;
+  justify-content: center;
 }
 
 .main-column {
   display: grid;
   gap: 16px;
+  width: 100%;
 }
 
 .detail-list {
@@ -136,35 +138,6 @@
   margin-bottom: 12px;
 }
 
-.related-card {
-  position: sticky;
-  top: 16px;
-}
-
-.related-list {
-  display: grid;
-  gap: 10px;
-}
-
-.related-link {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
-  color: inherit;
-  text-decoration: none;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 14px;
-}
-
-.related-link:hover {
-  background: var(--mat-sys-surface-container);
-}
-
-.related-title {
-  font: var(--mat-sys-title-small);
-}
-
-.related-subtitle,
 .muted-text {
   font: var(--mat-sys-body-small);
   color: var(--mat-sys-on-surface-variant);
@@ -195,10 +168,6 @@
 @media (width <= 959.98px) {
   .genome-layout {
     grid-template-columns: 1fr;
-  }
-
-  .related-card {
-    position: static;
   }
 }
 

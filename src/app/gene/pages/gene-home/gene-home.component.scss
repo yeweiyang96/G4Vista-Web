@@ -1,0 +1,64 @@
+.gene-page {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  min-height: 70vh;
+  margin: 2rem auto;
+
+  @media (width <= 669.98px) {
+    width: 95%;
+    margin: 10px auto;
+  }
+}
+
+.page-header {
+  h1 {
+    margin: 0 0 5px;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.search-container {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  margin: 8px 0 12px;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.gene-grid {
+  width: 100%;
+}
+
+.assembly-link,
+.feature-link,
+.gene-link {
+  justify-content: flex-start;
+  min-width: 0;
+  padding: 0;
+}
+
+.secondary-text {
+  display: block;
+  margin-left: 12px;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.state-message,
+.muted-text {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (width <= 669.98px) {
+  .search-container {
+    align-items: flex-start;
+  }
+}
