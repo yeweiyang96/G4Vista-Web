@@ -6,6 +6,7 @@ import {
   input,
   OnChanges,
   OnDestroy,
+  output,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -24,11 +25,13 @@ import { GenomeNavCommand } from './genome-viewer-state.service';
 export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy {
   readonly viewerConfig = input.required<GenomeViewerConfig>();
   readonly navigationCommand = input<GenomeNavCommand | null>(null);
+  readonly regionChanged = output<string>();
 
   @ViewChild('container', { static: true })
   private readonly containerRef!: ElementRef<HTMLDivElement>;
 
   private root?: Root;
+  private lastAssemblyName: string | null = null;
 
   ngAfterViewInit(): void {
     this.renderReactTree();
@@ -46,17 +49,26 @@ export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy
   }
 
   private renderReactTree(): void {
+    const viewerConfig = this.viewerConfig();
+    const nextAssemblyName = viewerConfig.assembly.name;
+    if (this.root && this.lastAssemblyName && this.lastAssemblyName !== nextAssemblyName) {
+      this.root.unmount();
+      this.root = undefined;
+    }
+    this.lastAssemblyName = nextAssemblyName;
+
     if (!this.root) {
       this.root = createRoot(this.containerRef.nativeElement);
     }
-
-    const viewerConfig = this.viewerConfig();
 
     this.root.render(
       createElement(JBrowseReactView, {
         key: viewerConfig.assembly.name,
         viewerConfig,
         navigationCommand: this.navigationCommand() ?? undefined,
+        onRegionChange: (region: string) => {
+          this.regionChanged.emit(region);
+        },
       }),
     );
   }

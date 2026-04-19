@@ -6,7 +6,7 @@
 
 .genome-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1080px);
+  grid-template-columns: minmax(0, 1520px);
   gap: 16px;
   justify-content: center;
 }
@@ -39,17 +39,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  align-items: baseline;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-top: 2em;
 }
 
 .selector-field {
   flex: 1 1 280px;
-}
-
-.selector-caption {
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface-variant);
+  max-width: 360px;
 }
 
 .filters {
@@ -128,8 +125,13 @@
 
 .filter-actions {
   display: flex;
+  gap: 12px;
   align-items: center;
   justify-content: flex-end;
+}
+
+.chart-card {
+  margin-top: 0;
 }
 
 .browser-actions {

@@ -32,7 +32,14 @@ describe('GenomeViewerConfigService', () => {
 
     const assembly = config.assembly as Record<string, unknown>;
     expect(assembly['name']).toBe('GCF_000021765.1');
-    expect(assembly['refNameAliases']).toBeUndefined();
+    expect(assembly['refNameAliases']).toEqual({
+      adapter: {
+        type: 'RefNameAliasAdapter',
+        location: {
+          uri: 'http://localhost:8000/jbrowse/GCF_000021765.1/jbrowse/GCF_000021765.1.refname_aliases.txt',
+        },
+      },
+    });
     expect(config.tracks.length).toBe(7);
     expect(config.defaultVisibleTrackIds).toEqual([
       'GCF_000021765.1_annotation',

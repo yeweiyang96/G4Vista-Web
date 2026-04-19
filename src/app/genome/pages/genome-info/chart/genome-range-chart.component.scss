@@ -1,0 +1,127 @@
+.range-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.range-chart__toolbar {
+  display: grid;
+  gap: 8px;
+}
+
+.range-chart__form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.range-chart__field {
+  min-width: 0;
+}
+
+.range-chart__field-bin {
+  max-width: 220px;
+}
+
+.range-chart__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 56px;
+}
+
+.range-chart__meta {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.range-chart__axis-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.range-chart__axis-group {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.range-chart__axis-label {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.range-chart__error {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-error);
+}
+
+.range-chart__surface {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px;
+  background: linear-gradient(180deg, var(--mat-sys-surface), var(--mat-sys-surface-container-low));
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 14px;
+}
+
+.range-chart__loading {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin: 4px 0 10px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.range-chart__state {
+  margin: 4px 0 10px;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.range-chart__plot {
+  flex: 1;
+  width: 100%;
+  height: clamp(220px, 36vh, 420px);
+  min-height: 220px;
+}
+
+@media (width <= 959.98px) {
+  .range-chart__form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .range-chart__actions {
+    justify-content: flex-start;
+    min-height: 0;
+  }
+}
+
+@media (width <= 599.98px) {
+  .range-chart__form {
+    grid-template-columns: 1fr;
+  }
+
+  .range-chart__field-bin {
+    max-width: none;
+  }
+
+  .range-chart__axis-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .range-chart__surface {
+    min-height: 0;
+  }
+
+  .range-chart__plot {
+    height: clamp(190px, 32vh, 320px);
+    min-height: 190px;
+  }
+}

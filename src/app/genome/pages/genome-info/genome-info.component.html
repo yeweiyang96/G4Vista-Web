@@ -36,7 +36,7 @@
                   Unavailable
                 }
               </dd>
-              <dt>SeqIDs</dt>
+              <dt>Accession IDs</dt>
               <dd>{{ assembly.seqids.length }}</dd>
             </dl>
           </mat-card-content>
@@ -51,16 +51,19 @@
           <mat-card-content>
             <div class="selector-row">
               <mat-form-field appearance="outline" class="selector-field">
-                <mat-label>SeqID</mat-label>
-                <mat-select [value]="selectedSeqid()" (valueChange)="selectSeqid($event)">
-                  @for (seqid of assembly.seqids; track seqid) {
-                    <mat-option [value]="seqid">{{ seqid }}</mat-option>
+                <mat-label>Accession ID</mat-label>
+                <mat-select
+                  [value]="displayedAccessionIdValue()"
+                  [disabled]="isGeneSearchMode()"
+                  (valueChange)="selectBrowseScope($event)"
+                >
+                  @for (option of accessionIdOptions(); track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
               <div class="type-switch">
-                <!-- <span class="selector-caption">G4 type</span> -->
                 <mat-button-toggle-group
                   [value]="g4Type()"
                   (change)="selectG4Type($event.value)"
@@ -71,7 +74,8 @@
                 </mat-button-toggle-group>
               </div>
             </div>
-            <form class="filters" aria-label="G4 filters">
+
+            <form class="filters" aria-label="G4 filters" (submit)="submitFilters($event)">
               <section class="filter-group filter-group-gene" aria-labelledby="gene-filter-title">
                 <div class="filter-group-header">
                   <p class="filter-group-eyebrow">Gene filter</p>
@@ -107,9 +111,28 @@
                       autocomplete="off"
                       spellcheck="false"
                       placeholder="Feature ID, gene name, or locus tag…"
-                      [formField]="filterForm.geneQuery"
+                      [value]="draftGeneInput()"
+                      [matAutocomplete]="geneAuto"
+                      (input)="onGeneInput($event)"
                     />
-                    <mat-hint>{{ geneSearchScopeHint() }}</mat-hint>
+                    <mat-autocomplete
+                      #geneAuto="matAutocomplete"
+                      [displayWith]="displayGeneCandidate"
+                      autoActiveFirstOption
+                      (optionSelected)="onGeneCandidateSelected($event)"
+                    >
+                      @for (candidate of geneCandidates(); track trackByGeneCandidate($index, candidate)) {
+                        <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
+                      }
+                      @if (showGeneCandidateEmptyState()) {
+                        <mat-option disabled>No matching genes found.</mat-option>
+                      }
+                    </mat-autocomplete>
+                    @if (geneInputError(); as errorMessage) {
+                      <mat-error>{{ errorMessage }}</mat-error>
+                    } @else {
+                      <mat-hint>{{ geneSearchScopeHint() }}</mat-hint>
+                    }
                   </mat-form-field>
                 </div>
               </section>
@@ -149,15 +172,19 @@
 
               <div class="filter-actions">
                 <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
+                <button mat-flat-button type="submit">Search</button>
               </div>
             </form>
 
             <app-g4-table
               [page]="g4Page()"
-              [selectedSeqid]="selectedSeqid()"
-              [isAssemblyScoped]="isGeneSearchMode()"
-              [geneSearchTerm]="activeGeneSearchTerm()"
-              [selectedPositionLabel]="selectedPositionLabel()"
+              [filterScopeLabel]="selectedPositionLabel()"
+              [filterSelectedGeneLabel]="submittedSelectedGeneLabel()"
+              [hasSelectedGene]="hasSubmittedSelectedGene()"
+              [filterSelectedTetrads]="submittedFilters().selectedTetrads"
+              [filterMinGscore]="submittedMinGscore()"
+              [filterMaxGscore]="submittedMaxGscore()"
+              [showAccessionIdColumn]="showAccessionIdColumn()"
               [sortState]="sortState()"
               [pageIndex]="pageIndex()"
               [pageSize]="pageSize()"
@@ -167,9 +194,35 @@
               (sortChanged)="changeSort($event)"
               (pageChanged)="changePage($event)"
               (navigateToG4)="navigateToG4($event)"
+              (resetScope)="resetScopeFilter()"
+              (resetGene)="resetGeneFilter()"
+              (resetTetrads)="resetTetradsFilter()"
+              (resetGscore)="resetGscoreFilter()"
             />
           </mat-card-content>
         </mat-card>
+
+        @if (canRenderChart()) {
+          <mat-card appearance="outlined" class="chart-card">
+            <mat-card-header>
+              <mat-card-title>Genome Range Chart</mat-card-title>
+              <mat-card-subtitle>{{ chartSeqid() }}: {{ chartViewport().start }}..{{ chartViewport().end }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <section aria-label="Genome range chart">
+                <app-genome-range-chart
+                  [assemblyAccession]="assemblyAccession()"
+                  [seqid]="chartSeqid()"
+                  [g4Type]="g4Type()"
+                  [viewport]="chartViewport()"
+                  [seqidLength]="chartSeqidLength()"
+                  [filters]="chartFilters()"
+                  (viewportChange)="applyChartViewport($event)"
+                />
+              </section>
+            </mat-card-content>
+          </mat-card>
+        }
 
         <mat-card appearance="outlined" class="browser-card">
           <mat-card-header>
@@ -179,11 +232,13 @@
 
           <mat-card-content>
             <div class="browser-actions">
-              <button mat-button type="button" (click)="resetBrowser()">
-                Reset to default region
-              </button>
+              <button mat-button type="button" (click)="resetBrowser()">Reset to default G4</button>
             </div>
-            <app-jbrowse-host [viewerConfig]="viewerConfig()" [navigationCommand]="navCommand()" />
+            <app-jbrowse-host
+              [viewerConfig]="viewerConfig()"
+              [navigationCommand]="navCommand()"
+              (regionChanged)="handleViewerRegionChange($event)"
+            />
           </mat-card-content>
         </mat-card>
       </div>

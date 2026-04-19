@@ -1,10 +1,19 @@
 <div class="table-meta">
-  <mat-chip-set>
-    @if (isAssemblyScoped()) {
-      <mat-chip>Scope: {{ selectedPositionLabel() }}</mat-chip>
-      <mat-chip>Gene: {{ geneSearchTerm() }}</mat-chip>
+  <mat-chip-set aria-label="Applied filters">
+    @if (hasGeneSelection()) {
+      <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetScope()">
+        Scope: {{ filterScopeLabel() }}
+      </mat-chip>
     }
-    <mat-chip>Gscore {{ displayedPage().min_gscore }}-{{ displayedPage().max_gscore }}</mat-chip>
+    <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetGene()">
+      Gene: {{ geneChipLabel() }}
+    </mat-chip>
+    <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetTetrads()">
+      Tetrads: {{ tetradsChipLabel() }}
+    </mat-chip>
+    <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetGscore()">
+      Gscore: {{ gscoreChipLabel() }}
+    </mat-chip>
   </mat-chip-set>
 </div>
 
@@ -39,28 +48,24 @@
   }
 </ng-template>
 
-@if (!isAssemblyScoped() && !selectedSeqid()) {
-  <div class="empty-state">No SeqID metadata is available for this assembly.</div>
-} @else {
-  <mtx-grid
-    class="g4-grid"
-    [data]="displayedPage().g4s"
-    [columns]="columns()"
-    [length]="displayedPage().count"
-    [loading]="isLoading()"
-    [pageIndex]="pageIndex()"
-    [pageSize]="pageSize()"
-    [pageSizeOptions]="[10, 20, 50]"
-    [columnHideable]="true"
-    [columnHideableChecked]="'show'"
-    [pageOnFront]="false"
-    [showColumnMenuButton]="true"
-    [sortDisableClear]="true"
-    [showToolbar]="true"
-    [sortActive]="sortState().active"
-    [sortDirection]="sortState().direction"
-    (columnChange)="onColumnChange($event)"
-    (page)="onPageChange($event)"
-    (sortChange)="onSortChange($event)"
-  ></mtx-grid>
-}
+<mtx-grid
+  class="g4-grid"
+  [data]="displayedPage().g4s"
+  [columns]="columns()"
+  [length]="displayedPage().count"
+  [loading]="isLoading()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[10, 20, 50]"
+  [columnHideable]="true"
+  [columnHideableChecked]="'show'"
+  [pageOnFront]="false"
+  [showColumnMenuButton]="true"
+  [sortDisableClear]="true"
+  [showToolbar]="true"
+  [sortActive]="sortState().active"
+  [sortDirection]="sortState().direction"
+  (columnChange)="onColumnChange($event)"
+  (page)="onPageChange($event)"
+  (sortChange)="onSortChange($event)"
+></mtx-grid>

@@ -9,6 +9,7 @@ export interface GenomeAssemblyDetail {
   species_name: string;
   seq_rel_date: string | null;
   seqids: string[];
+  seqid_lengths: Record<string, number>;
   taxon_id: number | null;
   topt_ave: number | null;
 }

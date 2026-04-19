@@ -55,6 +55,14 @@ function createAssemblyConfig(params: GenomeViewerConfigParams): JBrowseAssembly
         },
       },
     },
+    refNameAliases: {
+      adapter: {
+        type: 'RefNameAliasAdapter',
+        location: {
+          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.refname_aliases.txt`),
+        },
+      },
+    },
   };
 }
 
@@ -181,7 +189,10 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       adapter: {
         type: 'BigWigAdapter',
         bigWigLocation: {
-          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.g4.density.bw`),
+          uri: buildAssemblyAssetUrl(
+            params,
+            `window_scan/${assemblyAccession}.g4.windowed_density.bw`,
+          ),
         },
       },
     },

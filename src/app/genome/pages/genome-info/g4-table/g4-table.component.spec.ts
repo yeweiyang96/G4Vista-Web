@@ -18,10 +18,13 @@ describe('G4TableComponent', () => {
     component = fixture.componentInstance;
 
     fixture.componentRef.setInput('page', EMPTY_G4_PAGE);
-    fixture.componentRef.setInput('selectedSeqid', '');
-    fixture.componentRef.setInput('isAssemblyScoped', false);
-    fixture.componentRef.setInput('geneSearchTerm', '');
-    fixture.componentRef.setInput('selectedPositionLabel', 'Inside gene(G-rich)');
+    fixture.componentRef.setInput('filterScopeLabel', 'Inside gene (G-rich)');
+    fixture.componentRef.setInput('filterSelectedGeneLabel', 'Any');
+    fixture.componentRef.setInput('hasSelectedGene', false);
+    fixture.componentRef.setInput('filterSelectedTetrads', []);
+    fixture.componentRef.setInput('filterMinGscore', undefined);
+    fixture.componentRef.setInput('filterMaxGscore', undefined);
+    fixture.componentRef.setInput('showAccessionIdColumn', false);
     fixture.componentRef.setInput('sortState', { active: 'start', direction: 'asc' });
     fixture.componentRef.setInput('pageIndex', 0);
     fixture.componentRef.setInput('pageSize', 10);
@@ -30,9 +33,10 @@ describe('G4TableComponent', () => {
     fixture.detectChanges();
   });
 
-  it('binds custom cell templates even when the table is temporarily hidden', () => {
+  it('binds custom cell templates and keeps default relation visibility', () => {
     const columns = component.columns();
     const sequenceColumn = columns.find((column) => column.field === 'sequence');
+    const seqidColumn = columns.find((column) => column.field === 'seqid');
     const insideGeneColumn = columns.find(
       (column) => column.field === 'gene_relation:insideOf_gene_normal',
     );
@@ -40,21 +44,34 @@ describe('G4TableComponent', () => {
       (column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_normal',
     );
 
+    expect(seqidColumn).toBeUndefined();
     expect(sequenceColumn?.cellTemplate).toEqual(jasmine.any(TemplateRef));
     expect(insideGeneColumn?.cellTemplate).toEqual(jasmine.any(TemplateRef));
     expect(insideGeneColumn?.show).toBeTrue();
     expect(upstreamGeneColumn?.show).toBeFalse();
   });
 
-  it('keeps relation column visibility changes from the grid column menu', () => {
+  it('shows the Accession ID column only when requested', () => {
+    fixture.componentRef.setInput('showAccessionIdColumn', true);
+    fixture.detectChanges();
+
+    const seqidColumn = component.columns().find((column) => column.field === 'seqid');
+
+    expect(seqidColumn?.header).toBe('Accession ID');
+    expect(seqidColumn?.show).toBeTrue();
+  });
+
+  it('keeps base and relation column visibility changes from the grid column menu', () => {
+    fixture.componentRef.setInput('showAccessionIdColumn', true);
+    fixture.detectChanges();
+
     component.onColumnChange([
-      ...component
-        .columns()
-        .filter((column) => column.field !== 'gene_relation:insideOf_gene_normal'),
       {
-        ...component
-          .columns()
-          .find((column) => column.field === 'gene_relation:insideOf_gene_normal')!,
+        ...component.columns().find((column) => column.field === 'seqid')!,
+        show: false,
+      },
+      {
+        ...component.columns().find((column) => column.field === 'sequence')!,
         show: false,
       },
       {
@@ -66,22 +83,14 @@ describe('G4TableComponent', () => {
     ]);
 
     const columns = component.columns();
-    const insideGeneColumn = columns.find(
-      (column) => column.field === 'gene_relation:insideOf_gene_normal',
-    );
-    const upstreamGeneColumn = columns.find(
-      (column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_normal',
-    );
 
-    expect(insideGeneColumn?.show).toBeFalse();
-    expect(upstreamGeneColumn?.show).toBeTrue();
-  });
-
-  it('shows the SeqID column when the table is assembly scoped', () => {
-    fixture.componentRef.setInput('isAssemblyScoped', true);
-    fixture.detectChanges();
-
-    expect(component.columns().some((column) => column.field === 'seqid')).toBeTrue();
+    expect(columns.find((column) => column.field === 'seqid')?.show).toBeFalse();
+    expect(columns.find((column) => column.field === 'sequence')?.show).toBeFalse();
+    expect(
+      columns.find(
+        (column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_normal',
+      )?.show,
+    ).toBeTrue();
   });
 
   it('uses seqid:start composite keys for relation hits', () => {
@@ -119,5 +128,30 @@ describe('G4TableComponent', () => {
         'insideOf_gene_normal',
       ),
     ).toEqual([{ feature_id: 'geneA', label: 'Gene A', gene_biotype: 'protein_coding' }]);
+  });
+
+  it('derives default chip labels from the active filters and page stats', () => {
+    fixture.componentRef.setInput('page', {
+      ...EMPTY_G4_PAGE,
+      min_gscore: 10,
+      max_gscore: 55,
+    });
+    fixture.detectChanges();
+
+    expect(component.geneChipLabel()).toBe('Any');
+    expect(component.tetradsChipLabel()).toBe('All');
+    expect(component.gscoreChipLabel()).toBe('10-55');
+  });
+
+  it('hides the scope chip until a gene is selected', () => {
+    expect(component.hasGeneSelection()).toBeFalse();
+    expect(fixture.nativeElement.textContent).not.toContain('Scope:');
+
+    fixture.componentRef.setInput('hasSelectedGene', true);
+    fixture.componentRef.setInput('filterSelectedGeneLabel', 'dnaK (dnaK) [chr2]');
+    fixture.detectChanges();
+
+    expect(component.hasGeneSelection()).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Scope: Inside gene (G-rich)');
   });
 });

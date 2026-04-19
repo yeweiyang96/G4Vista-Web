@@ -79,8 +79,11 @@ export class GeneService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/gene';
 
-  searchGenes(searchTerm: string): Observable<GeneSearchItem[]> {
-    const params = new HttpParams().set('search_term', searchTerm);
+  searchGenes(searchTerm: string, assemblyAccession?: string): Observable<GeneSearchItem[]> {
+    let params = new HttpParams().set('search_term', searchTerm);
+    if (assemblyAccession) {
+      params = params.set('assembly_accession', assemblyAccession);
+    }
     return this.http.get<GeneSearchItem[]>(`${this.apiUrl}/`, { params });
   }
 

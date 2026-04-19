@@ -53,4 +53,18 @@ describe('GeneService', () => {
       }),
     ]);
   });
+
+  it('adds assembly_accession when provided in gene search', () => {
+    service.searchGenes('dnaK', 'GCF_1').subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === '/api/v1/gene/' &&
+        req.params.get('search_term') === 'dnaK' &&
+        req.params.get('assembly_accession') === 'GCF_1',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush([]);
+  });
 });

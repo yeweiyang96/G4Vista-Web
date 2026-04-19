@@ -98,7 +98,6 @@ export interface G4GeneRelationsResponse {
 export interface G4PageRequest {
   assemblyAccession: string;
   g4Type: G4Type;
-  seqid: string;
   pageIndex: number;
   pageSize: number;
   sort: G4SortField;
@@ -107,6 +106,43 @@ export interface G4PageRequest {
   minGscore?: number;
   maxGscore?: number;
   overlap?: boolean;
+}
+
+export interface G4HistogramBin {
+  start: number;
+  end: number;
+  count: number;
+  density_per_bp: number;
+  mean_gscore: number | null;
+}
+
+export interface G4HistogramResponse {
+  bins: G4HistogramBin[];
+  range_start: number;
+  range_end: number;
+  bin_size: number;
+  total_count: number;
+}
+
+export interface G4HistogramFilters {
+  tetrads: number[];
+  minGscore?: number;
+  maxGscore?: number;
+  overlap?: boolean;
+}
+
+export interface G4ChartViewport {
+  start: number;
+  end: number;
+  binSize: number;
+}
+
+export interface G4HistogramRequest {
+  assemblyAccession: string;
+  seqid: string;
+  g4Type: G4Type;
+  viewport: G4ChartViewport;
+  filters: G4HistogramFilters;
 }
 
 export interface G4GeneSearchRequest {
@@ -119,8 +155,9 @@ export interface G4GeneSearchRequest {
   tetrads: number[];
   minGscore?: number;
   maxGscore?: number;
-  searchTerm: string;
+  selectedFeatureId: string;
   selectedPosition: G4GenePosition;
+  searchTerm?: string;
   overlap?: boolean;
 }
 
@@ -129,6 +166,22 @@ export interface G4GeneRelationsRequest {
   g4Type: G4Type;
   seqid: string;
   starts: number[];
+}
+
+export interface G4GeneCandidate {
+  feature_id: string;
+  seqid: string;
+  gene_name: string | null;
+  locus_tag: string | null;
+  gene_biotype: string | null;
+}
+
+export interface G4GeneCandidatesRequest {
+  assemblyAccession: string;
+  g4Type: G4Type;
+  selectedPosition: G4GenePosition;
+  searchTerm: string;
+  limit?: number;
 }
 
 export const EMPTY_G4_PAGE: G4PageResponse = {
@@ -141,6 +194,14 @@ export const EMPTY_G4_PAGE: G4PageResponse = {
 
 export const EMPTY_G4_GENE_RELATIONS: G4GeneRelationsResponse = {
   relations: [],
+};
+
+export const EMPTY_G4_HISTOGRAM: G4HistogramResponse = {
+  bins: [],
+  range_start: 1,
+  range_end: 1,
+  bin_size: 1,
+  total_count: 0,
 };
 
 const SORT_FIELD_PARAM_MAP: Record<G4SortField, string> = {
@@ -161,6 +222,29 @@ export class G4Service {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/g4';
 
+  private appendCommonFilterParams(
+    params: HttpParams,
+    filters: Pick<
+      G4PageRequest | G4GeneSearchRequest | G4HistogramFilters,
+      'tetrads' | 'minGscore' | 'maxGscore' | 'overlap'
+    >,
+  ): HttpParams {
+    let nextParams = params;
+    for (const tetrad of filters.tetrads) {
+      nextParams = nextParams.append('tetrads', tetrad);
+    }
+    if (filters.minGscore !== undefined) {
+      nextParams = nextParams.set('min_gscore', filters.minGscore);
+    }
+    if (filters.maxGscore !== undefined) {
+      nextParams = nextParams.set('max_gscore', filters.maxGscore);
+    }
+    if (filters.overlap) {
+      nextParams = nextParams.set('overlap', true);
+    }
+    return nextParams;
+  }
+
   private buildCommonPageParams(
     request: Pick<
       G4PageRequest | G4GeneSearchRequest,
@@ -174,28 +258,24 @@ export class G4Service {
       | 'overlap'
     >,
   ): HttpParams {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('offset', request.pageIndex)
       .set('limit', request.pageSize)
       .set('sort', SORT_FIELD_PARAM_MAP[request.sort])
       .set('order', request.order);
-
-    for (const tetrad of request.tetrads) {
-      params = params.append('tetrad', tetrad);
-    }
-    if (request.minGscore !== undefined) {
-      params = params.set('min_gscore', request.minGscore);
-    }
-    if (request.maxGscore !== undefined) {
-      params = params.set('max_gscore', request.maxGscore);
-    }
-    if (request.overlap) {
-      params = params.set('overlap', true);
-    }
-    return params;
+    return this.appendCommonFilterParams(params, request);
   }
 
-  getG4Page(request: G4PageRequest): Observable<G4PageResponse> {
+  getAssemblyG4Page(request: G4PageRequest): Observable<G4PageResponse> {
+    const params = this.buildCommonPageParams(request);
+
+    return this.http.get<G4PageResponse>(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}`,
+      { params },
+    );
+  }
+
+  getG4Page(request: G4PageRequest & { seqid: string }): Observable<G4PageResponse> {
     const params = this.buildCommonPageParams(request);
 
     return this.http.get<G4PageResponse>(
@@ -206,11 +286,26 @@ export class G4Service {
 
   getGeneSearchPage(request: G4GeneSearchRequest): Observable<G4PageResponse> {
     const params = this.buildCommonPageParams(request)
-      .set('search_term', request.searchTerm)
+      .set('selected_feature_id', request.selectedFeatureId)
       .set('selected_position', request.selectedPosition);
+    const searchParams = request.searchTerm
+      ? params.set('search_term', request.searchTerm)
+      : params;
 
     return this.http.get<G4PageResponse>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-search`,
+      { params: searchParams },
+    );
+  }
+
+  getGeneCandidates(request: G4GeneCandidatesRequest): Observable<G4GeneCandidate[]> {
+    const params = new HttpParams()
+      .set('search_term', request.searchTerm)
+      .set('selected_position', request.selectedPosition)
+      .set('limit', request.limit ?? 20);
+
+    return this.http.get<G4GeneCandidate[]>(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-candidates`,
       { params },
     );
   }
@@ -223,6 +318,21 @@ export class G4Service {
 
     return this.http.get<G4GeneRelationsResponse>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}/gene-relations`,
+      { params },
+    );
+  }
+
+  getHistogram(request: G4HistogramRequest): Observable<G4HistogramResponse> {
+    const params = this.appendCommonFilterParams(
+      new HttpParams()
+        .set('range_start', request.viewport.start)
+        .set('range_end', request.viewport.end)
+        .set('bin_size', request.viewport.binSize),
+      request.filters,
+    );
+
+    return this.http.get<G4HistogramResponse>(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}/histogram`,
       { params },
     );
   }

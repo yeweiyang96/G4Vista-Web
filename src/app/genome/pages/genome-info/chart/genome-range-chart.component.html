@@ -1,0 +1,70 @@
+<section class="range-chart" aria-label="G4 histogram chart">
+  <div class="range-chart__toolbar">
+    <form class="range-chart__form" (submit)="submitViewport($event)">
+      <mat-form-field appearance="outline" class="range-chart__field">
+        <mat-label>Start (bp)</mat-label>
+        <input matInput type="number" min="1" [max]="seqidLength()" [formControl]="startControl" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="range-chart__field">
+        <mat-label>End (bp)</mat-label>
+        <input matInput type="number" min="1" [max]="seqidLength()" [formControl]="endControl" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="range-chart__field range-chart__field-bin">
+        <mat-label>Bin size (bp)</mat-label>
+        <input matInput type="number" min="1" [max]="seqidLength()" [formControl]="binSizeControl" />
+      </mat-form-field>
+
+      <div class="range-chart__actions">
+        <button mat-flat-button type="submit">Apply range</button>
+      </div>
+    </form>
+
+    <div class="range-chart__axis-controls">
+      <div class="range-chart__axis-group">
+        <span class="range-chart__axis-label">Y axis</span>
+        <mat-button-toggle-group [value]="yAxisMode()" (change)="setYAxisMode($event.value)">
+          <mat-button-toggle value="count">Count</mat-button-toggle>
+          <mat-button-toggle value="density">Density</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div class="range-chart__axis-group">
+        <span class="range-chart__axis-label">Density unit</span>
+        <mat-button-toggle-group
+          [value]="densityUnitBp()"
+          [disabled]="yAxisMode() !== 'density'"
+          (change)="setDensityUnit($event.value)"
+        >
+          @for (unit of densityUnitOptions; track unit.bp) {
+            <mat-button-toggle [value]="unit.bp">{{ unit.label }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <p class="range-chart__meta">{{ seqid() }}: {{ rangeLabel() }}</p>
+
+    @if (validationError(); as error) {
+      <p class="range-chart__error" role="status">{{ error }}</p>
+    }
+  </div>
+
+  <div class="range-chart__surface">
+    @if (histogramResource.isLoading()) {
+      <div class="range-chart__loading">
+        <mat-spinner diameter="26"></mat-spinner>
+        <span>Loading histogram...</span>
+      </div>
+    }
+
+    @if (histogramErrorMessage(); as errorMessage) {
+      <p class="range-chart__state" role="status">{{ errorMessage }}</p>
+    } @else if (showEmptyState()) {
+      <p class="range-chart__state" role="status">No histogram data for the selected range.</p>
+    }
+
+    <div #chartHost class="range-chart__plot"></div>
+  </div>
+</section>

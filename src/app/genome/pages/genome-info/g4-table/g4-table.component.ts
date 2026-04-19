@@ -1,10 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
-  effect,
   TemplateRef,
   ViewChild,
+  computed,
+  effect,
   input,
   output,
   signal,
@@ -16,14 +16,15 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import {
+  EMPTY_G4_PAGE,
   G4GenePosition,
   G4GenePositionOption,
   G4GeneRelationHit,
   G4PageItem,
   G4PageResponse,
   G4SortField,
-  EMPTY_G4_PAGE,
 } from '../../../services/g4.service';
+
 interface SequenceSegment {
   text: string;
   highlighted: boolean;
@@ -78,10 +79,13 @@ export class G4TableComponent {
   @ViewChild('relationTpl', { static: true }) relationTpl!: TemplateRef<unknown>;
 
   readonly page = input.required<G4PageResponse>();
-  readonly selectedSeqid = input.required<string>();
-  readonly isAssemblyScoped = input(false);
-  readonly geneSearchTerm = input('');
-  readonly selectedPositionLabel = input.required<string>();
+  readonly filterScopeLabel = input.required<string>();
+  readonly filterSelectedGeneLabel = input('Any');
+  readonly hasSelectedGene = input(false);
+  readonly filterSelectedTetrads = input<readonly number[]>([]);
+  readonly filterMinGscore = input<number | undefined>(undefined);
+  readonly filterMaxGscore = input<number | undefined>(undefined);
+  readonly showAccessionIdColumn = input(false);
   readonly sortState = input.required<{ active: G4SortField; direction: 'asc' | 'desc' }>();
   readonly pageIndex = input.required<number>();
   readonly pageSize = input.required<number>();
@@ -100,23 +104,43 @@ export class G4TableComponent {
   readonly displayedGeneRelationsByRowKey = computed(() =>
     this.isLoading() ? this.cachedGeneRelationsByRowKey() : this.geneRelationsByRowKey(),
   );
+  readonly hasGeneSelection = computed(() => this.hasSelectedGene());
+  readonly geneChipLabel = computed(() => this.filterSelectedGeneLabel().trim() || 'Any');
+  readonly tetradsChipLabel = computed(() =>
+    this.filterSelectedTetrads().length ? this.filterSelectedTetrads().join(', ') : 'All',
+  );
+  readonly gscoreChipLabel = computed(() => {
+    const min = this.filterMinGscore();
+    const max = this.filterMaxGscore();
+
+    if (min !== undefined && max !== undefined) {
+      return `${min}-${max}`;
+    }
+    if (min !== undefined) {
+      return `>= ${min}`;
+    }
+    if (max !== undefined) {
+      return `<= ${max}`;
+    }
+
+    return `${this.displayedPage().min_gscore}-${this.displayedPage().max_gscore}`;
+  });
 
   readonly columns = computed<MtxGridColumn<G4PageItem>[]>(() => {
     const visibility = this.columnVisibility();
     const baseColumns = [
-      ...(this.isAssemblyScoped()
-        ? [{ header: 'SeqID', field: 'seqid', disabled: true } satisfies MtxGridColumn<G4PageItem>]
+      ...(this.showAccessionIdColumn()
+        ? ([{ header: 'Accession ID', field: 'seqid' }] satisfies MtxGridColumn<G4PageItem>[])
         : []),
-      { header: 'Start', field: 'start', sortable: true, type: 'number', disabled: true },
-      { header: 'End', field: 'end', sortable: true, type: 'number', disabled: true },
-      { header: 'Length', field: 'length', sortable: true, type: 'number', disabled: true },
-      { header: 'Tetrads', field: 'tetrads', sortable: true, type: 'number', disabled: true },
-      { header: 'Gscore', field: 'gscore', sortable: true, type: 'number', disabled: true },
+      { header: 'Start', field: 'start', sortable: true, type: 'number' },
+      { header: 'End', field: 'end', sortable: true, type: 'number' },
+      { header: 'Length', field: 'length', sortable: true, type: 'number' },
+      { header: 'Tetrads', field: 'tetrads', sortable: true, type: 'number' },
+      { header: 'Gscore', field: 'gscore', sortable: true, type: 'number' },
       {
         header: 'Sequence',
         field: 'sequence',
         cellTemplate: this.sequenceTpl as unknown as never,
-        disabled: true,
       },
     ] satisfies MtxGridColumn<G4PageItem>[];
 
@@ -142,6 +166,10 @@ export class G4TableComponent {
   readonly sortChanged = output<Sort>();
   readonly pageChanged = output<PageEvent>();
   readonly navigateToG4 = output<G4PageItem>();
+  readonly resetScope = output<void>();
+  readonly resetGene = output<void>();
+  readonly resetTetrads = output<void>();
+  readonly resetGscore = output<void>();
 
   constructor() {
     effect(() => {
@@ -175,6 +203,22 @@ export class G4TableComponent {
 
   onNavigateToG4(item: G4PageItem): void {
     this.navigateToG4.emit(item);
+  }
+
+  onResetScope(): void {
+    this.resetScope.emit();
+  }
+
+  onResetGene(): void {
+    this.resetGene.emit();
+  }
+
+  onResetTetrads(): void {
+    this.resetTetrads.emit();
+  }
+
+  onResetGscore(): void {
+    this.resetGscore.emit();
   }
 
   sequenceSegments(item: G4PageItem): SequenceSegment[] {

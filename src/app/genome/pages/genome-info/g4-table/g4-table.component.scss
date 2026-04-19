@@ -2,6 +2,10 @@
   margin: 12px 0;
 }
 
+.filter-chip {
+  cursor: pointer;
+}
+
 .g4-grid {
   width: 100%;
 }
@@ -31,13 +35,6 @@
 
 .gene-link {
   min-width: 0;
-}
-
-.empty-state {
-  display: grid;
-  place-items: center;
-  min-height: 30vh;
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .muted-text {
