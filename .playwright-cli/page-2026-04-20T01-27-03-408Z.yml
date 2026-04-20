@@ -1,0 +1,610 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation "Top Toolbar" [ref=e4]:
+      - button "Home" [ref=e5]:
+        - img [ref=e7]
+        - generic [ref=e19]: G4Vista
+      - link "Taxonomy" [ref=e22] [cursor=pointer]:
+        - /url: /taxonomy
+        - generic [ref=e23]: Taxonomy
+      - link "Genome" [ref=e26] [cursor=pointer]:
+        - /url: /genome
+        - generic [ref=e27]: Genome
+      - link "Gene" [ref=e30] [cursor=pointer]:
+        - /url: /gene
+        - generic [ref=e31]: Gene
+      - link "Environment" [ref=e34] [cursor=pointer]:
+        - /url: /environment
+        - generic [ref=e35]: Environment
+      - button "Toggle Theme" [ref=e38] [cursor=pointer]:
+        - img [ref=e39]: brightness_medium
+      - link "GitHub Repository" [ref=e42] [cursor=pointer]:
+        - /url: https://github.com/yeweiyang96/g4vista
+        - img "Github SVG icon" [ref=e43]:
+          - img [ref=e44]
+        - generic [ref=e46]: GitHub
+  - region "Genome detail" [ref=e71]:
+    - generic [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: ASM2176v1
+          - generic [ref=e78]: Thauera aminoaromatica
+        - generic [ref=e80]:
+          - term [ref=e81]: Assembly accession
+          - definition [ref=e82]: GCF_000021765.1
+          - term [ref=e83]: Scientific name
+          - definition [ref=e84]:
+            - link "Thauera aminoaromatica" [ref=e85] [cursor=pointer]:
+              - /url: /taxonomy/164330
+              - generic [ref=e86]: Thauera aminoaromatica
+          - term [ref=e89]: Assembly name
+          - definition [ref=e90]: ASM2176v1
+          - term [ref=e91]: Release date
+          - definition [ref=e92]: 2009-05-14
+          - term [ref=e93]: Taxon ID
+          - definition [ref=e94]: "164330"
+          - term [ref=e95]: Topt ave
+          - definition [ref=e96]: 28 °C
+          - term [ref=e97]: Accession IDs
+          - definition [ref=e98]: "2"
+      - generic [ref=e99]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: G4 Explorer
+          - generic [ref=e103]: 24675 PQS in Accession ID NC_011662.2
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e108] [cursor=pointer]:
+              - generic [ref=e109]: Accession ID
+              - combobox "Accession ID" [ref=e111]:
+                - generic [ref=e112]:
+                  - generic [ref=e114]: NC_011662.2
+                  - img [ref=e117]
+            - radiogroup "G4 type selector" [ref=e121]:
+              - radio "G rich" [checked] [ref=e122] [cursor=pointer]:
+                - generic [ref=e125]: G rich
+              - radio "C rich" [ref=e126] [cursor=pointer]:
+                - generic [ref=e128]: C rich
+          - form "G4 filters" [ref=e129]:
+            - region "Find genes around each PQS" [ref=e130]:
+              - generic [ref=e131]:
+                - paragraph [ref=e132]: Gene filter
+                - heading "Find genes around each PQS" [level=3] [ref=e133]
+                - paragraph [ref=e134]: Choose where the gene sits relative to the PQS, then search by feature ID, gene name, or locus tag across the current assembly.
+              - generic [ref=e135]:
+                - generic [ref=e136]:
+                  - generic [ref=e138] [cursor=pointer]:
+                    - generic [ref=e139]: Search scope
+                    - combobox "Search scope" [ref=e141]:
+                      - generic [ref=e142]:
+                        - generic [ref=e144]: Inside gene (G-rich)
+                        - img [ref=e147]
+                  - generic [ref=e151]: Defines where the matched gene sits relative to the PQS.
+                - generic [ref=e153]:
+                  - generic [ref=e155]:
+                    - generic [ref=e156]: Gene keyword
+                    - img [ref=e158]: search
+                    - combobox "Gene keyword" [active] [ref=e160]: dnaA (gene-TMZ1T_RS00005) [NC_011662.2]
+                  - generic [ref=e163]: Matches genes in Inside gene (G-rich) across the current genome.
+            - generic [ref=e167] [cursor=pointer]:
+              - generic [ref=e168]: Tetrads
+              - combobox "Tetrads" [ref=e170]:
+                - img [ref=e176]
+            - generic [ref=e181]:
+              - generic [ref=e182]: Min gscore
+              - spinbutton "Min gscore" [ref=e184]
+            - generic [ref=e188]:
+              - generic [ref=e189]: Max gscore
+              - spinbutton "Max gscore" [ref=e191]
+            - generic [ref=e193]:
+              - button "Reset filters" [ref=e194]:
+                - generic [ref=e195]: Reset filters
+              - button "Search" [ref=e198]:
+                - generic [ref=e199]: Search
+          - generic [ref=e202]:
+            - generic "Applied filters" [ref=e204]:
+              - 'button "Gene: Any" [ref=e205] [cursor=pointer]':
+                - generic [ref=e208]: "Gene: Any"
+              - 'button "Tetrads: All" [ref=e209] [cursor=pointer]':
+                - generic [ref=e212]: "Tetrads: All"
+              - 'button "Gscore: 17-90" [ref=e213] [cursor=pointer]':
+                - generic [ref=e216]: "Gscore: 17-90"
+            - generic [ref=e217]:
+              - button "Columns Shown" [ref=e221]:
+                - generic [ref=e222]: Columns Shown
+              - table [ref=e228]:
+                - rowgroup [ref=e229]:
+                  - row "Start End Length Tetrads Gscore Sequence Inside gene (G-rich)" [ref=e230]:
+                    - columnheader "Start" [ref=e231]:
+                      - button "Start" [ref=e234] [cursor=pointer]:
+                        - generic [ref=e235]:
+                          - generic [ref=e236]: Start
+                          - img [ref=e237]
+                        - img [ref=e240]
+                    - columnheader "End" [ref=e242]:
+                      - button "End" [ref=e245] [cursor=pointer]:
+                        - generic [ref=e246]:
+                          - generic [ref=e247]: End
+                          - img [ref=e248]
+                        - img [ref=e251]
+                    - columnheader "Length" [ref=e253]:
+                      - button "Length" [ref=e256] [cursor=pointer]:
+                        - generic [ref=e257]:
+                          - generic [ref=e258]: Length
+                          - img [ref=e259]
+                        - img [ref=e262]
+                    - columnheader "Tetrads" [ref=e264]:
+                      - button "Tetrads" [ref=e267] [cursor=pointer]:
+                        - generic [ref=e268]:
+                          - generic [ref=e269]: Tetrads
+                          - img [ref=e270]
+                        - img [ref=e273]
+                    - columnheader "Gscore" [ref=e275]:
+                      - button "Gscore" [ref=e278] [cursor=pointer]:
+                        - generic [ref=e279]:
+                          - generic [ref=e280]: Gscore
+                          - img [ref=e281]
+                        - img [ref=e284]
+                    - columnheader "Sequence" [ref=e286]:
+                      - generic [ref=e291]: Sequence
+                    - columnheader "Inside gene (G-rich)" [ref=e292]:
+                      - generic [ref=e297]: Inside gene (G-rich)
+                - rowgroup [ref=e298]:
+                  - row "349 363 15 2 20 GGCGAGGGTGGCTGG dnaA" [ref=e299]:
+                    - cell "349" [ref=e300]:
+                      - generic [ref=e301]: "349"
+                    - cell "363" [ref=e302]:
+                      - generic [ref=e303]: "363"
+                    - cell "15" [ref=e304]:
+                      - generic [ref=e305]: "15"
+                    - cell "2" [ref=e306]:
+                      - generic [ref=e307]: "2"
+                    - cell "20" [ref=e308]:
+                      - generic [ref=e309]: "20"
+                    - cell "GGCGAGGGTGGCTGG" [ref=e310]:
+                      - button "GGCGAGGGTGGCTGG" [ref=e311]:
+                        - generic [ref=e312]: GGCGAGGGTGGCTGG
+                    - cell "dnaA" [ref=e315]:
+                      - link "dnaA" [ref=e317] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00005
+                        - generic [ref=e318]: dnaA
+                  - row "862 877 16 2 19 GGCGGCGTCGGCCTGG dnaA" [ref=e321]:
+                    - cell "862" [ref=e322]:
+                      - generic [ref=e323]: "862"
+                    - cell "877" [ref=e324]:
+                      - generic [ref=e325]: "877"
+                    - cell "16" [ref=e326]:
+                      - generic [ref=e327]: "16"
+                    - cell "2" [ref=e328]:
+                      - generic [ref=e329]: "2"
+                    - cell "19" [ref=e330]:
+                      - generic [ref=e331]: "19"
+                    - cell "GGCGGCGTCGGCCTGG" [ref=e332]:
+                      - button "GGCGGCGTCGGCCTGG" [ref=e333]:
+                        - generic [ref=e334]: GGCGGCGTCGGCCTGG
+                    - cell "dnaA" [ref=e337]:
+                      - link "dnaA" [ref=e339] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00005
+                        - generic [ref=e340]: dnaA
+                  - row "1,575 1,594 20 2 18 GGCGATGTGGCTGGCCAAGG dnaA" [ref=e343]:
+                    - cell "1,575" [ref=e344]:
+                      - generic [ref=e345]: 1,575
+                    - cell "1,594" [ref=e346]:
+                      - generic [ref=e347]: 1,594
+                    - cell "20" [ref=e348]:
+                      - generic [ref=e349]: "20"
+                    - cell "2" [ref=e350]:
+                      - generic [ref=e351]: "2"
+                    - cell "18" [ref=e352]:
+                      - generic [ref=e353]: "18"
+                    - cell "GGCGATGTGGCTGGCCAAGG" [ref=e354]:
+                      - button "GGCGATGTGGCTGGCCAAGG" [ref=e355]:
+                        - generic [ref=e356]: GGCGATGTGGCTGGCCAAGG
+                    - cell "dnaA" [ref=e359]:
+                      - link "dnaA" [ref=e361] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00005
+                        - generic [ref=e362]: dnaA
+                  - row "1,617 1,637 21 2 19 GGCGATCGGCGAGGCCTTCGG dnaA" [ref=e365]:
+                    - cell "1,617" [ref=e366]:
+                      - generic [ref=e367]: 1,617
+                    - cell "1,637" [ref=e368]:
+                      - generic [ref=e369]: 1,637
+                    - cell "21" [ref=e370]:
+                      - generic [ref=e371]: "21"
+                    - cell "2" [ref=e372]:
+                      - generic [ref=e373]: "2"
+                    - cell "19" [ref=e374]:
+                      - generic [ref=e375]: "19"
+                    - cell "GGCGATCGGCGAGGCCTTCGG" [ref=e376]:
+                      - button "GGCGATCGGCGAGGCCTTCGG" [ref=e377]:
+                        - generic [ref=e378]: GGCGATCGGCGAGGCCTTCGG
+                    - cell "dnaA" [ref=e381]:
+                      - link "dnaA" [ref=e383] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00005
+                        - generic [ref=e384]: dnaA
+                  - row "1,987 2,003 17 2 17 GGCGGCCACATCGGTGG dnaN" [ref=e387]:
+                    - cell "1,987" [ref=e388]:
+                      - generic [ref=e389]: 1,987
+                    - cell "2,003" [ref=e390]:
+                      - generic [ref=e391]: 2,003
+                    - cell "17" [ref=e392]:
+                      - generic [ref=e393]: "17"
+                    - cell "2" [ref=e394]:
+                      - generic [ref=e395]: "2"
+                    - cell "17" [ref=e396]:
+                      - generic [ref=e397]: "17"
+                    - cell "GGCGGCCACATCGGTGG" [ref=e398]:
+                      - button "GGCGGCCACATCGGTGG" [ref=e399]:
+                        - generic [ref=e400]: GGCGGCCACATCGGTGG
+                    - cell "dnaN" [ref=e403]:
+                      - link "dnaN" [ref=e405] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00010
+                        - generic [ref=e406]: dnaN
+                  - row "3,233 3,252 20 2 18 GGCCGCGGCATCCCGGTCGG gyrB" [ref=e409]:
+                    - cell "3,233" [ref=e410]:
+                      - generic [ref=e411]: 3,233
+                    - cell "3,252" [ref=e412]:
+                      - generic [ref=e413]: 3,252
+                    - cell "20" [ref=e414]:
+                      - generic [ref=e415]: "20"
+                    - cell "2" [ref=e416]:
+                      - generic [ref=e417]: "2"
+                    - cell "18" [ref=e418]:
+                      - generic [ref=e419]: "18"
+                    - cell "GGCCGCGGCATCCCGGTCGG" [ref=e420]:
+                      - button "GGCCGCGGCATCCCGGTCGG" [ref=e421]:
+                        - generic [ref=e422]: GGCCGCGGCATCCCGGTCGG
+                    - cell "gyrB" [ref=e425]:
+                      - link "gyrB" [ref=e427] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00015
+                        - generic [ref=e428]: gyrB
+                  - row "3,352 3,378 27 2 18 GGTCTCCGGCGGCCTGCACGGCGTGGG gyrB" [ref=e431]:
+                    - cell "3,352" [ref=e432]:
+                      - generic [ref=e433]: 3,352
+                    - cell "3,378" [ref=e434]:
+                      - generic [ref=e435]: 3,378
+                    - cell "27" [ref=e436]:
+                      - generic [ref=e437]: "27"
+                    - cell "2" [ref=e438]:
+                      - generic [ref=e439]: "2"
+                    - cell "18" [ref=e440]:
+                      - generic [ref=e441]: "18"
+                    - cell "GGTCTCCGGCGGCCTGCACGGCGTGGG" [ref=e442]:
+                      - button "GGTCTCCGGCGGCCTGCACGGCGTGGG" [ref=e443]:
+                        - generic [ref=e444]: GGTCTCCGGCGGCCTGCACGGCGTGGG
+                    - cell "gyrB" [ref=e447]:
+                      - link "gyrB" [ref=e449] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00015
+                        - generic [ref=e450]: gyrB
+                  - row "3,490 3,518 29 2 19 GGTCGTGGATGGCGTCGAGGTCAGCCCGG gyrB" [ref=e453]:
+                    - cell "3,490" [ref=e454]:
+                      - generic [ref=e455]: 3,490
+                    - cell "3,518" [ref=e456]:
+                      - generic [ref=e457]: 3,518
+                    - cell "29" [ref=e458]:
+                      - generic [ref=e459]: "29"
+                    - cell "2" [ref=e460]:
+                      - generic [ref=e461]: "2"
+                    - cell "19" [ref=e462]:
+                      - generic [ref=e463]: "19"
+                    - cell "GGTCGTGGATGGCGTCGAGGTCAGCCCGG" [ref=e464]:
+                      - button "GGTCGTGGATGGCGTCGAGGTCAGCCCGG" [ref=e465]:
+                        - generic [ref=e466]: GGTCGTGGATGGCGTCGAGGTCAGCCCGG
+                    - cell "gyrB" [ref=e469]:
+                      - link "gyrB" [ref=e471] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00015
+                        - generic [ref=e472]: gyrB
+                  - row "4,114 4,130 17 2 17 GGCCCGCCCGGCGGTGG gyrB" [ref=e475]:
+                    - cell "4,114" [ref=e476]:
+                      - generic [ref=e477]: 4,114
+                    - cell "4,130" [ref=e478]:
+                      - generic [ref=e479]: 4,130
+                    - cell "17" [ref=e480]:
+                      - generic [ref=e481]: "17"
+                    - cell "2" [ref=e482]:
+                      - generic [ref=e483]: "2"
+                    - cell "17" [ref=e484]:
+                      - generic [ref=e485]: "17"
+                    - cell "GGCCCGCCCGGCGGTGG" [ref=e486]:
+                      - button "GGCCCGCCCGGCGGTGG" [ref=e487]:
+                        - generic [ref=e488]: GGCCCGCCCGGCGGTGG
+                    - cell "gyrB" [ref=e491]:
+                      - link "gyrB" [ref=e493] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00015
+                        - generic [ref=e494]: gyrB
+                  - row "4,268 4,296 29 2 17 GGCGTGCTCGACGGCGTCGGCCTGCCCGG gyrB" [ref=e497]:
+                    - cell "4,268" [ref=e498]:
+                      - generic [ref=e499]: 4,268
+                    - cell "4,296" [ref=e500]:
+                      - generic [ref=e501]: 4,296
+                    - cell "29" [ref=e502]:
+                      - generic [ref=e503]: "29"
+                    - cell "2" [ref=e504]:
+                      - generic [ref=e505]: "2"
+                    - cell "17" [ref=e506]:
+                      - generic [ref=e507]: "17"
+                    - cell "GGCGTGCTCGACGGCGTCGGCCTGCCCGG" [ref=e508]:
+                      - button "GGCGTGCTCGACGGCGTCGGCCTGCCCGG" [ref=e509]:
+                        - generic [ref=e510]: GGCGTGCTCGACGGCGTCGGCCTGCCCGG
+                    - cell "gyrB" [ref=e513]:
+                      - link "gyrB" [ref=e515] [cursor=pointer]:
+                        - /url: /gene/GCF_000021765.1/NC_011662.2/gene-TMZ1T_RS00015
+                        - generic [ref=e516]: gyrB
+              - group [ref=e521]:
+                - generic [ref=e523]:
+                  - generic [ref=e524]:
+                    - generic [ref=e525]: "Items per page:"
+                    - combobox "Items per page:" [ref=e530] [cursor=pointer]:
+                      - generic [ref=e531]:
+                        - generic [ref=e533]: "10"
+                        - img [ref=e536]
+                  - generic [ref=e539]:
+                    - status [ref=e540]: 1 – 10 of 24675
+                    - button "First page" [disabled] [ref=e541]:
+                      - img [ref=e542]
+                    - button "Previous page" [disabled] [ref=e546]:
+                      - img [ref=e547]
+                    - button "Next page" [ref=e551] [cursor=pointer]:
+                      - img [ref=e552]
+                    - button "Last page" [ref=e556] [cursor=pointer]:
+                      - img [ref=e557]
+      - generic [ref=e561]:
+        - generic [ref=e563]:
+          - generic [ref=e564]: Genome Range Chart
+          - generic [ref=e565]: "NC_011662.2: 1..4496212"
+        - region "Genome range chart" [ref=e567]:
+          - region "G4 histogram chart" [ref=e569]:
+            - generic [ref=e570]:
+              - generic [ref=e571]:
+                - generic [ref=e574]:
+                  - generic [ref=e575]:
+                    - text: Start (bp)
+                    - generic [ref=e576]: "*"
+                  - spinbutton "Start (bp)" [ref=e578]: "1"
+                - generic [ref=e582]:
+                  - generic [ref=e583]:
+                    - text: End (bp)
+                    - generic [ref=e584]: "*"
+                  - spinbutton "End (bp)" [ref=e586]: "4496212"
+                - generic [ref=e590]:
+                  - generic [ref=e591]:
+                    - text: Bin size (bp)
+                    - generic [ref=e592]: "*"
+                  - spinbutton "Bin size (bp)" [ref=e594]: "22482"
+                - button "Apply range" [ref=e597]:
+                  - generic [ref=e598]: Apply range
+              - generic [ref=e601]:
+                - generic [ref=e602]:
+                  - generic [ref=e603]: Y axis
+                  - radiogroup [ref=e604]:
+                    - radio "Count" [checked] [ref=e605] [cursor=pointer]:
+                      - generic [ref=e608]: Count
+                    - radio "Density" [ref=e609] [cursor=pointer]:
+                      - generic [ref=e611]: Density
+                - generic [ref=e612]:
+                  - generic [ref=e613]: Density unit
+                  - radiogroup [disabled] [ref=e614]:
+                    - radio "1M" [disabled]:
+                      - generic: 1M
+                    - radio "100kb" [checked] [disabled]:
+                      - generic: 100kb
+                    - radio "10kb" [disabled]:
+                      - generic: 10kb
+                    - radio "1kb" [disabled]:
+                      - generic: 1kb
+              - paragraph [ref=e615]: "NC_011662.2: 1..4496212 (4496212 bp)"
+            - generic "Vega visualization" [ref=e617]:
+              - img [ref=e1037]:
+                - generic [ref=e1042]:
+                  - generic "X-axis titled 'Genomic position (bp)' for a linear scale with values from 0 to 4496212" [ref=e1043]:
+                    - generic [ref=e1045]:
+                      - generic:
+                        - generic: "1"
+                        - generic: "2248107"
+                        - generic: "4496212"
+                      - generic:
+                        - generic: Genomic position (bp)
+                  - generic "Y-axis titled 'G4 count' for a linear scale with values from 0 to 200" [ref=e1046]:
+                    - generic [ref=e1048]:
+                      - generic:
+                        - generic: "0"
+                        - generic: "20"
+                        - generic: "40"
+                        - generic: "60"
+                        - generic: "80"
+                        - generic: "100"
+                        - generic: "120"
+                        - generic: "140"
+                        - generic: "160"
+                        - generic: "180"
+                        - generic: "200"
+                      - generic:
+                        - generic: G4 count
+                  - generic "Gradient legend titled 'Mean G-score' for fill color with values from 19 to 23" [ref=e1250]:
+                    - generic [ref=e1252]:
+                      - generic [ref=e1255]:
+                        - generic:
+                          - generic: "19"
+                          - generic: "23"
+                      - generic:
+                        - generic: Mean G-score
+      - generic [ref=e837]:
+        - generic [ref=e839]:
+          - generic [ref=e840]: Genome Browser
+          - generic [ref=e841]: NC_011662.2:1..4496212
+        - generic [ref=e842]:
+          - button "Reset to default G4" [ref=e844]:
+            - generic [ref=e845]: Reset to default G4
+          - generic "JBrowse linear genome view" [ref=e849]:
+            - generic [ref=e852]:
+              - generic [ref=e853]:
+                - button [ref=e854] [cursor=pointer]:
+                  - img [ref=e855]
+                - button [ref=e859] [cursor=pointer]:
+                  - img [ref=e861]
+              - generic [ref=e868]:
+                - generic [ref=e870]:
+                  - generic [ref=e873]:
+                    - generic:
+                      - paragraph: ANONYMOUS
+                      - generic [ref=e1256]:
+                        - paragraph: 0.5M
+                        - paragraph: 1M
+                        - paragraph: 1.5M
+                        - paragraph: 2M
+                        - paragraph: 2.5M
+                        - paragraph: 3M
+                        - paragraph: 3.5M
+                        - paragraph: 4M
+                  - generic [ref=e875]:
+                    - img
+                    - generic [ref=e876]:
+                      - button "Open track selector" [ref=e877] [cursor=pointer]:
+                        - img [ref=e878]
+                      - generic [ref=e881]:
+                        - button [ref=e882] [cursor=pointer]:
+                          - img [ref=e883]
+                        - button [ref=e885] [cursor=pointer]:
+                          - img [ref=e886]
+                        - generic [ref=e890]:
+                          - combobox "Search for location" [ref=e891]: ANONYMOUS:1..4,496,212
+                          - generic [ref=e892]:
+                            - img [ref=e893]
+                            - button [ref=e895] [cursor=pointer]:
+                              - img [ref=e896]
+                          - group
+                      - paragraph [ref=e898] [cursor=pointer]: 5.46Mbp
+                      - generic [ref=e899]:
+                        - generic "Zoom out 2x" [ref=e900]:
+                          - button [disabled]:
+                            - img
+                        - 'generic "Window size: 5Mbp" [ref=e1257] [cursor=pointer]':
+                          - slider [ref=e908]: "-1184.07707361474"
+                        - generic "Zoom in 2x" [ref=e909]:
+                          - button [ref=e910] [cursor=pointer]:
+                            - img [ref=e911]
+                        - button [ref=e914] [cursor=pointer]:
+                          - img [ref=e915]
+                - generic [ref=e918]:
+                  - generic [ref=e920]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic: 0M
+                            - generic:
+                              - generic: 1M
+                            - generic:
+                              - generic: 2M
+                            - generic:
+                              - generic: 3M
+                          - generic:
+                            - generic:
+                              - generic: 4M
+                    - generic [ref=e921] [cursor=pointer]: ANONYMOUS
+                  - generic [ref=e922]:
+                    - generic [ref=e923]:
+                      - generic [ref=e924]:
+                        - img
+                      - button "close this track" [ref=e925] [cursor=pointer]:
+                        - img [ref=e926]
+                      - generic: Genome annotation
+                      - button [ref=e928] [cursor=pointer]:
+                        - img [ref=e929]
+                    - generic [ref=e934]:
+                      - alert [ref=e937]:
+                        - img [ref=e939]
+                        - generic "Zoom in to see features or force load (may be slow)" [ref=e942]
+                        - button "Force load" [ref=e944] [cursor=pointer]
+                      - alert [ref=e946]:
+                        - img [ref=e948]
+                        - generic "Zoom in to see features or force load (may be slow)" [ref=e951]
+                        - button "Force load" [ref=e953] [cursor=pointer]
+                  - generic [ref=e956]:
+                    - generic [ref=e957]:
+                      - generic [ref=e958]:
+                        - img
+                      - button "close this track" [ref=e959] [cursor=pointer]:
+                        - img [ref=e960]
+                      - generic: G4 motifs
+                      - button [ref=e962] [cursor=pointer]:
+                        - img [ref=e963]
+                    - generic [ref=e968]:
+                      - alert [ref=e971]:
+                        - img [ref=e973]
+                        - generic "Zoom in to see features or force load (may be slow)" [ref=e976]
+                        - button "Force load" [ref=e978] [cursor=pointer]
+                      - alert [ref=e980]:
+                        - img [ref=e982]
+                        - generic "Zoom in to see features or force load (may be slow)" [ref=e985]
+                        - button "Force load" [ref=e987] [cursor=pointer]
+                  - generic [ref=e990]:
+                    - generic [ref=e991]:
+                      - generic [ref=e992]:
+                        - img
+                      - button "close this track" [ref=e993] [cursor=pointer]:
+                        - img [ref=e994]
+                      - generic: G4 density
+                      - button [ref=e996] [cursor=pointer]:
+                        - img [ref=e997]
+                    - generic [ref=e1000]:
+                      - generic:
+                        - generic [ref=e1001]:
+                          - generic [ref=e1004]:
+                            - generic:
+                              - generic: Loading ...
+                          - generic [ref=e1008]:
+                            - generic:
+                              - generic: Loading ...
+                        - img:
+                          - generic:
+                            - generic:
+                              - generic: "0"
+                            - generic:
+                              - generic: "1"
+                            - generic:
+                              - generic: "2"
+                            - generic:
+                              - generic: "3"
+                            - generic:
+                              - generic: "4"
+                  - generic [ref=e1013]:
+                    - generic [ref=e1014]:
+                      - generic [ref=e1015]:
+                        - img
+                      - button "close this track" [ref=e1016] [cursor=pointer]:
+                        - img [ref=e1017]
+                      - generic: G4 score
+                      - button [ref=e1019] [cursor=pointer]:
+                        - img [ref=e1020]
+                    - generic [ref=e1023]:
+                      - generic:
+                        - generic [ref=e1024]:
+                          - generic [ref=e1027]:
+                            - generic:
+                              - generic: Loading ...
+                          - generic [ref=e1031]:
+                            - generic:
+                              - generic: Loading ...
+                        - img:
+                          - generic:
+                            - generic:
+                              - generic: "0"
+                            - generic:
+                              - generic: "20"
+                            - generic:
+                              - generic: "40"
+                            - generic:
+                              - generic: "60"
+                            - generic:
+                              - generic: "80"
+  - contentinfo [ref=e49]:
+    - generic [ref=e50]:
+      - img [ref=e52]
+      - link "Medical AI Center" [ref=e64] [cursor=pointer]:
+        - /url: https://bioinfo.med.niigata-u.ac.jp/
+    - generic [ref=e66]:
+      - generic [ref=e67]: Powered by Medical AI Center ©2013-2026.
+      - link "Code licensed under an MIT-style License." [ref=e68] [cursor=pointer]:
+        - /url: https://opensource.org/license/mit
+      - generic [ref=e69]: Documentation licensed under CC BY 4.0.

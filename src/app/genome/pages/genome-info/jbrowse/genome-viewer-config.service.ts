@@ -61,6 +61,7 @@ function createAssemblyConfig(params: GenomeViewerConfigParams): JBrowseAssembly
         location: {
           uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.refname_aliases.txt`),
         },
+        refNameColumnHeaderName: 'name',
       },
     },
   };

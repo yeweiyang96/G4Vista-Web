@@ -1,0 +1,35 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation "Top Toolbar" [ref=e4]:
+      - button "Home" [ref=e5]:
+        - img [ref=e7]
+        - generic [ref=e19]: G4Vista
+      - link "Taxonomy" [ref=e22] [cursor=pointer]:
+        - /url: /taxonomy
+        - generic [ref=e23]: Taxonomy
+      - link "Genome" [ref=e26] [cursor=pointer]:
+        - /url: /genome
+        - generic [ref=e27]: Genome
+      - link "Gene" [ref=e30] [cursor=pointer]:
+        - /url: /gene
+        - generic [ref=e31]: Gene
+      - link "Environment" [ref=e34] [cursor=pointer]:
+        - /url: /environment
+        - generic [ref=e35]: Environment
+      - button "Toggle Theme" [ref=e38] [cursor=pointer]:
+        - img [ref=e39]: brightness_medium
+      - link "GitHub Repository" [ref=e42] [cursor=pointer]:
+        - /url: https://github.com/yeweiyang96/g4vista
+        - img "Github SVG icon" [ref=e43]:
+          - img [ref=e44]
+        - generic [ref=e46]: GitHub
+  - contentinfo [ref=e49]:
+    - generic [ref=e50]:
+      - img [ref=e52]
+      - link "Medical AI Center" [ref=e64] [cursor=pointer]:
+        - /url: https://bioinfo.med.niigata-u.ac.jp/
+    - generic [ref=e66]:
+      - generic [ref=e67]: Powered by Medical AI Center ©2013-2026.
+      - link "Code licensed under an MIT-style License." [ref=e68] [cursor=pointer]:
+        - /url: https://opensource.org/license/mit
+      - generic [ref=e69]: Documentation licensed under CC BY 4.0.

@@ -38,6 +38,7 @@ describe('GenomeViewerConfigService', () => {
         location: {
           uri: 'http://localhost:8000/jbrowse/GCF_000021765.1/jbrowse/GCF_000021765.1.refname_aliases.txt',
         },
+        refNameColumnHeaderName: 'name',
       },
     });
     expect(config.tracks.length).toBe(7);

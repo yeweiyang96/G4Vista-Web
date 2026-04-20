@@ -1,5 +1,5 @@
 import { createViewState, JBrowseLinearGenomeView } from '@jbrowse/react-linear-genome-view2';
-import { StrictMode, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GenomeViewerConfig } from './genome-viewer-config.service';
 import { GenomeNavCommand } from './genome-viewer-state.service';
 
@@ -79,9 +79,5 @@ export function JBrowseReactView({
     );
   }, [navigationCommand, viewState]);
 
-  return (
-    <StrictMode>
-      <JBrowseLinearGenomeView viewState={viewState} />
-    </StrictMode>
-  );
+  return <JBrowseLinearGenomeView viewState={viewState} />;
 }
