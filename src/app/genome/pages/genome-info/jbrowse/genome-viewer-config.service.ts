@@ -13,6 +13,11 @@ export interface JBrowseAssemblyConfig extends Record<string, unknown> {
 export interface JBrowseConfig {
   assembly: JBrowseAssemblyConfig;
   tracks: JBrowseTrackConfig[];
+  configuration: {
+    rpc: {
+      defaultDriver: 'WebWorkerRpcDriver';
+    };
+  };
   defaultVisibleTrackIds: string[];
 }
 
@@ -269,6 +274,11 @@ export class GenomeViewerConfigService {
     return {
       assembly: createAssemblyConfig(params),
       tracks: [createAnnotationTrackConfig(params), ...createG4TrackConfigs(params)],
+      configuration: {
+        rpc: {
+          defaultDriver: 'WebWorkerRpcDriver',
+        },
+      },
       defaultVisibleTrackIds: [
         `${assemblyAccession}_annotation`,
         `${assemblyAccession}_g4`,

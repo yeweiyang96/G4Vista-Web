@@ -264,6 +264,11 @@ describe('GenomeInfoComponent', () => {
     genomeViewerConfigService.createViewerConfig.and.returnValue({
       assembly: { name: 'GCF_1' },
       tracks: [],
+      configuration: {
+        rpc: {
+          defaultDriver: 'WebWorkerRpcDriver',
+        },
+      },
       defaultVisibleTrackIds: [],
     });
     genomeViewerConfigService.resolveDefaultRegion.and.returnValue(of('chr1:1..1000'));
@@ -778,6 +783,11 @@ describe('GenomeInfoComponent', () => {
     genomeViewerConfigService.createViewerConfig.and.callFake(({ assemblyAccession }) => ({
       assembly: { name: assemblyAccession },
       tracks: [],
+      configuration: {
+        rpc: {
+          defaultDriver: 'WebWorkerRpcDriver',
+        },
+      },
       defaultVisibleTrackIds: [],
     }));
     genomeViewerConfigService.resolveDefaultRegion.and.callFake(({ assemblyAccession }) =>

@@ -42,6 +42,11 @@ describe('GenomeViewerConfigService', () => {
       },
     });
     expect(config.tracks.length).toBe(7);
+    expect(config.configuration).toEqual({
+      rpc: {
+        defaultDriver: 'WebWorkerRpcDriver',
+      },
+    });
     expect(config.defaultVisibleTrackIds).toEqual([
       'GCF_000021765.1_annotation',
       'GCF_000021765.1_g4',

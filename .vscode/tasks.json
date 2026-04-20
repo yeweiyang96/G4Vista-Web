@@ -60,7 +60,7 @@
     {
       "label": "stop: dev server (4200)",
       "type": "shell",
-      "command": "PIDS=$(lsof -ti tcp:4200); if [ -n \"$PIDS\" ]; then kill $PIDS; fi",
+      "command": "pkill -f \"mise run dev\" || true; pkill -f \"ng serve\" || true; PIDS=$(lsof -ti tcp:4200); if [ -n \"$PIDS\" ]; then kill $PIDS || true; fi",
       "problemMatcher": []
     }
   ]

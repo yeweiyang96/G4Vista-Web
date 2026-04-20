@@ -69,7 +69,10 @@
             }
           },
           "options": {
-            "proxyConfig": "proxy.config.json"
+            "proxyConfig": "proxy.config.json",
+            "prebundle": {
+              "exclude": ["rpcWorker?worker_file&type=classic"]
+            }
           },
           "defaultConfiguration": "development"
         },

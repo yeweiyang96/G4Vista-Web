@@ -5,6 +5,10 @@ import { GenomeNavCommand } from './genome-viewer-state.service';
 
 type ViewState = ReturnType<typeof createViewState>;
 
+function makeWorkerInstance(): Worker {
+  return new Worker(new URL('./jbrowse-rpc.worker.ts', import.meta.url), { type: 'module' });
+}
+
 export interface JBrowseReactViewProps {
   viewerConfig: GenomeViewerConfig;
   navigationCommand?: GenomeNavCommand | null;
@@ -50,6 +54,7 @@ export function JBrowseReactView({
 
     currentViewState = createViewState({
       ...viewerConfig,
+      makeWorkerInstance,
       onChange: () => {
         queueMicrotask(notifyRegionChange);
       },
