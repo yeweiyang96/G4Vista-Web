@@ -10,6 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +29,7 @@ import {
   G4Service,
   G4Type,
 } from '../../../services/g4.service';
+import { UiThemeMode, UiThemeService } from '../../../../theme/ui-theme.service';
 
 export interface G4ChartPointFocus {
   seqid: string;
@@ -36,18 +38,23 @@ export interface G4ChartPointFocus {
   center: number;
 }
 
+export interface G4ChartAxisFeatureRange {
+  start: number;
+  end: number;
+}
+
 type ChartYAxisMode = 'count' | 'density';
 
 interface DensityUnitOption {
   label: string;
   bp: number;
-  axisLabel: string;
 }
 
 interface ChartRenderBin extends G4HistogramBin {
   y_value: number;
-  density_in_unit: number;
-  density_unit_label: string;
+  density: number;
+  density_bin_label: string;
+  bin_length: number;
 }
 
 interface ChartSize {
@@ -55,13 +62,23 @@ interface ChartSize {
   height: number;
 }
 
+interface ChartThemeColors {
+  axisText: string;
+  axisLine: string;
+  gridLine: string;
+}
+
+const DEFAULT_CHART_THEME_COLORS: ChartThemeColors = {
+  axisText: '#1d1b20',
+  axisLine: '#74777f',
+  gridLine: '#c4c6d0',
+};
 const DENSITY_UNIT_OPTIONS: readonly DensityUnitOption[] = [
-  { label: '1M', bp: 1_000_000, axisLabel: '1 Mb' },
-  { label: '100kb', bp: 100_000, axisLabel: '100 kb' },
-  { label: '10kb', bp: 10_000, axisLabel: '10 kb' },
-  { label: '1kb', bp: 1_000, axisLabel: '1 kb' },
+  { label: '1M', bp: 1_000_000 },
+  { label: '100kb', bp: 100_000 },
+  { label: '10kb', bp: 10_000 },
+  { label: '1kb', bp: 1_000 },
 ];
-const DEFAULT_DENSITY_UNIT_BP = 100_000;
 
 @Component({
   selector: 'app-genome-range-chart',
@@ -84,9 +101,11 @@ export class GenomeRangeChartComponent {
   readonly viewport = input.required<G4ChartViewport>();
   readonly seqidLength = input.required<number>();
   readonly filters = input<G4HistogramFilters>({ tetrads: [] });
+  readonly axisFeatureRange = input<G4ChartAxisFeatureRange | null>(null);
 
   readonly viewportChange = output<G4ChartViewport>();
   readonly pointFocus = output<G4ChartPointFocus>();
+  readonly resetRange = output<void>();
 
   readonly startControl = new FormControl(1, {
     nonNullable: true,
@@ -101,7 +120,6 @@ export class GenomeRangeChartComponent {
     validators: [Validators.required, Validators.min(1)],
   });
   readonly yAxisMode = signal<ChartYAxisMode>('count');
-  readonly densityUnitBp = signal<number>(DEFAULT_DENSITY_UNIT_BP);
   readonly densityUnitOptions = DENSITY_UNIT_OPTIONS;
 
   readonly validationError = signal<string | null>(null);
@@ -115,12 +133,25 @@ export class GenomeRangeChartComponent {
 
   private readonly chartHost = viewChild<ElementRef<HTMLDivElement>>('chartHost');
 
+  private readonly documentRef = inject(DOCUMENT, { optional: true });
   private readonly g4Service = inject(G4Service);
+  private readonly uiThemeService = inject(UiThemeService);
   private readonly renderRevision = signal(0);
   private lastObservedWidth = 0;
 
-  readonly histogramRequest = computed<G4HistogramRequest | undefined>(() => {
+  readonly histogramViewport = computed<G4ChartViewport>(() => {
     const viewport = this.viewport();
+    return {
+      ...viewport,
+      binSize: Math.max(1, Math.trunc(viewport.binSize)),
+    };
+  });
+  readonly selectedDensityPresetBp = computed<number | null>(() => {
+    const binSize = this.histogramViewport().binSize;
+    return DENSITY_UNIT_OPTIONS.some((option) => option.bp === binSize) ? binSize : null;
+  });
+  readonly histogramRequest = computed<G4HistogramRequest | undefined>(() => {
+    const viewport = this.histogramViewport();
     const seqidLength = this.seqidLength();
 
     if (!this.seqid() || seqidLength < 1) {
@@ -153,30 +184,25 @@ export class GenomeRangeChartComponent {
     const snapshot = this.histogramSnapshot();
     return 'value' in snapshot ? snapshot.value.bins : [];
   });
-  readonly selectedDensityUnit = computed<DensityUnitOption>(() => {
-    return (
-      DENSITY_UNIT_OPTIONS.find((option) => option.bp === this.densityUnitBp()) ??
-      DENSITY_UNIT_OPTIONS[1]
-    );
-  });
   readonly yAxisTitle = computed(() => {
     if (this.yAxisMode() === 'count') {
       return 'G4 count';
     }
-    return `G4 density (/${this.selectedDensityUnit().axisLabel})`;
+    return 'G4 density (G4/bp)';
   });
   readonly chartRenderBins = computed<readonly ChartRenderBin[]>(() => {
     const mode = this.yAxisMode();
-    const densityUnit = this.selectedDensityUnit();
+    const densityBinLabel = this.formatDensityBinLabel(this.histogramViewport().binSize);
 
     return this.histogramBins().map((bin) => {
-      const densityPerBp = this.resolveDensityPerBp(bin);
-      const densityInUnit = densityPerBp * densityUnit.bp;
+      const binLength = this.resolveBinLength(bin);
+      const density = this.resolveDensity(bin, binLength);
       return {
         ...bin,
-        y_value: mode === 'count' ? bin.count : densityInUnit,
-        density_in_unit: densityInUnit,
-        density_unit_label: densityUnit.label,
+        y_value: mode === 'count' ? bin.count : density,
+        density,
+        density_bin_label: densityBinLabel,
+        bin_length: binLength,
       };
     });
   });
@@ -199,7 +225,7 @@ export class GenomeRangeChartComponent {
       const viewport = this.viewport();
       this.startControl.setValue(viewport.start, { emitEvent: false });
       this.endControl.setValue(viewport.end, { emitEvent: false });
-      this.binSizeControl.setValue(viewport.binSize, { emitEvent: false });
+      this.binSizeControl.setValue(this.histogramViewport().binSize, { emitEvent: false });
       this.validationError.set(null);
       this.renderRevision.update((revision) => revision + 1);
     });
@@ -245,11 +271,12 @@ export class GenomeRangeChartComponent {
       const status = this.histogramStatus();
       const bins = this.chartRenderBins();
       const yAxisTitle = this.yAxisTitle();
+      const themeColors = this.resolveChartThemeColors(this.uiThemeService.resolvedMode());
       if (status === 'loading' || status === 'idle' || status === 'error' || bins.length === 0) {
         this.clearChart(host);
         return;
       }
-      void this.renderChart(host, request.viewport, bins, yAxisTitle);
+      void this.renderChart(host, request.viewport, bins, yAxisTitle, themeColors);
     });
   }
 
@@ -286,6 +313,11 @@ export class GenomeRangeChartComponent {
     });
   }
 
+  resetViewport(): void {
+    this.validationError.set(null);
+    this.resetRange.emit();
+  }
+
   setYAxisMode(mode: ChartYAxisMode | string | null): void {
     if (mode !== 'count' && mode !== 'density') {
       return;
@@ -301,18 +333,24 @@ export class GenomeRangeChartComponent {
     if (!DENSITY_UNIT_OPTIONS.some((option) => option.bp === normalizedUnitBp)) {
       return;
     }
-    this.densityUnitBp.set(normalizedUnitBp);
+    this.binSizeControl.setValue(normalizedUnitBp);
+    this.submitViewport();
   }
 
-  private resolveDensityPerBp(bin: G4HistogramBin): number {
-    if (Number.isFinite(bin.density_per_bp) && bin.density_per_bp >= 0) {
-      return bin.density_per_bp;
-    }
+  private resolveDensity(bin: G4HistogramBin, binLength: number): number {
     if (bin.count <= 0) {
       return 0;
     }
+    return bin.count / binLength;
+  }
+
+  private resolveBinLength(bin: G4HistogramBin): number {
     const binWidth = Math.max(bin.end - bin.start + 1, 1);
-    return bin.count / binWidth;
+    return binWidth;
+  }
+
+  private formatDensityBinLabel(binSize: number): string {
+    return DENSITY_UNIT_OPTIONS.find((option) => option.bp === binSize)?.label ?? `${binSize}bp`;
   }
 
   private async renderChart(
@@ -320,10 +358,11 @@ export class GenomeRangeChartComponent {
     viewport: G4ChartViewport,
     bins: readonly ChartRenderBin[],
     yAxisTitle: string,
+    themeColors: ChartThemeColors,
   ): Promise<void> {
     const chartSize = this.computeChartSize(host);
     const { default: embed } = await import('vega-embed');
-    const spec = this.buildVegaSpec(viewport, bins, yAxisTitle, chartSize);
+    const spec = this.buildVegaSpec(viewport, bins, yAxisTitle, themeColors, chartSize);
 
     const result = await embed(host, spec as never, { actions: false });
 
@@ -345,11 +384,21 @@ export class GenomeRangeChartComponent {
     viewport: G4ChartViewport,
     bins: readonly ChartRenderBin[],
     yAxisTitle: string,
+    themeColors: ChartThemeColors = DEFAULT_CHART_THEME_COLORS,
     chartSize: ChartSize = { width: 960, height: 320 },
   ): object {
     const hasMeanGscore = bins.some((bin) => bin.mean_gscore !== null);
     const rightPadding = hasMeanGscore ? 112 : 18;
-    const xAxisValues = this.buildXAxisValues(viewport.start, viewport.end);
+    const xSpan = viewport.end - viewport.start;
+    const xDomainEnd = Math.max(xSpan, 1);
+    const axisFeatureRange = this.axisFeatureRange();
+    const hasFeatureAxisLabels = this.hasVisibleAxisFeatureRange(
+      xDomainEnd,
+      viewport,
+      axisFeatureRange,
+    );
+    const xAxisValues = this.buildRelativeXAxisValues(xSpan, viewport, axisFeatureRange);
+    const xAxisLabelSignal = this.buildXAxisLabelSignal(xDomainEnd, viewport, axisFeatureRange);
 
     return {
       $schema: 'https://vega.github.io/schema/vega/v6.json',
@@ -360,25 +409,51 @@ export class GenomeRangeChartComponent {
       },
       width: chartSize.width,
       height: chartSize.height,
+      config: {
+        axis: {
+          labelColor: themeColors.axisText,
+          titleColor: themeColors.axisText,
+          domainColor: themeColors.axisLine,
+          tickColor: themeColors.axisLine,
+          gridColor: themeColors.gridLine,
+        },
+        legend: {
+          labelColor: themeColors.axisText,
+          titleColor: themeColors.axisText,
+        },
+      },
       padding: {
         left: 56,
         right: rightPadding,
         top: 14,
-        bottom: 42,
+        bottom: hasFeatureAxisLabels ? 62 : 42,
       },
       data: [
         {
           name: 'bins',
           values: bins,
+          transform: [
+            {
+              type: 'formula',
+              as: 'plot_start',
+              expr: `max(0, datum.start - ${viewport.start})`,
+            },
+            {
+              type: 'formula',
+              as: 'plot_end',
+              expr: `min(${xDomainEnd}, max(0, datum.end - ${viewport.start}))`,
+            },
+          ],
         },
       ],
       scales: [
         {
           name: 'x',
           type: 'linear',
-          domain: [viewport.start, viewport.end],
+          domain: [0, xDomainEnd],
           range: 'width',
           nice: false,
+          zero: false,
         },
         {
           name: 'y',
@@ -404,6 +479,23 @@ export class GenomeRangeChartComponent {
           values: xAxisValues,
           format: 'd',
           labelOverlap: 'greedy',
+          labelPadding: hasFeatureAxisLabels ? 8 : 4,
+          titlePadding: hasFeatureAxisLabels ? 18 : 4,
+          encode: {
+            labels: {
+              update: {
+                text: {
+                  signal: xAxisLabelSignal,
+                },
+                lineBreak: {
+                  value: '\n',
+                },
+                lineHeight: {
+                  value: 12,
+                },
+              },
+            },
+          },
         },
         {
           orient: 'left',
@@ -417,8 +509,8 @@ export class GenomeRangeChartComponent {
           from: { data: 'bins' },
           encode: {
             update: {
-              x: { scale: 'x', field: 'start' },
-              x2: { scale: 'x', field: 'end' },
+              x: { scale: 'x', field: 'plot_start' },
+              x2: { scale: 'x', field: 'plot_end' },
               y: { scale: 'y', field: 'y_value' },
               y2: { scale: 'y', value: 0 },
               fill: [
@@ -435,7 +527,7 @@ export class GenomeRangeChartComponent {
               strokeWidth: { value: 0.3 },
               tooltip: {
                 signal:
-                  "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'density': datum.density_in_unit, 'density_unit': datum.density_unit_label, 'density_per_bp': datum.density_per_bp, 'mean_gscore': datum.mean_gscore}",
+                  "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'bin_length': datum.bin_length, 'density': datum.density, 'density_bin': datum.density_bin_label, 'mean_gscore': datum.mean_gscore}",
               },
             },
           },
@@ -459,6 +551,28 @@ export class GenomeRangeChartComponent {
     };
   }
 
+  private resolveChartThemeColors(mode: UiThemeMode): ChartThemeColors {
+    const defaultAxisText = mode === 'dark' ? '#e1e2e6' : '#1d1b20';
+    const defaultAxisLine = mode === 'dark' ? '#8f9099' : '#74777f';
+    const defaultGridLine = mode === 'dark' ? '#494a50' : '#c4c6d0';
+
+    return {
+      axisText: this.resolveCssColorVar('--mat-sys-on-surface', defaultAxisText),
+      axisLine: this.resolveCssColorVar('--mat-sys-outline', defaultAxisLine),
+      gridLine: this.resolveCssColorVar('--mat-sys-outline-variant', defaultGridLine),
+    };
+  }
+
+  private resolveCssColorVar(variableName: string, fallbackColor: string): string {
+    const rootElement = this.documentRef?.documentElement;
+    if (!rootElement) {
+      return fallbackColor;
+    }
+
+    const resolvedValue = getComputedStyle(rootElement).getPropertyValue(variableName).trim();
+    return resolvedValue || fallbackColor;
+  }
+
   private computeChartSize(host: HTMLElement): ChartSize {
     const bounds = host.getBoundingClientRect();
     const width = Math.max(360, Math.trunc(host.clientWidth || bounds.width || 960));
@@ -469,12 +583,76 @@ export class GenomeRangeChartComponent {
     };
   }
 
-  private buildXAxisValues(start: number, end: number): number[] {
-    if (start >= end) {
-      return [start];
+  private buildRelativeXAxisValues(
+    xDomainEnd: number,
+    viewport: G4ChartViewport,
+    axisFeatureRange: G4ChartAxisFeatureRange | null,
+  ): number[] {
+    if (xDomainEnd <= 0) {
+      return [0];
     }
-    const middle = Math.round((start + end) / 2);
-    return Array.from(new Set([start, middle, end])).sort((a, b) => a - b);
+
+    const values = axisFeatureRange ? [0, xDomainEnd] : [0, Math.round(xDomainEnd / 2), xDomainEnd];
+    if (axisFeatureRange) {
+      values.push(
+        ...[axisFeatureRange.start, axisFeatureRange.end]
+          .filter((position) => position >= viewport.start && position <= viewport.end)
+          .map((position) => position - viewport.start),
+      );
+    }
+
+    return Array.from(new Set(values)).sort((a, b) => a - b);
+  }
+
+  private buildXAxisLabelSignal(
+    xDomainEnd: number,
+    viewport: G4ChartViewport,
+    axisFeatureRange: G4ChartAxisFeatureRange | null,
+  ): string {
+    const baseLabel = `format(datum.value + ${viewport.start}, 'd')`;
+    if (!axisFeatureRange) {
+      return baseLabel;
+    }
+
+    const featureLabels = new Map<number, string>();
+    const featureStartOffset = axisFeatureRange.start - viewport.start;
+    if (this.isVisibleRelativeAxisPosition(featureStartOffset, xDomainEnd)) {
+      featureLabels.set(featureStartOffset, 'Gene start');
+    }
+
+    const featureEndOffset = axisFeatureRange.end - viewport.start;
+    if (this.isVisibleRelativeAxisPosition(featureEndOffset, xDomainEnd)) {
+      featureLabels.set(
+        featureEndOffset,
+        featureLabels.has(featureEndOffset) ? 'Gene start/end' : 'Gene end',
+      );
+    }
+
+    if (!featureLabels.size) {
+      return baseLabel;
+    }
+
+    return `${Array.from(featureLabels.entries())
+      .sort(([left], [right]) => left - right)
+      .map(([value, label]) => `datum.value === ${value} ? '${label}\\n' + ${baseLabel} : `)
+      .join('')}${baseLabel}`;
+  }
+
+  private hasVisibleAxisFeatureRange(
+    xDomainEnd: number,
+    viewport: G4ChartViewport,
+    axisFeatureRange: G4ChartAxisFeatureRange | null,
+  ): boolean {
+    if (!axisFeatureRange) {
+      return false;
+    }
+    return [axisFeatureRange.start, axisFeatureRange.end].some((position) =>
+      this.isVisibleRelativeAxisPosition(position - viewport.start, xDomainEnd),
+    );
+  }
+
+  private isVisibleRelativeAxisPosition(position: number, xDomainEnd: number): boolean {
+    return Number.isFinite(position) && position >= 0 && position <= xDomainEnd;
   }
 
   private clearChart(host = this.chartHost()?.nativeElement): void {

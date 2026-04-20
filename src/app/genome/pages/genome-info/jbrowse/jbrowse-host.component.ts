@@ -51,6 +51,7 @@ export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy
   private renderReactTree(): void {
     const viewerConfig = this.viewerConfig();
     const nextAssemblyName = viewerConfig.assembly.name;
+    const nextThemeMode = viewerConfig.configuration.theme.mode;
     if (this.root && this.lastAssemblyName && this.lastAssemblyName !== nextAssemblyName) {
       this.root.unmount();
       this.root = undefined;
@@ -63,7 +64,7 @@ export class JbrowseHostComponent implements AfterViewInit, OnChanges, OnDestroy
 
     this.root.render(
       createElement(JBrowseReactView, {
-        key: viewerConfig.assembly.name,
+        key: `${viewerConfig.assembly.name}:${nextThemeMode}`,
         viewerConfig,
         navigationCommand: this.navigationCommand() ?? undefined,
         onRegionChange: (region: string) => {

@@ -25,6 +25,10 @@ describe('GenomeInfoComponent', () => {
       chr1: 10_000,
       chr2: 20_000,
     },
+    regions: [
+      { seqid: 'chr1', accession_name: 'Main chromosome', region_length: 10_000 },
+      { seqid: 'chr2', accession_name: 'Plasmid pTest', region_length: 20_000 },
+    ],
     taxon_id: 1,
     topt_ave: 37,
   };
@@ -39,6 +43,10 @@ describe('GenomeInfoComponent', () => {
       chrA: 12_000,
       chrB: 24_000,
     },
+    regions: [
+      { seqid: 'chrA', accession_name: 'Chromosome A', region_length: 12_000 },
+      { seqid: 'chrB', accession_name: 'Plasmid B', region_length: 24_000 },
+    ],
     taxon_id: 2,
     topt_ave: 30,
   };
@@ -268,6 +276,19 @@ describe('GenomeInfoComponent', () => {
         rpc: {
           defaultDriver: 'WebWorkerRpcDriver',
         },
+        theme: {
+          name: 'G4Vista Light',
+          mode: 'light',
+          palette: {
+            primary: { main: '#311b92' },
+            secondary: { main: '#0097a7' },
+            tertiary: { main: '#f57c00' },
+            quaternary: { main: '#d50000' },
+            background: { default: '#fdfbff', paper: '#f9f9ff' },
+            text: { primary: '#1a1b1f', secondary: '#46464a' },
+          },
+        },
+        extraThemes: {},
       },
       defaultVisibleTrackIds: [],
     });
@@ -324,6 +345,7 @@ describe('GenomeInfoComponent', () => {
 
     expect(component.browseScope()).toBe('chr1');
     expect(component.displayedAccessionIdValue()).toBe('chr1');
+    expect(component.displayedAccessionIdLabel()).toBe('Main chromosome');
     expect(component.showAccessionIdColumn()).toBeFalse();
     expect(g4Service.getG4Page).toHaveBeenCalledWith(
       jasmine.objectContaining({
@@ -343,6 +365,42 @@ describe('GenomeInfoComponent', () => {
     expect(viewerState.region()).toBe('chr1:1..10000');
   });
 
+  it('displays accession names and filters options without changing seqid values', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.allAccessionIdOptions().map((option) => option.label)).toEqual([
+      'Whole genome',
+      'Main chromosome',
+      'Plasmid pTest',
+    ]);
+    expect(component.allAccessionIdOptions().map((option) => option.value)).toEqual([
+      component.wholeGenomeScope,
+      'chr1',
+      'chr2',
+    ]);
+
+    component.onAccessionFilterInput({ target: { value: 'plasmid' } } as unknown as Event);
+    fixture.detectChanges();
+
+    expect(component.accessionIdOptions().map((option) => option.value)).toEqual(['chr2']);
+    expect(component.accessionIdOptions().map((option) => option.label)).toEqual(['Plasmid pTest']);
+
+    component.onAccessionFilterInput({ target: { value: 'chr1' } } as unknown as Event);
+    fixture.detectChanges();
+
+    expect(component.accessionIdOptions().map((option) => option.value)).toEqual(['chr1']);
+    expect(component.accessionIdOptions()[0].label).toBe('Main chromosome');
+
+    component.clearAccessionFilter();
+    fixture.detectChanges();
+
+    expect(component.accessionFilter()).toBe('');
+    expect(component.accessionIdOptions().length).toBe(3);
+  });
+
   it('switches to another Accession ID and applies its full range viewport', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
@@ -358,6 +416,7 @@ describe('GenomeInfoComponent', () => {
 
     expect(component.browseScope()).toBe('chr2');
     expect(component.displayedAccessionIdValue()).toBe('chr2');
+    expect(component.displayedAccessionIdLabel()).toBe('Plasmid pTest');
     expect(g4Service.getG4Page.calls.allArgs()).toContain([
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
@@ -522,7 +581,7 @@ describe('GenomeInfoComponent', () => {
 
     expect(component.isGeneSearchMode()).toBeTrue();
     expect(component.browseScope()).toBe('chr2');
-    expect(component.displayedAccessionIdValue()).toBe(component.wholeGenomeScope);
+    expect(component.displayedAccessionIdValue()).toBe('chr2');
     expect(component.showAccessionIdColumn()).toBeTrue();
     expect(geneService.getGene).toHaveBeenCalledWith('GCF_1', 'chr2', 'dnaK');
     expect(g4Service.getGeneSearchPage).toHaveBeenCalledWith(
@@ -535,11 +594,15 @@ describe('GenomeInfoComponent', () => {
     );
     expect(component.chartSeqid()).toBe('chr2');
     expect(component.chartViewport()).toEqual({
-      start: 2000,
-      end: 12000,
+      start: 5000,
+      end: 9000,
       binSize: 100,
     });
-    expect(viewerState.region()).toBe('chr2:2000..12000');
+    expect(component.chartAxisFeatureRange()).toEqual({
+      start: 6000,
+      end: 8000,
+    });
+    expect(viewerState.region()).toBe('chr2:5000..9000');
     expect(
       Object.prototype.hasOwnProperty.call(
         g4Service.getGeneSearchPage.calls.mostRecent().args[0],
@@ -584,6 +647,63 @@ describe('GenomeInfoComponent', () => {
         maxGscore: 55,
       }),
     );
+  });
+
+  it('clears gene search mode when Accession ID changes after selecting a gene', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.selectBrowseScope('chr2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.selectGeneCandidate({
+      feature_id: 'dnaK',
+      seqid: 'chr2',
+      gene_name: 'dnaK',
+      locus_tag: 'LOC_DNAK',
+      gene_biotype: 'protein_coding',
+    });
+    component.submitFilters();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.isGeneSearchMode()).toBeTrue();
+    expect(component.displayedAccessionIdValue()).toBe('chr2');
+
+    g4Service.getG4Page.calls.reset();
+
+    component.selectBrowseScope('chr1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.isGeneSearchMode()).toBeFalse();
+    expect(component.submittedSelectedGene()).toBeNull();
+    expect(component.draftSelectedGene()).toBeNull();
+    expect(component.draftGeneInput()).toBe('');
+    expect(component.browseScope()).toBe('chr1');
+    expect(component.displayedAccessionIdValue()).toBe('chr1');
+    expect(component.showAccessionIdColumn()).toBeFalse();
+    expect(g4Service.getG4Page.calls.allArgs()).toContain([
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'normal',
+        seqid: 'chr1',
+        pageSize: 10,
+      }),
+    ]);
+    expect(component.chartSeqid()).toBe('chr1');
+    expect(component.chartViewport()).toEqual({
+      start: 1,
+      end: 10_000,
+      binSize: 50,
+    });
+    expect(viewerState.region()).toBe('chr1:1..10000');
   });
 
   it('normalizes gene-navigation target when selected gene seqid is invalid', async () => {
@@ -669,7 +789,12 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(component.chartSeqid()).toBe('chr2');
-    expect(viewerState.region()).toBe('chr2:2000..12000');
+    expect(component.chartViewport()).toEqual({
+      start: 5000,
+      end: 9000,
+      binSize: 100,
+    });
+    expect(viewerState.region()).toBe('chr2:5000..9000');
   });
 
   it('blocks submit when text is typed without selecting a candidate', () => {
@@ -787,6 +912,19 @@ describe('GenomeInfoComponent', () => {
         rpc: {
           defaultDriver: 'WebWorkerRpcDriver',
         },
+        theme: {
+          name: 'G4Vista Light',
+          mode: 'light',
+          palette: {
+            primary: { main: '#311b92' },
+            secondary: { main: '#0097a7' },
+            tertiary: { main: '#f57c00' },
+            quaternary: { main: '#d50000' },
+            background: { default: '#fdfbff', paper: '#f9f9ff' },
+            text: { primary: '#1a1b1f', secondary: '#46464a' },
+          },
+        },
+        extraThemes: {},
       },
       defaultVisibleTrackIds: [],
     }));
@@ -849,6 +987,44 @@ describe('GenomeInfoComponent', () => {
     viewerState.requestNavToLocation('chr9:1..500');
 
     component.resetBrowser();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.chartSeqid()).toBe('chr2');
+    expect(component.chartViewport()).toEqual({
+      start: 1,
+      end: 20_000,
+      binSize: 100,
+    });
+    expect(viewerState.region()).toBe('chr2:1..20000');
+  });
+
+  it('resets the chart viewport through the chart reset handler', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.selectBrowseScope('chr2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.applyChartViewport({
+      start: 1000,
+      end: 2000,
+      binSize: 25,
+    });
+
+    expect(component.chartViewport()).toEqual({
+      start: 1000,
+      end: 2000,
+      binSize: 25,
+    });
+    expect(viewerState.region()).toBe('chr2:1000..2000');
+
+    component.resetChartViewport();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();

@@ -49,6 +49,43 @@
   max-width: 360px;
 }
 
+.accession-filter-panel {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 12px;
+  background: var(--mat-sys-surface-container);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.accession-filter-input {
+  width: 100%;
+}
+
+.accession-filter-input mat-icon,
+.accession-filter-input button {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.accession-option {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.accession-option-name,
+.accession-option-id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accession-option-id {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .filters {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

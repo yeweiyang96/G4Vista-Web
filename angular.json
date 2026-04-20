@@ -31,7 +31,28 @@
               }
             ],
             "styles": ["src/styles.scss"],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "allowedCommonJsDependencies": [
+              "@jridgewell/resolve-uri",
+              "canvas2svg",
+              "copy-to-clipboard",
+              "deepmerge",
+              "detect-node",
+              "escape-html",
+              "fast-deep-equal",
+              "hoist-non-react-statics",
+              "md5",
+              "pluralize",
+              "prop-types",
+              "react",
+              "react-dom",
+              "react-draggable",
+              "react-is",
+              "set-value",
+              "source-map-js",
+              "toggle-selection",
+              "use-sync-external-store"
+            ]
           },
           "configurations": {
             "production": {

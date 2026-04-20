@@ -28,7 +28,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
 import { Observable, catchError, forkJoin, map, of, switchMap, timer } from 'rxjs';
 import { GeneService } from '../../../gene/services/gene.service';
-import { GenomeRangeChartComponent } from './chart/genome-range-chart.component';
+import {
+  type G4ChartAxisFeatureRange,
+  GenomeRangeChartComponent,
+} from './chart/genome-range-chart.component';
 import { G4TableComponent } from './g4-table/g4-table.component';
 import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome-detail.service';
 import {
@@ -54,6 +57,7 @@ import {
   GenomeViewerStateService,
   JbrowseHostComponent,
 } from '../../viewer';
+import { UiThemeService } from '../../../theme/ui-theme.service';
 
 interface G4FilterModel {
   selectedTetrads: number[];
@@ -84,6 +88,18 @@ interface GenomeViewportTarget {
   end: number;
 }
 
+interface GeneNavigationTarget {
+  target: GenomeViewportTarget;
+  source: 'selected-gene' | 'first-g4';
+}
+
+interface AccessionIdOption {
+  value: BrowseScope;
+  label: string;
+  secondaryLabel?: string;
+  searchText: string;
+}
+
 const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.normal[0].value;
 const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   start: 'start',
@@ -96,6 +112,8 @@ const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const WHOLE_GENOME_SCOPE = 'whole-genome';
 const CHART_TARGET_BUCKETS = 200;
 const CHART_FOCUS_HALF_WINDOW_BP = 5000;
+const GENE_SEARCH_FOCUS_HALF_WINDOW_BP = 1000;
+const GENE_SEARCH_BIN_SIZE_BP = 100;
 const GENE_CANDIDATE_MIN_CHARS = 2;
 const GENE_CANDIDATE_LIMIT = 20;
 const GENE_CANDIDATE_DEBOUNCE_MS = 300;
@@ -170,6 +188,10 @@ function buildG4RowKey(seqid: string, start: number): string {
   return `${seqid}:${start}`;
 }
 
+function normalizeSearchTerm(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 function formatGeneRelationLabel(label: string): string {
   return label.replace('(G-rich)', ' (G-rich)').replace('(iMotif)', ' (iMotif)');
 }
@@ -230,13 +252,10 @@ function defaultBinSizeForLength(seqidLength: number): number {
 function focusWindowAroundCenter(
   center: number,
   seqidLength: number,
+  halfWindowBp = CHART_FOCUS_HALF_WINDOW_BP,
 ): { start: number; end: number } {
   const normalizedLength = normalizedSeqidLength(seqidLength);
-  return normalizedChartRange(
-    center - CHART_FOCUS_HALF_WINDOW_BP,
-    center + CHART_FOCUS_HALF_WINDOW_BP,
-    normalizedLength,
-  );
+  return normalizedChartRange(center - halfWindowBp, center + halfWindowBp, normalizedLength);
 }
 
 @Component({
@@ -273,6 +292,7 @@ export class GenomeInfoComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly viewerState = inject(GenomeViewerStateService);
   private readonly genomeViewerConfigService = inject(GenomeViewerConfigService);
+  private readonly uiThemeService = inject(UiThemeService);
 
   readonly g4Type = signal<G4Type>('normal');
   readonly genePositionOptions = computed(() =>
@@ -296,6 +316,7 @@ export class GenomeInfoComponent {
   readonly draftSelectedGene = signal<G4GeneCandidate | null>(null);
   readonly submittedSelectedGene = signal<G4GeneCandidate | null>(null);
   readonly geneInputError = signal<string | null>(null);
+  readonly accessionFilter = signal('');
 
   readonly assemblyResource = rxResource<GenomeAssemblyDetail, string>({
     params: () => this.assemblyAccession(),
@@ -309,6 +330,7 @@ export class GenomeInfoComponent {
     this.genomeViewerConfigService.createViewerConfig({
       assemblyAccession: this.assemblyAccession(),
       dataBaseUrl: this.dataBaseUrl(),
+      themeMode: this.uiThemeService.resolvedMode(),
     }),
   );
   readonly defaultRegionResource = rxResource<
@@ -347,10 +369,38 @@ export class GenomeInfoComponent {
     end: 1,
     binSize: 1,
   });
-  readonly accessionIdOptions = computed(() => [
-    { value: WHOLE_GENOME_SCOPE, label: 'Whole genome' },
-    ...(this.assemblyDetail()?.seqids ?? []).map((seqid) => ({ value: seqid, label: seqid })),
+  readonly selectedGeneAxisRange = signal<GenomeViewportTarget | null>(null);
+  readonly chartAxisFeatureRange = computed<G4ChartAxisFeatureRange | null>(() => {
+    const range = this.selectedGeneAxisRange();
+    if (!range || range.seqid !== this.chartSeqid()) {
+      return null;
+    }
+    return {
+      start: range.start,
+      end: range.end,
+    };
+  });
+  readonly regionsBySeqid = computed(() => {
+    const regions = this.assemblyDetail()?.regions ?? [];
+    return new Map(regions.map((region) => [region.seqid, region]));
+  });
+  readonly allAccessionIdOptions = computed<AccessionIdOption[]>(() => [
+    { value: WHOLE_GENOME_SCOPE, label: 'Whole genome', searchText: 'whole genome' },
+    ...(this.assemblyDetail()?.seqids ?? []).map((seqid) => {
+      const label = this.accessionNameForSeqid(seqid);
+      return {
+        value: seqid,
+        label,
+        secondaryLabel: label === seqid ? undefined : seqid,
+        searchText: normalizeSearchTerm(`${label} ${seqid}`),
+      };
+    }),
   ]);
+  readonly accessionIdOptions = computed(() => {
+    const filter = normalizeSearchTerm(this.accessionFilter());
+    const options = this.allAccessionIdOptions();
+    return filter ? options.filter((option) => option.searchText.includes(filter)) : options;
+  });
   readonly browseFilters = computed(() => {
     const filters = this.submittedFilters();
     return {
@@ -425,13 +475,11 @@ export class GenomeInfoComponent {
     parseOptionalInteger(this.submittedFilters().maxGscore),
   );
   readonly isGeneSearchMode = computed(() => this.hasSubmittedSelectedGene());
-  readonly displayedAccessionIdValue = computed(() =>
-    this.isGeneSearchMode() ? WHOLE_GENOME_SCOPE : this.browseScope(),
+  readonly displayedAccessionIdValue = computed(
+    () => this.submittedSelectedGene()?.seqid ?? this.browseScope(),
   );
   readonly displayedAccessionIdLabel = computed(() =>
-    this.displayedAccessionIdValue() === WHOLE_GENOME_SCOPE
-      ? 'Whole genome'
-      : this.displayedAccessionIdValue(),
+    this.accessionNameForSeqid(this.displayedAccessionIdValue()),
   );
   readonly showAccessionIdColumn = computed(
     () => this.isGeneSearchMode() || this.browseScope() === WHOLE_GENOME_SCOPE,
@@ -554,11 +602,12 @@ export class GenomeInfoComponent {
   );
   readonly explorerSubtitle = computed(() => {
     const browseScope = this.browseScope();
+    const gcType = this.g4Type() === 'revcomp' ? 'i-motifs' : 'G4s';
     if (!browseScope || this.isGeneSearchMode() || browseScope === WHOLE_GENOME_SCOPE) {
-      return `${this.g4Page().count} PQS in ${this.assemblyAccession()}`;
+      return `${this.g4Page().count} ${gcType} in ${this.assemblyAccession()}`;
     }
 
-    return `${this.g4Page().count} PQS in Accession ID ${browseScope}`;
+    return `${this.g4Page().count} ${gcType} in chr ${this.accessionNameForSeqid(browseScope)}`;
   });
   readonly geneSearchScopeHint = computed(() => {
     const label = this.draftPositionLabel();
@@ -626,6 +675,7 @@ export class GenomeInfoComponent {
 
       this.lastAssemblyAccessionForGeneSelection = assemblyAccession;
       this.navigationRequestId += 1;
+      this.accessionFilter.set('');
       this.clearGeneSelection();
     });
 
@@ -693,18 +743,37 @@ export class GenomeInfoComponent {
     this.geneInputError.set(null);
     this.commitFilters(this.filterForm().value());
     this.submittedSelectedGene.set(selectedGene);
+    this.selectedGeneAxisRange.set(null);
     if (selectedGene) {
       this.navigateToFirstResultForGeneSearch();
     }
   }
 
   selectBrowseScope(scope: BrowseScope): void {
-    if (this.isGeneSearchMode() || scope === this.browseScope()) {
+    const isGeneSearchMode = this.isGeneSearchMode();
+    if (!isGeneSearchMode && scope === this.browseScope()) {
       return;
     }
 
-    this.browseScope.set(scope);
+    this.accessionFilter.set('');
+    if (scope !== this.browseScope()) {
+      this.browseScope.set(scope);
+    }
+    if (isGeneSearchMode) {
+      this.clearGeneSelection();
+    }
     this.applyScopeViewport(scope, { navigateViewer: true });
+  }
+
+  onAccessionFilterInput(event: Event): void {
+    const value = (event.target as HTMLInputElement | null)?.value ?? '';
+    this.accessionFilter.set(value);
+  }
+
+  clearAccessionFilter(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.accessionFilter.set('');
   }
 
   selectG4Type(type: G4Type): void {
@@ -807,6 +876,10 @@ export class GenomeInfoComponent {
     }
 
     this.applyScopeViewport(this.browseScope(), { navigateViewer: true });
+  }
+
+  resetChartViewport(): void {
+    this.resetBrowser();
   }
 
   navigateToG4(item: G4PageItem): void {
@@ -947,38 +1020,50 @@ export class GenomeInfoComponent {
       .pipe(
         switchMap((geneTarget) => {
           if (geneTarget) {
-            return of(geneTarget);
+            return of<GeneNavigationTarget>({
+              target: geneTarget,
+              source: 'selected-gene',
+            });
           }
           return this.fetchFirstResultForGeneSearch().pipe(
-            map((page): GenomeViewportTarget | null => {
+            map((page): GeneNavigationTarget | null => {
               const firstG4 = page.g4s[0];
               return firstG4
                 ? {
-                    seqid: firstG4.seqid,
-                    start: firstG4.start,
-                    end: firstG4.end,
+                    target: {
+                      seqid: firstG4.seqid,
+                      start: firstG4.start,
+                      end: firstG4.end,
+                    },
+                    source: 'first-g4',
                   }
                 : null;
             }),
           );
         }),
       )
-      .subscribe((target) => {
-        if (requestId !== this.navigationRequestId || !target) {
+      .subscribe((navigationTarget) => {
+        if (requestId !== this.navigationRequestId || !navigationTarget) {
           return;
         }
 
-        const normalizedTarget = this.normalizeViewportTarget(target);
+        const normalizedTarget = this.normalizeViewportTarget(navigationTarget.target);
         if (!normalizedTarget) {
           return;
         }
+        this.selectedGeneAxisRange.set(
+          navigationTarget.source === 'selected-gene' ? normalizedTarget : null,
+        );
         const seqidLength = this.seqidLengthFor(normalizedTarget.seqid);
-        const center = Math.round((normalizedTarget.start + normalizedTarget.end) / 2);
-        const focusedRange = focusWindowAroundCenter(center, seqidLength);
+        const focusedRange = normalizedChartRange(
+          normalizedTarget.start - GENE_SEARCH_FOCUS_HALF_WINDOW_BP,
+          normalizedTarget.end + GENE_SEARCH_FOCUS_HALF_WINDOW_BP,
+          seqidLength,
+        );
         this.updateChartViewport(normalizedTarget.seqid, {
           start: focusedRange.start,
           end: focusedRange.end,
-          binSize: this.chartViewport().binSize,
+          binSize: GENE_SEARCH_BIN_SIZE_BP,
         });
         this.navigateViewerToRange(normalizedTarget.seqid, focusedRange.start, focusedRange.end);
       });
@@ -1011,6 +1096,7 @@ export class GenomeInfoComponent {
     this.draftGeneInput.set('');
     this.draftSelectedGene.set(null);
     this.submittedSelectedGene.set(null);
+    this.selectedGeneAxisRange.set(null);
     this.geneInputError.set(null);
   }
 
@@ -1031,6 +1117,13 @@ export class GenomeInfoComponent {
 
   trackByGeneCandidate(_index: number, candidate: G4GeneCandidate): string {
     return `${candidate.seqid}:${candidate.feature_id}`;
+  }
+
+  private accessionNameForSeqid(seqid: BrowseScope): string {
+    if (seqid === WHOLE_GENOME_SCOPE) {
+      return 'Whole genome';
+    }
+    return this.regionsBySeqid().get(seqid)?.accession_name?.trim() || seqid;
   }
 
   private applyScopeViewport(scope: BrowseScope, options: { navigateViewer: boolean }): void {

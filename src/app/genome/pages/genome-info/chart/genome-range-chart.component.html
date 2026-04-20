@@ -13,10 +13,17 @@
 
       <mat-form-field appearance="outline" class="range-chart__field range-chart__field-bin">
         <mat-label>Bin size (bp)</mat-label>
-        <input matInput type="number" min="1" [max]="seqidLength()" [formControl]="binSizeControl" />
+        <input
+          matInput
+          type="number"
+          min="1"
+          [max]="seqidLength()"
+          [formControl]="binSizeControl"
+        />
       </mat-form-field>
 
       <div class="range-chart__actions">
+        <button mat-button type="button" (click)="resetViewport()">Reset range</button>
         <button mat-flat-button type="submit">Apply range</button>
       </div>
     </form>
@@ -31,9 +38,9 @@
       </div>
 
       <div class="range-chart__axis-group">
-        <span class="range-chart__axis-label">Density unit</span>
+        <span class="range-chart__axis-label">Density bin</span>
         <mat-button-toggle-group
-          [value]="densityUnitBp()"
+          [value]="selectedDensityPresetBp()"
           [disabled]="yAxisMode() !== 'density'"
           (change)="setDensityUnit($event.value)"
         >

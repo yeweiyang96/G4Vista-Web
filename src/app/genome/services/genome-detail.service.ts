@@ -10,8 +10,15 @@ export interface GenomeAssemblyDetail {
   seq_rel_date: string | null;
   seqids: string[];
   seqid_lengths: Record<string, number>;
+  regions?: GenomeAssemblyRegion[];
   taxon_id: number | null;
   topt_ave: number | null;
+}
+
+export interface GenomeAssemblyRegion {
+  seqid: string;
+  accession_name: string;
+  region_length: number | null;
 }
 
 @Injectable({

@@ -51,14 +51,58 @@
           <mat-card-content>
             <div class="selector-row">
               <mat-form-field appearance="outline" class="selector-field">
-                <mat-label>Accession ID</mat-label>
+                <mat-label>Accession name</mat-label>
                 <mat-select
                   [value]="displayedAccessionIdValue()"
-                  [disabled]="isGeneSearchMode()"
                   (valueChange)="selectBrowseScope($event)"
                 >
+                  <mat-select-trigger>{{ displayedAccessionIdLabel() }}</mat-select-trigger>
+                  <div
+                    class="accession-filter-panel"
+                    tabindex="0"
+                    (click)="$event.stopPropagation()"
+                    (keydown)="$event.stopPropagation()"
+                  >
+                    <mat-form-field
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                      class="accession-filter-input"
+                    >
+                      <mat-label>Filter accessions</mat-label>
+                      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                      <input
+                        matInput
+                        type="search"
+                        autocomplete="off"
+                        spellcheck="false"
+                        [value]="accessionFilter()"
+                        (input)="onAccessionFilterInput($event)"
+                      />
+                      @if (accessionFilter()) {
+                        <button
+                          mat-icon-button
+                          matSuffix
+                          type="button"
+                          aria-label="Clear accession filter"
+                          (click)="clearAccessionFilter($event)"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      }
+                    </mat-form-field>
+                  </div>
                   @for (option of accessionIdOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    <mat-option [value]="option.value">
+                      <span class="accession-option">
+                        <span class="accession-option-name">{{ option.label }}</span>
+                        @if (option.secondaryLabel) {
+                          <span class="accession-option-id">{{ option.secondaryLabel }}</span>
+                        }
+                      </span>
+                    </mat-option>
+                  }
+                  @if (accessionIdOptions().length === 0) {
+                    <mat-option disabled>No matching accessions</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -83,8 +127,8 @@
                     Find genes around each PQS
                   </h3>
                   <p class="filter-group-description">
-                    Choose where the gene sits relative to the PQS, then search by feature ID,
-                    gene name, or locus tag across the current assembly.
+                    Choose where the gene sits relative to the PQS, then search by feature ID, gene
+                    name, or locus tag across the current assembly.
                   </p>
                 </div>
 
@@ -121,8 +165,13 @@
                       autoActiveFirstOption
                       (optionSelected)="onGeneCandidateSelected($event)"
                     >
-                      @for (candidate of geneCandidates(); track trackByGeneCandidate($index, candidate)) {
-                        <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
+                      @for (
+                        candidate of geneCandidates();
+                        track trackByGeneCandidate($index, candidate)
+                      ) {
+                        <mat-option [value]="candidate">{{
+                          geneOptionLabel(candidate)
+                        }}</mat-option>
                       }
                       @if (showGeneCandidateEmptyState()) {
                         <mat-option disabled>No matching genes found.</mat-option>
@@ -206,7 +255,11 @@
           <mat-card appearance="outlined" class="chart-card">
             <mat-card-header>
               <mat-card-title>Genome Range Chart</mat-card-title>
-              <mat-card-subtitle>{{ chartSeqid() }}: {{ chartViewport().start }}..{{ chartViewport().end }}</mat-card-subtitle>
+              <mat-card-subtitle
+                >{{ chartSeqid() }}: {{ chartViewport().start }}..{{
+                  chartViewport().end
+                }}</mat-card-subtitle
+              >
             </mat-card-header>
             <mat-card-content>
               <section aria-label="Genome range chart">
@@ -217,7 +270,9 @@
                   [viewport]="chartViewport()"
                   [seqidLength]="chartSeqidLength()"
                   [filters]="chartFilters()"
+                  [axisFeatureRange]="chartAxisFeatureRange()"
                   (viewportChange)="applyChartViewport($event)"
+                  (resetRange)="resetChartViewport()"
                 />
               </section>
             </mat-card-content>
