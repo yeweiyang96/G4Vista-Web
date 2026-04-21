@@ -1,0 +1,174 @@
+<mat-card appearance="outlined" class="position-card">
+  <mat-card-header class="position-card-header">
+    <div class="position-card-heading">
+      <mat-card-title>Whole-Genome Motif Position Summary</mat-card-title>
+      <mat-card-subtitle
+        >{{ motifTypeLabel() }} · {{ flankWindowLabel() }} upstream/downstream gene
+        window</mat-card-subtitle
+      >
+    </div>
+
+    <div class="position-controls">
+      <mat-button-toggle-group
+        [value]="g4Type()"
+        (change)="changeG4Type($event.value)"
+        aria-label="Whole-genome motif sequence type"
+      >
+        <mat-button-toggle value="normal">G rich</mat-button-toggle>
+        <mat-button-toggle value="revcomp">C rich</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="gene-window-field">
+        <mat-label>Upstream/downstream gene window</mat-label>
+        <mat-select [value]="flankWindow()" (valueChange)="changeFlankWindow($event)">
+          @for (option of flankWindowOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <form class="position-filter-form" (submit)="onApplyFilters($event)">
+        <mat-form-field
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="position-filter-field"
+        >
+          <mat-label>Tetrads</mat-label>
+          <mat-select
+            [value]="filterSelectedTetrads()"
+            multiple
+            (valueChange)="changeSelectedTetrads($event)"
+          >
+            @for (option of tetradOptions(); track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="position-filter-field"
+        >
+          <mat-label>Min gscore</mat-label>
+          <input
+            matInput
+            type="number"
+            inputmode="numeric"
+            step="1"
+            [value]="filterMinGscore()"
+            (input)="onMinGscoreInput($event)"
+          />
+        </mat-form-field>
+
+        <mat-form-field
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="position-filter-field"
+        >
+          <mat-label>Max gscore</mat-label>
+          <input
+            matInput
+            type="number"
+            inputmode="numeric"
+            step="1"
+            [value]="filterMaxGscore()"
+            (input)="onMaxGscoreInput($event)"
+          />
+        </mat-form-field>
+
+        <div class="position-filter-actions">
+          <button mat-button type="button" (click)="onResetFilters()">Reset</button>
+          <button mat-flat-button type="submit">Search</button>
+        </div>
+      </form>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (isLoading()) {
+      <div class="state">
+        <mat-spinner diameter="28"></mat-spinner>
+        <span>Loading whole-genome motif summary...</span>
+      </div>
+    } @else if (errorMessage()) {
+      <p class="state" role="status">{{ errorMessage() }}</p>
+    } @else if (distribution().total_count > 0) {
+      <div class="summary-grid">
+        <div class="pie-wrap" aria-label="Whole-genome motif position summary chart">
+          <div class="pie" [style.background]="gradient()">
+            <div class="pie-core">
+              <span class="pie-count">{{ formatCount(distribution().total_count) }}</span>
+              <span class="pie-label">motif sites</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics">
+          @for (metric of summaryMetrics(); track metric.key) {
+            <div class="metric">
+              <span class="metric-label">{{ metric.label }}</span>
+              <span class="metric-value">{{ metric.value }}</span>
+              <span class="metric-detail">{{ metric.detail }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="category-list">
+        @for (category of categoryRows(); track category.key) {
+          <div class="category-row" [title]="category.displayDescription">
+            <span
+              class="category-swatch"
+              [style.background]="category.color"
+              aria-hidden="true"
+            ></span>
+            <span class="category-name">{{ category.displayLabel }}</span>
+            <span class="category-count">{{ formatCount(category.count) }}</span>
+            <span class="category-ratio">{{ formatRatio(category.ratio) }}</span>
+          </div>
+        }
+      </div>
+
+      @if (featureBreakdown().length > 0) {
+        <section class="feature-breakdown" aria-label="Root non-gene feature type breakdown">
+          <h3 class="feature-breakdown-title">Root non-gene feature types</h3>
+          <div class="feature-breakdown-table">
+            <div class="feature-breakdown-row feature-breakdown-header">
+              <span>Feature type</span>
+              <span
+                matTooltip="Count of deduplicated motif sites assigned to this feature type."
+                matTooltipPosition="above"
+                >Unique motif sites</span
+              >
+              <span>Proportion</span>
+              <span
+                matTooltip="Total number of feature-site associations for this feature type; can exceed unique motif sites when one motif links to multiple features."
+                matTooltipPosition="above"
+                >Feature-site associations</span
+              >
+            </div>
+            @for (feature of featureBreakdown(); track feature.feature_type) {
+              <div class="feature-breakdown-row">
+                <span class="feature-breakdown-name">{{ feature.feature_type }}</span>
+                <span>{{ formatCount(feature.unique_g4_count) }}</span>
+                <span>{{ formatRatio(feature.ratio_of_total) }}</span>
+                <span>{{ formatCount(feature.relation_count) }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (distribution().quality.warnings.length > 0) {
+        <div class="warnings" role="status">
+          @for (warning of distribution().quality.warnings; track warning) {
+            <p>{{ warning }}</p>
+          }
+        </div>
+      }
+    } @else {
+      <p class="state" role="status">No whole-genome motif-site counts are available.</p>
+    }
+  </mat-card-content>
+</mat-card>

@@ -42,6 +42,24 @@
           </mat-card-content>
         </mat-card>
 
+        <app-position-distribution
+          [distribution]="positionDistribution()"
+          [isLoading]="positionDistributionResource.isLoading()"
+          [errorMessage]="positionDistributionErrorMessage()"
+          [flankWindow]="positionDistributionFlankWindow()"
+          [flankWindowLabel]="positionDistributionFlankWindowLabel()"
+          [g4Type]="positionDistributionG4Type()"
+          [tetradOptions]="positionDistributionTetradOptions()"
+          [filterSelectedTetrads]="positionDistributionFilterModel().selectedTetrads"
+          [filterMinGscore]="positionDistributionFilterModel().minGscore"
+          [filterMaxGscore]="positionDistributionFilterModel().maxGscore"
+          (g4TypeChange)="setPositionDistributionG4Type($event)"
+          (flankWindowChange)="setPositionDistributionFlankWindow($event)"
+          (filterModelChange)="setPositionDistributionFilterModel($event)"
+          (applyFilters)="submitPositionDistributionFilters()"
+          (resetFilters)="resetPositionDistributionFilters()"
+        />
+
         <mat-card appearance="outlined" class="explorer-card">
           <mat-card-header>
             <mat-card-title>G4 Explorer</mat-card-title>

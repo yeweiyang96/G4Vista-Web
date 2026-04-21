@@ -6,6 +6,7 @@ import { GenomeInfoComponent } from './genome-info.component';
 import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome-detail.service';
 import {
   EMPTY_G4_PAGE,
+  EMPTY_G4_POSITION_DISTRIBUTION,
   G4_GENE_POSITION_OPTIONS_BY_TYPE,
   G4GeneRelationsResponse,
   G4PageResponse,
@@ -239,6 +240,7 @@ describe('GenomeInfoComponent', () => {
       'getGeneSearchPage',
       'getGeneCandidates',
       'getGeneRelations',
+      'getPositionDistribution',
     ]);
     g4Service.getG4Page.and.callFake(({ seqid, pageSize }) =>
       of(
@@ -282,6 +284,65 @@ describe('GenomeInfoComponent', () => {
             ],
           },
         })),
+      }),
+    );
+    g4Service.getPositionDistribution.and.returnValue(
+      of({
+        ...EMPTY_G4_POSITION_DISTRIBUTION,
+        assembly_accession: 'GCF_1',
+        g4_type: 'normal',
+        total_count: 5,
+        categories: [
+          {
+            key: 'gene_inside',
+            label: 'Gene inside',
+            count: 2,
+            ratio: 0.4,
+            precedence_rank: 1,
+            description: 'Gene hit',
+          },
+          {
+            key: 'gene_upstream',
+            label: 'Gene upstream',
+            count: 1,
+            ratio: 0.2,
+            precedence_rank: 2,
+            description: 'Upstream hit',
+          },
+          {
+            key: 'gene_downstream',
+            label: 'Gene downstream',
+            count: 1,
+            ratio: 0.2,
+            precedence_rank: 3,
+            description: 'Downstream hit',
+          },
+          {
+            key: 'other_root_non_gene_feature',
+            label: 'Other root non-gene feature',
+            count: 1,
+            ratio: 0.2,
+            precedence_rank: 4,
+            description: 'Other feature hit',
+          },
+          {
+            key: 'non_feature',
+            label: 'Non-feature',
+            count: 0,
+            ratio: 0,
+            precedence_rank: 5,
+            description: 'No feature hit',
+          },
+        ],
+        feature_breakdown: [
+          {
+            feature_type: 'promoter',
+            unique_g4_count: 1,
+            relation_count: 1,
+            ratio_of_total: 0.2,
+            is_root_feature: true,
+          },
+        ],
       }),
     );
 
@@ -383,6 +444,127 @@ describe('GenomeInfoComponent', () => {
     });
     expect(g4Service.getAssemblyG4Page).not.toHaveBeenCalled();
     expect(viewerState.region()).toBe('chr1:1..10000');
+  });
+
+  it('loads position distribution from independent whole-genome controls only', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'normal',
+        flankWindow: 1000,
+        tetrads: [],
+        minGscore: undefined,
+        maxGscore: undefined,
+      }),
+    );
+
+    g4Service.getPositionDistribution.calls.reset();
+    component.filterModel.update((current) => ({
+      ...current,
+      selectedTetrads: [3],
+      minGscore: '12',
+      maxGscore: '40',
+    }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+
+    component.submitFilters();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+
+    component.setPositionDistributionFilterModel({
+      selectedTetrads: [3],
+      minGscore: '12',
+      maxGscore: '40',
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+
+    component.submitPositionDistributionFilters();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'normal',
+        flankWindow: 1000,
+        tetrads: [3],
+        minGscore: 12,
+        maxGscore: 40,
+      }),
+    );
+
+    g4Service.getPositionDistribution.calls.reset();
+    component.resetPositionDistributionFilters();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'normal',
+        flankWindow: 1000,
+        tetrads: [],
+        minGscore: undefined,
+        maxGscore: undefined,
+      }),
+    );
+
+    g4Service.getPositionDistribution.calls.reset();
+
+    component.selectG4Type('revcomp');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+
+    component.setPositionDistributionFlankWindow(500);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'normal',
+        flankWindow: 500,
+        tetrads: [],
+      }),
+    );
+    expect(component.positionDistributionFlankWindowLabel()).toBe('500 bp');
+
+    g4Service.getPositionDistribution.calls.reset();
+    component.setPositionDistributionG4Type('revcomp');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'revcomp',
+        flankWindow: 500,
+        tetrads: [],
+      }),
+    );
   });
 
   it('displays accession names and filters options without changing seqid values', async () => {

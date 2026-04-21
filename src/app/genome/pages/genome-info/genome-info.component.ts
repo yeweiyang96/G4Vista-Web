@@ -33,9 +33,13 @@ import {
   GenomeRangeChartComponent,
 } from './chart/genome-range-chart.component';
 import { G4TableComponent } from './g4-table/g4-table.component';
+import { PositionDistributionComponent } from './position-distribution/position-distribution.component';
 import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome-detail.service';
 import {
   EMPTY_G4_PAGE,
+  EMPTY_G4_POSITION_DISTRIBUTION,
+  G4FlankWindow,
+  G4_FLANK_WINDOW_OPTIONS,
   G4ChartViewport,
   G4GeneCandidate,
   G4GeneCandidatesRequest,
@@ -48,6 +52,8 @@ import {
   G4PageItem,
   G4PageRequest,
   G4PageResponse,
+  G4PositionDistributionRequest,
+  G4PositionDistributionResponse,
   G4Service,
   G4SortField,
   G4Type,
@@ -62,6 +68,12 @@ import { UiThemeService } from '../../../theme/ui-theme.service';
 interface G4FilterModel {
   selectedTetrads: number[];
   selectedPosition: G4GenePosition;
+  minGscore: string;
+  maxGscore: string;
+}
+
+interface PositionDistributionFilterModel {
+  selectedTetrads: number[];
   minGscore: string;
   maxGscore: string;
 }
@@ -101,6 +113,7 @@ interface AccessionIdOption {
 }
 
 const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.normal[0].value;
+const DEFAULT_FLANK_WINDOW: G4FlankWindow = 1000;
 const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   start: 'start',
   end: 'end',
@@ -125,6 +138,14 @@ function createInitialFilterModel(selectedPosition = DEFAULT_GENE_POSITION): G4F
   return {
     selectedTetrads: [],
     selectedPosition,
+    minGscore: '',
+    maxGscore: '',
+  };
+}
+
+function createInitialPositionDistributionFilterModel(): PositionDistributionFilterModel {
+  return {
+    selectedTetrads: [],
     minGscore: '',
     maxGscore: '',
   };
@@ -155,6 +176,22 @@ function normalizeFilterModel(model: G4FilterModel): G4FilterModel {
     minGscore: normalizeIntegerInput(model.minGscore),
     maxGscore: normalizeIntegerInput(model.maxGscore),
   };
+}
+
+function normalizePositionDistributionFilterModel(
+  model: PositionDistributionFilterModel,
+): PositionDistributionFilterModel {
+  return {
+    ...model,
+    minGscore: normalizeIntegerInput(model.minGscore),
+    maxGscore: normalizeIntegerInput(model.maxGscore),
+  };
+}
+
+function normalizeFlankWindow(value: number): G4FlankWindow {
+  return G4_FLANK_WINDOW_OPTIONS.some((option) => option.value === value)
+    ? (value as G4FlankWindow)
+    : DEFAULT_FLANK_WINDOW;
 }
 
 function buildViewerLocation(seqid: string, start: number, end: number): string {
@@ -266,6 +303,7 @@ function focusWindowAroundCenter(
     G4TableComponent,
     GenomeRangeChartComponent,
     JbrowseHostComponent,
+    PositionDistributionComponent,
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -316,6 +354,12 @@ export class GenomeInfoComponent {
   readonly draftGeneInput = signal('');
   readonly draftSelectedGene = signal<G4GeneCandidate | null>(null);
   readonly submittedSelectedGene = signal<G4GeneCandidate | null>(null);
+  readonly positionDistributionG4Type = signal<G4Type>('normal');
+  readonly positionDistributionFlankWindow = signal<G4FlankWindow>(DEFAULT_FLANK_WINDOW);
+  readonly positionDistributionFilterModel = signal(createInitialPositionDistributionFilterModel());
+  readonly submittedPositionDistributionFilters = signal(
+    createInitialPositionDistributionFilterModel(),
+  );
   readonly geneInputError = signal<string | null>(null);
   readonly accessionFilter = signal('');
 
@@ -414,6 +458,25 @@ export class GenomeInfoComponent {
     ...this.browseFilters(),
     overlap: false,
   }));
+  readonly positionDistributionFlankWindowLabel = computed(
+    () =>
+      G4_FLANK_WINDOW_OPTIONS.find(
+        (option) => option.value === this.positionDistributionFlankWindow(),
+      )?.label ?? '1 kb',
+  );
+  readonly positionDistributionFilters = computed(() => {
+    const filters = this.submittedPositionDistributionFilters();
+    return {
+      tetrads: filters.selectedTetrads,
+      minGscore: parseOptionalInteger(filters.minGscore),
+      maxGscore: parseOptionalInteger(filters.maxGscore),
+    };
+  });
+  readonly positionDistributionTetradOptions = computed(() =>
+    this.g4Page()
+      .tetrads_list.slice()
+      .sort((left, right) => left - right),
+  );
   readonly draftPositionLabel = computed(
     () =>
       this.genePositionOptions().find(
@@ -551,6 +614,45 @@ export class GenomeInfoComponent {
     defaultValue: EMPTY_G4_PAGE,
   });
   readonly g4Page = computed<G4PageResponse>(() => this.g4PageResource.value());
+  readonly positionDistributionResource = rxResource<
+    G4PositionDistributionResponse,
+    G4PositionDistributionRequest | undefined
+  >({
+    params: () => {
+      if (!this.assemblyDetail()) {
+        return undefined;
+      }
+
+      return {
+        assemblyAccession: this.assemblyAccession(),
+        g4Type: this.positionDistributionG4Type(),
+        tetrads: this.positionDistributionFilters().tetrads,
+        minGscore: this.positionDistributionFilters().minGscore,
+        maxGscore: this.positionDistributionFilters().maxGscore,
+        overlap: false,
+        flankWindow: this.positionDistributionFlankWindow(),
+        includeFeatureBreakdown: true,
+      };
+    },
+    stream: ({ params }) => {
+      if (!params) {
+        return of(EMPTY_G4_POSITION_DISTRIBUTION);
+      }
+      return this.g4Service.getPositionDistribution(params);
+    },
+    defaultValue: EMPTY_G4_POSITION_DISTRIBUTION,
+  });
+  readonly positionDistribution = computed<G4PositionDistributionResponse>(() =>
+    this.positionDistributionResource.value(),
+  );
+  readonly positionDistributionStatus = computed(
+    () => this.positionDistributionResource.snapshot().status,
+  );
+  readonly positionDistributionErrorMessage = computed(() =>
+    this.positionDistributionStatus() === 'error'
+      ? 'Whole-genome motif position summary unavailable.'
+      : '',
+  );
   readonly geneRelationsResource = rxResource<
     GeneRelationBatchResponse[],
     GeneRelationBatchRequest | undefined
@@ -820,6 +922,30 @@ export class GenomeInfoComponent {
       this.pageSize.set(event.pageSize);
     }
     this.pageIndex.set(event.pageIndex);
+  }
+
+  setPositionDistributionG4Type(value: G4Type): void {
+    this.positionDistributionG4Type.set(value);
+  }
+
+  setPositionDistributionFlankWindow(value: G4FlankWindow): void {
+    this.positionDistributionFlankWindow.set(normalizeFlankWindow(value));
+  }
+
+  setPositionDistributionFilterModel(model: PositionDistributionFilterModel): void {
+    this.positionDistributionFilterModel.set(model);
+  }
+
+  submitPositionDistributionFilters(): void {
+    this.submittedPositionDistributionFilters.set(
+      normalizePositionDistributionFilterModel(this.positionDistributionFilterModel()),
+    );
+  }
+
+  resetPositionDistributionFilters(): void {
+    const defaults = createInitialPositionDistributionFilterModel();
+    this.positionDistributionFilterModel.set(defaults);
+    this.submittedPositionDistributionFilters.set(defaults);
   }
 
   resetFilters(): void {

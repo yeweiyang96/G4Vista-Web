@@ -46,6 +46,19 @@ export const G4_GENE_POSITION_OPTIONS = [
 export type G4GenePosition = (typeof G4_GENE_POSITION_OPTIONS)[number]['value'];
 export type G4SortField = 'start' | 'end' | 'length' | 'tetrads' | 'gscore' | 'y1' | 'y2' | 'y3';
 export type G4Type = 'normal' | 'revcomp';
+export type G4FlankWindow = 100 | 200 | 300 | 500 | 1000 | 2000 | 3000 | 4000 | 5000;
+
+export const G4_FLANK_WINDOW_OPTIONS: readonly { value: G4FlankWindow; label: string }[] = [
+  { value: 100, label: '100 bp' },
+  { value: 200, label: '200 bp' },
+  { value: 300, label: '300 bp' },
+  { value: 500, label: '500 bp' },
+  { value: 1000, label: '1 kb' },
+  { value: 2000, label: '2 kb' },
+  { value: 3000, label: '3 kb' },
+  { value: 4000, label: '4 kb' },
+  { value: 5000, label: '5 kb' },
+];
 
 export interface G4GenePositionOption {
   value: G4GenePosition;
@@ -145,6 +158,60 @@ export interface G4HistogramRequest {
   filters: G4HistogramFilters;
 }
 
+export interface G4PositionDistributionFilters {
+  tetrads: number[];
+  min_gscore: number | null;
+  max_gscore: number | null;
+  overlap: boolean;
+  flank_window: G4FlankWindow;
+  counting_mode: 'exclusive';
+}
+
+export interface G4PositionCategory {
+  key: string;
+  label: string;
+  count: number;
+  ratio: number;
+  precedence_rank: number;
+  description: string;
+}
+
+export interface G4FeatureBreakdownItem {
+  feature_type: string;
+  unique_g4_count: number;
+  relation_count: number;
+  ratio_of_total: number;
+  is_root_feature: boolean;
+}
+
+export interface G4PositionDistributionQuality {
+  regions_total_count: number;
+  regions_status_ok_count: number;
+  regions_length_mismatch_count: number;
+  warnings: string[];
+}
+
+export interface G4PositionDistributionResponse {
+  assembly_accession: string;
+  g4_type: G4Type;
+  filters: G4PositionDistributionFilters;
+  total_count: number;
+  categories: G4PositionCategory[];
+  feature_breakdown: G4FeatureBreakdownItem[];
+  quality: G4PositionDistributionQuality;
+}
+
+export interface G4PositionDistributionRequest {
+  assemblyAccession: string;
+  g4Type: G4Type;
+  tetrads: number[];
+  minGscore?: number;
+  maxGscore?: number;
+  overlap?: boolean;
+  flankWindow: G4FlankWindow;
+  includeFeatureBreakdown?: boolean;
+}
+
 export interface G4GeneSearchRequest {
   assemblyAccession: string;
   g4Type: G4Type;
@@ -202,6 +269,28 @@ export const EMPTY_G4_HISTOGRAM: G4HistogramResponse = {
   range_end: 1,
   bin_size: 1,
   total_count: 0,
+};
+
+export const EMPTY_G4_POSITION_DISTRIBUTION: G4PositionDistributionResponse = {
+  assembly_accession: '',
+  g4_type: 'normal',
+  filters: {
+    tetrads: [],
+    min_gscore: null,
+    max_gscore: null,
+    overlap: false,
+    flank_window: 1000,
+    counting_mode: 'exclusive',
+  },
+  total_count: 0,
+  categories: [],
+  feature_breakdown: [],
+  quality: {
+    regions_total_count: 0,
+    regions_status_ok_count: 0,
+    regions_length_mismatch_count: 0,
+    warnings: [],
+  },
 };
 
 const SORT_FIELD_PARAM_MAP: Record<G4SortField, string> = {
@@ -333,6 +422,22 @@ export class G4Service {
 
     return this.http.get<G4HistogramResponse>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}/histogram`,
+      { params },
+    );
+  }
+
+  getPositionDistribution(
+    request: G4PositionDistributionRequest,
+  ): Observable<G4PositionDistributionResponse> {
+    const params = this.appendCommonFilterParams(
+      new HttpParams()
+        .set('flank_window', request.flankWindow)
+        .set('include_feature_breakdown', request.includeFeatureBreakdown ?? true),
+      request,
+    );
+
+    return this.http.get<G4PositionDistributionResponse>(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/position-distribution`,
       { params },
     );
   }

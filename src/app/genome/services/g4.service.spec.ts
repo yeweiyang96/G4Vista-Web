@@ -255,4 +255,46 @@ describe('G4Service', () => {
       total_count: 0,
     });
   });
+
+  it('builds position distribution requests with submitted filters', () => {
+    service
+      .getPositionDistribution({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'normal',
+        tetrads: [2, 4],
+        minGscore: 12,
+        maxGscore: 40,
+        overlap: true,
+        flankWindow: 500,
+        includeFeatureBreakdown: false,
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      '/api/v1/g4/GCF_000021765.1/normal/position-distribution?flank_window=500&include_feature_breakdown=false&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      assembly_accession: 'GCF_000021765.1',
+      g4_type: 'normal',
+      filters: {
+        tetrads: [2, 4],
+        min_gscore: 12,
+        max_gscore: 40,
+        overlap: true,
+        flank_window: 500,
+        counting_mode: 'exclusive',
+      },
+      total_count: 0,
+      categories: [],
+      feature_breakdown: [],
+      quality: {
+        regions_total_count: 0,
+        regions_status_ok_count: 0,
+        regions_length_mismatch_count: 0,
+        warnings: [],
+      },
+    });
+  });
 });
