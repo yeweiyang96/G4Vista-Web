@@ -49,6 +49,27 @@
   max-width: 360px;
 }
 
+.region-fna-header {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.region-fna-header-label {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.region-fna-header-value {
+  font: var(--mat-sys-body-medium);
+  overflow-wrap: anywhere;
+}
+
 .accession-filter-panel {
   position: sticky;
   top: 0;

@@ -112,6 +112,7 @@ const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const WHOLE_GENOME_SCOPE = 'whole-genome';
 const CHART_TARGET_BUCKETS = 200;
 const CHART_FOCUS_HALF_WINDOW_BP = 5000;
+const TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP = 100;
 const GENE_SEARCH_FOCUS_HALF_WINDOW_BP = 1000;
 const GENE_SEARCH_BIN_SIZE_BP = 100;
 const GENE_CANDIDATE_MIN_CHARS = 2;
@@ -481,6 +482,13 @@ export class GenomeInfoComponent {
   readonly displayedAccessionIdLabel = computed(() =>
     this.accessionNameForSeqid(this.displayedAccessionIdValue()),
   );
+  readonly displayedRegionFnaHeader = computed(() => {
+    const scope = this.displayedAccessionIdValue();
+    if (!scope || scope === WHOLE_GENOME_SCOPE) {
+      return '';
+    }
+    return this.regionsBySeqid().get(scope)?.fna_header?.trim() ?? '';
+  });
   readonly showAccessionIdColumn = computed(
     () => this.isGeneSearchMode() || this.browseScope() === WHOLE_GENOME_SCOPE,
   );
@@ -898,7 +906,7 @@ export class GenomeInfoComponent {
     this.updateChartViewport(normalizedTarget.seqid, {
       start: focusedRange.start,
       end: focusedRange.end,
-      binSize: this.chartViewport().binSize,
+      binSize: TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP,
     });
     this.navigateViewerToRange(normalizedTarget.seqid, focusedRange.start, focusedRange.end);
   }

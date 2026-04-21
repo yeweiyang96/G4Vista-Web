@@ -18,6 +18,7 @@ export interface GenomeAssemblyDetail {
 export interface GenomeAssemblyRegion {
   seqid: string;
   accession_name: string;
+  fna_header: string;
   region_length: number | null;
 }
 

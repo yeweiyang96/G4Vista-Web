@@ -49,6 +49,13 @@
           </mat-card-header>
 
           <mat-card-content>
+            @if (displayedRegionFnaHeader(); as fnaHeader) {
+              <div class="region-fna-header">
+                <span class="region-fna-header-label">FASTA header</span>
+                <span class="region-fna-header-value">{{ fnaHeader }}</span>
+              </div>
+            }
+
             <div class="selector-row">
               <mat-form-field appearance="outline" class="selector-field">
                 <mat-label>Accession name</mat-label>

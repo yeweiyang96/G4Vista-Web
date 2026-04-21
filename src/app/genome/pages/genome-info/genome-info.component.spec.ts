@@ -26,8 +26,18 @@ describe('GenomeInfoComponent', () => {
       chr2: 20_000,
     },
     regions: [
-      { seqid: 'chr1', accession_name: 'Main chromosome', region_length: 10_000 },
-      { seqid: 'chr2', accession_name: 'Plasmid pTest', region_length: 20_000 },
+      {
+        seqid: 'chr1',
+        accession_name: 'Main chromosome',
+        fna_header: 'chr1 FASTA header',
+        region_length: 10_000,
+      },
+      {
+        seqid: 'chr2',
+        accession_name: 'Plasmid pTest',
+        fna_header: 'chr2 plasmid FASTA header',
+        region_length: 20_000,
+      },
     ],
     taxon_id: 1,
     topt_ave: 37,
@@ -44,8 +54,18 @@ describe('GenomeInfoComponent', () => {
       chrB: 24_000,
     },
     regions: [
-      { seqid: 'chrA', accession_name: 'Chromosome A', region_length: 12_000 },
-      { seqid: 'chrB', accession_name: 'Plasmid B', region_length: 24_000 },
+      {
+        seqid: 'chrA',
+        accession_name: 'Chromosome A',
+        fna_header: 'chrA FASTA header',
+        region_length: 12_000,
+      },
+      {
+        seqid: 'chrB',
+        accession_name: 'Plasmid B',
+        fna_header: 'chrB FASTA header',
+        region_length: 24_000,
+      },
     ],
     taxon_id: 2,
     topt_ave: 30,
@@ -371,6 +391,7 @@ describe('GenomeInfoComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
+    expect(component.displayedRegionFnaHeader()).toBe('chr1 FASTA header');
     expect(component.allAccessionIdOptions().map((option) => option.label)).toEqual([
       'Whole genome',
       'Main chromosome',
@@ -417,6 +438,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.browseScope()).toBe('chr2');
     expect(component.displayedAccessionIdValue()).toBe('chr2');
     expect(component.displayedAccessionIdLabel()).toBe('Plasmid pTest');
+    expect(component.displayedRegionFnaHeader()).toBe('chr2 plasmid FASTA header');
     expect(g4Service.getG4Page.calls.allArgs()).toContain([
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
