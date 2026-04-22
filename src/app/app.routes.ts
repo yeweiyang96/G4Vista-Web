@@ -1,10 +1,7 @@
 import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
-import { isDevMode } from '@angular/core';
 import { HomeComponent } from './home/home.component';
 
-const JBROWSE_BASE_URL = isDevMode()
-  ? 'http://localhost:8000/jbrowse'
-  : 'https://g4vista.med.niigata-u.ac.jp/api/jbrowse';
+const JBROWSE_BASE_URL = 'https://g4vista.med.niigata-u.ac.jp/api/jbrowse';
 
 export const routes: Routes = [
   { path: '', title: 'G4Vista', component: HomeComponent },
