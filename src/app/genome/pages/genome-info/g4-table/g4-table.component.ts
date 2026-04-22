@@ -136,7 +136,7 @@ export class G4TableComponent {
       { header: 'End', field: 'end', sortable: true, type: 'number' },
       { header: 'Length', field: 'length', sortable: true, type: 'number' },
       { header: 'Tetrads', field: 'tetrads', sortable: true, type: 'number' },
-      { header: 'Gscore', field: 'gscore', sortable: true, type: 'number' },
+      { header: 'Score', field: 'gscore', sortable: true, type: 'number' },
       {
         header: 'Sequence',
         field: 'sequence',

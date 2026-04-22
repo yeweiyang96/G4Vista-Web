@@ -93,19 +93,19 @@ export class GeneHomeComponent {
       field: 'gene_biotype',
     },
     {
-      header: 'Inside Gene (G-rich)',
+      header: 'Inside Gene (G4)',
       field: 'insideOf_gene_normal_count',
       type: 'number',
       sortable: true,
     },
     {
-      header: 'Upstream 1kb (G-rich)',
+      header: 'Upstream 1kb (G4)',
       field: 'insideOf_genes_upstream_1k_normal_count',
       type: 'number',
       sortable: true,
     },
     {
-      header: 'Downstream 1kb (G-rich)',
+      header: 'Downstream 1kb (G4)',
       field: 'insideOf_genes_downstream_1k_normal_count',
       type: 'number',
       sortable: true,

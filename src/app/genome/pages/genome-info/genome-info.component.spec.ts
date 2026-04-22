@@ -7,6 +7,7 @@ import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome
 import {
   EMPTY_G4_PAGE,
   EMPTY_G4_POSITION_DISTRIBUTION,
+  EMPTY_G4_POSITION_STATISTICS,
   G4_GENE_POSITION_OPTIONS_BY_TYPE,
   G4GeneRelationsResponse,
   G4PageResponse,
@@ -241,6 +242,7 @@ describe('GenomeInfoComponent', () => {
       'getGeneCandidates',
       'getGeneRelations',
       'getPositionDistribution',
+      'getPositionStatistics',
     ]);
     g4Service.getG4Page.and.callFake(({ seqid, pageSize }) =>
       of(
@@ -341,6 +343,71 @@ describe('GenomeInfoComponent', () => {
             relation_count: 1,
             ratio_of_total: 0.2,
             is_root_feature: true,
+          },
+        ],
+      }),
+    );
+    g4Service.getPositionStatistics.and.returnValue(
+      of({
+        ...EMPTY_G4_POSITION_STATISTICS,
+        assembly_accession: 'GCF_1',
+        genome_length_bp: 30_000,
+        genome_length_mb: 0.03,
+        filters: {
+          windows: [100, 500, 1000, 5000],
+          tetrads: [],
+          min_gscore: null,
+          max_gscore: null,
+          overlap: false,
+        },
+        windows: [
+          {
+            window_bp: 100,
+            categories: [
+              {
+                key: 'gene_inside',
+                label: 'Gene inside',
+                description: 'Gene hit',
+                precedence_rank: 1,
+                merged_interval_length_bp: 1000,
+                length_mb: 0.001,
+                motifs: {
+                  normal: {
+                    count: 2,
+                    density_per_mb: 2000,
+                    expected_vs_genome: 1,
+                    fold_vs_genome: 2,
+                    fold_vs_non_feature: 3,
+                    median_gscore: 20,
+                    p95_gscore: 40,
+                    median_tetrads: 3,
+                    p95_tetrads: 4,
+                    median_length: 24,
+                    p95_length: 32,
+                  },
+                  revcomp: {
+                    count: 1,
+                    density_per_mb: 1000,
+                    expected_vs_genome: 0.5,
+                    fold_vs_genome: 1,
+                    fold_vs_non_feature: 1.5,
+                    median_gscore: 18,
+                    p95_gscore: 30,
+                    median_tetrads: 2,
+                    p95_tetrads: 3,
+                    median_length: 20,
+                    p95_length: 28,
+                  },
+                },
+                asymmetry: {
+                  normal_fraction: 2 / 3,
+                  revcomp_fraction: 1 / 3,
+                  fraction_delta: 1 / 3,
+                  count_delta: 1,
+                  density_ratio_normal_over_revcomp: 2,
+                },
+              },
+            ],
           },
         ],
       }),
@@ -1099,7 +1166,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.submittedSelectedGene()?.feature_id).toBe('dnaK');
     expect(component.isGeneSearchMode()).toBeTrue();
     expect(snackBarOpenSpy).toHaveBeenCalledWith(
-      'No PQS matched the selected gene with the current filters.',
+      'No G4 matched the selected gene with the current filters.',
       'Dismiss',
       { duration: 4000 },
     );

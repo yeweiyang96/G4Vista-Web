@@ -1,7 +1,7 @@
 <mat-card appearance="outlined" class="position-card">
   <mat-card-header class="position-card-header">
     <div class="position-card-heading">
-      <mat-card-title>Whole-Genome Motif Position Summary</mat-card-title>
+      <mat-card-title>Whole-Genome G-rich/i-motif Position Summary</mat-card-title>
       <mat-card-subtitle
         >{{ motifTypeLabel() }} · {{ flankWindowLabel() }} upstream/downstream gene
         window</mat-card-subtitle
@@ -12,10 +12,10 @@
       <mat-button-toggle-group
         [value]="g4Type()"
         (change)="changeG4Type($event.value)"
-        aria-label="Whole-genome motif sequence type"
+        aria-label="Whole-genome G-rich/i-motif type"
       >
-        <mat-button-toggle value="normal">G rich</mat-button-toggle>
-        <mat-button-toggle value="revcomp">C rich</mat-button-toggle>
+        <mat-button-toggle value="normal">G-rich</mat-button-toggle>
+        <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
       </mat-button-toggle-group>
 
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="gene-window-field">
@@ -50,7 +50,7 @@
           subscriptSizing="dynamic"
           class="position-filter-field"
         >
-          <mat-label>Min gscore</mat-label>
+          <mat-label>Min score</mat-label>
           <input
             matInput
             type="number"
@@ -66,7 +66,7 @@
           subscriptSizing="dynamic"
           class="position-filter-field"
         >
-          <mat-label>Max gscore</mat-label>
+          <mat-label>Max score</mat-label>
           <input
             matInput
             type="number"
@@ -79,96 +79,557 @@
 
         <div class="position-filter-actions">
           <button mat-button type="button" (click)="onResetFilters()">Reset</button>
-          <button mat-flat-button type="submit">Search</button>
+          <button mat-flat-button type="submit">Submit</button>
         </div>
       </form>
     </div>
   </mat-card-header>
 
   <mat-card-content>
-    @if (isLoading()) {
-      <div class="state">
-        <mat-spinner diameter="28"></mat-spinner>
-        <span>Loading whole-genome motif summary...</span>
-      </div>
-    } @else if (errorMessage()) {
-      <p class="state" role="status">{{ errorMessage() }}</p>
-    } @else if (distribution().total_count > 0) {
-      <div class="summary-grid">
-        <div class="pie-wrap" aria-label="Whole-genome motif position summary chart">
-          <div class="pie" [style.background]="gradient()">
-            <div class="pie-core">
-              <span class="pie-count">{{ formatCount(distribution().total_count) }}</span>
-              <span class="pie-label">motif sites</span>
+    <mat-tab-group class="position-tabs" animationDuration="150ms">
+      <mat-tab label="Summary">
+        <section class="tab-panel">
+          @if (isLoading()) {
+            <div class="state">
+              <mat-spinner diameter="28"></mat-spinner>
+              <span>Loading whole-genome G-rich/i-motif summary...</span>
             </div>
-          </div>
-        </div>
+          } @else if (errorMessage()) {
+            <p class="state" role="status">{{ errorMessage() }}</p>
+          } @else if (distribution().total_count > 0) {
+            <div class="summary-grid">
+              <div class="pie-wrap" aria-label="Whole-genome G-rich/i-motif position summary chart">
+                <div class="pie" [style.background]="gradient()">
+                  <div class="pie-core">
+                    <span class="pie-count">{{ formatCount(distribution().total_count) }}</span>
+                    <span class="pie-label">sites</span>
+                  </div>
+                </div>
+              </div>
 
-        <div class="metrics">
-          @for (metric of summaryMetrics(); track metric.key) {
-            <div class="metric">
-              <span class="metric-label">{{ metric.label }}</span>
-              <span class="metric-value">{{ metric.value }}</span>
-              <span class="metric-detail">{{ metric.detail }}</span>
+              <div class="metrics">
+                @for (metric of summaryMetrics(); track metric.key) {
+                  <div class="metric">
+                    <span class="metric-label">{{ metric.label }}</span>
+                    <span class="metric-value">{{ metric.value }}</span>
+                    <span class="metric-detail">{{ metric.detail }}</span>
+                  </div>
+                }
+              </div>
             </div>
-          }
-        </div>
-      </div>
 
-      <div class="category-list">
-        @for (category of categoryRows(); track category.key) {
-          <div class="category-row" [title]="category.displayDescription">
-            <span
-              class="category-swatch"
-              [style.background]="category.color"
-              aria-hidden="true"
-            ></span>
-            <span class="category-name">{{ category.displayLabel }}</span>
-            <span class="category-count">{{ formatCount(category.count) }}</span>
-            <span class="category-ratio">{{ formatRatio(category.ratio) }}</span>
-          </div>
-        }
-      </div>
-
-      @if (featureBreakdown().length > 0) {
-        <section class="feature-breakdown" aria-label="Root non-gene feature type breakdown">
-          <h3 class="feature-breakdown-title">Root non-gene feature types</h3>
-          <div class="feature-breakdown-table">
-            <div class="feature-breakdown-row feature-breakdown-header">
-              <span>Feature type</span>
-              <span
-                matTooltip="Count of deduplicated motif sites assigned to this feature type."
-                matTooltipPosition="above"
-                >Unique motif sites</span
-              >
-              <span>Proportion</span>
-              <span
-                matTooltip="Total number of feature-site associations for this feature type; can exceed unique motif sites when one motif links to multiple features."
-                matTooltipPosition="above"
-                >Feature-site associations</span
-              >
+            <div class="category-list">
+              @for (category of categoryRows(); track category.key) {
+                <div class="category-row" [title]="category.displayDescription">
+                  <span
+                    class="category-swatch"
+                    [style.background]="category.color"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="category-name">{{ category.displayLabel }}</span>
+                  <span class="category-count">{{ formatCount(category.count) }}</span>
+                  <span class="category-ratio">{{ formatRatio(category.ratio) }}</span>
+                </div>
+              }
             </div>
-            @for (feature of featureBreakdown(); track feature.feature_type) {
-              <div class="feature-breakdown-row">
-                <span class="feature-breakdown-name">{{ feature.feature_type }}</span>
-                <span>{{ formatCount(feature.unique_g4_count) }}</span>
-                <span>{{ formatRatio(feature.ratio_of_total) }}</span>
-                <span>{{ formatCount(feature.relation_count) }}</span>
+
+            @if (featureBreakdown().length > 0) {
+              <section class="feature-breakdown" aria-label="Root non-gene feature type breakdown">
+                <h3 class="feature-breakdown-title">Root non-gene feature types</h3>
+                <div class="feature-breakdown-table">
+                  <div class="feature-breakdown-row feature-breakdown-header">
+                    <span>Feature type</span>
+                    <span
+                      matTooltip="Count of deduplicated G-rich/i-motif sites assigned to this feature type."
+                      matTooltipPosition="above"
+                      >Unique G-rich/i-motif sites</span
+                    >
+                    <span>Proportion</span>
+                    <span
+                      matTooltip="Total number of feature-site associations for this feature type; can exceed unique sites when one site links to multiple features."
+                      matTooltipPosition="above"
+                      >Feature-site associations</span
+                    >
+                  </div>
+                  @for (feature of featureBreakdown(); track feature.feature_type) {
+                    <div class="feature-breakdown-row">
+                      <span class="feature-breakdown-name">{{ feature.feature_type }}</span>
+                      <span>{{ formatCount(feature.unique_g4_count) }}</span>
+                      <span>{{ formatRatio(feature.ratio_of_total) }}</span>
+                      <span>{{ formatCount(feature.relation_count) }}</span>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+
+            @if (distribution().quality.warnings.length > 0) {
+              <div class="warnings" role="status">
+                @for (warning of distribution().quality.warnings; track warning) {
+                  <p>{{ warning }}</p>
+                }
               </div>
             }
-          </div>
-        </section>
-      }
-
-      @if (distribution().quality.warnings.length > 0) {
-        <div class="warnings" role="status">
-          @for (warning of distribution().quality.warnings; track warning) {
-            <p>{{ warning }}</p>
+          } @else {
+            <p class="state" role="status">
+              No whole-genome G-rich/i-motif site counts are available.
+            </p>
           }
-        </div>
-      }
-    } @else {
-      <p class="state" role="status">No whole-genome motif-site counts are available.</p>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Density & Enrichment">
+        <section class="tab-panel">
+          @if (statisticsLoading()) {
+            <div class="state">
+              <mat-spinner diameter="28"></mat-spinner>
+              <span>Loading research statistics...</span>
+            </div>
+          } @else if (statisticsErrorMessage()) {
+            <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
+          } @else if (hasStatistics()) {
+            <div class="stats-wrap">
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.window"
+                        matTooltipPosition="above"
+                        >Window</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.category"
+                        matTooltipPosition="above"
+                        >Category</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.intervalLength"
+                        matTooltipPosition="above"
+                        >Interval length (Mb)</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.densityPerMb"
+                        matTooltipPosition="above"
+                        >G-rich density / Mb</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.foldVsGenome"
+                        matTooltipPosition="above"
+                        >G-rich fold vs genome</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.foldVsNonFeature"
+                        matTooltipPosition="above"
+                        >G-rich fold vs non-feature</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.densityPerMb"
+                        matTooltipPosition="above"
+                        >i-motif density / Mb</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.foldVsGenome"
+                        matTooltipPosition="above"
+                        >i-motif fold vs genome</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.foldVsNonFeature"
+                        matTooltipPosition="above"
+                        >i-motif fold vs non-feature</span
+                      >
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    category of statisticsRows();
+                    track category.window_bp + ':' + category.key
+                  ) {
+                    <tr>
+                      <td>{{ category.windowLabel }}</td>
+                      <td class="stats-category">
+                        <span
+                          class="category-swatch"
+                          [style.background]="category.color"
+                          aria-hidden="true"
+                        ></span>
+                        {{ category.displayLabel }}
+                      </td>
+                      <td>{{ formatNullableNumber(category.length_mb) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs.normal.density_per_mb) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs.normal.fold_vs_genome) }}</td>
+                      <td>
+                        {{ formatNullableNumber(category.motifs.normal.fold_vs_non_feature) }}
+                      </td>
+                      <td>{{ formatNullableNumber(category.motifs.revcomp.density_per_mb) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs.revcomp.fold_vs_genome) }}</td>
+                      <td>
+                        {{ formatNullableNumber(category.motifs.revcomp.fold_vs_non_feature) }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="state" role="status">No research statistics are available.</p>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Strength">
+        <section class="tab-panel">
+          @if (statisticsLoading()) {
+            <div class="state">
+              <mat-spinner diameter="28"></mat-spinner>
+              <span>Loading strength statistics...</span>
+            </div>
+          } @else if (statisticsErrorMessage()) {
+            <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
+          } @else if (hasStatistics()) {
+            <div class="stats-wrap">
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.window"
+                        matTooltipPosition="above"
+                        >Window</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.category"
+                        matTooltipPosition="above"
+                        >Category</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.type"
+                        matTooltipPosition="above"
+                        >Type</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.count"
+                        matTooltipPosition="above"
+                        >Count</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.medianP95"
+                        matTooltipPosition="above"
+                        >gscore median / p95</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.medianP95"
+                        matTooltipPosition="above"
+                        >tetrads median / p95</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.medianP95"
+                        matTooltipPosition="above"
+                        >motif length median / p95</span
+                      >
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of strengthRows(); track row.id) {
+                    <tr>
+                      <td>{{ row.category.windowLabel }}</td>
+                      <td class="stats-category">
+                        <span
+                          class="category-swatch"
+                          [style.background]="row.category.color"
+                          aria-hidden="true"
+                        ></span>
+                        {{ row.category.displayLabel }}
+                      </td>
+                      <td>{{ row.motifLabel }}</td>
+                      <td>{{ formatCount(row.stats.count) }}</td>
+                      <td>
+                        {{ formatNullableNumber(row.stats.median_gscore) }} /
+                        {{ formatNullableNumber(row.stats.p95_gscore) }}
+                      </td>
+                      <td>
+                        {{ formatNullableNumber(row.stats.median_tetrads) }} /
+                        {{ formatNullableNumber(row.stats.p95_tetrads) }}
+                      </td>
+                      <td>
+                        {{ formatNullableNumber(row.stats.median_length) }} /
+                        {{ formatNullableNumber(row.stats.p95_length) }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="state" role="status">No strength statistics are available.</p>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="G-rich vs i-motif">
+        <section class="tab-panel">
+          @if (statisticsLoading()) {
+            <div class="state">
+              <mat-spinner diameter="28"></mat-spinner>
+              <span>Loading asymmetry statistics...</span>
+            </div>
+          } @else if (statisticsErrorMessage()) {
+            <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
+          } @else if (hasStatistics()) {
+            <div class="stats-wrap">
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.window"
+                        matTooltipPosition="above"
+                        >Window</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.category"
+                        matTooltipPosition="above"
+                        >Category</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.count"
+                        matTooltipPosition="above"
+                        >G-rich count</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.count"
+                        matTooltipPosition="above"
+                        >i-motif count</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.fraction"
+                        matTooltipPosition="above"
+                        >G-rich fraction</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.fraction"
+                        matTooltipPosition="above"
+                        >i-motif fraction</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.fractionDelta"
+                        matTooltipPosition="above"
+                        >Fraction delta</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.densityRatio"
+                        matTooltipPosition="above"
+                        >Density ratio (G-rich / i-motif)</span
+                      >
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    category of asymmetryRows();
+                    track category.window_bp + ':' + category.key
+                  ) {
+                    <tr>
+                      <td>{{ category.windowLabel }}</td>
+                      <td class="stats-category">
+                        <span
+                          class="category-swatch"
+                          [style.background]="category.color"
+                          aria-hidden="true"
+                        ></span>
+                        {{ category.displayLabel }}
+                      </td>
+                      <td>{{ formatCount(category.motifs.normal.count) }}</td>
+                      <td>{{ formatCount(category.motifs.revcomp.count) }}</td>
+                      <td>{{ formatNullablePercent(category.asymmetry.normal_fraction) }}</td>
+                      <td>{{ formatNullablePercent(category.asymmetry.revcomp_fraction) }}</td>
+                      <td>{{ formatSignedPercent(category.asymmetry.fraction_delta) }}</td>
+                      <td>
+                        {{
+                          formatNullableNumber(category.asymmetry.density_ratio_normal_over_revcomp)
+                        }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="state" role="status">No asymmetry statistics are available.</p>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Window Sensitivity">
+        <section class="tab-panel">
+          @if (statisticsLoading()) {
+            <div class="state">
+              <mat-spinner diameter="28"></mat-spinner>
+              <span>Loading window sensitivity...</span>
+            </div>
+          } @else if (statisticsErrorMessage()) {
+            <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
+          } @else if (windowSensitivityRows().length > 0) {
+            <div class="stats-wrap">
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.window"
+                        matTooltipPosition="above"
+                        >Window</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.category"
+                        matTooltipPosition="above"
+                        >Category</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.densityPerMb"
+                        matTooltipPosition="above"
+                        >G-rich density / Mb</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.relativeDensity"
+                        matTooltipPosition="above"
+                        >G-rich relative density</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.densityPerMb"
+                        matTooltipPosition="above"
+                        >i-motif density / Mb</span
+                      >
+                    </th>
+                    <th>
+                      <span
+                        class="header-help"
+                        [matTooltip]="statisticTooltips.relativeDensity"
+                        matTooltipPosition="above"
+                        >i-motif relative density</span
+                      >
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of windowSensitivityRows(); track row.id) {
+                    <tr>
+                      <td>{{ row.category.windowLabel }}</td>
+                      <td class="stats-category">
+                        <span
+                          class="category-swatch"
+                          [style.background]="row.category.color"
+                          aria-hidden="true"
+                        ></span>
+                        {{ row.category.displayLabel }}
+                      </td>
+                      <td>{{ formatNullableNumber(row.category.motifs.normal.density_per_mb) }}</td>
+                      <td><meter min="0" max="100" [value]="row.normalDensityRatio"></meter></td>
+                      <td>
+                        {{ formatNullableNumber(row.category.motifs.revcomp.density_per_mb) }}
+                      </td>
+                      <td><meter min="0" max="100" [value]="row.revcompDensityRatio"></meter></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="state" role="status">
+              No upstream/downstream sensitivity data are available.
+            </p>
+          }
+        </section>
+      </mat-tab>
+    </mat-tab-group>
+
+    @if (statistics().quality.warnings.length > 0) {
+      <div class="warnings" role="status">
+        @for (warning of statistics().quality.warnings; track warning) {
+          <p>{{ warning }}</p>
+        }
+      </div>
     }
   </mat-card-content>
 </mat-card>

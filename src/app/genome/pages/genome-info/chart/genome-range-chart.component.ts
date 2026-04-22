@@ -527,7 +527,7 @@ export class GenomeRangeChartComponent {
               strokeWidth: { value: 0.3 },
               tooltip: {
                 signal:
-                  "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'bin_length': datum.bin_length, 'density': datum.density, 'density_bin': datum.density_bin_label, 'mean_gscore': datum.mean_gscore}",
+                  "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'bin_length': datum.bin_length, 'density': datum.density, 'density_bin': datum.density_bin_label, 'mean_score': datum.mean_gscore}",
               },
             },
           },
@@ -537,7 +537,7 @@ export class GenomeRangeChartComponent {
         ? [
             {
               fill: 'color',
-              title: 'Mean G-score',
+              title: 'Mean score',
               orient: 'right',
               offset: 8,
               titleFontSize: 12,

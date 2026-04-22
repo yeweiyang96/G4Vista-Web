@@ -38,6 +38,7 @@ import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome
 import {
   EMPTY_G4_PAGE,
   EMPTY_G4_POSITION_DISTRIBUTION,
+  EMPTY_G4_POSITION_STATISTICS,
   G4FlankWindow,
   G4_FLANK_WINDOW_OPTIONS,
   G4ChartViewport,
@@ -54,6 +55,8 @@ import {
   G4PageResponse,
   G4PositionDistributionRequest,
   G4PositionDistributionResponse,
+  G4PositionStatisticsRequest,
+  G4PositionStatisticsResponse,
   G4Service,
   G4SortField,
   G4Type,
@@ -114,6 +117,7 @@ interface AccessionIdOption {
 
 const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.normal[0].value;
 const DEFAULT_FLANK_WINDOW: G4FlankWindow = 1000;
+const POSITION_STATISTICS_WINDOWS = [100, 500, 1000, 5000] as const;
 const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   start: 'start',
   end: 'end',
@@ -231,7 +235,10 @@ function normalizeSearchTerm(value: string): string {
 }
 
 function formatGeneRelationLabel(label: string): string {
-  return label.replace('(G-rich)', ' (G-rich)').replace('(iMotif)', ' (iMotif)');
+  return label
+    .replace(/\s*\(G-rich\)/g, ' (G4)')
+    .replace(/\s*\(iMotif\)/g, ' (i-motif)')
+    .replace(/\s*\(i-motif\)/g, ' (i-motif)');
 }
 
 function preferredGeneDisplayName(candidate: G4GeneCandidate): string {
@@ -642,16 +649,51 @@ export class GenomeInfoComponent {
     },
     defaultValue: EMPTY_G4_POSITION_DISTRIBUTION,
   });
+  readonly positionStatisticsResource = rxResource<
+    G4PositionStatisticsResponse,
+    G4PositionStatisticsRequest | undefined
+  >({
+    params: () => {
+      if (!this.assemblyDetail()) {
+        return undefined;
+      }
+
+      return {
+        assemblyAccession: this.assemblyAccession(),
+        windows: [...POSITION_STATISTICS_WINDOWS],
+        tetrads: this.positionDistributionFilters().tetrads,
+        minGscore: this.positionDistributionFilters().minGscore,
+        maxGscore: this.positionDistributionFilters().maxGscore,
+        overlap: false,
+      };
+    },
+    stream: ({ params }) => {
+      if (!params) {
+        return of(EMPTY_G4_POSITION_STATISTICS);
+      }
+      return this.g4Service.getPositionStatistics(params);
+    },
+    defaultValue: EMPTY_G4_POSITION_STATISTICS,
+  });
   readonly positionDistribution = computed<G4PositionDistributionResponse>(() =>
     this.positionDistributionResource.value(),
+  );
+  readonly positionStatistics = computed<G4PositionStatisticsResponse>(() =>
+    this.positionStatisticsResource.value(),
   );
   readonly positionDistributionStatus = computed(
     () => this.positionDistributionResource.snapshot().status,
   );
+  readonly positionStatisticsStatus = computed(
+    () => this.positionStatisticsResource.snapshot().status,
+  );
   readonly positionDistributionErrorMessage = computed(() =>
     this.positionDistributionStatus() === 'error'
-      ? 'Whole-genome motif position summary unavailable.'
+      ? 'Whole-genome G4/i-motif position summary unavailable.'
       : '',
+  );
+  readonly positionStatisticsErrorMessage = computed(() =>
+    this.positionStatisticsStatus() === 'error' ? 'Research position statistics unavailable.' : '',
   );
   readonly geneRelationsResource = rxResource<
     GeneRelationBatchResponse[],
@@ -712,7 +754,7 @@ export class GenomeInfoComponent {
   );
   readonly explorerSubtitle = computed(() => {
     const browseScope = this.browseScope();
-    const gcType = this.g4Type() === 'revcomp' ? 'i-motifs' : 'G4s';
+    const gcType = this.g4Type() === 'revcomp' ? 'i-motif sites' : 'G4 sites';
     if (!browseScope || this.isGeneSearchMode() || browseScope === WHOLE_GENOME_SCOPE) {
       return `${this.g4Page().count} ${gcType} in ${this.assemblyAccession()}`;
     }
@@ -835,9 +877,14 @@ export class GenomeInfoComponent {
       }
 
       this.lastEmptyGeneSearchNoticeKey = noticeKey;
-      this.snackBar.open('No PQS matched the selected gene with the current filters.', 'Dismiss', {
-        duration: 4000,
-      });
+      const motifLabel = this.g4Type() === 'revcomp' ? 'i-motif' : 'G4';
+      this.snackBar.open(
+        `No ${motifLabel} matched the selected gene with the current filters.`,
+        'Dismiss',
+        {
+          duration: 4000,
+        },
+      );
     });
   }
 

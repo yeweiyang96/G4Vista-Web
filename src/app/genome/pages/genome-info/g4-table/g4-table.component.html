@@ -12,7 +12,7 @@
       Tetrads: {{ tetradsChipLabel() }}
     </mat-chip>
     <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetGscore()">
-      Gscore: {{ gscoreChipLabel() }}
+      Score: {{ gscoreChipLabel() }}
     </mat-chip>
   </mat-chip-set>
 </div>
@@ -20,7 +20,9 @@
 <ng-template #sequenceTpl let-row="rowData">
   <button mat-button type="button" class="sequence-button" (click)="onNavigateToG4(row)">
     @for (segment of sequenceSegments(row); track $index) {
-      <span [class.sequence-highlight]="segment.highlighted" class="sequence">{{ segment.text }}</span>
+      <span [class.sequence-highlight]="segment.highlighted" class="sequence">{{
+        segment.text
+      }}</span>
     }
   </button>
 </ng-template>

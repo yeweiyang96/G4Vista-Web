@@ -46,6 +46,9 @@
           [distribution]="positionDistribution()"
           [isLoading]="positionDistributionResource.isLoading()"
           [errorMessage]="positionDistributionErrorMessage()"
+          [statistics]="positionStatistics()"
+          [statisticsLoading]="positionStatisticsResource.isLoading()"
+          [statisticsErrorMessage]="positionStatisticsErrorMessage()"
           [flankWindow]="positionDistributionFlankWindow()"
           [flankWindowLabel]="positionDistributionFlankWindowLabel()"
           [g4Type]="positionDistributionG4Type()"
@@ -136,24 +139,24 @@
                 <mat-button-toggle-group
                   [value]="g4Type()"
                   (change)="selectG4Type($event.value)"
-                  aria-label="G4 type selector"
+                  aria-label="G4/i-motif type selector"
                 >
-                  <mat-button-toggle value="normal">G rich</mat-button-toggle>
-                  <mat-button-toggle value="revcomp">C rich</mat-button-toggle>
+                  <mat-button-toggle value="normal">G4</mat-button-toggle>
+                  <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
                 </mat-button-toggle-group>
               </div>
             </div>
 
-            <form class="filters" aria-label="G4 filters" (submit)="submitFilters($event)">
+            <form class="filters" aria-label="G4/i-motif filters" (submit)="submitFilters($event)">
               <section class="filter-group filter-group-gene" aria-labelledby="gene-filter-title">
                 <div class="filter-group-header">
                   <p class="filter-group-eyebrow">Gene filter</p>
                   <h3 id="gene-filter-title" class="filter-group-title">
-                    Find genes around each PQS
+                    Find genes around each G4 or i-motif
                   </h3>
                   <p class="filter-group-description">
-                    Choose where the gene sits relative to the PQS, then search by feature ID, gene
-                    name, or locus tag across the current assembly.
+                    Choose where the gene sits relative to the selected G4 or i-motif, then search
+                    by feature ID, gene name, or locus tag across the current assembly.
                   </p>
                 </div>
 
@@ -165,7 +168,10 @@
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
                     </mat-select>
-                    <mat-hint>Defines where the matched gene sits relative to the PQS.</mat-hint>
+                    <mat-hint
+                      >Defines where the matched gene sits relative to the selected G4 or
+                      i-motif.</mat-hint
+                    >
                   </mat-form-field>
 
                   <mat-form-field
@@ -221,7 +227,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="filter-field">
-                <mat-label>Min gscore</mat-label>
+                <mat-label>Min score</mat-label>
                 <input
                   matInput
                   type="number"
@@ -233,7 +239,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="filter-field">
-                <mat-label>Max gscore</mat-label>
+                <mat-label>Max score</mat-label>
                 <input
                   matInput
                   type="number"

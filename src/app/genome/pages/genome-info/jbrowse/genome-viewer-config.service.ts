@@ -306,7 +306,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
     {
       type: 'FeatureTrack',
       trackId: `${assemblyAccession}_g4`,
-      name: 'G4 motifs',
+      name: 'G4',
       assemblyNames: [assemblyAccession],
       displays: [createFeatureTrackDisplayConfig(params)],
       category: ['G4'],

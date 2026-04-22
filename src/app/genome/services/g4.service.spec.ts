@@ -297,4 +297,42 @@ describe('G4Service', () => {
       },
     });
   });
+
+  it('builds position statistics requests with windows and filters', () => {
+    service
+      .getPositionStatistics({
+        assemblyAccession: 'GCF_000021765.1',
+        windows: [100, 500, 1000, 5000],
+        tetrads: [2, 4],
+        minGscore: 12,
+        maxGscore: 40,
+        overlap: true,
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=100&windows=500&windows=1000&windows=5000&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      assembly_accession: 'GCF_000021765.1',
+      filters: {
+        windows: [100, 500, 1000, 5000],
+        tetrads: [2, 4],
+        min_gscore: 12,
+        max_gscore: 40,
+        overlap: true,
+      },
+      genome_length_bp: 0,
+      genome_length_mb: 0,
+      windows: [],
+      quality: {
+        regions_total_count: 0,
+        regions_status_ok_count: 0,
+        regions_length_mismatch_count: 0,
+        warnings: [],
+      },
+    });
+  });
 });

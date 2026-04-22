@@ -3,44 +3,44 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export const G4_GENE_POSITION_OPTIONS = [
-  { value: 'insideOf_gene_normal', label: 'Inside gene(G-rich)' },
-  { value: 'insideOf_genes_upstream_100bp_normal', label: '100 bp upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_200bp_normal', label: '200 bp upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_300bp_normal', label: '300 bp upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_500bp_normal', label: '500 bp upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_1k_normal', label: '1 kb upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_2k_normal', label: '2 kb upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_3k_normal', label: '3 kb upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_4k_normal', label: '4 kb upstream(G-rich)' },
-  { value: 'insideOf_genes_upstream_5k_normal', label: '5 kb upstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_100bp_normal', label: '100 bp downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_200bp_normal', label: '200 bp downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_300bp_normal', label: '300 bp downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_500bp_normal', label: '500 bp downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_1k_normal', label: '1 kb downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_2k_normal', label: '2 kb downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_3k_normal', label: '3 kb downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_4k_normal', label: '4 kb downstream(G-rich)' },
-  { value: 'insideOf_genes_downstream_5k_normal', label: '5 kb downstream(G-rich)' },
-  { value: 'insideOf_gene_revcomp', label: 'Inside gene(iMotif)' },
-  { value: 'insideOf_genes_upstream_100bp_revcomp', label: '100 bp upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_200bp_revcomp', label: '200 bp upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_300bp_revcomp', label: '300 bp upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_500bp_revcomp', label: '500 bp upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_1k_revcomp', label: '1 kb upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_2k_revcomp', label: '2 kb upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_3k_revcomp', label: '3 kb upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_4k_revcomp', label: '4 kb upstream(iMotif)' },
-  { value: 'insideOf_genes_upstream_5k_revcomp', label: '5 kb upstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_100bp_revcomp', label: '100 bp downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_200bp_revcomp', label: '200 bp downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_300bp_revcomp', label: '300 bp downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_500bp_revcomp', label: '500 bp downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_1k_revcomp', label: '1 kb downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_2k_revcomp', label: '2 kb downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_3k_revcomp', label: '3 kb downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_4k_revcomp', label: '4 kb downstream(iMotif)' },
-  { value: 'insideOf_genes_downstream_5k_revcomp', label: '5 kb downstream(iMotif)' },
+  { value: 'insideOf_gene_normal', label: 'Inside gene (G4)' },
+  { value: 'insideOf_genes_upstream_100bp_normal', label: '100 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_200bp_normal', label: '200 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_300bp_normal', label: '300 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_500bp_normal', label: '500 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_1k_normal', label: '1 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_2k_normal', label: '2 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_3k_normal', label: '3 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_4k_normal', label: '4 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_5k_normal', label: '5 kb upstream (G4)' },
+  { value: 'insideOf_genes_downstream_100bp_normal', label: '100 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_200bp_normal', label: '200 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_300bp_normal', label: '300 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_500bp_normal', label: '500 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_1k_normal', label: '1 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_2k_normal', label: '2 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_3k_normal', label: '3 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_4k_normal', label: '4 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_5k_normal', label: '5 kb downstream (G4)' },
+  { value: 'insideOf_gene_revcomp', label: 'Inside gene (i-motif)' },
+  { value: 'insideOf_genes_upstream_100bp_revcomp', label: '100 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_200bp_revcomp', label: '200 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_300bp_revcomp', label: '300 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_500bp_revcomp', label: '500 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_1k_revcomp', label: '1 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_2k_revcomp', label: '2 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_3k_revcomp', label: '3 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_4k_revcomp', label: '4 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_5k_revcomp', label: '5 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_100bp_revcomp', label: '100 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_200bp_revcomp', label: '200 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_300bp_revcomp', label: '300 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_500bp_revcomp', label: '500 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_1k_revcomp', label: '1 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_2k_revcomp', label: '2 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_3k_revcomp', label: '3 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_4k_revcomp', label: '4 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_5k_revcomp', label: '5 kb downstream (i-motif)' },
 ] as const;
 
 export type G4GenePosition = (typeof G4_GENE_POSITION_OPTIONS)[number]['value'];
@@ -201,6 +201,61 @@ export interface G4PositionDistributionResponse {
   quality: G4PositionDistributionQuality;
 }
 
+export interface G4PositionStatisticsFilters {
+  windows: number[];
+  tetrads: number[];
+  min_gscore: number | null;
+  max_gscore: number | null;
+  overlap: boolean;
+}
+
+export interface G4PositionMotifStats {
+  count: number;
+  density_per_mb: number | null;
+  expected_vs_genome: number | null;
+  fold_vs_genome: number | null;
+  fold_vs_non_feature: number | null;
+  median_gscore: number | null;
+  p95_gscore: number | null;
+  median_tetrads: number | null;
+  p95_tetrads: number | null;
+  median_length: number | null;
+  p95_length: number | null;
+}
+
+export interface G4PositionAsymmetry {
+  normal_fraction: number | null;
+  revcomp_fraction: number | null;
+  fraction_delta: number | null;
+  count_delta: number;
+  density_ratio_normal_over_revcomp: number | null;
+}
+
+export interface G4PositionStatisticsCategory {
+  key: string;
+  label: string;
+  description: string;
+  precedence_rank: number;
+  merged_interval_length_bp: number;
+  length_mb: number;
+  motifs: Record<G4Type, G4PositionMotifStats>;
+  asymmetry: G4PositionAsymmetry;
+}
+
+export interface G4PositionStatisticsWindow {
+  window_bp: number;
+  categories: G4PositionStatisticsCategory[];
+}
+
+export interface G4PositionStatisticsResponse {
+  assembly_accession: string;
+  filters: G4PositionStatisticsFilters;
+  genome_length_bp: number;
+  genome_length_mb: number;
+  windows: G4PositionStatisticsWindow[];
+  quality: G4PositionDistributionQuality;
+}
+
 export interface G4PositionDistributionRequest {
   assemblyAccession: string;
   g4Type: G4Type;
@@ -210,6 +265,15 @@ export interface G4PositionDistributionRequest {
   overlap?: boolean;
   flankWindow: G4FlankWindow;
   includeFeatureBreakdown?: boolean;
+}
+
+export interface G4PositionStatisticsRequest {
+  assemblyAccession: string;
+  windows?: number[];
+  tetrads: number[];
+  minGscore?: number;
+  maxGscore?: number;
+  overlap?: boolean;
 }
 
 export interface G4GeneSearchRequest {
@@ -285,6 +349,26 @@ export const EMPTY_G4_POSITION_DISTRIBUTION: G4PositionDistributionResponse = {
   total_count: 0,
   categories: [],
   feature_breakdown: [],
+  quality: {
+    regions_total_count: 0,
+    regions_status_ok_count: 0,
+    regions_length_mismatch_count: 0,
+    warnings: [],
+  },
+};
+
+export const EMPTY_G4_POSITION_STATISTICS: G4PositionStatisticsResponse = {
+  assembly_accession: '',
+  filters: {
+    windows: [],
+    tetrads: [],
+    min_gscore: null,
+    max_gscore: null,
+    overlap: false,
+  },
+  genome_length_bp: 0,
+  genome_length_mb: 0,
+  windows: [],
   quality: {
     regions_total_count: 0,
     regions_status_ok_count: 0,
@@ -438,6 +522,21 @@ export class G4Service {
 
     return this.http.get<G4PositionDistributionResponse>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/position-distribution`,
+      { params },
+    );
+  }
+
+  getPositionStatistics(
+    request: G4PositionStatisticsRequest,
+  ): Observable<G4PositionStatisticsResponse> {
+    let params = new HttpParams();
+    for (const window of request.windows ?? [100, 500, 1000, 5000]) {
+      params = params.append('windows', window);
+    }
+    params = this.appendCommonFilterParams(params, request);
+
+    return this.http.get<G4PositionStatisticsResponse>(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/position-statistics`,
       { params },
     );
   }

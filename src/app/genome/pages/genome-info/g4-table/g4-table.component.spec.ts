@@ -18,7 +18,7 @@ describe('G4TableComponent', () => {
     component = fixture.componentInstance;
 
     fixture.componentRef.setInput('page', EMPTY_G4_PAGE);
-    fixture.componentRef.setInput('filterScopeLabel', 'Inside gene (G-rich)');
+    fixture.componentRef.setInput('filterScopeLabel', 'Inside gene (G4)');
     fixture.componentRef.setInput('filterSelectedGeneLabel', 'Any');
     fixture.componentRef.setInput('hasSelectedGene', false);
     fixture.componentRef.setInput('filterSelectedTetrads', []);
@@ -152,6 +152,6 @@ describe('G4TableComponent', () => {
     fixture.detectChanges();
 
     expect(component.hasGeneSelection()).toBeTrue();
-    expect(fixture.nativeElement.textContent).toContain('Scope: Inside gene (G-rich)');
+    expect(fixture.nativeElement.textContent).toContain('Scope: Inside gene (G4)');
   });
 });
