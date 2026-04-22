@@ -58,9 +58,9 @@
       }
     },
     {
-      "label": "stop: dev server (4200)",
+      "label": "stop: dev server (4201)",
       "type": "shell",
-      "command": "pkill -f \"mise run dev\" || true; pkill -f \"ng serve\" || true; PIDS=$(lsof -ti tcp:4200); if [ -n \"$PIDS\" ]; then kill $PIDS || true; fi",
+      "command": "pkill -f \"mise run dev\" || true; pkill -f \"ng serve --host 0.0.0.0 --port 4201\" || true; PIDS=$(lsof -ti tcp:4201); if [ -n \"$PIDS\" ]; then kill $PIDS || true; fi",
       "problemMatcher": []
     }
   ]

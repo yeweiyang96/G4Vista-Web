@@ -20,5 +20,5 @@ outputs = ['node_modules/.pnpm/lock.yaml']
 
 [tasks.dev]
 description = 'Starts the development server'
-run = 'ng serve --live-reload true --hmr false'
+run = 'ng serve --host 0.0.0.0 --port 4201 --allowed-hosts --live-reload true --hmr false'
 depends = ['pnpm-install']

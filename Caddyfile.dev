@@ -1,0 +1,9 @@
+:80 {
+    encode gzip zstd
+
+    route {
+        reverse_proxy /api/* fastapi:8000
+        reverse_proxy /health fastapi:8000
+        reverse_proxy host.docker.internal:4201
+    }
+}
