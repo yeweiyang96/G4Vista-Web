@@ -35,6 +35,46 @@ describe('PositionDistributionComponent', () => {
         description: 'Upstream gene',
       },
     ],
+    gene_biotype_breakdown: [
+      {
+        bio_type: 'protein_coding',
+        display_label: 'protein_coding',
+        total_count: 3,
+        categories: [
+          {
+            key: 'gene_inside',
+            label: 'Gene inside',
+            count: 2,
+            ratio: 2 / 3,
+            precedence_rank: 1,
+            description: 'Inside gene',
+          },
+          {
+            key: 'gene_upstream',
+            label: 'Gene upstream',
+            count: 1,
+            ratio: 1 / 3,
+            precedence_rank: 2,
+            description: 'Upstream gene',
+          },
+        ],
+      },
+      {
+        bio_type: null,
+        display_label: 'Unspecified gene biotype',
+        total_count: 1,
+        categories: [
+          {
+            key: 'non_feature',
+            label: 'Non-feature',
+            count: 1,
+            ratio: 1,
+            precedence_rank: 5,
+            description: 'No feature assignment',
+          },
+        ],
+      },
+    ],
   };
   const statistics: G4PositionStatisticsResponse = {
     ...EMPTY_G4_POSITION_STATISTICS,
@@ -182,6 +222,16 @@ describe('PositionDistributionComponent', () => {
     return fixture.nativeElement.textContent as string;
   }
 
+  function headerElement(): HTMLElement {
+    return fixture.nativeElement.querySelector('.position-card-header') as HTMLElement;
+  }
+
+  function activeTabPanel(): HTMLElement {
+    return fixture.nativeElement.querySelector(
+      '[role="tabpanel"][aria-hidden="false"], .mat-mdc-tab-body-active',
+    ) as HTMLElement;
+  }
+
   function tooltipMessages(): readonly string[] {
     return fixture.debugElement
       .queryAll(By.directive(MatTooltip))
@@ -197,6 +247,58 @@ describe('PositionDistributionComponent', () => {
     expect(text).toContain('G-rich vs i-motif');
     expect(text).not.toContain('G4 vs i-motif');
     expect(text).toContain('Window Sensitivity');
+  });
+
+  it('keeps summary-only position controls inside the Summary tab', async () => {
+    const header = headerElement();
+
+    expect(header.querySelector('.position-filter-form')).not.toBeNull();
+    expect(header.querySelector('mat-button-toggle-group')).toBeNull();
+    expect(header.querySelector('.gene-window-field')).toBeNull();
+    expect(header.textContent).toContain('Tetrads');
+    expect(header.textContent).toContain('Min score');
+    expect(header.textContent).toContain('Max score');
+    expect(header.textContent).toContain('Submit');
+    expect(header.textContent).toContain('Reset');
+
+    let panel = activeTabPanel();
+    expect(panel.querySelector('.summary-position-controls')).not.toBeNull();
+    expect(panel.querySelector('mat-button-toggle-group')).not.toBeNull();
+    expect(panel.querySelector('.gene-window-field')).not.toBeNull();
+    expect(panel.textContent).toContain('Upstream/downstream gene window');
+
+    for (const tabLabel of [
+      'Density & Enrichment',
+      'Strength',
+      'G-rich vs i-motif',
+      'Window Sensitivity',
+    ]) {
+      await selectTab(tabLabel);
+      panel = activeTabPanel();
+      expect(panel.querySelector('.summary-position-controls')).toBeNull();
+      expect(panel.querySelector('mat-button-toggle-group')).toBeNull();
+      expect(panel.querySelector('.gene-window-field')).toBeNull();
+      expect(header.textContent).toContain('Tetrads');
+      expect(header.textContent).toContain('Submit');
+      expect(header.textContent).toContain('Reset');
+    }
+  });
+
+  it('renders gene biotype position relationships in the Summary tab', () => {
+    const panel = activeTabPanel();
+    const text = panel.textContent ?? '';
+
+    expect(text).toContain('Gene biotype position relationships');
+    expect(text).toContain('Gene biotype');
+    expect(text).toContain('Inside genes');
+    expect(text).toContain('Root non-gene');
+    expect(text).toContain('protein_coding');
+    expect(text).toContain('Unspecified gene biotype');
+    expect(text).toContain('2 (66.7%)');
+    expect(text).toContain('1 (100%)');
+    expect(tooltipMessages()).toContain(
+      'Ratios are within each gene biotype row; the same site can appear in multiple biotype rows when it has multiple gene relations.',
+    );
   });
 
   it('renders precise research table headers and removes ambiguous trend copy', async () => {
@@ -271,5 +373,85 @@ describe('PositionDistributionComponent', () => {
     expect(component.strengthRows().map((row) => row.motifLabel)).toContain('i-motif');
     expect(component.asymmetryRows()[0].asymmetry.count_delta).toBe(1);
     expect(component.windowSensitivityRows()[0].category.key).toBe('gene_upstream');
+  });
+
+  it('groups window sensitivity rows by label and sorts each label by window size', () => {
+    const upstreamCategory = statistics.windows[0].categories[1];
+    const downstreamCategory = {
+      ...upstreamCategory,
+      key: 'gene_downstream' as const,
+      label: 'Gene downstream',
+      description: 'Downstream gene',
+    };
+
+    fixture.componentRef.setInput('statistics', {
+      ...statistics,
+      windows: [
+        {
+          ...statistics.windows[0],
+          window_bp: 500,
+          categories: [
+            {
+              ...downstreamCategory,
+              motifs: {
+                ...downstreamCategory.motifs,
+                normal: {
+                  ...downstreamCategory.motifs.normal,
+                  density_per_mb: 500,
+                },
+              },
+            },
+            {
+              ...upstreamCategory,
+              motifs: {
+                ...upstreamCategory.motifs,
+                normal: {
+                  ...upstreamCategory.motifs.normal,
+                  density_per_mb: 400,
+                },
+              },
+            },
+          ],
+        },
+        {
+          ...statistics.windows[0],
+          window_bp: 100,
+          categories: [
+            {
+              ...upstreamCategory,
+              motifs: {
+                ...upstreamCategory.motifs,
+                normal: {
+                  ...upstreamCategory.motifs.normal,
+                  density_per_mb: 900,
+                },
+              },
+            },
+            {
+              ...downstreamCategory,
+              motifs: {
+                ...downstreamCategory.motifs,
+                normal: {
+                  ...downstreamCategory.motifs.normal,
+                  density_per_mb: 800,
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.componentInstance
+        .windowSensitivityRows()
+        .map((row) => `${row.category.label}:${row.category.window_bp}`),
+    ).toEqual([
+      'Gene downstream:100',
+      'Gene downstream:500',
+      'Gene upstream:100',
+      'Gene upstream:500',
+    ]);
   });
 });

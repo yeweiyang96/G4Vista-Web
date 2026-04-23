@@ -184,6 +184,13 @@ export interface G4FeatureBreakdownItem {
   is_root_feature: boolean;
 }
 
+export interface G4GeneBiotypePositionBreakdown {
+  bio_type: string | null;
+  display_label: string;
+  total_count: number;
+  categories: G4PositionCategory[];
+}
+
 export interface G4PositionDistributionQuality {
   regions_total_count: number;
   regions_status_ok_count: number;
@@ -198,6 +205,7 @@ export interface G4PositionDistributionResponse {
   total_count: number;
   categories: G4PositionCategory[];
   feature_breakdown: G4FeatureBreakdownItem[];
+  gene_biotype_breakdown: G4GeneBiotypePositionBreakdown[];
   quality: G4PositionDistributionQuality;
 }
 
@@ -265,6 +273,7 @@ export interface G4PositionDistributionRequest {
   overlap?: boolean;
   flankWindow: G4FlankWindow;
   includeFeatureBreakdown?: boolean;
+  includeGeneBiotypeBreakdown?: boolean;
 }
 
 export interface G4PositionStatisticsRequest {
@@ -349,6 +358,7 @@ export const EMPTY_G4_POSITION_DISTRIBUTION: G4PositionDistributionResponse = {
   total_count: 0,
   categories: [],
   feature_breakdown: [],
+  gene_biotype_breakdown: [],
   quality: {
     regions_total_count: 0,
     regions_status_ok_count: 0,
@@ -516,7 +526,8 @@ export class G4Service {
     const params = this.appendCommonFilterParams(
       new HttpParams()
         .set('flank_window', request.flankWindow)
-        .set('include_feature_breakdown', request.includeFeatureBreakdown ?? true),
+        .set('include_feature_breakdown', request.includeFeatureBreakdown ?? true)
+        .set('include_gene_biotype_breakdown', request.includeGeneBiotypeBreakdown ?? true),
       request,
     );
 

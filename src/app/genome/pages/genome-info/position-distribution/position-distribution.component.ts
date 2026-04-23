@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   G4FlankWindow,
   G4FeatureBreakdownItem,
+  G4GeneBiotypePositionBreakdown,
   G4_FLANK_WINDOW_OPTIONS,
   G4PositionCategory,
   G4PositionDistributionResponse,
@@ -54,6 +55,17 @@ interface PositionWindowSensitivityRow {
   category: PositionStatisticsCategoryView;
   normalDensityRatio: number;
   revcompDensityRatio: number;
+}
+
+interface GeneBiotypeCategoryCell {
+  key: string;
+  label: string;
+  color: string;
+  value: string;
+}
+
+interface GeneBiotypeBreakdownView extends Omit<G4GeneBiotypePositionBreakdown, 'categories'> {
+  categories: readonly GeneBiotypeCategoryCell[];
 }
 
 interface PositionDistributionFilterModel {
@@ -102,7 +114,16 @@ const POSITION_STATISTIC_TOOLTIPS = {
     'G-rich density divided by i-motif density; N/A when denominator is zero or unavailable.',
   relativeDensity:
     'Bar scaled to the largest upstream/downstream density for that motif type across displayed windows; not a time trend.',
+  geneBiotypeBreakdown:
+    'Ratios are within each gene biotype row; the same site can appear in multiple biotype rows when it has multiple gene relations.',
 } as const;
+const GENE_BIOTYPE_CATEGORY_COLUMNS = [
+  { key: 'gene_inside', label: 'Inside genes' },
+  { key: 'gene_upstream', label: 'Upstream' },
+  { key: 'gene_downstream', label: 'Downstream' },
+  { key: 'other_root_non_gene_feature', label: 'Root non-gene' },
+  { key: 'non_feature', label: 'Non-feature' },
+] as const;
 
 function motifTypeLabel(g4Type: G4Type): string {
   return g4Type === 'revcomp' ? 'i-motif sequence sites' : 'G-rich sequence sites';
@@ -240,6 +261,37 @@ export class PositionDistributionComponent {
   readonly featureBreakdown = computed<readonly G4FeatureBreakdownItem[]>(() =>
     this.distribution().feature_breakdown.slice(0, 12),
   );
+  readonly geneBiotypeCategoryColumns = GENE_BIOTYPE_CATEGORY_COLUMNS.map((column) => ({
+    ...column,
+    color: POSITION_CATEGORY_COLORS[column.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
+  }));
+  readonly geneBiotypeBreakdown = computed<readonly GeneBiotypeBreakdownView[]>(() =>
+    [...this.distribution().gene_biotype_breakdown]
+      .sort((a, b) => {
+        const totalComparison = b.total_count - a.total_count;
+        if (totalComparison !== 0) {
+          return totalComparison;
+        }
+        return a.display_label.localeCompare(b.display_label);
+      })
+      .slice(0, 12)
+      .map((row) => ({
+        bio_type: row.bio_type,
+        display_label: row.display_label || row.bio_type || 'Unspecified gene biotype',
+        total_count: row.total_count,
+        categories: this.geneBiotypeCategoryColumns.map((column) => {
+          const category = row.categories.find((item) => item.key === column.key);
+          const count = category?.count ?? 0;
+          const ratio = category?.ratio ?? 0;
+          return {
+            key: column.key,
+            label: column.label,
+            color: POSITION_CATEGORY_COLORS[column.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
+            value: `${formatCount(count)} (${formatRatio(ratio)})`,
+          };
+        }),
+      })),
+  );
   readonly gradient = computed(() => {
     const total = this.distribution().total_count;
     if (!total) {
@@ -320,15 +372,22 @@ export class PositionDistributionComponent {
     const rows = this.statisticsRows().filter(
       (category) => category.key === 'gene_upstream' || category.key === 'gene_downstream',
     );
+    const sortedRows = [...rows].sort((a, b) => {
+      const labelComparison = a.label.localeCompare(b.label);
+      if (labelComparison !== 0) {
+        return labelComparison;
+      }
+      return a.window_bp - b.window_bp;
+    });
     const maxNormalDensity = Math.max(
       0,
-      ...rows.map((row) => row.motifs.normal.density_per_mb ?? 0),
+      ...sortedRows.map((row) => row.motifs.normal.density_per_mb ?? 0),
     );
     const maxRevcompDensity = Math.max(
       0,
-      ...rows.map((row) => row.motifs.revcomp.density_per_mb ?? 0),
+      ...sortedRows.map((row) => row.motifs.revcomp.density_per_mb ?? 0),
     );
-    return rows.map((category) => ({
+    return sortedRows.map((category) => ({
       id: `${category.window_bp}:${category.key}`,
       category,
       normalDensityRatio: maxNormalDensity

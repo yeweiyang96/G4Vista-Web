@@ -3,6 +3,27 @@
     "angular-cli": {
       "command": "npx",
       "args": ["-y", "@angular/cli", "mcp", "--experimental-tool"]
+    },
+    "mcp-ch": {
+      "args": [
+        "run",
+        "--with",
+        "mcp-clickhouse",
+        "--python",
+        "3.10",
+        "mcp-clickhouse"
+      ],
+      "command": "uv",
+      "env": {
+        "CLICKHOUSE_CONNECT_TIMEOUT": "30",
+        "CLICKHOUSE_HOST": "127.0.0.1",
+        "CLICKHOUSE_PASSWORD": "password",
+        "CLICKHOUSE_PORT": "8123",
+        "CLICKHOUSE_SECURE": "false",
+        "CLICKHOUSE_SEND_RECEIVE_TIMEOUT": "30",
+        "CLICKHOUSE_USER": "g4vista",
+        "CLICKHOUSE_VERIFY": "true"
+      },
     }
   }
 }

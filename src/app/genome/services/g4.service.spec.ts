@@ -267,11 +267,12 @@ describe('G4Service', () => {
         overlap: true,
         flankWindow: 500,
         includeFeatureBreakdown: false,
+        includeGeneBiotypeBreakdown: false,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/normal/position-distribution?flank_window=500&include_feature_breakdown=false&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/normal/position-distribution?flank_window=500&include_feature_breakdown=false&include_gene_biotype_breakdown=false&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
     );
 
     expect(request.request.method).toBe('GET');
@@ -289,6 +290,46 @@ describe('G4Service', () => {
       total_count: 0,
       categories: [],
       feature_breakdown: [],
+      gene_biotype_breakdown: [],
+      quality: {
+        regions_total_count: 0,
+        regions_status_ok_count: 0,
+        regions_length_mismatch_count: 0,
+        warnings: [],
+      },
+    });
+  });
+
+  it('requests gene biotype breakdown by default for position distribution', () => {
+    service
+      .getPositionDistribution({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'normal',
+        tetrads: [],
+        flankWindow: 1000,
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(
+      '/api/v1/g4/GCF_000021765.1/normal/position-distribution?flank_window=1000&include_feature_breakdown=true&include_gene_biotype_breakdown=true',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      assembly_accession: 'GCF_000021765.1',
+      g4_type: 'normal',
+      filters: {
+        tetrads: [],
+        min_gscore: null,
+        max_gscore: null,
+        overlap: false,
+        flank_window: 1000,
+        counting_mode: 'exclusive',
+      },
+      total_count: 0,
+      categories: [],
+      feature_breakdown: [],
+      gene_biotype_breakdown: [],
       quality: {
         regions_total_count: 0,
         regions_status_ok_count: 0,

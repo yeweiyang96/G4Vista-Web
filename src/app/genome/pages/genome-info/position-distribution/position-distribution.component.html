@@ -2,31 +2,10 @@
   <mat-card-header class="position-card-header">
     <div class="position-card-heading">
       <mat-card-title>Whole-Genome G-rich/i-motif Position Summary</mat-card-title>
-      <mat-card-subtitle
-        >{{ motifTypeLabel() }} · {{ flankWindowLabel() }} upstream/downstream gene
-        window</mat-card-subtitle
-      >
+      <mat-card-subtitle>Whole-genome position counts and research statistics</mat-card-subtitle>
     </div>
 
     <div class="position-controls">
-      <mat-button-toggle-group
-        [value]="g4Type()"
-        (change)="changeG4Type($event.value)"
-        aria-label="Whole-genome G-rich/i-motif type"
-      >
-        <mat-button-toggle value="normal">G-rich</mat-button-toggle>
-        <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
-      </mat-button-toggle-group>
-
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="gene-window-field">
-        <mat-label>Upstream/downstream gene window</mat-label>
-        <mat-select [value]="flankWindow()" (valueChange)="changeFlankWindow($event)">
-          @for (option of flankWindowOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
       <form class="position-filter-form" (submit)="onApplyFilters($event)">
         <mat-form-field
           appearance="outline"
@@ -89,6 +68,30 @@
     <mat-tab-group class="position-tabs" animationDuration="150ms">
       <mat-tab label="Summary">
         <section class="tab-panel">
+          <div class="summary-position-controls" aria-label="Summary position controls">
+            <mat-button-toggle-group
+              [value]="g4Type()"
+              (change)="changeG4Type($event.value)"
+              aria-label="Whole-genome G-rich/i-motif type"
+            >
+              <mat-button-toggle value="normal">G-rich</mat-button-toggle>
+              <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
+            </mat-button-toggle-group>
+
+            <mat-form-field
+              appearance="outline"
+              subscriptSizing="dynamic"
+              class="gene-window-field"
+            >
+              <mat-label>Upstream/downstream gene window</mat-label>
+              <mat-select [value]="flankWindow()" (valueChange)="changeFlankWindow($event)">
+                @for (option of flankWindowOptions; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
           @if (isLoading()) {
             <div class="state">
               <mat-spinner diameter="28"></mat-spinner>
@@ -133,9 +136,68 @@
               }
             </div>
 
+            @if (geneBiotypeBreakdown().length > 0) {
+              <section
+                class="feature-breakdown"
+                aria-label="Gene biotype position relationship breakdown"
+              >
+                <h3 class="breakdown-title">
+                  <span
+                    class="header-help"
+                    [matTooltip]="statisticTooltips.geneBiotypeBreakdown"
+                    matTooltipPosition="above"
+                    >Gene biotype position relationships</span
+                  >
+                </h3>
+                <div class="stats-wrap">
+                  <table class="stats-table">
+                    <thead>
+                      <tr>
+                        <th>Gene biotype</th>
+                        <th>Total</th>
+                        @for (column of geneBiotypeCategoryColumns; track column.key) {
+                          <th>
+                            <span class="stats-category">
+                              <span
+                                class="category-swatch"
+                                [style.background]="column.color"
+                                aria-hidden="true"
+                              ></span>
+                              {{ column.label }}
+                            </span>
+                          </th>
+                        }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (
+                        row of geneBiotypeBreakdown();
+                        track row.bio_type ?? row.display_label
+                      ) {
+                        <tr>
+                          <td class="feature-breakdown-name">{{ row.display_label }}</td>
+                          <td>{{ formatCount(row.total_count) }}</td>
+                          @for (category of row.categories; track category.key) {
+                            <td class="stats-category">
+                              <span
+                                class="category-swatch"
+                                [style.background]="category.color"
+                                aria-hidden="true"
+                              ></span>
+                              {{ category.value }}
+                            </td>
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            }
+
             @if (featureBreakdown().length > 0) {
               <section class="feature-breakdown" aria-label="Root non-gene feature type breakdown">
-                <h3 class="feature-breakdown-title">Root non-gene feature types</h3>
+                <h3 class="breakdown-title">Root non-gene feature types</h3>
                 <div class="feature-breakdown-table">
                   <div class="feature-breakdown-row feature-breakdown-header">
                     <span>Feature type</span>
