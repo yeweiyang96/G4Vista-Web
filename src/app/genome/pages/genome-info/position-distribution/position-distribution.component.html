@@ -102,11 +102,17 @@
           } @else if (distribution().total_count > 0) {
             <div class="summary-grid">
               <div class="pie-wrap" aria-label="Whole-genome G-rich/i-motif position summary chart">
-                <div class="pie" [style.background]="gradient()">
-                  <div class="pie-core">
-                    <span class="pie-count">{{ formatCount(distribution().total_count) }}</span>
-                    <span class="pie-label">sites</span>
-                  </div>
+                <div class="summary-doughnut">
+                  <canvas
+                    baseChart
+                    [type]="'doughnut'"
+                    [data]="summaryDoughnutData()"
+                    [options]="summaryDoughnutOptions"
+                    [plugins]="summaryDoughnutPlugins"
+                    [legend]="true"
+                    aria-label="Doughnut chart showing whole-genome position category share"
+                    role="img"
+                  ></canvas>
                 </div>
               </div>
 
@@ -138,7 +144,7 @@
 
             @if (geneBiotypeBreakdown().length > 0) {
               <section
-                class="feature-breakdown"
+                class="feature-breakdown gene-biotype-breakdown"
                 aria-label="Gene biotype position relationship breakdown"
               >
                 <h3 class="breakdown-title">
@@ -149,48 +155,76 @@
                     >Gene biotype position relationships</span
                   >
                 </h3>
-                <div class="stats-wrap">
-                  <table class="stats-table">
-                    <thead>
-                      <tr>
-                        <th>Gene biotype</th>
-                        <th>Total</th>
-                        @for (column of geneBiotypeCategoryColumns; track column.key) {
-                          <th>
-                            <span class="stats-category">
-                              <span
-                                class="category-swatch"
-                                [style.background]="column.color"
-                                aria-hidden="true"
-                              ></span>
-                              {{ column.label }}
-                            </span>
-                          </th>
-                        }
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (
-                        row of geneBiotypeBreakdown();
-                        track row.bio_type ?? row.display_label
-                      ) {
+                <div class="gene-biotype-layout">
+                  <div
+                    class="pie-wrap gene-biotype-chart"
+                    [matTooltip]="statisticTooltips.geneBiotypeDonut"
+                    matTooltipPosition="above"
+                  >
+                    <canvas
+                      baseChart
+                      [type]="'doughnut'"
+                      [data]="geneBiotypeDoughnutData()"
+                      [options]="geneBiotypeDoughnutOptions"
+                      [legend]="true"
+                      aria-label="Nested doughnut chart showing gene biotype share and within-biotype position category share"
+                      role="img"
+                    ></canvas>
+                  </div>
+                  <div class="stats-wrap gene-biotype-table">
+                    <table class="stats-table">
+                      <thead>
                         <tr>
-                          <td class="feature-breakdown-name">{{ row.display_label }}</td>
-                          <td>{{ formatCount(row.total_count) }}</td>
-                          @for (category of row.categories; track category.key) {
-                            <td class="stats-category">
-                              <span
-                                class="category-swatch"
-                                [style.background]="category.color"
-                                aria-hidden="true"
-                              ></span>
-                              {{ category.value }}
-                            </td>
+                          <th>Gene biotype</th>
+                          <th>Total</th>
+                          @for (column of geneBiotypeCategoryColumns; track column.key) {
+                            <th>
+                              <span class="stats-category">
+                                <span
+                                  class="category-swatch"
+                                  [style.background]="column.color"
+                                  aria-hidden="true"
+                                ></span>
+                                {{ column.label }}
+                              </span>
+                            </th>
                           }
                         </tr>
-                      }
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        @for (
+                          row of geneBiotypeBreakdown();
+                          track row.bio_type ?? row.display_label
+                        ) {
+                          <tr>
+                            <td class="feature-breakdown-name">
+                              <span class="stats-category">
+                                <span
+                                  class="category-swatch"
+                                  [style.background]="row.color"
+                                  aria-hidden="true"
+                                ></span>
+                                {{ row.display_label }}
+                              </span>
+                            </td>
+                            <td>{{ formatCount(row.total_count) }}</td>
+                            @for (category of row.categories; track category.key) {
+                              <td>
+                                <span class="stats-category">
+                                  <span
+                                    class="category-swatch"
+                                    [style.background]="category.color"
+                                    aria-hidden="true"
+                                  ></span>
+                                  {{ category.value }}
+                                </span>
+                              </td>
+                            }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </section>
             }
@@ -335,13 +369,15 @@
                   ) {
                     <tr>
                       <td>{{ category.windowLabel }}</td>
-                      <td class="stats-category">
-                        <span
-                          class="category-swatch"
-                          [style.background]="category.color"
-                          aria-hidden="true"
-                        ></span>
-                        {{ category.displayLabel }}
+                      <td>
+                        <span class="stats-category">
+                          <span
+                            class="category-swatch"
+                            [style.background]="category.color"
+                            aria-hidden="true"
+                          ></span>
+                          {{ category.displayLabel }}
+                        </span>
                       </td>
                       <td>{{ formatNullableNumber(category.length_mb) }}</td>
                       <td>{{ formatNullableNumber(category.motifs.normal.density_per_mb) }}</td>
@@ -441,13 +477,15 @@
                   @for (row of strengthRows(); track row.id) {
                     <tr>
                       <td>{{ row.category.windowLabel }}</td>
-                      <td class="stats-category">
-                        <span
-                          class="category-swatch"
-                          [style.background]="row.category.color"
-                          aria-hidden="true"
-                        ></span>
-                        {{ row.category.displayLabel }}
+                      <td>
+                        <span class="stats-category">
+                          <span
+                            class="category-swatch"
+                            [style.background]="row.category.color"
+                            aria-hidden="true"
+                          ></span>
+                          {{ row.category.displayLabel }}
+                        </span>
                       </td>
                       <td>{{ row.motifLabel }}</td>
                       <td>{{ formatCount(row.stats.count) }}</td>
@@ -561,13 +599,15 @@
                   ) {
                     <tr>
                       <td>{{ category.windowLabel }}</td>
-                      <td class="stats-category">
-                        <span
-                          class="category-swatch"
-                          [style.background]="category.color"
-                          aria-hidden="true"
-                        ></span>
-                        {{ category.displayLabel }}
+                      <td>
+                        <span class="stats-category">
+                          <span
+                            class="category-swatch"
+                            [style.background]="category.color"
+                            aria-hidden="true"
+                          ></span>
+                          {{ category.displayLabel }}
+                        </span>
                       </td>
                       <td>{{ formatCount(category.motifs.normal.count) }}</td>
                       <td>{{ formatCount(category.motifs.revcomp.count) }}</td>
@@ -658,13 +698,15 @@
                   @for (row of windowSensitivityRows(); track row.id) {
                     <tr>
                       <td>{{ row.category.windowLabel }}</td>
-                      <td class="stats-category">
-                        <span
-                          class="category-swatch"
-                          [style.background]="row.category.color"
-                          aria-hidden="true"
-                        ></span>
-                        {{ row.category.displayLabel }}
+                      <td>
+                        <span class="stats-category">
+                          <span
+                            class="category-swatch"
+                            [style.background]="row.category.color"
+                            aria-hidden="true"
+                          ></span>
+                          {{ row.category.displayLabel }}
+                        </span>
                       </td>
                       <td>{{ formatNullableNumber(row.category.motifs.normal.density_per_mb) }}</td>
                       <td><meter min="0" max="100" [value]="row.normalDensityRatio"></meter></td>

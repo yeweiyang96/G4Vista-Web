@@ -8,6 +8,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import type { Chart, ChartData, ChartOptions, LegendItem, Plugin, TooltipItem } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { BaseChartDirective } from 'ng2-charts';
 import {
   G4FlankWindow,
   G4FeatureBreakdownItem,
@@ -61,10 +64,13 @@ interface GeneBiotypeCategoryCell {
   key: string;
   label: string;
   color: string;
+  count: number;
+  ratio: number;
   value: string;
 }
 
 interface GeneBiotypeBreakdownView extends Omit<G4GeneBiotypePositionBreakdown, 'categories'> {
+  color: string;
   categories: readonly GeneBiotypeCategoryCell[];
 }
 
@@ -116,13 +122,30 @@ const POSITION_STATISTIC_TOOLTIPS = {
     'Bar scaled to the largest upstream/downstream density for that motif type across displayed windows; not a time trend.',
   geneBiotypeBreakdown:
     'Ratios are within each gene biotype row; the same site can appear in multiple biotype rows when it has multiple gene relations.',
+  geneBiotypeDonut:
+    'Outer ring shows displayed gene biotype share; inner ring splits each biotype span by position category.',
 } as const;
+const TRANSPARENT_CHART_SEGMENT = 'rgba(0, 0, 0, 0)';
 const GENE_BIOTYPE_CATEGORY_COLUMNS = [
   { key: 'gene_inside', label: 'Inside genes' },
   { key: 'gene_upstream', label: 'Upstream' },
   { key: 'gene_downstream', label: 'Downstream' },
   { key: 'other_root_non_gene_feature', label: 'Root non-gene' },
   { key: 'non_feature', label: 'Non-feature' },
+] as const;
+const GENE_BIOTYPE_COLORS = [
+  '#3f6c8a',
+  '#b45f06',
+  '#5b8f5a',
+  '#8b5fbf',
+  '#b64f7a',
+  '#7b6d3a',
+  '#507f7f',
+  '#9b5b48',
+  '#4f6fb3',
+  '#6f7d2f',
+  '#9a5c8a',
+  '#5d6b78',
 ] as const;
 
 function motifTypeLabel(g4Type: G4Type): string {
@@ -175,6 +198,23 @@ function categoryCount(categories: readonly G4PositionCategory[], key: string): 
   return categories.find((category) => category.key === key)?.count ?? 0;
 }
 
+function summaryChartLabel(category: Pick<G4PositionCategory, 'key' | 'label'>): string {
+  switch (category.key) {
+    case 'gene_inside':
+      return 'Inside genes';
+    case 'gene_upstream':
+      return 'Upstream';
+    case 'gene_downstream':
+      return 'Downstream';
+    case 'other_root_non_gene_feature':
+      return 'Root non-gene';
+    case 'non_feature':
+      return 'Non-feature';
+    default:
+      return category.label;
+  }
+}
+
 function formatCount(value: number): string {
   return COUNT_FORMATTER.format(value);
 }
@@ -206,6 +246,7 @@ function motifTypeShortLabel(g4Type: G4Type): string {
 @Component({
   selector: 'app-position-distribution',
   imports: [
+    BaseChartDirective,
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
@@ -247,6 +288,89 @@ export class PositionDistributionComponent {
   readonly formatSignedPercent = formatSignedPercent;
   readonly statisticTooltips = POSITION_STATISTIC_TOOLTIPS;
   readonly motifTypeLabel = computed(() => motifTypeLabel(this.g4Type()));
+  readonly summaryDoughnutPlugins: Plugin<'doughnut'>[] = [ChartDataLabels as Plugin<'doughnut'>];
+  readonly summaryDoughnutOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '56%',
+    elements: {
+      arc: {
+        borderAlign: 'inner',
+        borderColor: 'rgba(255, 255, 255, 0.85)',
+        borderWidth: 1,
+      },
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxHeight: 8,
+          boxWidth: 8,
+          padding: 12,
+          usePointStyle: true,
+        },
+      },
+      tooltip: {
+        filter: (context) => Number(context.parsed) > 0,
+        callbacks: {
+          label: (context) => this.summaryDoughnutTooltipLabel(context),
+        },
+      },
+      datalabels: {
+        align: 'center',
+        anchor: 'center',
+        clamp: true,
+        color: '#ffffff',
+        display: (context) => {
+          const value = Number(context.dataset.data[context.dataIndex] ?? 0);
+          return value > 0 ? 'auto' : false;
+        },
+        font: {
+          size: 11,
+          weight: 'bold',
+        },
+        formatter: (value) => {
+          const count = Number(value);
+          return count > 0 ? formatCount(count) : '';
+        },
+        textStrokeColor: 'rgba(0, 0, 0, 0.42)',
+        textStrokeWidth: 2,
+      },
+    },
+  };
+  readonly geneBiotypeDoughnutOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '42%',
+    elements: {
+      arc: {
+        borderAlign: 'inner',
+        borderColor: 'rgba(255, 255, 255, 0.85)',
+        borderWidth: 1,
+      },
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxHeight: 8,
+          boxWidth: 8,
+          generateLabels: (chart) =>
+            this.geneBiotypeDoughnutLegendLabels(chart as Chart<'doughnut'>),
+          padding: 12,
+          usePointStyle: true,
+        },
+        onClick: (_event, legendItem, legend) =>
+          this.toggleGeneBiotypeDoughnutLegendItem(legendItem, legend.chart as Chart<'doughnut'>),
+      },
+      tooltip: {
+        filter: (context) => this.showGeneBiotypeDoughnutTooltip(context),
+        callbacks: {
+          label: (context) => this.geneBiotypeDoughnutTooltipLabel(context),
+        },
+      },
+    },
+  };
 
   readonly categoryRows = computed<readonly PositionCategoryView[]>(() =>
     this.distribution().categories.map((category) => {
@@ -258,6 +382,21 @@ export class PositionDistributionComponent {
       };
     }),
   );
+  readonly summaryDoughnutData = computed<ChartData<'doughnut', number[], string>>(() => {
+    const categories = this.categoryRows();
+    return {
+      labels: categories.map((category) => summaryChartLabel(category)),
+      datasets: [
+        {
+          label: motifTypeShortLabel(this.g4Type()),
+          data: categories.map((category) => category.count),
+          backgroundColor: categories.map((category) => category.color),
+          hoverBackgroundColor: categories.map((category) => category.color),
+          hoverOffset: 2,
+        },
+      ],
+    };
+  });
   readonly featureBreakdown = computed<readonly G4FeatureBreakdownItem[]>(() =>
     this.distribution().feature_breakdown.slice(0, 12),
   );
@@ -266,19 +405,12 @@ export class PositionDistributionComponent {
     color: POSITION_CATEGORY_COLORS[column.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
   }));
   readonly geneBiotypeBreakdown = computed<readonly GeneBiotypeBreakdownView[]>(() =>
-    [...this.distribution().gene_biotype_breakdown]
-      .sort((a, b) => {
-        const totalComparison = b.total_count - a.total_count;
-        if (totalComparison !== 0) {
-          return totalComparison;
-        }
-        return a.display_label.localeCompare(b.display_label);
-      })
-      .slice(0, 12)
-      .map((row) => ({
+    this.geneBiotypeBreakdownSource().map((row, index) => {
+      return {
         bio_type: row.bio_type,
         display_label: row.display_label || row.bio_type || 'Unspecified gene biotype',
         total_count: row.total_count,
+        color: GENE_BIOTYPE_COLORS[index % GENE_BIOTYPE_COLORS.length],
         categories: this.geneBiotypeCategoryColumns.map((column) => {
           const category = row.categories.find((item) => item.key === column.key);
           const count = category?.count ?? 0;
@@ -287,32 +419,67 @@ export class PositionDistributionComponent {
             key: column.key,
             label: column.label,
             color: POSITION_CATEGORY_COLORS[column.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
+            count,
+            ratio,
             value: `${formatCount(count)} (${formatRatio(ratio)})`,
           };
         }),
-      })),
+      };
+    }),
   );
-  readonly gradient = computed(() => {
-    const total = this.distribution().total_count;
-    if (!total) {
-      return 'conic-gradient(var(--mat-sys-surface-container-high) 0deg 360deg)';
+  readonly geneBiotypeTotal = computed(() =>
+    this.geneBiotypeBreakdown().reduce((sum, row) => sum + row.total_count, 0),
+  );
+  readonly geneBiotypeDoughnutData = computed<ChartData<'doughnut', number[], string>>(() => {
+    const labels: string[] = [];
+    const outerData: number[] = [];
+    const innerData: number[] = [];
+    const outerBackground: string[] = [];
+    const innerBackground: string[] = [];
+
+    for (const row of this.geneBiotypeBreakdown()) {
+      row.categories.forEach((category, categoryIndex) => {
+        labels.push(`${row.display_label} / ${category.label}`);
+        outerData.push(categoryIndex === 0 ? row.total_count : 0);
+        innerData.push(category.count);
+        outerBackground.push(categoryIndex === 0 ? row.color : TRANSPARENT_CHART_SEGMENT);
+        innerBackground.push(category.color);
+      });
     }
 
-    let currentAngle = 0;
-    const segments: string[] = [];
-    for (const category of this.categoryRows()) {
-      if (category.count <= 0) {
-        continue;
-      }
-      const nextAngle = currentAngle + (category.count / total) * 360;
-      segments.push(`${category.color} ${currentAngle}deg ${nextAngle}deg`);
-      currentAngle = nextAngle;
-    }
-
-    return segments.length
-      ? `conic-gradient(${segments.join(', ')})`
-      : 'conic-gradient(var(--mat-sys-surface-container-high) 0deg 360deg)';
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Gene biotype',
+          data: outerData,
+          backgroundColor: outerBackground,
+          hoverBackgroundColor: outerBackground,
+          hoverOffset: 2,
+          weight: 1,
+        },
+        {
+          label: 'Position category within gene biotype',
+          data: innerData,
+          backgroundColor: innerBackground,
+          hoverBackgroundColor: innerBackground,
+          hoverOffset: 2,
+          weight: 1,
+        },
+      ],
+    };
   });
+  private readonly geneBiotypeBreakdownSource = computed(() =>
+    [...this.distribution().gene_biotype_breakdown]
+      .sort((a, b) => {
+        const totalComparison = b.total_count - a.total_count;
+        if (totalComparison !== 0) {
+          return totalComparison;
+        }
+        return a.display_label.localeCompare(b.display_label);
+      })
+      .slice(0, 12),
+  );
   readonly summaryMetrics = computed<readonly PositionSummaryMetric[]>(() => {
     const distribution = this.distribution();
     const categories = distribution.categories;
@@ -451,6 +618,73 @@ export class PositionDistributionComponent {
 
   private readInputValue(event: Event): string {
     return (event.target as HTMLInputElement | null)?.value ?? '';
+  }
+
+  private showGeneBiotypeDoughnutTooltip(context: TooltipItem<'doughnut'>): boolean {
+    return context.datasetIndex !== 0 || Number(context.parsed) > 0;
+  }
+
+  private geneBiotypeDoughnutLegendLabels(chart: Chart<'doughnut'>): LegendItem[] {
+    const slotCount = this.geneBiotypeCategoryColumns.length;
+    return this.geneBiotypeBreakdown().map((row, rowIndex) => {
+      const dataIndex = rowIndex * slotCount;
+      return {
+        datasetIndex: 0,
+        fillStyle: row.color,
+        hidden: !chart.getDataVisibility(dataIndex),
+        index: dataIndex,
+        lineWidth: 0,
+        pointStyle: 'circle',
+        strokeStyle: row.color,
+        text: row.display_label,
+      };
+    });
+  }
+
+  private toggleGeneBiotypeDoughnutLegendItem(
+    legendItem: LegendItem,
+    chart: Chart<'doughnut'>,
+  ): void {
+    if (legendItem.index === undefined) {
+      return;
+    }
+
+    const nextVisible = !chart.getDataVisibility(legendItem.index);
+    for (let offset = 0; offset < this.geneBiotypeCategoryColumns.length; offset += 1) {
+      const dataIndex = legendItem.index + offset;
+      if (chart.getDataVisibility(dataIndex) !== nextVisible) {
+        chart.toggleDataVisibility(dataIndex);
+      }
+    }
+    chart.update();
+  }
+
+  private summaryDoughnutTooltipLabel(context: TooltipItem<'doughnut'>): string {
+    const category = this.categoryRows()[context.dataIndex];
+    if (!category) {
+      return '';
+    }
+    return `${category.displayLabel}: ${formatCount(category.count)} (${formatRatio(
+      category.ratio,
+    )})`;
+  }
+
+  private geneBiotypeDoughnutTooltipLabel(context: TooltipItem<'doughnut'>): string {
+    const rowIndex = Math.floor(context.dataIndex / this.geneBiotypeCategoryColumns.length);
+    const categoryIndex = context.dataIndex % this.geneBiotypeCategoryColumns.length;
+    const row = this.geneBiotypeBreakdown()[rowIndex];
+    if (!row) {
+      return '';
+    }
+    if (context.datasetIndex === 0) {
+      return `${row.display_label}: ${formatCount(row.total_count)} (${formatRatio(
+        this.geneBiotypeTotal() ? row.total_count / this.geneBiotypeTotal() : 0,
+      )})`;
+    }
+    const category = row.categories[categoryIndex];
+    return `${row.display_label} / ${category.label}: ${formatCount(category.count)} (${formatRatio(
+      category.ratio,
+    )})`;
   }
 
   private statisticsWindowRows(

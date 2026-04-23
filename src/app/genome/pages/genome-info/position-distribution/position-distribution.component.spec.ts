@@ -3,6 +3,8 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatTabGroupHarness } from '@angular/material/tabs/testing';
 import { MatTooltip } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
+import { ArcElement, DoughnutController, Legend, Tooltip, TooltipItem } from 'chart.js';
+import { BaseChartDirective, provideCharts } from 'ng2-charts';
 import {
   EMPTY_G4_POSITION_DISTRIBUTION,
   EMPTY_G4_POSITION_STATISTICS,
@@ -189,6 +191,11 @@ describe('PositionDistributionComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PositionDistributionComponent],
+      providers: [
+        provideCharts({
+          registerables: [DoughnutController, ArcElement, Tooltip, Legend],
+        }),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PositionDistributionComponent);
@@ -284,6 +291,50 @@ describe('PositionDistributionComponent', () => {
     }
   });
 
+  it('renders the Summary position chart with an ng2-charts doughnut', () => {
+    const panel = activeTabPanel();
+    const summaryGrid = panel.querySelector('.summary-grid') as HTMLElement;
+
+    expect(summaryGrid.querySelector('.summary-doughnut canvas[basechart]')).not.toBeNull();
+    expect(summaryGrid.querySelector('.pie')).toBeNull();
+    const chartDirectives = fixture.debugElement
+      .queryAll(By.directive(BaseChartDirective))
+      .map((debugElement) => debugElement.injector.get(BaseChartDirective));
+    expect(chartDirectives.length).toBeGreaterThan(1);
+    expect(chartDirectives.every((chart) => chart.legend === true)).toBe(true);
+
+    const component = fixture.componentInstance;
+    const chartData = component.summaryDoughnutData();
+    expect(chartData.labels).toEqual(['Inside genes', 'Upstream']);
+    expect(chartData.datasets.length).toBe(1);
+    expect(chartData.datasets[0].label).toBe('G-rich');
+    expect(chartData.datasets[0].data).toEqual([2, 1]);
+    expect(component.summaryDoughnutPlugins.length).toBe(1);
+
+    const tooltip = component.summaryDoughnutOptions.plugins?.tooltip;
+    expect(tooltip).toBeDefined();
+    const zeroTooltip = { parsed: 0 } as TooltipItem<'doughnut'>;
+    const visibleTooltip = { parsed: 2 } as TooltipItem<'doughnut'>;
+    expect(tooltip?.filter?.(zeroTooltip, 0, [zeroTooltip], chartData)).toBe(false);
+    expect(tooltip?.filter?.(visibleTooltip, 0, [visibleTooltip], chartData)).toBe(true);
+    const labelCallback = tooltip?.callbacks?.label as
+      | ((context: TooltipItem<'doughnut'>) => string)
+      | undefined;
+    expect(labelCallback?.({ dataIndex: 0 } as TooltipItem<'doughnut'>)).toBe(
+      'Inside annotated genes: 2 (66.7%)',
+    );
+
+    const legend = component.summaryDoughnutOptions.plugins?.legend;
+    expect(legend?.position).toBe('bottom');
+    const datalabels = component.summaryDoughnutOptions.plugins?.datalabels as {
+      display?: (context: { dataset: { data: number[] }; dataIndex: number }) => 'auto' | false;
+      formatter?: (value: number) => string;
+    };
+    expect(datalabels.display?.({ dataset: { data: [2] }, dataIndex: 0 })).toBe('auto');
+    expect(datalabels.display?.({ dataset: { data: [0] }, dataIndex: 0 })).toBe(false);
+    expect(datalabels.formatter?.(2)).toBe('2');
+  });
+
   it('renders gene biotype position relationships in the Summary tab', () => {
     const panel = activeTabPanel();
     const text = panel.textContent ?? '';
@@ -296,8 +347,79 @@ describe('PositionDistributionComponent', () => {
     expect(text).toContain('Unspecified gene biotype');
     expect(text).toContain('2 (66.7%)');
     expect(text).toContain('1 (100%)');
+    expect(panel.querySelector('canvas[basechart]')).not.toBeNull();
+    expect(fixture.debugElement.query(By.directive(BaseChartDirective))).not.toBeNull();
+    const layout = panel.querySelector('.gene-biotype-layout') as HTMLElement;
+    expect(layout).not.toBeNull();
+    expect(layout.children[0].classList).toContain('gene-biotype-chart');
+    expect(layout.children[1].classList).toContain('gene-biotype-table');
+    expect(layout.querySelector('.gene-biotype-table table')).not.toBeNull();
+    expect(layout.querySelector('td.stats-category')).toBeNull();
+
+    const component = fixture.componentInstance;
+    const chartData = component.geneBiotypeDoughnutData();
+    expect(chartData.datasets.length).toBe(2);
+    expect(chartData.labels).toEqual([
+      'protein_coding / Inside genes',
+      'protein_coding / Upstream',
+      'protein_coding / Downstream',
+      'protein_coding / Root non-gene',
+      'protein_coding / Non-feature',
+      'Unspecified gene biotype / Inside genes',
+      'Unspecified gene biotype / Upstream',
+      'Unspecified gene biotype / Downstream',
+      'Unspecified gene biotype / Root non-gene',
+      'Unspecified gene biotype / Non-feature',
+    ]);
+    expect(chartData.datasets[0].label).toBe('Gene biotype');
+    expect(chartData.datasets[0].data).toEqual([3, 0, 0, 0, 0, 1, 0, 0, 0, 0]);
+    expect(chartData.datasets[1].label).toBe('Position category within gene biotype');
+    expect(chartData.datasets[1].data).toEqual([2, 1, 0, 0, 0, 0, 0, 0, 0, 1]);
+    expect(component.geneBiotypeBreakdown()[0].color).toBe('#3f6c8a');
+    expect(component.geneBiotypeTotal()).toBe(4);
+
+    const tooltip = component.geneBiotypeDoughnutOptions.plugins?.tooltip;
+    expect(tooltip).toBeDefined();
+    const zeroOuterTooltip = { datasetIndex: 0, parsed: 0 } as TooltipItem<'doughnut'>;
+    const visibleOuterTooltip = { datasetIndex: 0, parsed: 3 } as TooltipItem<'doughnut'>;
+    expect(tooltip?.filter?.(zeroOuterTooltip, 0, [zeroOuterTooltip], chartData)).toBe(false);
+    expect(tooltip?.filter?.(visibleOuterTooltip, 0, [visibleOuterTooltip], chartData)).toBe(true);
+    const legend = component.geneBiotypeDoughnutOptions.plugins?.legend;
+    expect(legend?.position).toBe('bottom');
+    const visibility = new Map<number, boolean>();
+    const fakeChart = {
+      getDataVisibility: (index: number) => visibility.get(index) ?? true,
+      toggleDataVisibility: (index: number) =>
+        visibility.set(index, !(visibility.get(index) ?? true)),
+      update: jasmine.createSpy('update'),
+    };
+    const legendLabels = legend?.labels?.generateLabels?.(fakeChart as never) ?? [];
+    expect(legendLabels.map((label) => label.text)).toEqual([
+      'protein_coding',
+      'Unspecified gene biotype',
+    ]);
+    expect(legendLabels.map((label) => label.index)).toEqual([0, 5]);
+    expect(legendLabels[0].fillStyle).toBe('#3f6c8a');
+
+    const legendClick = legend?.onClick as unknown as
+      | ((event: unknown, legendItem: (typeof legendLabels)[number], legend: unknown) => void)
+      | undefined;
+    legendClick?.({}, legendLabels[0], { chart: fakeChart });
+    expect(Array.from({ length: 5 }, (_, index) => visibility.get(index))).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(visibility.get(5)).toBeUndefined();
+    expect(fakeChart.update).toHaveBeenCalledTimes(1);
+
     expect(tooltipMessages()).toContain(
       'Ratios are within each gene biotype row; the same site can appear in multiple biotype rows when it has multiple gene relations.',
+    );
+    expect(tooltipMessages()).toContain(
+      'Outer ring shows displayed gene biotype share; inner ring splits each biotype span by position category.',
     );
   });
 
