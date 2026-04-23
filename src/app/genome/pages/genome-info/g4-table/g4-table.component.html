@@ -3,16 +3,26 @@
     @if (hasGeneSelection()) {
       <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetScope()">
         Scope: {{ filterScopeLabel() }}
+        <mat-icon aria-hidden="true" class="filter-chip-icon">close</mat-icon>
       </mat-chip>
     }
     <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetGene()">
       Gene: {{ geneChipLabel() }}
+      @if (hasSelectedGeneChip()) {
+        <mat-icon aria-hidden="true" class="filter-chip-icon">close</mat-icon>
+      }
     </mat-chip>
     <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetTetrads()">
       Tetrads: {{ tetradsChipLabel() }}
+      @if (hasSelectedTetradsChip()) {
+        <mat-icon aria-hidden="true" class="filter-chip-icon">close</mat-icon>
+      }
     </mat-chip>
     <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetGscore()">
       Score: {{ gscoreChipLabel() }}
+      @if (hasSelectedGscoreChip()) {
+        <mat-icon aria-hidden="true" class="filter-chip-icon">close</mat-icon>
+      }
     </mat-chip>
   </mat-chip-set>
 </div>

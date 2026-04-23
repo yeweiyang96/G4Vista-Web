@@ -12,6 +12,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
@@ -69,7 +70,7 @@ function isDefaultRelationPosition(position: G4GenePosition): boolean {
 
 @Component({
   selector: 'app-g4-table',
-  imports: [MatButtonModule, MatChipsModule, MtxGridModule, RouterLink],
+  imports: [MatButtonModule, MatChipsModule, MatIconModule, MtxGridModule, RouterLink],
   templateUrl: './g4-table.component.html',
   styleUrl: './g4-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -108,6 +109,11 @@ export class G4TableComponent {
   readonly geneChipLabel = computed(() => this.filterSelectedGeneLabel().trim() || 'Any');
   readonly tetradsChipLabel = computed(() =>
     this.filterSelectedTetrads().length ? this.filterSelectedTetrads().join(', ') : 'All',
+  );
+  readonly hasSelectedGeneChip = computed(() => this.hasSelectedGene());
+  readonly hasSelectedTetradsChip = computed(() => this.filterSelectedTetrads().length > 0);
+  readonly hasSelectedGscoreChip = computed(
+    () => this.filterMinGscore() !== undefined || this.filterMaxGscore() !== undefined,
   );
   readonly gscoreChipLabel = computed(() => {
     const min = this.filterMinGscore();

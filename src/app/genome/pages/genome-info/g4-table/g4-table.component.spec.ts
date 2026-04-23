@@ -154,4 +154,20 @@ describe('G4TableComponent', () => {
     expect(component.hasGeneSelection()).toBeTrue();
     expect(fixture.nativeElement.textContent).toContain('Scope: Inside gene (G4)');
   });
+
+  it('shows close icons only for non-default chips', () => {
+    const getCloseIconCount = () => fixture.nativeElement.querySelectorAll('mat-icon').length;
+
+    expect(getCloseIconCount()).toBe(0);
+
+    fixture.componentRef.setInput('hasSelectedGene', true);
+    fixture.componentRef.setInput('filterSelectedGeneLabel', 'dnaK (dnaK) [chr2]');
+    fixture.componentRef.setInput('filterSelectedTetrads', [2, 4]);
+    fixture.componentRef.setInput('filterMinGscore', 12);
+    fixture.componentRef.setInput('filterMaxGscore', 28);
+    fixture.detectChanges();
+
+    expect(getCloseIconCount()).toBe(4);
+    expect(fixture.nativeElement.textContent).toContain('close');
+  });
 });
