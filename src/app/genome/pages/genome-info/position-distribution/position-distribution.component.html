@@ -1,7 +1,7 @@
 <mat-card appearance="outlined" class="position-card">
   <mat-card-header class="position-card-header">
     <div class="position-card-heading">
-      <mat-card-title>Whole-Genome G-rich/i-motif Position Summary</mat-card-title>
+      <mat-card-title>Whole-Genome G4/i-motif Position Summary</mat-card-title>
       <mat-card-subtitle>Whole-genome position counts and research statistics</mat-card-subtitle>
     </div>
 
@@ -72,9 +72,9 @@
             <mat-button-toggle-group
               [value]="g4Type()"
               (change)="changeG4Type($event.value)"
-              aria-label="Whole-genome G-rich/i-motif type"
+              aria-label="Whole-genome G4/i-motif type"
             >
-              <mat-button-toggle value="normal">G-rich</mat-button-toggle>
+              <mat-button-toggle value="normal">G4</mat-button-toggle>
               <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
             </mat-button-toggle-group>
 
@@ -95,13 +95,13 @@
           @if (isLoading()) {
             <div class="state">
               <mat-spinner diameter="28"></mat-spinner>
-              <span>Loading whole-genome G-rich/i-motif summary...</span>
+              <span>Loading whole-genome G4/i-motif summary...</span>
             </div>
           } @else if (errorMessage()) {
             <p class="state" role="status">{{ errorMessage() }}</p>
           } @else if (distribution().total_count > 0) {
             <div class="summary-grid">
-              <div class="pie-wrap" aria-label="Whole-genome G-rich/i-motif position summary chart">
+              <div class="pie-wrap" aria-label="Whole-genome G4/i-motif position summary chart">
                 <div class="summary-doughnut">
                   <canvas
                     baseChart
@@ -236,9 +236,9 @@
                   <div class="feature-breakdown-row feature-breakdown-header">
                     <span>Feature type</span>
                     <span
-                      matTooltip="Count of deduplicated G-rich/i-motif sites assigned to this feature type."
+                      matTooltip="Count of deduplicated G4/i-motif sites assigned to this feature type."
                       matTooltipPosition="above"
-                      >Unique G-rich/i-motif sites</span
+                      >Unique G4/i-motif sites</span
                     >
                     <span>Proportion</span>
                     <span
@@ -267,9 +267,7 @@
               </div>
             }
           } @else {
-            <p class="state" role="status">
-              No whole-genome G-rich/i-motif site counts are available.
-            </p>
+            <p class="state" role="status">No whole-genome G4/i-motif site counts are available.</p>
           }
         </section>
       </mat-tab>
@@ -317,7 +315,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.densityPerMb"
                         matTooltipPosition="above"
-                        >G-rich density / Mb</span
+                        >G4 density / Mb</span
                       >
                     </th>
                     <th>
@@ -325,7 +323,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.foldVsGenome"
                         matTooltipPosition="above"
-                        >G-rich fold vs genome</span
+                        >G4 fold vs genome</span
                       >
                     </th>
                     <th>
@@ -333,7 +331,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.foldVsNonFeature"
                         matTooltipPosition="above"
-                        >G-rich fold vs non-feature</span
+                        >G4 fold vs non-feature</span
                       >
                     </th>
                     <th>
@@ -512,7 +510,7 @@
         </section>
       </mat-tab>
 
-      <mat-tab label="G-rich vs i-motif">
+      <mat-tab label="G4 vs i-motif">
         <section class="tab-panel">
           @if (statisticsLoading()) {
             <div class="state">
@@ -547,7 +545,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.count"
                         matTooltipPosition="above"
-                        >G-rich count</span
+                        >G4 count</span
                       >
                     </th>
                     <th>
@@ -563,7 +561,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.fraction"
                         matTooltipPosition="above"
-                        >G-rich fraction</span
+                        >G4 fraction</span
                       >
                     </th>
                     <th>
@@ -587,7 +585,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.densityRatio"
                         matTooltipPosition="above"
-                        >Density ratio (G-rich / i-motif)</span
+                        >Density ratio (G4 / i-motif)</span
                       >
                     </th>
                   </tr>
@@ -665,7 +663,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.densityPerMb"
                         matTooltipPosition="above"
-                        >G-rich density / Mb</span
+                        >G4 density / Mb</span
                       >
                     </th>
                     <th>
@@ -673,7 +671,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.relativeDensity"
                         matTooltipPosition="above"
-                        >G-rich relative density</span
+                        >G4 relative density</span
                       >
                     </th>
                     <th>

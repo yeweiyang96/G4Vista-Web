@@ -107,17 +107,17 @@ const SIGNED_PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
 const POSITION_STATISTIC_TOOLTIPS = {
   window: 'Upstream/downstream flank size used for this statistics row.',
   category: 'Mutually exclusive genomic position category used for this statistics row.',
-  type: 'Motif class: G-rich for normal calls and i-motif for reverse-complement calls.',
+  type: 'Motif class: G4 for normal calls and i-motif for reverse-complement calls.',
   count: 'Observed motif count assigned to this category.',
   intervalLength: 'Category denominator is the merged non-overlapping interval length.',
   densityPerMb: 'Motif count divided by merged interval length in megabases.',
   foldVsGenome: 'Category density divided by genome-wide density.',
   foldVsNonFeature: 'Category density divided by non-feature density.',
   medianP95: 'Median is the typical value; p95 is the 95th percentile, not the maximum.',
-  fraction: 'Share of G-rich or i-motif counts within the same category.',
-  fractionDelta: 'G-rich fraction minus i-motif fraction in the same category.',
+  fraction: 'Share of G4 or i-motif counts within the same category.',
+  fractionDelta: 'G4 fraction minus i-motif fraction in the same category.',
   densityRatio:
-    'G-rich density divided by i-motif density; N/A when denominator is zero or unavailable.',
+    'G4 density divided by i-motif density; N/A when denominator is zero or unavailable.',
   relativeDensity:
     'Bar scaled to the largest upstream/downstream density for that motif type across displayed windows; not a time trend.',
   geneBiotypeBreakdown:
@@ -149,7 +149,7 @@ const GENE_BIOTYPE_COLORS = [
 ] as const;
 
 function motifTypeLabel(g4Type: G4Type): string {
-  return g4Type === 'revcomp' ? 'i-motif sequence sites' : 'G-rich sequence sites';
+  return g4Type === 'revcomp' ? 'i-motif sequence sites' : 'G4 sequence sites';
 }
 
 function categoryDisplayText(
@@ -160,31 +160,29 @@ function categoryDisplayText(
     case 'gene_inside':
       return {
         displayLabel: 'Inside annotated genes',
-        displayDescription:
-          'Predicted G-rich/i-motif sites that fall within annotated gene intervals.',
+        displayDescription: 'Predicted G4/i-motif sites that fall within annotated gene intervals.',
       };
     case 'gene_upstream':
       return {
         displayLabel: `Within ${flankWindowLabel} upstream of genes`,
-        displayDescription: 'Predicted G-rich/i-motif sites in the upstream gene-neighbor window.',
+        displayDescription: 'Predicted G4/i-motif sites in the upstream gene-neighbor window.',
       };
     case 'gene_downstream':
       return {
         displayLabel: `Within ${flankWindowLabel} downstream of genes`,
-        displayDescription:
-          'Predicted G-rich/i-motif sites in the downstream gene-neighbor window.',
+        displayDescription: 'Predicted G4/i-motif sites in the downstream gene-neighbor window.',
       };
     case 'other_root_non_gene_feature':
       return {
         displayLabel: 'Inside root non-gene features',
         displayDescription:
-          'Predicted G-rich/i-motif sites assigned to parentless non-gene annotations such as promoters or repeat regions.',
+          'Predicted G4/i-motif sites assigned to parentless non-gene annotations such as promoters or repeat regions.',
       };
     case 'non_feature':
       return {
         displayLabel: 'No gene or root-feature assignment',
         displayDescription:
-          'Predicted G-rich/i-motif sites outside genes, gene-neighbor windows, and root non-gene features.',
+          'Predicted G4/i-motif sites outside genes, gene-neighbor windows, and root non-gene features.',
       };
     default:
       return {
@@ -240,7 +238,7 @@ function formatSignedPercent(value: number | null): string {
 }
 
 function motifTypeShortLabel(g4Type: G4Type): string {
-  return g4Type === 'revcomp' ? 'i-motif' : 'G-rich';
+  return g4Type === 'revcomp' ? 'i-motif' : 'G4';
 }
 
 @Component({
@@ -494,7 +492,7 @@ export class PositionDistributionComponent {
     return [
       {
         key: 'total',
-        label: 'Predicted G-rich/i-motif sites',
+        label: 'Predicted G4/i-motif sites',
         value: formatCount(total),
         detail: 'Whole genome, all accessions',
       },
@@ -502,7 +500,7 @@ export class PositionDistributionComponent {
         key: 'gene',
         label: 'Inside annotated genes',
         value: formatRatio(total ? geneInside / total : 0),
-        detail: `${formatCount(geneInside)} G-rich/i-motif sites`,
+        detail: `${formatCount(geneInside)} G4/i-motif sites`,
       },
       {
         key: 'regulatory',
