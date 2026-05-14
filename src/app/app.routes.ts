@@ -56,4 +56,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./gene/pages/gene-info/gene-info.component').then((m) => m.GeneInfoComponent),
   },
+  {
+    path: 'research/microbial-environment-g4',
+    title: 'Microbial G4 Environment Research',
+    loadComponent: () =>
+      import('./research/pages/microbial-environment-g4/microbial-environment-g4.component').then(
+        (m) => m.MicrobialEnvironmentG4Component,
+      ),
+  },
 ];

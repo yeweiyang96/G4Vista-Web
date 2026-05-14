@@ -52,7 +52,7 @@ export class App {
     { name: 'Taxonomy', route: '/taxonomy' },
     { name: 'Genome', route: '/genome' },
     { name: 'Gene', route: '/gene' },
-    { name: 'Environment', route: '/environment' },
+    { name: 'Research', route: '/research/microbial-environment-g4' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');
 

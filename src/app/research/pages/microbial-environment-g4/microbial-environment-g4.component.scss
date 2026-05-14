@@ -1,0 +1,290 @@
+.environment-page {
+  display: grid;
+  gap: 24px;
+  max-width: 1480px;
+  padding: 28px 24px 42px;
+  margin: 0 auto;
+}
+
+.header-copy,
+.control-stack,
+.collection-box,
+.query-snapshot mat-card-content,
+.empty-state {
+  display: grid;
+  gap: 14px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font: var(--mat-sys-display-small);
+}
+
+.eyebrow,
+.subtitle,
+.step-copy,
+.panel-heading p,
+.summary-cell small,
+.rail-title span,
+.collection-empty,
+.table-empty {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.workbench-shell {
+  min-height: 720px;
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+}
+
+.query-rail {
+  width: 460px;
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--mat-sys-surface-container-low);
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.workbench-content {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 18px;
+}
+
+.rail-title,
+.section-heading,
+.panel-heading,
+.submitted-bar,
+.status-note,
+.axis-note,
+.axis-meta,
+.taxonomy-search,
+.result-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.rail-title,
+.section-heading,
+.panel-heading {
+  justify-content: space-between;
+}
+
+.rail-title {
+  margin-bottom: 12px;
+}
+
+.step-actions,
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+:host ::ng-deep .query-stepper .mat-vertical-content {
+  padding: 14px 0 18px 24px;
+}
+
+:host ::ng-deep .query-stepper .mat-button-toggle-checkbox-wrapper {
+  display: none;
+}
+
+.segmented-field {
+  display: grid;
+  gap: 8px;
+}
+
+.segmented-field > span {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.segmented-field mat-button-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: calc(100% - 2px);
+  overflow: hidden;
+}
+
+:host ::ng-deep .segmented-field .mat-button-toggle-label-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.axis-note,
+.collection-empty,
+.status-note {
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.axis-note {
+  align-items: flex-start;
+  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-secondary-container);
+}
+
+.axis-meta,
+.submitted-bar,
+.panel-heading {
+  flex-wrap: wrap;
+}
+
+.axis-meta span,
+.submitted-bar span,
+.submitted-bar strong {
+  padding: 6px 10px;
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 999px;
+}
+
+.taxonomy-search {
+  align-items: stretch;
+}
+
+.taxonomy-search mat-form-field {
+  flex: 1;
+}
+
+.taxonomy-search button {
+  align-self: stretch;
+  min-width: 108px;
+  margin-bottom: 22px;
+}
+
+.candidate-list,
+.collection-box,
+.summary-cell,
+.results-tabs,
+.empty-state,
+.status-note,
+.submitted-bar {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 14px;
+}
+
+.candidate-list,
+.collection-box,
+.summary-cell,
+.results-tabs,
+.empty-state {
+  background: var(--mat-sys-surface-container-low);
+}
+
+.candidate-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.collection-box,
+.summary-cell,
+.tab-panel {
+  padding: 14px;
+}
+
+.summary-cell {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.collection-empty {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  background: var(--mat-sys-surface-container);
+}
+
+.status-note.pending {
+  color: var(--mat-sys-on-tertiary-container);
+  background: var(--mat-sys-tertiary-container);
+}
+
+.status-note.error {
+  color: var(--mat-sys-on-error-container);
+  background: var(--mat-sys-error-container);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.submitted-bar {
+  padding: 12px 14px;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.tab-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.chart-frame {
+  height: 440px;
+}
+
+.no-points {
+  display: grid;
+  gap: 10px;
+  place-items: center center;
+  height: 100%;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+@media (width <= 980px) {
+  .query-rail {
+    width: min(460px, 90vw);
+  }
+
+  :host ::ng-deep .query-stepper .mat-vertical-content {
+    padding-left: 16px;
+  }
+}
+
+@media (width <= 720px) {
+  .environment-page {
+    padding: 20px 14px 32px;
+  }
+
+  h1 {
+    font: var(--mat-sys-headline-medium);
+  }
+
+  .taxonomy-search,
+  .panel-heading,
+  .result-actions,
+  .status-note {
+    display: grid;
+  }
+
+  .taxonomy-search button,
+  .result-actions button,
+  .status-note button {
+    width: 100%;
+  }
+
+  .query-rail {
+    width: 92vw;
+  }
+}
