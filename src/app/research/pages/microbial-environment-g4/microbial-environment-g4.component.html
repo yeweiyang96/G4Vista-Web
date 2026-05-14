@@ -84,7 +84,7 @@
               </div>
 
               <div class="axis-note">
-                <mat-icon>info</mat-icon>
+                <!-- <mat-icon>info</mat-icon> -->
                 <span>{{ studySummary() }}</span>
               </div>
 
@@ -157,11 +157,7 @@
                           <strong>{{ candidate.label }}</strong>
                           <span>{{ candidate.rank | titlecase }}</span>
                         </div>
-                        <button
-                          mat-button
-                          type="button"
-                          (click)="addTaxonomySelection(candidate)"
-                        >
+                        <button mat-button type="button" (click)="addTaxonomySelection(candidate)">
                           <mat-icon>add</mat-icon>
                           Add
                         </button>
@@ -504,7 +500,9 @@
                     </ng-container>
                     <ng-container matColumnDef="length">
                       <th mat-header-cell *matHeaderCellDef>Length</th>
-                      <td mat-cell *matCellDef="let row">{{ formatValue(row.sixteen_s_length) }}</td>
+                      <td mat-cell *matCellDef="let row">
+                        {{ formatValue(row.sixteen_s_length) }}
+                      </td>
                     </ng-container>
                     <ng-container matColumnDef="density">
                       <th mat-header-cell *matHeaderCellDef>G4 density/kb</th>

@@ -179,6 +179,20 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text.toLowerCase()).not.toContain('bounds');
   });
 
+  it('updates the study summary when the environment axis changes', () => {
+    component.form.controls.trait.setValue('ph');
+    component.form.controls.mode.setValue('optimum');
+    component.onAxisChange();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(component.studySummary()).toBe(
+      "Analyze whole-genome G4 density across pH bins using each genome's optimum interval.",
+    );
+    expect(text).toContain("pH bins using each genome's optimum interval");
+  });
+
   it('uses explicit taxonomy Find and Add to build a genome collection', () => {
     component.form.controls.taxonomyRank.setValue('genus');
     component.form.controls.taxonomyKeyword.setValue('Alp');

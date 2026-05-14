@@ -51,8 +51,17 @@ interface SummaryMetric {
   icon: string;
 }
 
+interface AxisSelection {
+  readonly trait: MicrobialEnvironmentTrait;
+  readonly mode: MicrobialEnvironmentMode;
+}
+
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 });
+const INITIAL_AXIS_SELECTION: AxisSelection = {
+  trait: 'temperature',
+  mode: 'growth',
+};
 const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
   traits: [
     { value: 'temperature', label: 'Temperature' },
@@ -162,6 +171,8 @@ export class MicrobialEnvironmentG4Component {
   private readonly document = inject(DOCUMENT);
   private readonly breakpointObserver = inject(BreakpointObserver);
 
+  private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
+
   readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
   readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
   readonly taxonomyCandidates = signal<MicrobialTaxonomySearchResult[]>([]);
@@ -176,8 +187,12 @@ export class MicrobialEnvironmentG4Component {
   readonly isNarrow = signal(false);
 
   readonly form = new FormGroup({
-    trait: new FormControl<MicrobialEnvironmentTrait>('temperature', { nonNullable: true }),
-    mode: new FormControl<MicrobialEnvironmentMode>('growth', { nonNullable: true }),
+    trait: new FormControl<MicrobialEnvironmentTrait>(INITIAL_AXIS_SELECTION.trait, {
+      nonNullable: true,
+    }),
+    mode: new FormControl<MicrobialEnvironmentMode>(INITIAL_AXIS_SELECTION.mode, {
+      nonNullable: true,
+    }),
     taxonomyRank: new FormControl<MicrobialTaxonomyRank>('genus', { nonNullable: true }),
     taxonomyKeyword: new FormControl('', { nonNullable: true }),
   });
@@ -202,8 +217,7 @@ export class MicrobialEnvironmentG4Component {
   );
 
   readonly currentRange = computed(() => {
-    const trait = this.form.controls.trait.value;
-    const mode = this.form.controls.mode.value;
+    const { trait, mode } = this.axisSelection();
     return (
       this.options()?.bin_ranges.find((range) => range.trait === trait && range.mode === mode) ??
       null
@@ -215,8 +229,7 @@ export class MicrobialEnvironmentG4Component {
   );
 
   readonly studySummary = computed(() => {
-    const trait = this.form.controls.trait.value;
-    const mode = this.form.controls.mode.value;
+    const { trait, mode } = this.axisSelection();
     const traitText = trait === 'temperature' ? 'temperature' : 'pH';
     const modeText = mode === 'growth' ? 'growth interval' : 'optimum interval';
     return `Analyze whole-genome G4 density across ${traitText} bins using each genome's ${modeText}.`;
@@ -345,6 +358,11 @@ export class MicrobialEnvironmentG4Component {
   }
 
   onAxisChange(): void {
+    const axisSelection: AxisSelection = {
+      trait: this.form.controls.trait.value,
+      mode: this.form.controls.mode.value,
+    };
+    this.axisSelection.set(axisSelection);
     this.taxonomyCandidates.set([]);
     this.clearSubmittedResult();
   }
@@ -444,21 +462,18 @@ export class MicrobialEnvironmentG4Component {
   }
 
   axisLabel(): string {
-    return this.form.controls.trait.value === 'temperature' ? 'Temperature bin' : 'pH bin';
+    return this.axisSelection().trait === 'temperature' ? 'Temperature bin' : 'pH bin';
   }
 
   currentTraitLabel(): string {
     return optionLabel(
       this.options()?.traits ?? FALLBACK_OPTIONS.traits,
-      this.form.controls.trait.value,
+      this.axisSelection().trait,
     );
   }
 
   currentModeLabel(): string {
-    return optionLabel(
-      this.options()?.modes ?? FALLBACK_OPTIONS.modes,
-      this.form.controls.mode.value,
-    );
+    return optionLabel(this.options()?.modes ?? FALLBACK_OPTIONS.modes, this.axisSelection().mode);
   }
 
   taxonomyRankLabel(rank: string): string {
@@ -475,7 +490,7 @@ export class MicrobialEnvironmentG4Component {
     if (!range) {
       return 'Step pending';
     }
-    return this.form.controls.trait.value === 'temperature'
+    return this.axisSelection().trait === 'temperature'
       ? `${formatNumber(range.bin_step)} °C bins`
       : `${formatNumber(range.bin_step)} pH bins`;
   }
