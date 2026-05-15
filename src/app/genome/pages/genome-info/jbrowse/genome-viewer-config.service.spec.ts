@@ -168,7 +168,7 @@ describe('GenomeViewerConfigService', () => {
       'GCF_000021765.1_annotation',
       'GCF_000021765.1_g4',
       'GCF_000021765.1_g4_density',
-      'GCF_000021765.1_g4_gscore',
+      'GCF_000021765.1_g4_score',
     ]);
 
     const annotationTrack = config.tracks.find(
@@ -178,8 +178,8 @@ describe('GenomeViewerConfigService', () => {
       (track) => track.trackId === 'GCF_000021765.1_g4_density',
     );
     const iMotifTrack = config.tracks.find((track) => track.trackId === 'GCF_000021765.1_i_motif');
-    const iMotifGscoreTrack = config.tracks.find(
-      (track) => track.trackId === 'GCF_000021765.1_i_motif_gscore',
+    const iMotifScoreTrack = config.tracks.find(
+      (track) => track.trackId === 'GCF_000021765.1_i_motif_score',
     );
 
     expect(annotationTrack).toBeDefined();
@@ -214,16 +214,16 @@ describe('GenomeViewerConfigService', () => {
       posColor: '#00458f',
       negColor: '#d50000',
     });
-    const iMotifGscoreDisplay = (
-      (iMotifGscoreTrack as Record<string, unknown>)['displays'] as
+    const iMotifScoreDisplay = (
+      (iMotifScoreTrack as Record<string, unknown>)['displays'] as
         | Record<string, unknown>[]
         | undefined
     )?.[0];
-    const iMotifGscoreRenderers = (iMotifGscoreDisplay as Record<string, unknown>)['renderers'] as
+    const iMotifScoreRenderers = (iMotifScoreDisplay as Record<string, unknown>)['renderers'] as
       | Record<string, unknown>
       | undefined;
-    expect((iMotifGscoreDisplay as Record<string, unknown>)['defaultRendering']).toBe('xyplot');
-    expect(iMotifGscoreRenderers?.['XYPlotRenderer']).toEqual({
+    expect((iMotifScoreDisplay as Record<string, unknown>)['defaultRendering']).toBe('xyplot');
+    expect(iMotifScoreRenderers?.['XYPlotRenderer']).toEqual({
       color: '#005cbb',
       posColor: '#005cbb',
       negColor: '#d50000',
@@ -233,7 +233,7 @@ describe('GenomeViewerConfigService', () => {
     expect(((g4DensityTrack as Record<string, unknown>)['type'] as string) ?? '').toBe(
       'QuantitativeTrack',
     );
-    expect(((iMotifGscoreTrack as Record<string, unknown>)['type'] as string) ?? '').toBe(
+    expect(((iMotifScoreTrack as Record<string, unknown>)['type'] as string) ?? '').toBe(
       'QuantitativeTrack',
     );
   });
@@ -349,18 +349,18 @@ describe('GenomeViewerConfigService', () => {
       negColor: '#ffb4ab',
     });
 
-    const g4GscoreTrack = config.tracks.find(
-      (track) => track.trackId === 'GCF_000021765.1_g4_gscore',
+    const g4ScoreTrack = config.tracks.find(
+      (track) => track.trackId === 'GCF_000021765.1_g4_score',
     );
-    const g4GscoreDisplay = (
-      (g4GscoreTrack as Record<string, unknown>)['displays'] as
+    const g4ScoreDisplay = (
+      (g4ScoreTrack as Record<string, unknown>)['displays'] as
         | Record<string, unknown>[]
         | undefined
     )?.[0];
-    const g4GscoreRenderers = (g4GscoreDisplay as Record<string, unknown>)['renderers'] as
+    const g4ScoreRenderers = (g4ScoreDisplay as Record<string, unknown>)['renderers'] as
       | Record<string, unknown>
       | undefined;
-    expect(g4GscoreRenderers?.['XYPlotRenderer']).toEqual({
+    expect(g4ScoreRenderers?.['XYPlotRenderer']).toEqual({
       color: '#abc7ff',
       posColor: '#abc7ff',
       negColor: '#ffb4ab',

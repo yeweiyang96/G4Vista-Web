@@ -383,10 +383,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       adapter: {
         type: 'BigWigAdapter',
         bigWigLocation: {
-          uri: buildAssemblyAssetUrl(
-            params,
-            `window_scan/${assemblyAccession}.g4.windowed_density.bw`,
-          ),
+          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.g4.density.bw`),
         },
       },
     },
@@ -406,7 +403,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
     },
     {
       type: 'QuantitativeTrack',
-      trackId: `${assemblyAccession}_g4_gscore`,
+      trackId: `${assemblyAccession}_g4_score`,
       name: 'G4 score',
       assemblyNames: [assemblyAccession],
       displays: [createQuantitativeTrackDisplayConfig(params, 'score')],
@@ -414,13 +411,13 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       adapter: {
         type: 'BigWigAdapter',
         bigWigLocation: {
-          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.g4.gscore.bw`),
+          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.g4.score.bw`),
         },
       },
     },
     {
       type: 'QuantitativeTrack',
-      trackId: `${assemblyAccession}_i_motif_gscore`,
+      trackId: `${assemblyAccession}_i_motif_score`,
       name: 'i-motif score',
       assemblyNames: [assemblyAccession],
       displays: [createQuantitativeTrackDisplayConfig(params, 'score')],
@@ -428,7 +425,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       adapter: {
         type: 'BigWigAdapter',
         bigWigLocation: {
-          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.i_motif.gscore.bw`),
+          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.i_motif.score.bw`),
         },
       },
     },
@@ -477,7 +474,7 @@ export class GenomeViewerConfigService {
         `${assemblyAccession}_annotation`,
         `${assemblyAccession}_g4`,
         `${assemblyAccession}_g4_density`,
-        `${assemblyAccession}_g4_gscore`,
+        `${assemblyAccession}_g4_score`,
       ],
     };
   }
