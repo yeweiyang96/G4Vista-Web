@@ -28,14 +28,6 @@
               <dd>{{ assembly.seq_rel_date || 'Unavailable' }}</dd>
               <dt>Taxon ID</dt>
               <dd>{{ assembly.taxon_id ?? 'Unavailable' }}</dd>
-              <dt>Topt ave</dt>
-              <dd>
-                @if (assembly.topt_ave !== null) {
-                  {{ assembly.topt_ave }} °C
-                } @else {
-                  Unavailable
-                }
-              </dd>
               <dt>Accession IDs</dt>
               <dd>{{ assembly.seqids.length }}</dd>
             </dl>

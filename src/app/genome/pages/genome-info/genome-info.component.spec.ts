@@ -42,7 +42,6 @@ describe('GenomeInfoComponent', () => {
       },
     ],
     taxon_id: 1,
-    topt_ave: 37,
   };
   const secondAssemblyDetail: GenomeAssemblyDetail = {
     assembly_accession: 'GCF_2',
@@ -70,7 +69,6 @@ describe('GenomeInfoComponent', () => {
       },
     ],
     taxon_id: 2,
-    topt_ave: 30,
   };
   const chr1BrowsePage: G4PageResponse = {
     ...EMPTY_G4_PAGE,

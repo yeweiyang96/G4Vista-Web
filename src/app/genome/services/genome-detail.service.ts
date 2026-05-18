@@ -12,7 +12,6 @@ export interface GenomeAssemblyDetail {
   seqid_lengths: Record<string, number>;
   regions?: GenomeAssemblyRegion[];
   taxon_id: number | null;
-  topt_ave: number | null;
 }
 
 export interface GenomeAssemblyRegion {
