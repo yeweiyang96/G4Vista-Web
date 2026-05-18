@@ -300,7 +300,7 @@ function createAnnotationTrackConfig(params: GenomeViewerConfigParams): JBrowseT
 function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackConfig[] {
   const assemblyAccession = params.assemblyAccession;
   const g4FileName = `${assemblyAccession}.g4.sorted.gff.gz`;
-  const iMotifFileName = `${assemblyAccession}.i_motif.sorted.gff.gz`;
+  const iMotifFileName = `${assemblyAccession}.i-motif.sorted.gff.gz`;
 
   return [
     {
@@ -340,7 +340,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
     },
     {
       type: 'FeatureTrack',
-      trackId: `${assemblyAccession}_i_motif`,
+      trackId: `${assemblyAccession}_i-motif`,
       name: 'i-motif',
       assemblyNames: [assemblyAccession],
       displays: [createFeatureTrackDisplayConfig(params)],
@@ -359,7 +359,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       textSearching: {
         textSearchAdapter: {
           type: 'TrixTextSearchAdapter',
-          textSearchAdapterId: `${assemblyAccession}_i_motif-index`,
+          textSearchAdapterId: `${assemblyAccession}_i-motif-index`,
           ixFilePath: {
             uri: buildAssemblyAssetUrl(params, `trix/${iMotifFileName}.ix`),
           },
@@ -389,7 +389,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
     },
     {
       type: 'QuantitativeTrack',
-      trackId: `${assemblyAccession}_i_motif_density`,
+      trackId: `${assemblyAccession}_i-motif_density`,
       name: 'i-motif density',
       assemblyNames: [assemblyAccession],
       displays: [createQuantitativeTrackDisplayConfig(params, 'density')],
@@ -397,7 +397,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       adapter: {
         type: 'BigWigAdapter',
         bigWigLocation: {
-          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.i_motif.density.bw`),
+          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.i-motif.density.bw`),
         },
       },
     },
@@ -417,7 +417,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
     },
     {
       type: 'QuantitativeTrack',
-      trackId: `${assemblyAccession}_i_motif_score`,
+      trackId: `${assemblyAccession}_i-motif_score`,
       name: 'i-motif score',
       assemblyNames: [assemblyAccession],
       displays: [createQuantitativeTrackDisplayConfig(params, 'score')],
@@ -425,7 +425,7 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
       adapter: {
         type: 'BigWigAdapter',
         bigWigLocation: {
-          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.i_motif.score.bw`),
+          uri: buildAssemblyAssetUrl(params, `${assemblyAccession}.i-motif.score.bw`),
         },
       },
     },

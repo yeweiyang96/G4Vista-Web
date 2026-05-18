@@ -71,14 +71,14 @@ import { UiThemeService } from '../../../theme/ui-theme.service';
 interface G4FilterModel {
   selectedTetrads: number[];
   selectedPosition: G4GenePosition;
-  minGscore: string;
-  maxGscore: string;
+  minScore: string;
+  maxScore: string;
 }
 
 interface PositionDistributionFilterModel {
   selectedTetrads: number[];
-  minGscore: string;
-  maxGscore: string;
+  minScore: string;
+  maxScore: string;
 }
 
 interface G4PageResourceRequest {
@@ -115,7 +115,7 @@ interface AccessionIdOption {
   searchText: string;
 }
 
-const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.normal[0].value;
+const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value;
 const DEFAULT_FLANK_WINDOW: G4FlankWindow = 1000;
 const POSITION_STATISTICS_WINDOWS = [100, 500, 1000, 5000] as const;
 const SORTABLE_COLUMNS: Record<string, G4SortField> = {
@@ -123,7 +123,7 @@ const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   end: 'end',
   length: 'length',
   tetrads: 'tetrads',
-  gscore: 'gscore',
+  score: 'score',
 };
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const WHOLE_GENOME_SCOPE = 'whole-genome';
@@ -142,16 +142,16 @@ function createInitialFilterModel(selectedPosition = DEFAULT_GENE_POSITION): G4F
   return {
     selectedTetrads: [],
     selectedPosition,
-    minGscore: '',
-    maxGscore: '',
+    minScore: '',
+    maxScore: '',
   };
 }
 
 function createInitialPositionDistributionFilterModel(): PositionDistributionFilterModel {
   return {
     selectedTetrads: [],
-    minGscore: '',
-    maxGscore: '',
+    minScore: '',
+    maxScore: '',
   };
 }
 
@@ -177,8 +177,8 @@ function normalizeIntegerInput(rawValue: string): string {
 function normalizeFilterModel(model: G4FilterModel): G4FilterModel {
   return {
     ...model,
-    minGscore: normalizeIntegerInput(model.minGscore),
-    maxGscore: normalizeIntegerInput(model.maxGscore),
+    minScore: normalizeIntegerInput(model.minScore),
+    maxScore: normalizeIntegerInput(model.maxScore),
   };
 }
 
@@ -187,8 +187,8 @@ function normalizePositionDistributionFilterModel(
 ): PositionDistributionFilterModel {
   return {
     ...model,
-    minGscore: normalizeIntegerInput(model.minGscore),
-    maxGscore: normalizeIntegerInput(model.maxGscore),
+    minScore: normalizeIntegerInput(model.minScore),
+    maxScore: normalizeIntegerInput(model.maxScore),
   };
 }
 
@@ -235,10 +235,7 @@ function normalizeSearchTerm(value: string): string {
 }
 
 function formatGeneRelationLabel(label: string): string {
-  return label
-    .replace(/\s*\(G-rich\)/g, ' (G4)')
-    .replace(/\s*\(iMotif\)/g, ' (i-motif)')
-    .replace(/\s*\(i-motif\)/g, ' (i-motif)');
+  return label.replace(/\s*\(iMotif\)/g, ' (i-motif)').replace(/\s*\(i-motif\)/g, ' (i-motif)');
 }
 
 function preferredGeneDisplayName(candidate: G4GeneCandidate): string {
@@ -340,7 +337,7 @@ export class GenomeInfoComponent {
   private readonly genomeViewerConfigService = inject(GenomeViewerConfigService);
   private readonly uiThemeService = inject(UiThemeService);
 
-  readonly g4Type = signal<G4Type>('normal');
+  readonly g4Type = signal<G4Type>('g4');
   readonly genePositionOptions = computed(() =>
     G4_GENE_POSITION_OPTIONS_BY_TYPE[this.g4Type()].map((option) => ({
       ...option,
@@ -361,7 +358,7 @@ export class GenomeInfoComponent {
   readonly draftGeneInput = signal('');
   readonly draftSelectedGene = signal<G4GeneCandidate | null>(null);
   readonly submittedSelectedGene = signal<G4GeneCandidate | null>(null);
-  readonly positionDistributionG4Type = signal<G4Type>('normal');
+  readonly positionDistributionG4Type = signal<G4Type>('g4');
   readonly positionDistributionFlankWindow = signal<G4FlankWindow>(DEFAULT_FLANK_WINDOW);
   readonly positionDistributionFilterModel = signal(createInitialPositionDistributionFilterModel());
   readonly submittedPositionDistributionFilters = signal(
@@ -457,8 +454,8 @@ export class GenomeInfoComponent {
     const filters = this.submittedFilters();
     return {
       tetrads: filters.selectedTetrads,
-      minGscore: parseOptionalInteger(filters.minGscore),
-      maxGscore: parseOptionalInteger(filters.maxGscore),
+      minScore: parseOptionalInteger(filters.minScore),
+      maxScore: parseOptionalInteger(filters.maxScore),
     };
   });
   readonly chartFilters = computed<G4HistogramFilters>(() => ({
@@ -475,8 +472,8 @@ export class GenomeInfoComponent {
     const filters = this.submittedPositionDistributionFilters();
     return {
       tetrads: filters.selectedTetrads,
-      minGscore: parseOptionalInteger(filters.minGscore),
-      maxGscore: parseOptionalInteger(filters.maxGscore),
+      minScore: parseOptionalInteger(filters.minScore),
+      maxScore: parseOptionalInteger(filters.maxScore),
     };
   });
   readonly positionDistributionTetradOptions = computed(() =>
@@ -539,11 +536,11 @@ export class GenomeInfoComponent {
       !this.geneCandidatesResource.isLoading() &&
       this.geneCandidates().length === 0,
   );
-  readonly submittedMinGscore = computed(() =>
-    parseOptionalInteger(this.submittedFilters().minGscore),
+  readonly submittedMinScore = computed(() =>
+    parseOptionalInteger(this.submittedFilters().minScore),
   );
-  readonly submittedMaxGscore = computed(() =>
-    parseOptionalInteger(this.submittedFilters().maxGscore),
+  readonly submittedMaxScore = computed(() =>
+    parseOptionalInteger(this.submittedFilters().maxScore),
   );
   readonly isGeneSearchMode = computed(() => this.hasSubmittedSelectedGene());
   readonly displayedAccessionIdValue = computed(
@@ -634,8 +631,8 @@ export class GenomeInfoComponent {
         assemblyAccession: this.assemblyAccession(),
         g4Type: this.positionDistributionG4Type(),
         tetrads: this.positionDistributionFilters().tetrads,
-        minGscore: this.positionDistributionFilters().minGscore,
-        maxGscore: this.positionDistributionFilters().maxGscore,
+        minScore: this.positionDistributionFilters().minScore,
+        maxScore: this.positionDistributionFilters().maxScore,
         overlap: false,
         flankWindow: this.positionDistributionFlankWindow(),
         includeFeatureBreakdown: true,
@@ -662,8 +659,8 @@ export class GenomeInfoComponent {
         assemblyAccession: this.assemblyAccession(),
         windows: [...POSITION_STATISTICS_WINDOWS],
         tetrads: this.positionDistributionFilters().tetrads,
-        minGscore: this.positionDistributionFilters().minGscore,
-        maxGscore: this.positionDistributionFilters().maxGscore,
+        minScore: this.positionDistributionFilters().minScore,
+        maxScore: this.positionDistributionFilters().maxScore,
         overlap: false,
       };
     },
@@ -754,7 +751,7 @@ export class GenomeInfoComponent {
   );
   readonly explorerSubtitle = computed(() => {
     const browseScope = this.browseScope();
-    const gcType = this.g4Type() === 'revcomp' ? 'i-motif sites' : 'G4 sites';
+    const gcType = this.g4Type() === 'i-motif' ? 'i-motif sites' : 'G4 sites';
     if (!browseScope || this.isGeneSearchMode() || browseScope === WHOLE_GENOME_SCOPE) {
       return `${this.g4Page().count} ${gcType} in ${this.assemblyAccession()}`;
     }
@@ -869,15 +866,15 @@ export class GenomeInfoComponent {
         selectedGene.feature_id,
         filters.selectedPosition,
         filters.selectedTetrads.join(','),
-        filters.minGscore,
-        filters.maxGscore,
+        filters.minScore,
+        filters.maxScore,
       ].join('::');
       if (noticeKey === this.lastEmptyGeneSearchNoticeKey) {
         return;
       }
 
       this.lastEmptyGeneSearchNoticeKey = noticeKey;
-      const motifLabel = this.g4Type() === 'revcomp' ? 'i-motif' : 'G4';
+      const motifLabel = this.g4Type() === 'i-motif' ? 'i-motif' : 'G4';
       this.snackBar.open(
         `No ${motifLabel} matched the selected gene with the current filters.`,
         'Dismiss',
@@ -1022,11 +1019,11 @@ export class GenomeInfoComponent {
     });
   }
 
-  resetGscoreFilter(): void {
+  resetScoreFilter(): void {
     this.commitFilters({
       ...this.submittedFilters(),
-      minGscore: '',
-      maxGscore: '',
+      minScore: '',
+      maxScore: '',
     });
   }
 
@@ -1149,8 +1146,8 @@ export class GenomeInfoComponent {
       sort: this.sortState().active,
       order: this.sortState().direction,
       tetrads: filters.tetrads,
-      minGscore: filters.minGscore,
-      maxGscore: filters.maxGscore,
+      minScore: filters.minScore,
+      maxScore: filters.maxScore,
     };
   }
 
@@ -1183,8 +1180,8 @@ export class GenomeInfoComponent {
       sort: this.sortState().active,
       order: this.sortState().direction,
       tetrads: filters.tetrads,
-      minGscore: filters.minGscore,
-      maxGscore: filters.maxGscore,
+      minScore: filters.minScore,
+      maxScore: filters.maxScore,
       selectedFeatureId: selectedGene.feature_id,
       selectedPosition: this.submittedFilters().selectedPosition,
     };

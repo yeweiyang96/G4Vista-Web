@@ -43,9 +43,9 @@ describe('GeneHomeComponent', () => {
         gene_id: 'ATP6',
         gene_name: 'ATP6',
         gene_biotype: 'protein_coding',
-        insideOf_gene_normal_count: 1,
-        insideOf_genes_upstream_1k_normal_count: 2,
-        insideOf_genes_downstream_1k_normal_count: 3,
+        insideOf_gene_g4_count: 1,
+        insideOf_genes_upstream_1k_g4_count: 2,
+        insideOf_genes_downstream_1k_g4_count: 3,
       },
       {
         assembly_accession: 'GCF_000146045.2',
@@ -55,9 +55,9 @@ describe('GeneHomeComponent', () => {
         gene_id: 'YAL001C',
         gene_name: 'TFC3',
         gene_biotype: 'protein_coding',
-        insideOf_gene_normal_count: 4,
-        insideOf_genes_upstream_1k_normal_count: 5,
-        insideOf_genes_downstream_1k_normal_count: 6,
+        insideOf_gene_g4_count: 4,
+        insideOf_genes_upstream_1k_g4_count: 5,
+        insideOf_genes_downstream_1k_g4_count: 6,
       },
     ];
 

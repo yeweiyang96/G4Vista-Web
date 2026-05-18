@@ -17,7 +17,7 @@ describe('PositionDistributionComponent', () => {
   const distribution: G4PositionDistributionResponse = {
     ...EMPTY_G4_POSITION_DISTRIBUTION,
     assembly_accession: 'GCF_1',
-    g4_type: 'normal',
+    g4_type: 'g4',
     total_count: 3,
     categories: [
       {
@@ -86,8 +86,8 @@ describe('PositionDistributionComponent', () => {
     filters: {
       windows: [100],
       tetrads: [],
-      min_gscore: null,
-      max_gscore: null,
+      min_score: null,
+      max_score: null,
       overlap: false,
     },
     windows: [
@@ -102,27 +102,27 @@ describe('PositionDistributionComponent', () => {
             merged_interval_length_bp: 1000,
             length_mb: 0.001,
             motifs: {
-              normal: {
+              g4: {
                 count: 2,
                 density_per_mb: 2000,
                 expected_vs_genome: 1,
                 fold_vs_genome: 2,
                 fold_vs_non_feature: 3,
-                median_gscore: 20,
-                p95_gscore: 40,
+                median_score: 20,
+                p95_score: 40,
                 median_tetrads: 3,
                 p95_tetrads: 4,
                 median_length: 24,
                 p95_length: 32,
               },
-              revcomp: {
+              'i-motif': {
                 count: 1,
                 density_per_mb: 1000,
                 expected_vs_genome: 0.5,
                 fold_vs_genome: 1,
                 fold_vs_non_feature: 1.5,
-                median_gscore: 18,
-                p95_gscore: 30,
+                median_score: 18,
+                p95_score: 30,
                 median_tetrads: 2,
                 p95_tetrads: 3,
                 median_length: 20,
@@ -130,11 +130,11 @@ describe('PositionDistributionComponent', () => {
               },
             },
             asymmetry: {
-              normal_fraction: 2 / 3,
-              revcomp_fraction: 1 / 3,
+              g4_fraction: 2 / 3,
+              i_motif_fraction: 1 / 3,
               fraction_delta: 1 / 3,
               count_delta: 1,
-              density_ratio_normal_over_revcomp: 2,
+              density_ratio_g4_over_i_motif: 2,
             },
           },
           {
@@ -145,27 +145,27 @@ describe('PositionDistributionComponent', () => {
             merged_interval_length_bp: 500,
             length_mb: 0.0005,
             motifs: {
-              normal: {
+              g4: {
                 count: 1,
                 density_per_mb: 2000,
                 expected_vs_genome: 0.5,
                 fold_vs_genome: 2,
                 fold_vs_non_feature: null,
-                median_gscore: 16,
-                p95_gscore: 16,
+                median_score: 16,
+                p95_score: 16,
                 median_tetrads: 2,
                 p95_tetrads: 2,
                 median_length: 20,
                 p95_length: 20,
               },
-              revcomp: {
+              'i-motif': {
                 count: 0,
                 density_per_mb: 0,
                 expected_vs_genome: 0,
                 fold_vs_genome: 0,
                 fold_vs_non_feature: null,
-                median_gscore: null,
-                p95_gscore: null,
+                median_score: null,
+                p95_score: null,
                 median_tetrads: null,
                 p95_tetrads: null,
                 median_length: null,
@@ -173,11 +173,11 @@ describe('PositionDistributionComponent', () => {
               },
             },
             asymmetry: {
-              normal_fraction: 1,
-              revcomp_fraction: 0,
+              g4_fraction: 1,
+              i_motif_fraction: 0,
               fraction_delta: 1,
               count_delta: 1,
-              density_ratio_normal_over_revcomp: null,
+              density_ratio_g4_over_i_motif: null,
             },
           },
         ],
@@ -207,11 +207,11 @@ describe('PositionDistributionComponent', () => {
     fixture.componentRef.setInput('statisticsErrorMessage', '');
     fixture.componentRef.setInput('flankWindow', 1000);
     fixture.componentRef.setInput('flankWindowLabel', '1 kb');
-    fixture.componentRef.setInput('g4Type', 'normal');
+    fixture.componentRef.setInput('g4Type', 'g4');
     fixture.componentRef.setInput('tetradOptions', [2, 3]);
     fixture.componentRef.setInput('filterSelectedTetrads', []);
-    fixture.componentRef.setInput('filterMinGscore', '');
-    fixture.componentRef.setInput('filterMaxGscore', '');
+    fixture.componentRef.setInput('filterMinScore', '');
+    fixture.componentRef.setInput('filterMaxScore', '');
     fixture.detectChanges();
     tabGroup = await TestbedHarnessEnvironment.loader(fixture).getHarness(MatTabGroupHarness);
   });
@@ -251,8 +251,7 @@ describe('PositionDistributionComponent', () => {
     expect(text).toContain('Summary');
     expect(text).toContain('Density & Enrichment');
     expect(text).toContain('Strength');
-    expect(text).toContain('G-rich vs i-motif');
-    expect(text).not.toContain('G4 vs i-motif');
+    expect(text).toContain('G4 vs i-motif');
     expect(text).toContain('Window Sensitivity');
   });
 
@@ -277,7 +276,7 @@ describe('PositionDistributionComponent', () => {
     for (const tabLabel of [
       'Density & Enrichment',
       'Strength',
-      'G-rich vs i-motif',
+      'G4 vs i-motif',
       'Window Sensitivity',
     ]) {
       await selectTab(tabLabel);
@@ -307,7 +306,7 @@ describe('PositionDistributionComponent', () => {
     const chartData = component.summaryDoughnutData();
     expect(chartData.labels).toEqual(['Inside genes', 'Upstream']);
     expect(chartData.datasets.length).toBe(1);
-    expect(chartData.datasets[0].label).toBe('G-rich');
+    expect(chartData.datasets[0].label).toBe('G4');
     expect(chartData.datasets[0].data).toEqual([2, 1]);
     expect(component.summaryDoughnutPlugins.length).toBe(1);
 
@@ -426,28 +425,27 @@ describe('PositionDistributionComponent', () => {
   it('renders precise research table headers and removes ambiguous trend copy', async () => {
     let text = await selectTab('Density & Enrichment');
     expect(text).toContain('Interval length (Mb)');
-    expect(text).toContain('G-rich density / Mb');
-    expect(text).toContain('G-rich fold vs genome');
+    expect(text).toContain('G4 density / Mb');
+    expect(text).toContain('G4 fold vs genome');
     expect(text).toContain('i-motif fold vs non-feature');
     expect(text).not.toContain('G4 density/Mb');
     expect(text).not.toContain('G4 fold genome');
 
     text = await selectTab('Strength');
-    expect(text).toContain('gscore median / p95');
+    expect(text).toContain('score median / p95');
     expect(text).toContain('tetrads median / p95');
     expect(text).toContain('motif length median / p95');
     expect(text).not.toContain('Score median/p95');
 
-    text = await selectTab('G-rich vs i-motif');
-    expect(text).toContain('G-rich count');
-    expect(text).toContain('G-rich fraction');
+    text = await selectTab('G4 vs i-motif');
+    expect(text).toContain('G4 count');
+    expect(text).toContain('G4 fraction');
     expect(text).toContain('Fraction delta');
-    expect(text).toContain('Density ratio (G-rich / i-motif)');
-    expect(text).not.toContain('G4 count');
+    expect(text).toContain('Density ratio (G4 / i-motif)');
     expect(text).not.toContain('Delta');
 
     text = await selectTab('Window Sensitivity');
-    expect(text).toContain('G-rich relative density');
+    expect(text).toContain('G4 relative density');
     expect(text).toContain('i-motif relative density');
     expect(text).not.toContain('G4 trend');
     expect(text).not.toContain('i-motif trend');
@@ -459,7 +457,7 @@ describe('PositionDistributionComponent', () => {
     for (const tabLabel of [
       'Density & Enrichment',
       'Strength',
-      'G-rich vs i-motif',
+      'G4 vs i-motif',
       'Window Sensitivity',
     ]) {
       await selectTab(tabLabel);
@@ -477,9 +475,9 @@ describe('PositionDistributionComponent', () => {
     expect(messages).toContain(
       'Median is the typical value; p95 is the 95th percentile, not the maximum.',
     );
-    expect(messages).toContain('G-rich fraction minus i-motif fraction in the same category.');
+    expect(messages).toContain('G4 fraction minus i-motif fraction in the same category.');
     expect(messages).toContain(
-      'G-rich density divided by i-motif density; N/A when denominator is zero or unavailable.',
+      'G4 density divided by i-motif density; N/A when denominator is zero or unavailable.',
     );
     expect(messages).toContain(
       'Bar scaled to the largest upstream/downstream density for that motif type across displayed windows; not a time trend.',
@@ -490,8 +488,8 @@ describe('PositionDistributionComponent', () => {
     const component = fixture.componentInstance;
 
     expect(component.statisticsRows()[0].displayLabel).toBe('Inside annotated genes');
-    expect(component.statisticsRows()[0].motifs.normal.fold_vs_genome).toBe(2);
-    expect(component.strengthRows().map((row) => row.motifLabel)).toContain('G-rich');
+    expect(component.statisticsRows()[0].motifs.g4.fold_vs_genome).toBe(2);
+    expect(component.strengthRows().map((row) => row.motifLabel)).toContain('G4');
     expect(component.strengthRows().map((row) => row.motifLabel)).toContain('i-motif');
     expect(component.asymmetryRows()[0].asymmetry.count_delta).toBe(1);
     expect(component.windowSensitivityRows()[0].category.key).toBe('gene_upstream');
@@ -517,8 +515,8 @@ describe('PositionDistributionComponent', () => {
               ...downstreamCategory,
               motifs: {
                 ...downstreamCategory.motifs,
-                normal: {
-                  ...downstreamCategory.motifs.normal,
+                g4: {
+                  ...downstreamCategory.motifs.g4,
                   density_per_mb: 500,
                 },
               },
@@ -527,8 +525,8 @@ describe('PositionDistributionComponent', () => {
               ...upstreamCategory,
               motifs: {
                 ...upstreamCategory.motifs,
-                normal: {
-                  ...upstreamCategory.motifs.normal,
+                g4: {
+                  ...upstreamCategory.motifs.g4,
                   density_per_mb: 400,
                 },
               },
@@ -543,8 +541,8 @@ describe('PositionDistributionComponent', () => {
               ...upstreamCategory,
               motifs: {
                 ...upstreamCategory.motifs,
-                normal: {
-                  ...upstreamCategory.motifs.normal,
+                g4: {
+                  ...upstreamCategory.motifs.g4,
                   density_per_mb: 900,
                 },
               },
@@ -553,8 +551,8 @@ describe('PositionDistributionComponent', () => {
               ...downstreamCategory,
               motifs: {
                 ...downstreamCategory.motifs,
-                normal: {
-                  ...downstreamCategory.motifs.normal,
+                g4: {
+                  ...downstreamCategory.motifs.g4,
                   density_per_mb: 800,
                 },
               },

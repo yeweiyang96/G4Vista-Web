@@ -79,7 +79,7 @@ describe('GenomeRangeChartComponent', () => {
             end: 50,
             count: 1,
             density_per_bp: 0.02,
-            mean_gscore: 22,
+            mean_score: 22,
           },
         ],
         range_start: 1,
@@ -95,7 +95,7 @@ describe('GenomeRangeChartComponent', () => {
     }).compileComponents();
   });
 
-  function createComponent(g4Type: G4Type = 'normal') {
+  function createComponent(g4Type: G4Type = 'g4') {
     const fixture = TestBed.createComponent(GenomeRangeChartComponent);
     const component = fixture.componentInstance;
 
@@ -112,8 +112,8 @@ describe('GenomeRangeChartComponent', () => {
     fixture.componentRef.setInput('seqidLength', 10_000);
     fixture.componentRef.setInput('filters', {
       tetrads: [2, 3],
-      minGscore: 10,
-      maxGscore: 60,
+      minScore: 10,
+      maxScore: 60,
     });
     fixture.detectChanges();
 
@@ -128,7 +128,7 @@ describe('GenomeRangeChartComponent', () => {
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
         seqid: 'chr1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         viewport: {
           start: 1,
           end: 100,
@@ -259,7 +259,7 @@ describe('GenomeRangeChartComponent', () => {
             end: 100,
             count: 2,
             density_per_bp: 999,
-            mean_gscore: 22,
+            mean_score: 22,
           },
         ],
         range_start: 1,
@@ -352,7 +352,7 @@ describe('GenomeRangeChartComponent', () => {
           end: 10_999,
           count: 2,
           density_per_bp: 0.002,
-          mean_gscore: 22,
+          mean_score: 22,
           y_value: 2,
           density: 0.002,
           density_bin_label: '100kb',
@@ -406,7 +406,7 @@ describe('GenomeRangeChartComponent', () => {
           end: 6099,
           count: 1,
           density_per_bp: 0.01,
-          mean_gscore: 22,
+          mean_score: 22,
           y_value: 1,
           density: 0.01,
           density_bin_label: '100kb',

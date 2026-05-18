@@ -94,19 +94,19 @@ export class GeneHomeComponent {
     },
     {
       header: 'Inside Gene (G4)',
-      field: 'insideOf_gene_normal_count',
+      field: 'insideOf_gene_g4_count',
       type: 'number',
       sortable: true,
     },
     {
       header: 'Upstream 1kb (G4)',
-      field: 'insideOf_genes_upstream_1k_normal_count',
+      field: 'insideOf_genes_upstream_1k_g4_count',
       type: 'number',
       sortable: true,
     },
     {
       header: 'Downstream 1kb (G4)',
-      field: 'insideOf_genes_downstream_1k_normal_count',
+      field: 'insideOf_genes_downstream_1k_g4_count',
       type: 'number',
       sortable: true,
     },

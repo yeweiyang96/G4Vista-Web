@@ -35,8 +35,8 @@
             type="number"
             inputmode="numeric"
             step="1"
-            [value]="filterMinGscore()"
-            (input)="onMinGscoreInput($event)"
+            [value]="filterMinScore()"
+            (input)="onMinScoreInput($event)"
           />
         </mat-form-field>
 
@@ -51,8 +51,8 @@
             type="number"
             inputmode="numeric"
             step="1"
-            [value]="filterMaxGscore()"
-            (input)="onMaxGscoreInput($event)"
+            [value]="filterMaxScore()"
+            (input)="onMaxScoreInput($event)"
           />
         </mat-form-field>
 
@@ -74,8 +74,8 @@
               (change)="changeG4Type($event.value)"
               aria-label="Whole-genome G4/i-motif type"
             >
-              <mat-button-toggle value="normal">G4</mat-button-toggle>
-              <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
+              <mat-button-toggle value="g4">G4</mat-button-toggle>
+              <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
             </mat-button-toggle-group>
 
             <mat-form-field
@@ -378,15 +378,15 @@
                         </span>
                       </td>
                       <td>{{ formatNullableNumber(category.length_mb) }}</td>
-                      <td>{{ formatNullableNumber(category.motifs.normal.density_per_mb) }}</td>
-                      <td>{{ formatNullableNumber(category.motifs.normal.fold_vs_genome) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs.g4.density_per_mb) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs.g4.fold_vs_genome) }}</td>
                       <td>
-                        {{ formatNullableNumber(category.motifs.normal.fold_vs_non_feature) }}
+                        {{ formatNullableNumber(category.motifs.g4.fold_vs_non_feature) }}
                       </td>
-                      <td>{{ formatNullableNumber(category.motifs.revcomp.density_per_mb) }}</td>
-                      <td>{{ formatNullableNumber(category.motifs.revcomp.fold_vs_genome) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs['i-motif'].density_per_mb) }}</td>
+                      <td>{{ formatNullableNumber(category.motifs['i-motif'].fold_vs_genome) }}</td>
                       <td>
-                        {{ formatNullableNumber(category.motifs.revcomp.fold_vs_non_feature) }}
+                        {{ formatNullableNumber(category.motifs['i-motif'].fold_vs_non_feature) }}
                       </td>
                     </tr>
                   }
@@ -450,7 +450,7 @@
                         class="header-help"
                         [matTooltip]="statisticTooltips.medianP95"
                         matTooltipPosition="above"
-                        >gscore median / p95</span
+                        >score median / p95</span
                       >
                     </th>
                     <th>
@@ -488,8 +488,8 @@
                       <td>{{ row.motifLabel }}</td>
                       <td>{{ formatCount(row.stats.count) }}</td>
                       <td>
-                        {{ formatNullableNumber(row.stats.median_gscore) }} /
-                        {{ formatNullableNumber(row.stats.p95_gscore) }}
+                        {{ formatNullableNumber(row.stats.median_score) }} /
+                        {{ formatNullableNumber(row.stats.p95_score) }}
                       </td>
                       <td>
                         {{ formatNullableNumber(row.stats.median_tetrads) }} /
@@ -607,14 +607,14 @@
                           {{ category.displayLabel }}
                         </span>
                       </td>
-                      <td>{{ formatCount(category.motifs.normal.count) }}</td>
-                      <td>{{ formatCount(category.motifs.revcomp.count) }}</td>
-                      <td>{{ formatNullablePercent(category.asymmetry.normal_fraction) }}</td>
-                      <td>{{ formatNullablePercent(category.asymmetry.revcomp_fraction) }}</td>
+                      <td>{{ formatCount(category.motifs.g4.count) }}</td>
+                      <td>{{ formatCount(category.motifs['i-motif'].count) }}</td>
+                      <td>{{ formatNullablePercent(category.asymmetry.g4_fraction) }}</td>
+                      <td>{{ formatNullablePercent(category.asymmetry.i_motif_fraction) }}</td>
                       <td>{{ formatSignedPercent(category.asymmetry.fraction_delta) }}</td>
                       <td>
                         {{
-                          formatNullableNumber(category.asymmetry.density_ratio_normal_over_revcomp)
+                          formatNullableNumber(category.asymmetry.density_ratio_g4_over_i_motif)
                         }}
                       </td>
                     </tr>
@@ -706,12 +706,12 @@
                           {{ row.category.displayLabel }}
                         </span>
                       </td>
-                      <td>{{ formatNullableNumber(row.category.motifs.normal.density_per_mb) }}</td>
-                      <td><meter min="0" max="100" [value]="row.normalDensityRatio"></meter></td>
+                      <td>{{ formatNullableNumber(row.category.motifs.g4.density_per_mb) }}</td>
+                      <td><meter min="0" max="100" [value]="row.g4DensityRatio"></meter></td>
                       <td>
-                        {{ formatNullableNumber(row.category.motifs.revcomp.density_per_mb) }}
+                        {{ formatNullableNumber(row.category.motifs['i-motif'].density_per_mb) }}
                       </td>
-                      <td><meter min="0" max="100" [value]="row.revcompDensityRatio"></meter></td>
+                      <td><meter min="0" max="100" [value]="row.iMotifDensityRatio"></meter></td>
                     </tr>
                   }
                 </tbody>

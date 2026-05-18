@@ -3,49 +3,49 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export const G4_GENE_POSITION_OPTIONS = [
-  { value: 'insideOf_gene_normal', label: 'Inside gene (G4)' },
-  { value: 'insideOf_genes_upstream_100bp_normal', label: '100 bp upstream (G4)' },
-  { value: 'insideOf_genes_upstream_200bp_normal', label: '200 bp upstream (G4)' },
-  { value: 'insideOf_genes_upstream_300bp_normal', label: '300 bp upstream (G4)' },
-  { value: 'insideOf_genes_upstream_500bp_normal', label: '500 bp upstream (G4)' },
-  { value: 'insideOf_genes_upstream_1k_normal', label: '1 kb upstream (G4)' },
-  { value: 'insideOf_genes_upstream_2k_normal', label: '2 kb upstream (G4)' },
-  { value: 'insideOf_genes_upstream_3k_normal', label: '3 kb upstream (G4)' },
-  { value: 'insideOf_genes_upstream_4k_normal', label: '4 kb upstream (G4)' },
-  { value: 'insideOf_genes_upstream_5k_normal', label: '5 kb upstream (G4)' },
-  { value: 'insideOf_genes_downstream_100bp_normal', label: '100 bp downstream (G4)' },
-  { value: 'insideOf_genes_downstream_200bp_normal', label: '200 bp downstream (G4)' },
-  { value: 'insideOf_genes_downstream_300bp_normal', label: '300 bp downstream (G4)' },
-  { value: 'insideOf_genes_downstream_500bp_normal', label: '500 bp downstream (G4)' },
-  { value: 'insideOf_genes_downstream_1k_normal', label: '1 kb downstream (G4)' },
-  { value: 'insideOf_genes_downstream_2k_normal', label: '2 kb downstream (G4)' },
-  { value: 'insideOf_genes_downstream_3k_normal', label: '3 kb downstream (G4)' },
-  { value: 'insideOf_genes_downstream_4k_normal', label: '4 kb downstream (G4)' },
-  { value: 'insideOf_genes_downstream_5k_normal', label: '5 kb downstream (G4)' },
-  { value: 'insideOf_gene_revcomp', label: 'Inside gene (i-motif)' },
-  { value: 'insideOf_genes_upstream_100bp_revcomp', label: '100 bp upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_200bp_revcomp', label: '200 bp upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_300bp_revcomp', label: '300 bp upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_500bp_revcomp', label: '500 bp upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_1k_revcomp', label: '1 kb upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_2k_revcomp', label: '2 kb upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_3k_revcomp', label: '3 kb upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_4k_revcomp', label: '4 kb upstream (i-motif)' },
-  { value: 'insideOf_genes_upstream_5k_revcomp', label: '5 kb upstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_100bp_revcomp', label: '100 bp downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_200bp_revcomp', label: '200 bp downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_300bp_revcomp', label: '300 bp downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_500bp_revcomp', label: '500 bp downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_1k_revcomp', label: '1 kb downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_2k_revcomp', label: '2 kb downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_3k_revcomp', label: '3 kb downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_4k_revcomp', label: '4 kb downstream (i-motif)' },
-  { value: 'insideOf_genes_downstream_5k_revcomp', label: '5 kb downstream (i-motif)' },
+  { value: 'insideOf_gene_g4', label: 'Inside gene (G4)' },
+  { value: 'insideOf_genes_upstream_100bp_g4', label: '100 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_200bp_g4', label: '200 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_300bp_g4', label: '300 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_500bp_g4', label: '500 bp upstream (G4)' },
+  { value: 'insideOf_genes_upstream_1k_g4', label: '1 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_2k_g4', label: '2 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_3k_g4', label: '3 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_4k_g4', label: '4 kb upstream (G4)' },
+  { value: 'insideOf_genes_upstream_5k_g4', label: '5 kb upstream (G4)' },
+  { value: 'insideOf_genes_downstream_100bp_g4', label: '100 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_200bp_g4', label: '200 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_300bp_g4', label: '300 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_500bp_g4', label: '500 bp downstream (G4)' },
+  { value: 'insideOf_genes_downstream_1k_g4', label: '1 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_2k_g4', label: '2 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_3k_g4', label: '3 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_4k_g4', label: '4 kb downstream (G4)' },
+  { value: 'insideOf_genes_downstream_5k_g4', label: '5 kb downstream (G4)' },
+  { value: 'insideOf_gene_i_motif', label: 'Inside gene (i-motif)' },
+  { value: 'insideOf_genes_upstream_100bp_i_motif', label: '100 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_200bp_i_motif', label: '200 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_300bp_i_motif', label: '300 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_500bp_i_motif', label: '500 bp upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_1k_i_motif', label: '1 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_2k_i_motif', label: '2 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_3k_i_motif', label: '3 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_4k_i_motif', label: '4 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_upstream_5k_i_motif', label: '5 kb upstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_100bp_i_motif', label: '100 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_200bp_i_motif', label: '200 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_300bp_i_motif', label: '300 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_500bp_i_motif', label: '500 bp downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_1k_i_motif', label: '1 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_2k_i_motif', label: '2 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_3k_i_motif', label: '3 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_4k_i_motif', label: '4 kb downstream (i-motif)' },
+  { value: 'insideOf_genes_downstream_5k_i_motif', label: '5 kb downstream (i-motif)' },
 ] as const;
 
 export type G4GenePosition = (typeof G4_GENE_POSITION_OPTIONS)[number]['value'];
-export type G4SortField = 'start' | 'end' | 'length' | 'tetrads' | 'gscore' | 'y1' | 'y2' | 'y3';
-export type G4Type = 'normal' | 'revcomp';
+export type G4SortField = 'start' | 'end' | 'length' | 'tetrads' | 'score' | 'y1' | 'y2' | 'y3';
+export type G4Type = 'g4' | 'i-motif';
 export type G4FlankWindow = 100 | 200 | 300 | 500 | 1000 | 2000 | 3000 | 4000 | 5000;
 
 export const G4_FLANK_WINDOW_OPTIONS: readonly { value: G4FlankWindow; label: string }[] = [
@@ -66,8 +66,8 @@ export interface G4GenePositionOption {
 }
 
 export const G4_GENE_POSITION_OPTIONS_BY_TYPE: Record<G4Type, readonly G4GenePositionOption[]> = {
-  normal: G4_GENE_POSITION_OPTIONS.filter((option) => option.value.endsWith('_normal')),
-  revcomp: G4_GENE_POSITION_OPTIONS.filter((option) => option.value.endsWith('_revcomp')),
+  g4: G4_GENE_POSITION_OPTIONS.filter((option) => option.value.endsWith('_g4')),
+  'i-motif': G4_GENE_POSITION_OPTIONS.filter((option) => option.value.endsWith('_i_motif')),
 };
 
 export interface G4PageItem {
@@ -81,7 +81,7 @@ export interface G4PageItem {
   y1: number;
   y2: number;
   y3: number;
-  gscore: number;
+  score: number;
   sequence: string;
 }
 
@@ -89,8 +89,8 @@ export interface G4PageResponse {
   g4s: G4PageItem[];
   count: number;
   tetrads_list: number[];
-  max_gscore: number;
-  min_gscore: number;
+  max_score: number;
+  min_score: number;
 }
 
 export interface G4GeneRelationHit {
@@ -116,8 +116,8 @@ export interface G4PageRequest {
   sort: G4SortField;
   order: 'asc' | 'desc';
   tetrads: number[];
-  minGscore?: number;
-  maxGscore?: number;
+  minScore?: number;
+  maxScore?: number;
   overlap?: boolean;
 }
 
@@ -126,7 +126,7 @@ export interface G4HistogramBin {
   end: number;
   count: number;
   density_per_bp: number;
-  mean_gscore: number | null;
+  mean_score: number | null;
 }
 
 export interface G4HistogramResponse {
@@ -139,8 +139,8 @@ export interface G4HistogramResponse {
 
 export interface G4HistogramFilters {
   tetrads: number[];
-  minGscore?: number;
-  maxGscore?: number;
+  minScore?: number;
+  maxScore?: number;
   overlap?: boolean;
 }
 
@@ -160,8 +160,8 @@ export interface G4HistogramRequest {
 
 export interface G4PositionDistributionFilters {
   tetrads: number[];
-  min_gscore: number | null;
-  max_gscore: number | null;
+  min_score: number | null;
+  max_score: number | null;
   overlap: boolean;
   flank_window: G4FlankWindow;
   counting_mode: 'exclusive';
@@ -212,8 +212,8 @@ export interface G4PositionDistributionResponse {
 export interface G4PositionStatisticsFilters {
   windows: number[];
   tetrads: number[];
-  min_gscore: number | null;
-  max_gscore: number | null;
+  min_score: number | null;
+  max_score: number | null;
   overlap: boolean;
 }
 
@@ -223,8 +223,8 @@ export interface G4PositionMotifStats {
   expected_vs_genome: number | null;
   fold_vs_genome: number | null;
   fold_vs_non_feature: number | null;
-  median_gscore: number | null;
-  p95_gscore: number | null;
+  median_score: number | null;
+  p95_score: number | null;
   median_tetrads: number | null;
   p95_tetrads: number | null;
   median_length: number | null;
@@ -232,11 +232,11 @@ export interface G4PositionMotifStats {
 }
 
 export interface G4PositionAsymmetry {
-  normal_fraction: number | null;
-  revcomp_fraction: number | null;
+  g4_fraction: number | null;
+  i_motif_fraction: number | null;
   fraction_delta: number | null;
   count_delta: number;
-  density_ratio_normal_over_revcomp: number | null;
+  density_ratio_g4_over_i_motif: number | null;
 }
 
 export interface G4PositionStatisticsCategory {
@@ -268,8 +268,8 @@ export interface G4PositionDistributionRequest {
   assemblyAccession: string;
   g4Type: G4Type;
   tetrads: number[];
-  minGscore?: number;
-  maxGscore?: number;
+  minScore?: number;
+  maxScore?: number;
   overlap?: boolean;
   flankWindow: G4FlankWindow;
   includeFeatureBreakdown?: boolean;
@@ -280,8 +280,8 @@ export interface G4PositionStatisticsRequest {
   assemblyAccession: string;
   windows?: number[];
   tetrads: number[];
-  minGscore?: number;
-  maxGscore?: number;
+  minScore?: number;
+  maxScore?: number;
   overlap?: boolean;
 }
 
@@ -293,8 +293,8 @@ export interface G4GeneSearchRequest {
   sort: G4SortField;
   order: 'asc' | 'desc';
   tetrads: number[];
-  minGscore?: number;
-  maxGscore?: number;
+  minScore?: number;
+  maxScore?: number;
   selectedFeatureId: string;
   selectedPosition: G4GenePosition;
   searchTerm?: string;
@@ -328,8 +328,8 @@ export const EMPTY_G4_PAGE: G4PageResponse = {
   g4s: [],
   count: 0,
   tetrads_list: [],
-  max_gscore: 0,
-  min_gscore: 0,
+  max_score: 0,
+  min_score: 0,
 };
 
 export const EMPTY_G4_GENE_RELATIONS: G4GeneRelationsResponse = {
@@ -346,11 +346,11 @@ export const EMPTY_G4_HISTOGRAM: G4HistogramResponse = {
 
 export const EMPTY_G4_POSITION_DISTRIBUTION: G4PositionDistributionResponse = {
   assembly_accession: '',
-  g4_type: 'normal',
+  g4_type: 'g4',
   filters: {
     tetrads: [],
-    min_gscore: null,
-    max_gscore: null,
+    min_score: null,
+    max_score: null,
     overlap: false,
     flank_window: 1000,
     counting_mode: 'exclusive',
@@ -372,8 +372,8 @@ export const EMPTY_G4_POSITION_STATISTICS: G4PositionStatisticsResponse = {
   filters: {
     windows: [],
     tetrads: [],
-    min_gscore: null,
-    max_gscore: null,
+    min_score: null,
+    max_score: null,
     overlap: false,
   },
   genome_length_bp: 0,
@@ -392,7 +392,7 @@ const SORT_FIELD_PARAM_MAP: Record<G4SortField, string> = {
   end: 'end',
   length: 'length',
   tetrads: 'tetrads',
-  gscore: 'gscore',
+  score: 'score',
   y1: 'y1',
   y2: 'y2',
   y3: 'y3',
@@ -409,18 +409,18 @@ export class G4Service {
     params: HttpParams,
     filters: Pick<
       G4PageRequest | G4GeneSearchRequest | G4HistogramFilters,
-      'tetrads' | 'minGscore' | 'maxGscore' | 'overlap'
+      'tetrads' | 'minScore' | 'maxScore' | 'overlap'
     >,
   ): HttpParams {
     let nextParams = params;
     for (const tetrad of filters.tetrads) {
       nextParams = nextParams.append('tetrads', tetrad);
     }
-    if (filters.minGscore !== undefined) {
-      nextParams = nextParams.set('min_gscore', filters.minGscore);
+    if (filters.minScore !== undefined) {
+      nextParams = nextParams.set('min_score', filters.minScore);
     }
-    if (filters.maxGscore !== undefined) {
-      nextParams = nextParams.set('max_gscore', filters.maxGscore);
+    if (filters.maxScore !== undefined) {
+      nextParams = nextParams.set('max_score', filters.maxScore);
     }
     if (filters.overlap) {
       nextParams = nextParams.set('overlap', true);
@@ -431,14 +431,7 @@ export class G4Service {
   private buildCommonPageParams(
     request: Pick<
       G4PageRequest | G4GeneSearchRequest,
-      | 'pageIndex'
-      | 'pageSize'
-      | 'sort'
-      | 'order'
-      | 'tetrads'
-      | 'minGscore'
-      | 'maxGscore'
-      | 'overlap'
+      'pageIndex' | 'pageSize' | 'sort' | 'order' | 'tetrads' | 'minScore' | 'maxScore' | 'overlap'
     >,
   ): HttpParams {
     const params = new HttpParams()

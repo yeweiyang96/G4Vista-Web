@@ -387,8 +387,8 @@ export class GenomeRangeChartComponent {
     themeColors: ChartThemeColors = DEFAULT_CHART_THEME_COLORS,
     chartSize: ChartSize = { width: 960, height: 320 },
   ): object {
-    const hasMeanGscore = bins.some((bin) => bin.mean_gscore !== null);
-    const rightPadding = hasMeanGscore ? 112 : 18;
+    const hasMeanScore = bins.some((bin) => bin.mean_score !== null);
+    const rightPadding = hasMeanScore ? 112 : 18;
     const xSpan = viewport.end - viewport.start;
     const xDomainEnd = Math.max(xSpan, 1);
     const axisFeatureRange = this.axisFeatureRange();
@@ -466,7 +466,7 @@ export class GenomeRangeChartComponent {
         {
           name: 'color',
           type: 'linear',
-          domain: hasMeanGscore ? { data: 'bins', field: 'mean_gscore' } : [0, 1],
+          domain: hasMeanScore ? { data: 'bins', field: 'mean_score' } : [0, 1],
           range: ['#d9e5f3', '#87b4df', '#2f6ea8'],
           zero: false,
         },
@@ -515,25 +515,25 @@ export class GenomeRangeChartComponent {
               y2: { scale: 'y', value: 0 },
               fill: [
                 {
-                  test: 'datum.mean_gscore === null',
+                  test: 'datum.mean_score === null',
                   value: '#d9e5f3',
                 },
                 {
                   scale: 'color',
-                  field: 'mean_gscore',
+                  field: 'mean_score',
                 },
               ],
               stroke: { value: '#2f3d4f' },
               strokeWidth: { value: 0.3 },
               tooltip: {
                 signal:
-                  "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'bin_length': datum.bin_length, 'density': datum.density, 'density_bin': datum.density_bin_label, 'mean_score': datum.mean_gscore}",
+                  "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'bin_length': datum.bin_length, 'density': datum.density, 'density_bin': datum.density_bin_label, 'mean_score': datum.mean_score}",
               },
             },
           },
         },
       ],
-      legends: hasMeanGscore
+      legends: hasMeanScore
         ? [
             {
               fill: 'color',

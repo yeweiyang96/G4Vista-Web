@@ -84,8 +84,8 @@ export class G4TableComponent {
   readonly filterSelectedGeneLabel = input('Any');
   readonly hasSelectedGene = input(false);
   readonly filterSelectedTetrads = input<readonly number[]>([]);
-  readonly filterMinGscore = input<number | undefined>(undefined);
-  readonly filterMaxGscore = input<number | undefined>(undefined);
+  readonly filterMinScore = input<number | undefined>(undefined);
+  readonly filterMaxScore = input<number | undefined>(undefined);
   readonly showAccessionIdColumn = input(false);
   readonly sortState = input.required<{ active: G4SortField; direction: 'asc' | 'desc' }>();
   readonly pageIndex = input.required<number>();
@@ -112,12 +112,12 @@ export class G4TableComponent {
   );
   readonly hasSelectedGeneChip = computed(() => this.hasSelectedGene());
   readonly hasSelectedTetradsChip = computed(() => this.filterSelectedTetrads().length > 0);
-  readonly hasSelectedGscoreChip = computed(
-    () => this.filterMinGscore() !== undefined || this.filterMaxGscore() !== undefined,
+  readonly hasSelectedScoreChip = computed(
+    () => this.filterMinScore() !== undefined || this.filterMaxScore() !== undefined,
   );
-  readonly gscoreChipLabel = computed(() => {
-    const min = this.filterMinGscore();
-    const max = this.filterMaxGscore();
+  readonly scoreChipLabel = computed(() => {
+    const min = this.filterMinScore();
+    const max = this.filterMaxScore();
 
     if (min !== undefined && max !== undefined) {
       return `${min}-${max}`;
@@ -129,7 +129,7 @@ export class G4TableComponent {
       return `<= ${max}`;
     }
 
-    return `${this.displayedPage().min_gscore}-${this.displayedPage().max_gscore}`;
+    return `${this.displayedPage().min_score}-${this.displayedPage().max_score}`;
   });
 
   readonly columns = computed<MtxGridColumn<G4PageItem>[]>(() => {
@@ -142,7 +142,7 @@ export class G4TableComponent {
       { header: 'End', field: 'end', sortable: true, type: 'number' },
       { header: 'Length', field: 'length', sortable: true, type: 'number' },
       { header: 'Tetrads', field: 'tetrads', sortable: true, type: 'number' },
-      { header: 'Score', field: 'gscore', sortable: true, type: 'number' },
+      { header: 'Score', field: 'score', sortable: true, type: 'number' },
       {
         header: 'Sequence',
         field: 'sequence',
@@ -175,7 +175,7 @@ export class G4TableComponent {
   readonly resetScope = output<void>();
   readonly resetGene = output<void>();
   readonly resetTetrads = output<void>();
-  readonly resetGscore = output<void>();
+  readonly resetScore = output<void>();
 
   constructor() {
     effect(() => {
@@ -223,8 +223,8 @@ export class G4TableComponent {
     this.resetTetrads.emit();
   }
 
-  onResetGscore(): void {
-    this.resetGscore.emit();
+  onResetScore(): void {
+    this.resetScore.emit();
   }
 
   sequenceSegments(item: G4PageItem): SequenceSegment[] {

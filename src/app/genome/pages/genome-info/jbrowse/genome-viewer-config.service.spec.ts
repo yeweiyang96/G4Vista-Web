@@ -177,9 +177,9 @@ describe('GenomeViewerConfigService', () => {
     const g4DensityTrack = config.tracks.find(
       (track) => track.trackId === 'GCF_000021765.1_g4_density',
     );
-    const iMotifTrack = config.tracks.find((track) => track.trackId === 'GCF_000021765.1_i_motif');
+    const iMotifTrack = config.tracks.find((track) => track.trackId === 'GCF_000021765.1_i-motif');
     const iMotifScoreTrack = config.tracks.find(
-      (track) => track.trackId === 'GCF_000021765.1_i_motif_score',
+      (track) => track.trackId === 'GCF_000021765.1_i-motif_score',
     );
 
     expect(annotationTrack).toBeDefined();
@@ -353,9 +353,7 @@ describe('GenomeViewerConfigService', () => {
       (track) => track.trackId === 'GCF_000021765.1_g4_score',
     );
     const g4ScoreDisplay = (
-      (g4ScoreTrack as Record<string, unknown>)['displays'] as
-        | Record<string, unknown>[]
-        | undefined
+      (g4ScoreTrack as Record<string, unknown>)['displays'] as Record<string, unknown>[] | undefined
     )?.[0];
     const g4ScoreRenderers = (g4ScoreDisplay as Record<string, unknown>)['renderers'] as
       | Record<string, unknown>

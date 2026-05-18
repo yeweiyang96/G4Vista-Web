@@ -56,8 +56,8 @@ interface PositionStrengthRow {
 interface PositionWindowSensitivityRow {
   id: string;
   category: PositionStatisticsCategoryView;
-  normalDensityRatio: number;
-  revcompDensityRatio: number;
+  g4DensityRatio: number;
+  iMotifDensityRatio: number;
 }
 
 interface GeneBiotypeCategoryCell {
@@ -76,8 +76,8 @@ interface GeneBiotypeBreakdownView extends Omit<G4GeneBiotypePositionBreakdown, 
 
 interface PositionDistributionFilterModel {
   selectedTetrads: number[];
-  minGscore: string;
-  maxGscore: string;
+  minScore: string;
+  maxScore: string;
 }
 
 const POSITION_CATEGORY_COLORS: Record<string, string> = {
@@ -107,7 +107,7 @@ const SIGNED_PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
 const POSITION_STATISTIC_TOOLTIPS = {
   window: 'Upstream/downstream flank size used for this statistics row.',
   category: 'Mutually exclusive genomic position category used for this statistics row.',
-  type: 'Motif class: G4 for normal calls and i-motif for reverse-complement calls.',
+  type: 'Motif class: G4 or i-motif.',
   count: 'Observed motif count assigned to this category.',
   intervalLength: 'Category denominator is the merged non-overlapping interval length.',
   densityPerMb: 'Motif count divided by merged interval length in megabases.',
@@ -149,7 +149,7 @@ const GENE_BIOTYPE_COLORS = [
 ] as const;
 
 function motifTypeLabel(g4Type: G4Type): string {
-  return g4Type === 'revcomp' ? 'i-motif sequence sites' : 'G4 sequence sites';
+  return g4Type === 'i-motif' ? 'i-motif sequence sites' : 'G4 sequence sites';
 }
 
 function categoryDisplayText(
@@ -238,7 +238,7 @@ function formatSignedPercent(value: number | null): string {
 }
 
 function motifTypeShortLabel(g4Type: G4Type): string {
-  return g4Type === 'revcomp' ? 'i-motif' : 'G4';
+  return g4Type === 'i-motif' ? 'i-motif' : 'G4';
 }
 
 @Component({
@@ -271,8 +271,8 @@ export class PositionDistributionComponent {
   readonly g4Type = input.required<G4Type>();
   readonly tetradOptions = input.required<readonly number[]>();
   readonly filterSelectedTetrads = input<number[]>([]);
-  readonly filterMinGscore = input('');
-  readonly filterMaxGscore = input('');
+  readonly filterMinScore = input('');
+  readonly filterMaxScore = input('');
   readonly g4TypeChange = output<G4Type>();
   readonly flankWindowChange = output<G4FlankWindow>();
   readonly filterModelChange = output<PositionDistributionFilterModel>();
@@ -521,7 +521,7 @@ export class PositionDistributionComponent {
   );
   readonly strengthRows = computed<readonly PositionStrengthRow[]>(() =>
     this.statisticsRows().flatMap((category) =>
-      (['normal', 'revcomp'] as const).map((motifType) => ({
+      (['g4', 'i-motif'] as const).map((motifType) => ({
         id: `${category.window_bp}:${category.key}:${motifType}`,
         category,
         motifType,
@@ -544,22 +544,19 @@ export class PositionDistributionComponent {
       }
       return a.window_bp - b.window_bp;
     });
-    const maxNormalDensity = Math.max(
+    const maxG4Density = Math.max(0, ...sortedRows.map((row) => row.motifs.g4.density_per_mb ?? 0));
+    const maxIMotifDensity = Math.max(
       0,
-      ...sortedRows.map((row) => row.motifs.normal.density_per_mb ?? 0),
-    );
-    const maxRevcompDensity = Math.max(
-      0,
-      ...sortedRows.map((row) => row.motifs.revcomp.density_per_mb ?? 0),
+      ...sortedRows.map((row) => row.motifs['i-motif'].density_per_mb ?? 0),
     );
     return sortedRows.map((category) => ({
       id: `${category.window_bp}:${category.key}`,
       category,
-      normalDensityRatio: maxNormalDensity
-        ? ((category.motifs.normal.density_per_mb ?? 0) / maxNormalDensity) * 100
+      g4DensityRatio: maxG4Density
+        ? ((category.motifs.g4.density_per_mb ?? 0) / maxG4Density) * 100
         : 0,
-      revcompDensityRatio: maxRevcompDensity
-        ? ((category.motifs.revcomp.density_per_mb ?? 0) / maxRevcompDensity) * 100
+      iMotifDensityRatio: maxIMotifDensity
+        ? ((category.motifs['i-motif'].density_per_mb ?? 0) / maxIMotifDensity) * 100
         : 0,
     }));
   });
@@ -573,35 +570,35 @@ export class PositionDistributionComponent {
     this.flankWindowChange.emit(value);
   }
 
-  onMinGscoreInput(event: Event): void {
-    this.changeMinGscore(this.readInputValue(event));
+  onMinScoreInput(event: Event): void {
+    this.changeMinScore(this.readInputValue(event));
   }
 
-  onMaxGscoreInput(event: Event): void {
-    this.changeMaxGscore(this.readInputValue(event));
+  onMaxScoreInput(event: Event): void {
+    this.changeMaxScore(this.readInputValue(event));
   }
 
   changeSelectedTetrads(value: number[] | null): void {
     this.filterModelChange.emit({
       selectedTetrads: value ?? [],
-      minGscore: this.filterMinGscore(),
-      maxGscore: this.filterMaxGscore(),
+      minScore: this.filterMinScore(),
+      maxScore: this.filterMaxScore(),
     });
   }
 
-  changeMinGscore(rawValue: string): void {
+  changeMinScore(rawValue: string): void {
     this.filterModelChange.emit({
       selectedTetrads: this.filterSelectedTetrads(),
-      minGscore: rawValue,
-      maxGscore: this.filterMaxGscore(),
+      minScore: rawValue,
+      maxScore: this.filterMaxScore(),
     });
   }
 
-  changeMaxGscore(rawValue: string): void {
+  changeMaxScore(rawValue: string): void {
     this.filterModelChange.emit({
       selectedTetrads: this.filterSelectedTetrads(),
-      minGscore: this.filterMinGscore(),
-      maxGscore: rawValue,
+      minScore: this.filterMinScore(),
+      maxScore: rawValue,
     });
   }
 

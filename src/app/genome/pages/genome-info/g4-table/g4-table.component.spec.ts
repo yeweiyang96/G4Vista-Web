@@ -22,14 +22,14 @@ describe('G4TableComponent', () => {
     fixture.componentRef.setInput('filterSelectedGeneLabel', 'Any');
     fixture.componentRef.setInput('hasSelectedGene', false);
     fixture.componentRef.setInput('filterSelectedTetrads', []);
-    fixture.componentRef.setInput('filterMinGscore', undefined);
-    fixture.componentRef.setInput('filterMaxGscore', undefined);
+    fixture.componentRef.setInput('filterMinScore', undefined);
+    fixture.componentRef.setInput('filterMaxScore', undefined);
     fixture.componentRef.setInput('showAccessionIdColumn', false);
     fixture.componentRef.setInput('sortState', { active: 'start', direction: 'asc' });
     fixture.componentRef.setInput('pageIndex', 0);
     fixture.componentRef.setInput('pageSize', 10);
     fixture.componentRef.setInput('geneRelationsByRowKey', new Map());
-    fixture.componentRef.setInput('genePositionOptions', G4_GENE_POSITION_OPTIONS_BY_TYPE.normal);
+    fixture.componentRef.setInput('genePositionOptions', G4_GENE_POSITION_OPTIONS_BY_TYPE.g4);
     fixture.detectChanges();
   });
 
@@ -38,10 +38,10 @@ describe('G4TableComponent', () => {
     const sequenceColumn = columns.find((column) => column.field === 'sequence');
     const seqidColumn = columns.find((column) => column.field === 'seqid');
     const insideGeneColumn = columns.find(
-      (column) => column.field === 'gene_relation:insideOf_gene_normal',
+      (column) => column.field === 'gene_relation:insideOf_gene_g4',
     );
     const upstreamGeneColumn = columns.find(
-      (column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_normal',
+      (column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_g4',
     );
 
     expect(seqidColumn).toBeUndefined();
@@ -77,7 +77,7 @@ describe('G4TableComponent', () => {
       {
         ...component
           .columns()
-          .find((column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_normal')!,
+          .find((column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_g4')!,
         show: true,
       },
     ]);
@@ -87,9 +87,8 @@ describe('G4TableComponent', () => {
     expect(columns.find((column) => column.field === 'seqid')?.show).toBeFalse();
     expect(columns.find((column) => column.field === 'sequence')?.show).toBeFalse();
     expect(
-      columns.find(
-        (column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_normal',
-      )?.show,
+      columns.find((column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_g4')
+        ?.show,
     ).toBeTrue();
   });
 
@@ -100,7 +99,7 @@ describe('G4TableComponent', () => {
         [
           'NC_000001.1:100',
           {
-            insideOf_gene_normal: [
+            insideOf_gene_g4: [
               { feature_id: 'geneA', label: 'Gene A', gene_biotype: 'protein_coding' },
             ],
           },
@@ -114,7 +113,7 @@ describe('G4TableComponent', () => {
         {
           assembly_accession: 'GCF_1',
           seqid: 'NC_000001.1',
-          g4_type: 'normal',
+          g4_type: 'g4',
           start: 100,
           end: 120,
           length: 21,
@@ -122,10 +121,10 @@ describe('G4TableComponent', () => {
           y1: 1,
           y2: 1,
           y3: 1,
-          gscore: 18,
+          score: 18,
           sequence: 'GGGTTAGGGTTAGGGTTAGGG',
         },
-        'insideOf_gene_normal',
+        'insideOf_gene_g4',
       ),
     ).toEqual([{ feature_id: 'geneA', label: 'Gene A', gene_biotype: 'protein_coding' }]);
   });
@@ -133,14 +132,14 @@ describe('G4TableComponent', () => {
   it('derives default chip labels from the active filters and page stats', () => {
     fixture.componentRef.setInput('page', {
       ...EMPTY_G4_PAGE,
-      min_gscore: 10,
-      max_gscore: 55,
+      min_score: 10,
+      max_score: 55,
     });
     fixture.detectChanges();
 
     expect(component.geneChipLabel()).toBe('Any');
     expect(component.tetradsChipLabel()).toBe('All');
-    expect(component.gscoreChipLabel()).toBe('10-55');
+    expect(component.scoreChipLabel()).toBe('10-55');
   });
 
   it('hides the scope chip until a gene is selected', () => {
@@ -163,8 +162,8 @@ describe('G4TableComponent', () => {
     fixture.componentRef.setInput('hasSelectedGene', true);
     fixture.componentRef.setInput('filterSelectedGeneLabel', 'dnaK (dnaK) [chr2]');
     fixture.componentRef.setInput('filterSelectedTetrads', [2, 4]);
-    fixture.componentRef.setInput('filterMinGscore', 12);
-    fixture.componentRef.setInput('filterMaxGscore', 28);
+    fixture.componentRef.setInput('filterMinScore', 12);
+    fixture.componentRef.setInput('filterMaxScore', 28);
     fixture.detectChanges();
 
     expect(getCloseIconCount()).toBe(4);

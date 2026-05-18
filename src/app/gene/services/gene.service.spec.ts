@@ -40,9 +40,9 @@ describe('GeneService', () => {
         gene_id: 'ATP6',
         gene_name: null,
         gene_biotype: 'protein_coding',
-        insideOf_gene_normal_count: 0,
-        insideOf_genes_upstream_1k_normal_count: 0,
-        insideOf_genes_downstream_1k_normal_count: 0,
+        insideOf_gene_g4_count: 0,
+        insideOf_genes_upstream_1k_g4_count: 0,
+        insideOf_genes_downstream_1k_g4_count: 0,
       },
     ]);
 

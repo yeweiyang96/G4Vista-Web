@@ -54,8 +54,8 @@
           [g4Type]="positionDistributionG4Type()"
           [tetradOptions]="positionDistributionTetradOptions()"
           [filterSelectedTetrads]="positionDistributionFilterModel().selectedTetrads"
-          [filterMinGscore]="positionDistributionFilterModel().minGscore"
-          [filterMaxGscore]="positionDistributionFilterModel().maxGscore"
+          [filterMinScore]="positionDistributionFilterModel().minScore"
+          [filterMaxScore]="positionDistributionFilterModel().maxScore"
           (g4TypeChange)="setPositionDistributionG4Type($event)"
           (flankWindowChange)="setPositionDistributionFlankWindow($event)"
           (filterModelChange)="setPositionDistributionFilterModel($event)"
@@ -141,8 +141,8 @@
                   (change)="selectG4Type($event.value)"
                   aria-label="G4/i-motif type selector"
                 >
-                  <mat-button-toggle value="normal">G4</mat-button-toggle>
-                  <mat-button-toggle value="revcomp">i-motif</mat-button-toggle>
+                  <mat-button-toggle value="g4">G4</mat-button-toggle>
+                  <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
                 </mat-button-toggle-group>
               </div>
             </div>
@@ -233,8 +233,8 @@
                   type="number"
                   inputmode="numeric"
                   step="1"
-                  placeholder="{{ g4Page().min_gscore }}"
-                  [formField]="filterForm.minGscore"
+                  placeholder="{{ g4Page().min_score }}"
+                  [formField]="filterForm.minScore"
                 />
               </mat-form-field>
 
@@ -245,8 +245,8 @@
                   type="number"
                   inputmode="numeric"
                   step="1"
-                  placeholder="{{ g4Page().max_gscore }}"
-                  [formField]="filterForm.maxGscore"
+                  placeholder="{{ g4Page().max_score }}"
+                  [formField]="filterForm.maxScore"
                 />
               </mat-form-field>
 
@@ -262,8 +262,8 @@
               [filterSelectedGeneLabel]="submittedSelectedGeneLabel()"
               [hasSelectedGene]="hasSubmittedSelectedGene()"
               [filterSelectedTetrads]="submittedFilters().selectedTetrads"
-              [filterMinGscore]="submittedMinGscore()"
-              [filterMaxGscore]="submittedMaxGscore()"
+              [filterMinScore]="submittedMinScore()"
+              [filterMaxScore]="submittedMaxScore()"
               [showAccessionIdColumn]="showAccessionIdColumn()"
               [sortState]="sortState()"
               [pageIndex]="pageIndex()"
@@ -277,7 +277,7 @@
               (resetScope)="resetScopeFilter()"
               (resetGene)="resetGeneFilter()"
               (resetTetrads)="resetTetradsFilter()"
-              (resetGscore)="resetGscoreFilter()"
+              (resetScore)="resetScoreFilter()"
             />
           </mat-card-content>
         </mat-card>

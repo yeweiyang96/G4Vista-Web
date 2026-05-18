@@ -26,20 +26,20 @@ describe('G4Service', () => {
     service
       .getG4Page({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'revcomp',
+        g4Type: 'i-motif',
         seqid: 'NC_000001.1',
         pageIndex: 0,
         pageSize: 10,
         sort: 'start',
         order: 'asc',
         tetrads: [2, 3],
-        minGscore: 12,
-        maxGscore: 44,
+        minScore: 12,
+        maxScore: 44,
       })
       .subscribe(responseSpy);
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/NC_000001.1/revcomp?offset=0&limit=10&sort=start&order=asc&tetrads=2&tetrads=3&min_gscore=12&max_gscore=44',
+      '/api/v1/g4/GCF_000021765.1/NC_000001.1/i-motif?offset=0&limit=10&sort=start&order=asc&tetrads=2&tetrads=3&min_score=12&max_score=44',
     );
 
     expect(request.request.method).toBe('GET');
@@ -47,13 +47,13 @@ describe('G4Service', () => {
     request.flush({
       count: 1,
       tetrads_list: [2, 3],
-      max_gscore: 44,
-      min_gscore: 12,
+      max_score: 44,
+      min_score: 12,
       g4s: [
         {
           assembly_accession: 'GCF_000021765.1',
           seqid: 'NC_000001.1',
-          g4_type: 'revcomp',
+          g4_type: 'i-motif',
           start: 100,
           end: 120,
           length: 20,
@@ -61,7 +61,7 @@ describe('G4Service', () => {
           y1: 1,
           y2: 2,
           y3: 1,
-          gscore: 18,
+          score: 18,
           sequence: 'GGGTTAGGGTTAGGG',
         },
       ],
@@ -69,7 +69,7 @@ describe('G4Service', () => {
 
     expect(responseSpy).toHaveBeenCalledWith(
       jasmine.objectContaining({
-        g4s: [jasmine.objectContaining({ g4_type: 'revcomp' })],
+        g4s: [jasmine.objectContaining({ g4_type: 'i-motif' })],
       }),
     );
   });
@@ -80,19 +80,19 @@ describe('G4Service', () => {
     service
       .getAssemblyG4Page({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'revcomp',
+        g4Type: 'i-motif',
         pageIndex: 0,
         pageSize: 10,
         sort: 'start',
         order: 'asc',
         tetrads: [2, 3],
-        minGscore: 12,
-        maxGscore: 44,
+        minScore: 12,
+        maxScore: 44,
       })
       .subscribe(responseSpy);
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/revcomp?offset=0&limit=10&sort=start&order=asc&tetrads=2&tetrads=3&min_gscore=12&max_gscore=44',
+      '/api/v1/g4/GCF_000021765.1/i-motif?offset=0&limit=10&sort=start&order=asc&tetrads=2&tetrads=3&min_score=12&max_score=44',
     );
 
     expect(request.request.method).toBe('GET');
@@ -100,13 +100,13 @@ describe('G4Service', () => {
     request.flush({
       count: 1,
       tetrads_list: [2, 3],
-      max_gscore: 44,
-      min_gscore: 12,
+      max_score: 44,
+      min_score: 12,
       g4s: [
         {
           assembly_accession: 'GCF_000021765.1',
           seqid: 'NC_000001.1',
-          g4_type: 'revcomp',
+          g4_type: 'i-motif',
           start: 100,
           end: 120,
           length: 20,
@@ -114,7 +114,7 @@ describe('G4Service', () => {
           y1: 1,
           y2: 2,
           y3: 1,
-          gscore: 18,
+          score: 18,
           sequence: 'GGGTTAGGGTTAGGG',
         },
       ],
@@ -122,7 +122,7 @@ describe('G4Service', () => {
 
     expect(responseSpy).toHaveBeenCalledWith(
       jasmine.objectContaining({
-        g4s: [jasmine.objectContaining({ g4_type: 'revcomp' })],
+        g4s: [jasmine.objectContaining({ g4_type: 'i-motif' })],
       }),
     );
   });
@@ -133,21 +133,21 @@ describe('G4Service', () => {
     service
       .getGeneSearchPage({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         pageIndex: 2,
         pageSize: 20,
-        sort: 'gscore',
+        sort: 'score',
         order: 'desc',
         tetrads: [3],
-        minGscore: 17,
-        maxGscore: 90,
+        minScore: 17,
+        maxScore: 90,
         selectedFeatureId: 'geneA',
-        selectedPosition: 'insideOf_gene_normal',
+        selectedPosition: 'insideOf_gene_g4',
       })
       .subscribe(responseSpy);
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/normal/gene-search?offset=2&limit=20&sort=gscore&order=desc&tetrads=3&min_gscore=17&max_gscore=90&selected_feature_id=geneA&selected_position=insideOf_gene_normal',
+      '/api/v1/g4/GCF_000021765.1/g4/gene-search?offset=2&limit=20&sort=score&order=desc&tetrads=3&min_score=17&max_score=90&selected_feature_id=geneA&selected_position=insideOf_gene_g4',
     );
 
     expect(request.request.method).toBe('GET');
@@ -155,8 +155,8 @@ describe('G4Service', () => {
     request.flush({
       count: 0,
       tetrads_list: [3],
-      max_gscore: 90,
-      min_gscore: 17,
+      max_score: 90,
+      min_score: 17,
       g4s: [],
     });
 
@@ -174,14 +174,14 @@ describe('G4Service', () => {
     service
       .getGeneCandidates({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'normal',
-        selectedPosition: 'insideOf_gene_normal',
+        g4Type: 'g4',
+        selectedPosition: 'insideOf_gene_g4',
         searchTerm: 'dna',
       })
       .subscribe(responseSpy);
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/normal/gene-candidates?search_term=dna&selected_position=insideOf_gene_normal&limit=20',
+      '/api/v1/g4/GCF_000021765.1/g4/gene-candidates?search_term=dna&selected_position=insideOf_gene_g4&limit=20',
     );
 
     expect(request.request.method).toBe('GET');
@@ -208,14 +208,14 @@ describe('G4Service', () => {
     service
       .getGeneRelations({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         seqid: 'NC_000001.1',
         starts: [10, 20],
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/NC_000001.1/normal/gene-relations?start=10&start=20',
+      '/api/v1/g4/GCF_000021765.1/NC_000001.1/g4/gene-relations?start=10&start=20',
     );
 
     expect(request.request.method).toBe('GET');
@@ -227,7 +227,7 @@ describe('G4Service', () => {
       .getHistogram({
         assemblyAccession: 'GCF_000021765.1',
         seqid: 'NC_000001.1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         viewport: {
           start: 1000,
           end: 5000,
@@ -235,15 +235,15 @@ describe('G4Service', () => {
         },
         filters: {
           tetrads: [2, 4],
-          minGscore: 12,
-          maxGscore: 40,
+          minScore: 12,
+          maxScore: 40,
           overlap: true,
         },
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/NC_000001.1/normal/histogram?range_start=1000&range_end=5000&bin_size=200&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/NC_000001.1/g4/histogram?range_start=1000&range_end=5000&bin_size=200&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
     );
 
     expect(request.request.method).toBe('GET');
@@ -260,10 +260,10 @@ describe('G4Service', () => {
     service
       .getPositionDistribution({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         tetrads: [2, 4],
-        minGscore: 12,
-        maxGscore: 40,
+        minScore: 12,
+        maxScore: 40,
         overlap: true,
         flankWindow: 500,
         includeFeatureBreakdown: false,
@@ -272,17 +272,17 @@ describe('G4Service', () => {
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/normal/position-distribution?flank_window=500&include_feature_breakdown=false&include_gene_biotype_breakdown=false&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/g4/position-distribution?flank_window=500&include_feature_breakdown=false&include_gene_biotype_breakdown=false&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
     );
 
     expect(request.request.method).toBe('GET');
     request.flush({
       assembly_accession: 'GCF_000021765.1',
-      g4_type: 'normal',
+      g4_type: 'g4',
       filters: {
         tetrads: [2, 4],
-        min_gscore: 12,
-        max_gscore: 40,
+        min_score: 12,
+        max_score: 40,
         overlap: true,
         flank_window: 500,
         counting_mode: 'exclusive',
@@ -304,24 +304,24 @@ describe('G4Service', () => {
     service
       .getPositionDistribution({
         assemblyAccession: 'GCF_000021765.1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         tetrads: [],
         flankWindow: 1000,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/normal/position-distribution?flank_window=1000&include_feature_breakdown=true&include_gene_biotype_breakdown=true',
+      '/api/v1/g4/GCF_000021765.1/g4/position-distribution?flank_window=1000&include_feature_breakdown=true&include_gene_biotype_breakdown=true',
     );
 
     expect(request.request.method).toBe('GET');
     request.flush({
       assembly_accession: 'GCF_000021765.1',
-      g4_type: 'normal',
+      g4_type: 'g4',
       filters: {
         tetrads: [],
-        min_gscore: null,
-        max_gscore: null,
+        min_score: null,
+        max_score: null,
         overlap: false,
         flank_window: 1000,
         counting_mode: 'exclusive',
@@ -345,14 +345,14 @@ describe('G4Service', () => {
         assemblyAccession: 'GCF_000021765.1',
         windows: [100, 500, 1000, 5000],
         tetrads: [2, 4],
-        minGscore: 12,
-        maxGscore: 40,
+        minScore: 12,
+        maxScore: 40,
         overlap: true,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=100&windows=500&windows=1000&windows=5000&tetrads=2&tetrads=4&min_gscore=12&max_gscore=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=100&windows=500&windows=1000&windows=5000&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
     );
 
     expect(request.request.method).toBe('GET');
@@ -361,8 +361,8 @@ describe('G4Service', () => {
       filters: {
         windows: [100, 500, 1000, 5000],
         tetrads: [2, 4],
-        min_gscore: 12,
-        max_gscore: 40,
+        min_score: 12,
+        max_score: 40,
         overlap: true,
       },
       genome_length_bp: 0,

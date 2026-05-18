@@ -18,9 +18,9 @@
         <mat-icon aria-hidden="true" class="filter-chip-icon">close</mat-icon>
       }
     </mat-chip>
-    <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetGscore()">
-      Score: {{ gscoreChipLabel() }}
-      @if (hasSelectedGscoreChip()) {
+    <mat-chip class="filter-chip" role="button" tabindex="0" (click)="onResetScore()">
+      Score: {{ scoreChipLabel() }}
+      @if (hasSelectedScoreChip()) {
         <mat-icon aria-hidden="true" class="filter-chip-icon">close</mat-icon>
       }
     </mat-chip>

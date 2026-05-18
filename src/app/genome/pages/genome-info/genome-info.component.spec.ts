@@ -76,13 +76,13 @@ describe('GenomeInfoComponent', () => {
     ...EMPTY_G4_PAGE,
     count: 1,
     tetrads_list: [2, 3],
-    min_gscore: 10,
-    max_gscore: 50,
+    min_score: 10,
+    max_score: 50,
     g4s: [
       {
         assembly_accession: 'GCF_1',
         seqid: 'chr1',
-        g4_type: 'normal',
+        g4_type: 'g4',
         start: 5,
         end: 20,
         length: 16,
@@ -90,7 +90,7 @@ describe('GenomeInfoComponent', () => {
         y1: 1,
         y2: 1,
         y3: 1,
-        gscore: 15,
+        score: 15,
         sequence: 'GGGGTTGGGGTTGGGG',
       },
     ],
@@ -99,13 +99,13 @@ describe('GenomeInfoComponent', () => {
     ...EMPTY_G4_PAGE,
     count: 1,
     tetrads_list: [2, 3],
-    min_gscore: 11,
-    max_gscore: 51,
+    min_score: 11,
+    max_score: 51,
     g4s: [
       {
         assembly_accession: 'GCF_1',
         seqid: 'chr2',
-        g4_type: 'normal',
+        g4_type: 'g4',
         start: 50,
         end: 70,
         length: 21,
@@ -113,7 +113,7 @@ describe('GenomeInfoComponent', () => {
         y1: 1,
         y2: 1,
         y3: 1,
-        gscore: 18,
+        score: 18,
         sequence: 'GGGTTAGGGTTAGGGTTAGGG',
       },
     ],
@@ -121,20 +121,20 @@ describe('GenomeInfoComponent', () => {
   const wholeGenomeBrowsePage: G4PageResponse = {
     count: 2,
     tetrads_list: [2, 3],
-    min_gscore: 10,
-    max_gscore: 51,
+    min_score: 10,
+    max_score: 51,
     g4s: [chr1BrowsePage.g4s[0], chr2BrowsePage.g4s[0]],
   };
   const geneSearchPage: G4PageResponse = {
     count: 2,
     tetrads_list: [2, 3],
-    min_gscore: 15,
-    max_gscore: 41,
+    min_score: 15,
+    max_score: 41,
     g4s: [
       {
         assembly_accession: 'GCF_1',
         seqid: 'chr1',
-        g4_type: 'normal',
+        g4_type: 'g4',
         start: 10,
         end: 25,
         length: 16,
@@ -142,13 +142,13 @@ describe('GenomeInfoComponent', () => {
         y1: 1,
         y2: 1,
         y3: 1,
-        gscore: 22,
+        score: 22,
         sequence: 'GGGGTTGGGGTTGGGG',
       },
       {
         assembly_accession: 'GCF_1',
         seqid: 'chr2',
-        g4_type: 'normal',
+        g4_type: 'g4',
         start: 30,
         end: 44,
         length: 15,
@@ -156,7 +156,7 @@ describe('GenomeInfoComponent', () => {
         y1: 1,
         y2: 1,
         y3: 1,
-        gscore: 41,
+        score: 41,
         sequence: 'GGGAGGGTTGGGAGG',
       },
     ],
@@ -194,44 +194,44 @@ describe('GenomeInfoComponent', () => {
         description: null,
         gene_biotype: 'protein_coding',
         feature_key: 'dnaK',
-        insideOf_gene_normal: [],
-        insideOf_genes_upstream_100bp_normal: [],
-        insideOf_genes_downstream_100bp_normal: [],
-        insideOf_genes_upstream_200bp_normal: [],
-        insideOf_genes_downstream_200bp_normal: [],
-        insideOf_genes_upstream_300bp_normal: [],
-        insideOf_genes_downstream_300bp_normal: [],
-        insideOf_genes_upstream_500bp_normal: [],
-        insideOf_genes_downstream_500bp_normal: [],
-        insideOf_genes_upstream_1k_normal: [],
-        insideOf_genes_upstream_2k_normal: [],
-        insideOf_genes_upstream_3k_normal: [],
-        insideOf_genes_upstream_4k_normal: [],
-        insideOf_genes_upstream_5k_normal: [],
-        insideOf_genes_downstream_1k_normal: [],
-        insideOf_genes_downstream_2k_normal: [],
-        insideOf_genes_downstream_3k_normal: [],
-        insideOf_genes_downstream_4k_normal: [],
-        insideOf_genes_downstream_5k_normal: [],
-        insideOf_gene_revcomp: [],
-        insideOf_genes_upstream_100bp_revcomp: [],
-        insideOf_genes_downstream_100bp_revcomp: [],
-        insideOf_genes_upstream_200bp_revcomp: [],
-        insideOf_genes_downstream_200bp_revcomp: [],
-        insideOf_genes_upstream_300bp_revcomp: [],
-        insideOf_genes_downstream_300bp_revcomp: [],
-        insideOf_genes_upstream_500bp_revcomp: [],
-        insideOf_genes_downstream_500bp_revcomp: [],
-        insideOf_genes_upstream_1k_revcomp: [],
-        insideOf_genes_upstream_2k_revcomp: [],
-        insideOf_genes_upstream_3k_revcomp: [],
-        insideOf_genes_upstream_4k_revcomp: [],
-        insideOf_genes_upstream_5k_revcomp: [],
-        insideOf_genes_downstream_1k_revcomp: [],
-        insideOf_genes_downstream_2k_revcomp: [],
-        insideOf_genes_downstream_3k_revcomp: [],
-        insideOf_genes_downstream_4k_revcomp: [],
-        insideOf_genes_downstream_5k_revcomp: [],
+        insideOf_gene_g4: [],
+        insideOf_genes_upstream_100bp_g4: [],
+        insideOf_genes_downstream_100bp_g4: [],
+        insideOf_genes_upstream_200bp_g4: [],
+        insideOf_genes_downstream_200bp_g4: [],
+        insideOf_genes_upstream_300bp_g4: [],
+        insideOf_genes_downstream_300bp_g4: [],
+        insideOf_genes_upstream_500bp_g4: [],
+        insideOf_genes_downstream_500bp_g4: [],
+        insideOf_genes_upstream_1k_g4: [],
+        insideOf_genes_upstream_2k_g4: [],
+        insideOf_genes_upstream_3k_g4: [],
+        insideOf_genes_upstream_4k_g4: [],
+        insideOf_genes_upstream_5k_g4: [],
+        insideOf_genes_downstream_1k_g4: [],
+        insideOf_genes_downstream_2k_g4: [],
+        insideOf_genes_downstream_3k_g4: [],
+        insideOf_genes_downstream_4k_g4: [],
+        insideOf_genes_downstream_5k_g4: [],
+        insideOf_gene_i_motif: [],
+        insideOf_genes_upstream_100bp_i_motif: [],
+        insideOf_genes_downstream_100bp_i_motif: [],
+        insideOf_genes_upstream_200bp_i_motif: [],
+        insideOf_genes_downstream_200bp_i_motif: [],
+        insideOf_genes_upstream_300bp_i_motif: [],
+        insideOf_genes_downstream_300bp_i_motif: [],
+        insideOf_genes_upstream_500bp_i_motif: [],
+        insideOf_genes_downstream_500bp_i_motif: [],
+        insideOf_genes_upstream_1k_i_motif: [],
+        insideOf_genes_upstream_2k_i_motif: [],
+        insideOf_genes_upstream_3k_i_motif: [],
+        insideOf_genes_upstream_4k_i_motif: [],
+        insideOf_genes_upstream_5k_i_motif: [],
+        insideOf_genes_downstream_1k_i_motif: [],
+        insideOf_genes_downstream_2k_i_motif: [],
+        insideOf_genes_downstream_3k_i_motif: [],
+        insideOf_genes_downstream_4k_i_motif: [],
+        insideOf_genes_downstream_5k_i_motif: [],
       }),
     );
 
@@ -277,7 +277,7 @@ describe('GenomeInfoComponent', () => {
         relations: starts.map((start) => ({
           start,
           positions: {
-            insideOf_gene_normal: [
+            insideOf_gene_g4: [
               {
                 feature_id: `${seqid}-gene-${start}`,
                 label: `${seqid.toUpperCase()} gene ${start}`,
@@ -292,7 +292,7 @@ describe('GenomeInfoComponent', () => {
       of({
         ...EMPTY_G4_POSITION_DISTRIBUTION,
         assembly_accession: 'GCF_1',
-        g4_type: 'normal',
+        g4_type: 'g4',
         total_count: 5,
         categories: [
           {
@@ -356,8 +356,8 @@ describe('GenomeInfoComponent', () => {
         filters: {
           windows: [100, 500, 1000, 5000],
           tetrads: [],
-          min_gscore: null,
-          max_gscore: null,
+          min_score: null,
+          max_score: null,
           overlap: false,
         },
         windows: [
@@ -372,27 +372,27 @@ describe('GenomeInfoComponent', () => {
                 merged_interval_length_bp: 1000,
                 length_mb: 0.001,
                 motifs: {
-                  normal: {
+                  g4: {
                     count: 2,
                     density_per_mb: 2000,
                     expected_vs_genome: 1,
                     fold_vs_genome: 2,
                     fold_vs_non_feature: 3,
-                    median_gscore: 20,
-                    p95_gscore: 40,
+                    median_score: 20,
+                    p95_score: 40,
                     median_tetrads: 3,
                     p95_tetrads: 4,
                     median_length: 24,
                     p95_length: 32,
                   },
-                  revcomp: {
+                  'i-motif': {
                     count: 1,
                     density_per_mb: 1000,
                     expected_vs_genome: 0.5,
                     fold_vs_genome: 1,
                     fold_vs_non_feature: 1.5,
-                    median_gscore: 18,
-                    p95_gscore: 30,
+                    median_score: 18,
+                    p95_score: 30,
                     median_tetrads: 2,
                     p95_tetrads: 3,
                     median_length: 20,
@@ -400,11 +400,11 @@ describe('GenomeInfoComponent', () => {
                   },
                 },
                 asymmetry: {
-                  normal_fraction: 2 / 3,
-                  revcomp_fraction: 1 / 3,
+                  g4_fraction: 2 / 3,
+                  i_motif_fraction: 1 / 3,
                   fraction_delta: 1 / 3,
                   count_delta: 1,
-                  density_ratio_normal_over_revcomp: 2,
+                  density_ratio_g4_over_i_motif: 2,
                 },
               },
             ],
@@ -474,14 +474,14 @@ describe('GenomeInfoComponent', () => {
     const component = fixture.componentInstance;
 
     expect(component.genePositionOptions().map((option) => option.value)).toEqual(
-      G4_GENE_POSITION_OPTIONS_BY_TYPE.normal.map((option) => option.value),
+      G4_GENE_POSITION_OPTIONS_BY_TYPE.g4.map((option) => option.value),
     );
 
-    component.selectG4Type('revcomp');
+    component.selectG4Type('i-motif');
     fixture.detectChanges();
 
     expect(component.genePositionOptions().map((option) => option.value)).toEqual(
-      G4_GENE_POSITION_OPTIONS_BY_TYPE.revcomp.map((option) => option.value),
+      G4_GENE_POSITION_OPTIONS_BY_TYPE['i-motif'].map((option) => option.value),
     );
   });
 
@@ -498,7 +498,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getG4Page).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         seqid: 'chr1',
         pageSize: 10,
       }),
@@ -522,11 +522,11 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         flankWindow: 1000,
         tetrads: [],
-        minGscore: undefined,
-        maxGscore: undefined,
+        minScore: undefined,
+        maxScore: undefined,
       }),
     );
 
@@ -534,8 +534,8 @@ describe('GenomeInfoComponent', () => {
     component.filterModel.update((current) => ({
       ...current,
       selectedTetrads: [3],
-      minGscore: '12',
-      maxGscore: '40',
+      minScore: '12',
+      maxScore: '40',
     }));
     fixture.detectChanges();
     await fixture.whenStable();
@@ -552,8 +552,8 @@ describe('GenomeInfoComponent', () => {
 
     component.setPositionDistributionFilterModel({
       selectedTetrads: [3],
-      minGscore: '12',
-      maxGscore: '40',
+      minScore: '12',
+      maxScore: '40',
     });
     fixture.detectChanges();
     await fixture.whenStable();
@@ -569,11 +569,11 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         flankWindow: 1000,
         tetrads: [3],
-        minGscore: 12,
-        maxGscore: 40,
+        minScore: 12,
+        maxScore: 40,
       }),
     );
 
@@ -586,17 +586,17 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         flankWindow: 1000,
         tetrads: [],
-        minGscore: undefined,
-        maxGscore: undefined,
+        minScore: undefined,
+        maxScore: undefined,
       }),
     );
 
     g4Service.getPositionDistribution.calls.reset();
 
-    component.selectG4Type('revcomp');
+    component.selectG4Type('i-motif');
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -611,7 +611,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         flankWindow: 500,
         tetrads: [],
       }),
@@ -619,7 +619,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.positionDistributionFlankWindowLabel()).toBe('500 bp');
 
     g4Service.getPositionDistribution.calls.reset();
-    component.setPositionDistributionG4Type('revcomp');
+    component.setPositionDistributionG4Type('i-motif');
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -627,7 +627,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'revcomp',
+        g4Type: 'i-motif',
         flankWindow: 500,
         tetrads: [],
       }),
@@ -691,7 +691,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getG4Page.calls.allArgs()).toContain([
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         seqid: 'chr2',
         pageSize: 10,
       }),
@@ -724,7 +724,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getAssemblyG4Page.calls.allArgs()).toContain([
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         pageSize: 10,
       }),
     ]);
@@ -791,44 +791,44 @@ describe('GenomeInfoComponent', () => {
         description: null,
         gene_biotype: 'protein_coding',
         feature_key: 'dnaK',
-        insideOf_gene_normal: [],
-        insideOf_genes_upstream_100bp_normal: [],
-        insideOf_genes_downstream_100bp_normal: [],
-        insideOf_genes_upstream_200bp_normal: [],
-        insideOf_genes_downstream_200bp_normal: [],
-        insideOf_genes_upstream_300bp_normal: [],
-        insideOf_genes_downstream_300bp_normal: [],
-        insideOf_genes_upstream_500bp_normal: [],
-        insideOf_genes_downstream_500bp_normal: [],
-        insideOf_genes_upstream_1k_normal: [],
-        insideOf_genes_upstream_2k_normal: [],
-        insideOf_genes_upstream_3k_normal: [],
-        insideOf_genes_upstream_4k_normal: [],
-        insideOf_genes_upstream_5k_normal: [],
-        insideOf_genes_downstream_1k_normal: [],
-        insideOf_genes_downstream_2k_normal: [],
-        insideOf_genes_downstream_3k_normal: [],
-        insideOf_genes_downstream_4k_normal: [],
-        insideOf_genes_downstream_5k_normal: [],
-        insideOf_gene_revcomp: [],
-        insideOf_genes_upstream_100bp_revcomp: [],
-        insideOf_genes_downstream_100bp_revcomp: [],
-        insideOf_genes_upstream_200bp_revcomp: [],
-        insideOf_genes_downstream_200bp_revcomp: [],
-        insideOf_genes_upstream_300bp_revcomp: [],
-        insideOf_genes_downstream_300bp_revcomp: [],
-        insideOf_genes_upstream_500bp_revcomp: [],
-        insideOf_genes_downstream_500bp_revcomp: [],
-        insideOf_genes_upstream_1k_revcomp: [],
-        insideOf_genes_upstream_2k_revcomp: [],
-        insideOf_genes_upstream_3k_revcomp: [],
-        insideOf_genes_upstream_4k_revcomp: [],
-        insideOf_genes_upstream_5k_revcomp: [],
-        insideOf_genes_downstream_1k_revcomp: [],
-        insideOf_genes_downstream_2k_revcomp: [],
-        insideOf_genes_downstream_3k_revcomp: [],
-        insideOf_genes_downstream_4k_revcomp: [],
-        insideOf_genes_downstream_5k_revcomp: [],
+        insideOf_gene_g4: [],
+        insideOf_genes_upstream_100bp_g4: [],
+        insideOf_genes_downstream_100bp_g4: [],
+        insideOf_genes_upstream_200bp_g4: [],
+        insideOf_genes_downstream_200bp_g4: [],
+        insideOf_genes_upstream_300bp_g4: [],
+        insideOf_genes_downstream_300bp_g4: [],
+        insideOf_genes_upstream_500bp_g4: [],
+        insideOf_genes_downstream_500bp_g4: [],
+        insideOf_genes_upstream_1k_g4: [],
+        insideOf_genes_upstream_2k_g4: [],
+        insideOf_genes_upstream_3k_g4: [],
+        insideOf_genes_upstream_4k_g4: [],
+        insideOf_genes_upstream_5k_g4: [],
+        insideOf_genes_downstream_1k_g4: [],
+        insideOf_genes_downstream_2k_g4: [],
+        insideOf_genes_downstream_3k_g4: [],
+        insideOf_genes_downstream_4k_g4: [],
+        insideOf_genes_downstream_5k_g4: [],
+        insideOf_gene_i_motif: [],
+        insideOf_genes_upstream_100bp_i_motif: [],
+        insideOf_genes_downstream_100bp_i_motif: [],
+        insideOf_genes_upstream_200bp_i_motif: [],
+        insideOf_genes_downstream_200bp_i_motif: [],
+        insideOf_genes_upstream_300bp_i_motif: [],
+        insideOf_genes_downstream_300bp_i_motif: [],
+        insideOf_genes_upstream_500bp_i_motif: [],
+        insideOf_genes_downstream_500bp_i_motif: [],
+        insideOf_genes_upstream_1k_i_motif: [],
+        insideOf_genes_upstream_2k_i_motif: [],
+        insideOf_genes_upstream_3k_i_motif: [],
+        insideOf_genes_upstream_4k_i_motif: [],
+        insideOf_genes_upstream_5k_i_motif: [],
+        insideOf_genes_downstream_1k_i_motif: [],
+        insideOf_genes_downstream_2k_i_motif: [],
+        insideOf_genes_downstream_3k_i_motif: [],
+        insideOf_genes_downstream_4k_i_motif: [],
+        insideOf_genes_downstream_5k_i_motif: [],
       }),
     );
 
@@ -841,9 +841,9 @@ describe('GenomeInfoComponent', () => {
     });
     component.filterModel.update((current) => ({
       ...current,
-      selectedPosition: 'insideOf_gene_normal',
-      minGscore: '10',
-      maxGscore: '55',
+      selectedPosition: 'insideOf_gene_g4',
+      minScore: '10',
+      maxScore: '55',
     }));
     component.submitFilters();
     fixture.detectChanges();
@@ -858,9 +858,9 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getGeneSearchPage).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         selectedFeatureId: 'dnaK',
-        selectedPosition: 'insideOf_gene_normal',
+        selectedPosition: 'insideOf_gene_g4',
       }),
     );
     expect(component.chartSeqid()).toBe('chr2');
@@ -884,7 +884,7 @@ describe('GenomeInfoComponent', () => {
       [
         jasmine.objectContaining({
           assemblyAccession: 'GCF_1',
-          g4Type: 'normal',
+          g4Type: 'g4',
           seqid: 'chr1',
           starts: [10],
         }),
@@ -892,7 +892,7 @@ describe('GenomeInfoComponent', () => {
       [
         jasmine.objectContaining({
           assemblyAccession: 'GCF_1',
-          g4Type: 'normal',
+          g4Type: 'g4',
           seqid: 'chr2',
           starts: [30],
         }),
@@ -911,11 +911,11 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getG4Page).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         seqid: 'chr2',
         pageSize: 10,
-        minGscore: 10,
-        maxGscore: 55,
+        minScore: 10,
+        maxScore: 55,
       }),
     );
   });
@@ -963,7 +963,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getG4Page.calls.allArgs()).toContain([
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
-        g4Type: 'normal',
+        g4Type: 'g4',
         seqid: 'chr1',
         pageSize: 10,
       }),
@@ -1006,44 +1006,44 @@ describe('GenomeInfoComponent', () => {
         description: null,
         gene_biotype: 'protein_coding',
         feature_key: 'dnaK',
-        insideOf_gene_normal: [],
-        insideOf_genes_upstream_100bp_normal: [],
-        insideOf_genes_downstream_100bp_normal: [],
-        insideOf_genes_upstream_200bp_normal: [],
-        insideOf_genes_downstream_200bp_normal: [],
-        insideOf_genes_upstream_300bp_normal: [],
-        insideOf_genes_downstream_300bp_normal: [],
-        insideOf_genes_upstream_500bp_normal: [],
-        insideOf_genes_downstream_500bp_normal: [],
-        insideOf_genes_upstream_1k_normal: [],
-        insideOf_genes_upstream_2k_normal: [],
-        insideOf_genes_upstream_3k_normal: [],
-        insideOf_genes_upstream_4k_normal: [],
-        insideOf_genes_upstream_5k_normal: [],
-        insideOf_genes_downstream_1k_normal: [],
-        insideOf_genes_downstream_2k_normal: [],
-        insideOf_genes_downstream_3k_normal: [],
-        insideOf_genes_downstream_4k_normal: [],
-        insideOf_genes_downstream_5k_normal: [],
-        insideOf_gene_revcomp: [],
-        insideOf_genes_upstream_100bp_revcomp: [],
-        insideOf_genes_downstream_100bp_revcomp: [],
-        insideOf_genes_upstream_200bp_revcomp: [],
-        insideOf_genes_downstream_200bp_revcomp: [],
-        insideOf_genes_upstream_300bp_revcomp: [],
-        insideOf_genes_downstream_300bp_revcomp: [],
-        insideOf_genes_upstream_500bp_revcomp: [],
-        insideOf_genes_downstream_500bp_revcomp: [],
-        insideOf_genes_upstream_1k_revcomp: [],
-        insideOf_genes_upstream_2k_revcomp: [],
-        insideOf_genes_upstream_3k_revcomp: [],
-        insideOf_genes_upstream_4k_revcomp: [],
-        insideOf_genes_upstream_5k_revcomp: [],
-        insideOf_genes_downstream_1k_revcomp: [],
-        insideOf_genes_downstream_2k_revcomp: [],
-        insideOf_genes_downstream_3k_revcomp: [],
-        insideOf_genes_downstream_4k_revcomp: [],
-        insideOf_genes_downstream_5k_revcomp: [],
+        insideOf_gene_g4: [],
+        insideOf_genes_upstream_100bp_g4: [],
+        insideOf_genes_downstream_100bp_g4: [],
+        insideOf_genes_upstream_200bp_g4: [],
+        insideOf_genes_downstream_200bp_g4: [],
+        insideOf_genes_upstream_300bp_g4: [],
+        insideOf_genes_downstream_300bp_g4: [],
+        insideOf_genes_upstream_500bp_g4: [],
+        insideOf_genes_downstream_500bp_g4: [],
+        insideOf_genes_upstream_1k_g4: [],
+        insideOf_genes_upstream_2k_g4: [],
+        insideOf_genes_upstream_3k_g4: [],
+        insideOf_genes_upstream_4k_g4: [],
+        insideOf_genes_upstream_5k_g4: [],
+        insideOf_genes_downstream_1k_g4: [],
+        insideOf_genes_downstream_2k_g4: [],
+        insideOf_genes_downstream_3k_g4: [],
+        insideOf_genes_downstream_4k_g4: [],
+        insideOf_genes_downstream_5k_g4: [],
+        insideOf_gene_i_motif: [],
+        insideOf_genes_upstream_100bp_i_motif: [],
+        insideOf_genes_downstream_100bp_i_motif: [],
+        insideOf_genes_upstream_200bp_i_motif: [],
+        insideOf_genes_downstream_200bp_i_motif: [],
+        insideOf_genes_upstream_300bp_i_motif: [],
+        insideOf_genes_downstream_300bp_i_motif: [],
+        insideOf_genes_upstream_500bp_i_motif: [],
+        insideOf_genes_downstream_500bp_i_motif: [],
+        insideOf_genes_upstream_1k_i_motif: [],
+        insideOf_genes_upstream_2k_i_motif: [],
+        insideOf_genes_upstream_3k_i_motif: [],
+        insideOf_genes_upstream_4k_i_motif: [],
+        insideOf_genes_upstream_5k_i_motif: [],
+        insideOf_genes_downstream_1k_i_motif: [],
+        insideOf_genes_downstream_2k_i_motif: [],
+        insideOf_genes_downstream_3k_i_motif: [],
+        insideOf_genes_downstream_4k_i_motif: [],
+        insideOf_genes_downstream_5k_i_motif: [],
       }),
     );
 
@@ -1103,7 +1103,7 @@ describe('GenomeInfoComponent', () => {
 
     component.filterModel.update((current) => ({
       ...current,
-      selectedPosition: 'insideOf_genes_upstream_100bp_normal',
+      selectedPosition: 'insideOf_genes_upstream_100bp_g4',
     }));
     fixture.detectChanges();
     await fixture.whenStable();
@@ -1124,7 +1124,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(component.submittedSelectedGene()?.feature_id).toBe('dnaK');
-    component.selectG4Type('revcomp');
+    component.selectG4Type('i-motif');
     fixture.detectChanges();
 
     expect(component.submittedSelectedGene()).toBeNull();
@@ -1147,8 +1147,8 @@ describe('GenomeInfoComponent', () => {
         count: 0,
         g4s: [],
         tetrads_list: [2, 3],
-        min_gscore: 10,
-        max_gscore: 50,
+        min_score: 10,
+        max_score: 50,
       }),
     );
     component.selectGeneCandidate({
