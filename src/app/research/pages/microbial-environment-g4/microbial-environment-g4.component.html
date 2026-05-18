@@ -3,25 +3,19 @@
     <div class="header-copy">
       <p class="eyebrow">Microbial G4Vista</p>
       <h1>Microbial G4 Environment Research</h1>
-      <p class="subtitle">
-        Explore how whole-genome G4 signals vary across microbial temperature and pH conditions.
-      </p>
-      <mat-chip-set class="capability-chips" aria-label="Research capabilities">
+      <p class="subtitle">{{ studySummary() }}</p>
+      <mat-chip-set class="capability-chips" aria-label="Research state">
         <mat-chip>
           <mat-icon matChipAvatar>biotech</mat-icon>
-          Microbial genomes
+          {{ eligibleAssemblyLabel() }}
         </mat-chip>
         <mat-chip>
-          <mat-icon matChipAvatar>view_timeline</mat-icon>
-          Unit-bin analysis
+          <mat-icon matChipAvatar>query_stats</mat-icon>
+          Spearman correlation
         </mat-chip>
         <mat-chip>
-          <mat-icon matChipAvatar>hub</mat-icon>
-          16S G4
-        </mat-chip>
-        <mat-chip>
-          <mat-icon matChipAvatar>download</mat-icon>
-          CSV export
+          <mat-icon matChipAvatar>show_chart</mat-icon>
+          OLS regression line
         </mat-chip>
         <mat-chip [class.status-pending]="dataLayerUnavailable()">
           <mat-icon matChipAvatar>{{
@@ -58,14 +52,9 @@
           }
         </div>
 
-        <mat-stepper
-          class="query-stepper"
-          orientation="vertical"
-          [linear]="false"
-          style="background: transparent"
-        >
+        <mat-stepper class="query-stepper" orientation="vertical" [linear]="false">
           <mat-step>
-            <ng-template matStepLabel>Environment axis</ng-template>
+            <ng-template matStepLabel>Environment condition</ng-template>
             <div class="control-stack">
               <div class="segmented-field">
                 <span>Trait</span>
@@ -76,7 +65,7 @@
               </div>
 
               <div class="segmented-field">
-                <span>Trait mode</span>
+                <span>Mode</span>
                 <mat-button-toggle-group formControlName="mode" (change)="onAxisChange()">
                   <mat-button-toggle value="growth">Growth</mat-button-toggle>
                   <mat-button-toggle value="optimum">Optimum</mat-button-toggle>
@@ -84,13 +73,14 @@
               </div>
 
               <div class="axis-note">
-                <!-- <mat-icon>info</mat-icon> -->
+                <mat-icon>info</mat-icon>
                 <span>{{ studySummary() }}</span>
               </div>
 
               <div class="axis-meta">
-                <span>{{ currentStepLabel() }}</span>
-                <span>{{ currentRangeLabel() }}</span>
+                <span>{{ phenotypeLabel() }}</span>
+                <span>{{ phenotypeUnitLabel() }}</span>
+                <span>{{ eligibleAssemblyLabel() }}</span>
               </div>
 
               <div class="step-actions">
@@ -103,11 +93,11 @@
           </mat-step>
 
           <mat-step>
-            <ng-template matStepLabel>Genome collection</ng-template>
+            <ng-template matStepLabel>Assembly set</ng-template>
             <div class="control-stack">
               <p class="step-copy">
-                Add taxonomy groups to build a custom genome set. Multiple selections are combined
-                as a union; leaving this empty uses all eligible genomes for the current axis.
+                Add taxonomy groups to build the assembly set. Multiple selections are combined as
+                a union.
               </p>
 
               <mat-form-field appearance="outline">
@@ -155,7 +145,10 @@
                       <div class="candidate-row">
                         <div>
                           <strong>{{ candidate.label }}</strong>
-                          <span>{{ candidate.rank | titlecase }}</span>
+                          <span
+                            >{{ candidate.rank | titlecase }} ·
+                            {{ candidate.eligible_assembly_count }} assemblies</span
+                          >
                         </div>
                         <button mat-button type="button" (click)="addTaxonomySelection(candidate)">
                           <mat-icon>add</mat-icon>
@@ -167,23 +160,23 @@
                 </mat-selection-list>
               }
 
-              <section class="collection-box" aria-label="Genome collection">
+              <section class="collection-box" aria-label="Assembly collection">
                 <div class="section-heading">
                   <div>
-                    <h3>Genome set</h3>
+                    <h3>Assembly set</h3>
                     <p>{{ collectionSummary() }}</p>
                   </div>
-                  @if (genomeCollection().length) {
-                    <button mat-button type="button" (click)="clearGenomeCollection()">
+                  @if (assemblyCollection().length) {
+                    <button mat-button type="button" (click)="clearAssemblyCollection()">
                       <mat-icon>backspace</mat-icon>
                       Clear
                     </button>
                   }
                 </div>
 
-                @if (genomeCollection().length) {
+                @if (assemblyCollection().length) {
                   <mat-chip-set aria-label="Selected taxonomy groups">
-                    @for (selection of genomeCollection(); track selection.rank + selection.value) {
+                    @for (selection of assemblyCollection(); track selection.rank + selection.value) {
                       <mat-chip-row (removed)="removeTaxonomySelection(selection)">
                         {{ taxonomyRankLabel(selection.rank) }}: {{ selection.value }}
                         <button matChipRemove [attr.aria-label]="'Remove ' + selection.value">
@@ -195,7 +188,7 @@
                 } @else {
                   <div class="collection-empty">
                     <mat-icon>public</mat-icon>
-                    <span>All eligible genomes are included until taxonomy groups are added.</span>
+                    <span>All eligible assemblies are included until taxonomy groups are added.</span>
                   </div>
                 }
               </section>
@@ -214,16 +207,16 @@
           </mat-step>
 
           <mat-step>
-            <ng-template matStepLabel>Results</ng-template>
+            <ng-template matStepLabel>Run analysis</ng-template>
             <div class="control-stack">
               <p class="step-copy">
-                Search expands each genome into the environment bins its interval intersects, then
-                summarizes whole-genome G4 density per bin.
+                Search submits the current condition and assembly set, then calculates correlation
+                statistics from matching assemblies.
               </p>
               <div class="result-actions">
-                <button mat-button type="button" (click)="clearGenomeCollection()">
+                <button mat-button type="button" (click)="clearAssemblyCollection()">
                   <mat-icon>restart_alt</mat-icon>
-                  Reset genome set
+                  Reset set
                 </button>
                 <button
                   mat-flat-button
@@ -263,17 +256,14 @@
             <mat-chip-set class="draft-chips" aria-label="Current study design">
               <mat-chip>{{ currentTraitLabel() }}</mat-chip>
               <mat-chip>{{ currentModeLabel() }}</mat-chip>
-              <mat-chip>{{ currentStepLabel() }}</mat-chip>
+              <mat-chip>{{ phenotypeLabel() }}</mat-chip>
               <mat-chip>{{ collectionSummary() }}</mat-chip>
             </mat-chip-set>
 
             @if (dataLayerUnavailable()) {
               <div class="status-note pending" aria-live="polite">
                 <mat-icon>cloud_off</mat-icon>
-                <span>
-                  Research data is unavailable in this session, so the workflow is shown in preview
-                  mode.
-                </span>
+                <span>Research query tables are unavailable in this session.</span>
                 <button
                   mat-stroked-button
                   type="button"
@@ -302,7 +292,7 @@
             <span>Submitted</span>
             <strong>{{ query.trait === 'temperature' ? 'Temperature' : 'pH' }}</strong>
             <strong>{{ query.mode | titlecase }}</strong>
-            <span>{{ query.taxonomy_selections.length || 'All eligible' }} genome-set filters</span>
+            <span>{{ query.taxonomy_selections.length || 'All eligible' }} assembly-set filters</span>
           </section>
         }
 
@@ -320,216 +310,89 @@
             }
           </section>
 
-          <mat-tab-group class="results-tabs" mat-stretch-tabs="false">
-            <mat-tab label="Bin trend">
-              <section class="tab-panel plot-panel">
-                <div class="panel-heading">
-                  <div>
-                    <h2>G4 density across {{ axisLabel() | lowercase }}s</h2>
-                    <p>
-                      {{ response.bin_stats.length }} bins · {{ plottedPointCount() }} sampled
-                      genome-bin points
-                    </p>
-                  </div>
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    (click)="downloadBinRows()"
-                    [disabled]="downloading()"
-                  >
-                    <mat-icon>download</mat-icon>
-                    Bin rows CSV
-                  </button>
-                </div>
+          <section class="results-panel plot-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>{{ response.summary.phenotype_label }} vs G4 density</h2>
+                <p>
+                  {{ response.scatter_points.length }} points · {{ response.correlation.method }}
+                  correlation
+                </p>
+              </div>
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="downloadResults()"
+                [disabled]="downloading()"
+              >
+                @if (downloading()) {
+                  <mat-spinner diameter="18"></mat-spinner>
+                } @else {
+                  <mat-icon>download</mat-icon>
+                }
+                Download CSV
+              </button>
+            </div>
 
-                <div class="chart-frame">
-                  @if (response.bin_stats.length) {
-                    <canvas
-                      baseChart
-                      [data]="binChartData()"
-                      [options]="chartOptions()"
-                      type="scatter"
-                    ></canvas>
-                  } @else {
-                    <div class="no-points">
-                      <mat-icon>query_stats</mat-icon>
-                      <span>No bins for the submitted genome set.</span>
-                    </div>
-                  }
+            <div class="chart-frame">
+              @if (response.scatter_points.length) {
+                <div #scatterPlot class="vega-host" aria-label="G4 density scatter plot"></div>
+                @if (chartError()) {
+                  <div class="chart-error">{{ chartError() }}</div>
+                }
+              } @else {
+                <div class="no-points">
+                  <mat-icon>query_stats</mat-icon>
+                  <span>No complete assembly points for the submitted set.</span>
                 </div>
-              </section>
-            </mat-tab>
+              }
+            </div>
+          </section>
 
-            <mat-tab label="Bin statistics">
-              <section class="tab-panel">
-                <div class="panel-heading">
-                  <div>
-                    <h2>Per-bin statistics</h2>
-                    <p>Each genome may contribute to every bin overlapped by its interval.</p>
-                  </div>
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    (click)="downloadBinStats()"
-                    [disabled]="downloading()"
-                  >
-                    <mat-icon>download</mat-icon>
-                    Statistics CSV
-                  </button>
-                </div>
+          <section class="results-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Assembly table</h2>
+                <p>{{ response.preview_total }} assemblies match the submitted study.</p>
+              </div>
+            </div>
 
-                <div class="table-wrap">
-                  <table mat-table [dataSource]="response.bin_stats" class="stats-table">
-                    <ng-container matColumnDef="bin">
-                      <th mat-header-cell *matHeaderCellDef>Bin</th>
-                      <td mat-cell *matCellDef="let row">{{ formatBin(row) }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="genomes">
-                      <th mat-header-cell *matHeaderCellDef>Genomes</th>
-                      <td mat-cell *matCellDef="let row">{{ row.genome_count }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="meanDensity">
-                      <th mat-header-cell *matHeaderCellDef>Mean density</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.g4_density_mean) }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="medianDensity">
-                      <th mat-header-cell *matHeaderCellDef>Median density</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.g4_density_median) }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="meanCount">
-                      <th mat-header-cell *matHeaderCellDef>Mean count</th>
-                      <td mat-cell *matCellDef="let row">{{ formatValue(row.g4_count_mean) }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="meanScore">
-                      <th mat-header-cell *matHeaderCellDef>Mean score</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.g4_mean_score_mean) }}
-                      </td>
-                    </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="binStatColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: binStatColumns"></tr>
-                  </table>
-                </div>
-              </section>
-            </mat-tab>
-
-            <mat-tab label="Genome preview">
-              <section class="tab-panel">
-                <div class="panel-heading">
-                  <div>
-                    <h2>Genome preview</h2>
-                    <p>{{ response.preview_total }} genomes match the submitted study.</p>
-                  </div>
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    (click)="downloadGenomes()"
-                    [disabled]="downloading()"
-                  >
-                    <mat-icon>download</mat-icon>
-                    Genome CSV
-                  </button>
-                </div>
-
-                <div class="table-wrap">
-                  <table mat-table [dataSource]="response.genome_preview" class="stats-table">
-                    <ng-container matColumnDef="genome">
-                      <th mat-header-cell *matHeaderCellDef>Genome</th>
-                      <td mat-cell *matCellDef="let row">{{ row.genome_accession }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="taxonomy">
-                      <th mat-header-cell *matHeaderCellDef>Taxonomy</th>
-                      <td mat-cell *matCellDef="let row">{{ taxonomyLabel(row) }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="traitRange">
-                      <th mat-header-cell *matHeaderCellDef>{{ currentTraitLabel() }} range</th>
-                      <td mat-cell *matCellDef="let row">{{ traitRange(row) }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="density">
-                      <th mat-header-cell *matHeaderCellDef>G4 density</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.g4_density_per_mb) }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="count">
-                      <th mat-header-cell *matHeaderCellDef>G4 count</th>
-                      <td mat-cell *matCellDef="let row">{{ row.g4_count }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="score">
-                      <th mat-header-cell *matHeaderCellDef>Mean score</th>
-                      <td mat-cell *matCellDef="let row">{{ formatValue(row.g4_mean_score) }}</td>
-                    </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="genomeColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: genomeColumns"></tr>
-                  </table>
-                </div>
-              </section>
-            </mat-tab>
-
-            <mat-tab label="16S G4">
-              <section class="tab-panel">
-                <div class="panel-heading">
-                  <div>
-                    <h2>16S G4 auxiliary results</h2>
-                    <p>16S rows are reported for the submitted genome set and current axis.</p>
-                  </div>
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    (click)="downloadSixteenS()"
-                    [disabled]="downloading()"
-                  >
-                    <mat-icon>download</mat-icon>
-                    16S CSV
-                  </button>
-                </div>
-
-                <div class="table-wrap">
-                  <table mat-table [dataSource]="response.sixteen_s_preview" class="stats-table">
-                    <ng-container matColumnDef="genome">
-                      <th mat-header-cell *matHeaderCellDef>Genome</th>
-                      <td mat-cell *matCellDef="let row">{{ row.genome_accession }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="accession">
-                      <th mat-header-cell *matHeaderCellDef>16S accession</th>
-                      <td mat-cell *matCellDef="let row">{{ row.sixteen_s_accession }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="length">
-                      <th mat-header-cell *matHeaderCellDef>Length</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.sixteen_s_length) }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="density">
-                      <th mat-header-cell *matHeaderCellDef>G4 density/kb</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.sixteen_s_g4_density_per_kb) }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="count">
-                      <th mat-header-cell *matHeaderCellDef>G4 count</th>
-                      <td mat-cell *matCellDef="let row">{{ row.sixteen_s_g4_count }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="score">
-                      <th mat-header-cell *matHeaderCellDef>Mean score</th>
-                      <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row.sixteen_s_g4_mean_score) }}
-                      </td>
-                    </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="sixteenSColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: sixteenSColumns"></tr>
-                  </table>
-                  @if (!response.sixteen_s_preview.length) {
-                    <div class="table-empty">No 16S G4 rows for this submitted genome set.</div>
-                  }
-                </div>
-              </section>
-            </mat-tab>
-          </mat-tab-group>
+            <div class="table-wrap">
+              <table mat-table [dataSource]="response.table_preview" class="stats-table">
+                <ng-container matColumnDef="assembly">
+                  <th mat-header-cell *matHeaderCellDef>Assembly</th>
+                  <td mat-cell *matCellDef="let row">{{ row.assembly_accession }}</td>
+                </ng-container>
+                <ng-container matColumnDef="phenotype">
+                  <th mat-header-cell *matHeaderCellDef>{{ response.summary.phenotype_label }}</th>
+                  <td mat-cell *matCellDef="let row">
+                    <strong>{{ formatValue(row.phenotype_value) }}</strong>
+                    <span>{{ phenotypeRange(row) }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="density">
+                  <th mat-header-cell *matHeaderCellDef>G4 density</th>
+                  <td mat-cell *matCellDef="let row">
+                    {{ formatValue(row.g4_density_per_mb) }}
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="taxonomy">
+                  <th mat-header-cell *matHeaderCellDef>Taxonomy</th>
+                  <td mat-cell *matCellDef="let row">{{ taxonomyLabel(row) }}</td>
+                </ng-container>
+                <ng-container matColumnDef="gc">
+                  <th mat-header-cell *matHeaderCellDef>GC%</th>
+                  <td mat-cell *matCellDef="let row">{{ formatValue(row.gc_percent) }}</td>
+                </ng-container>
+                <ng-container matColumnDef="genomeSize">
+                  <th mat-header-cell *matHeaderCellDef>Genome size</th>
+                  <td mat-cell *matCellDef="let row">{{ formatValue(row.genome_size) }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="previewColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: previewColumns"></tr>
+              </table>
+            </div>
+          </section>
         } @else {
           <section class="empty-state">
             @if (loadingOptions()) {

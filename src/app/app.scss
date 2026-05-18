@@ -39,6 +39,11 @@
   text-decoration: inherit;
 }
 
+.navbar-menu-button mat-icon,
+.navbar-link mat-icon {
+  margin-left: 4px;
+}
+
 .small-screen {
   display: none;
 }

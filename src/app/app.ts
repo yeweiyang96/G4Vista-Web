@@ -4,6 +4,7 @@ import { LogoComponent } from './logo/logo.component';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
 
 type ThemeMode = 'brightness_medium' | 'dark_mode' | 'light_mode';
@@ -40,6 +41,7 @@ const GITHUB_ICON = `
     RouterLink,
     RouterLinkActive,
     MatIconModule,
+    MatMenuModule,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -52,7 +54,9 @@ export class App {
     { name: 'Taxonomy', route: '/taxonomy' },
     { name: 'Genome', route: '/genome' },
     { name: 'Gene', route: '/gene' },
-    { name: 'Research', route: '/research/microbial-environment-g4' },
+  ];
+  readonly researchSections = [
+    { name: 'Microbial environment G4', route: '/research/microbial-environment-g4' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');
 

@@ -38,7 +38,7 @@ describe('MicrobialEnvironmentG4Service', () => {
 
     const httpRequest = httpMock.expectOne('/api/v1/research/microbial-environment-g4/options');
     expect(httpRequest.request.method).toBe('GET');
-    httpRequest.flush({ traits: [], modes: [], taxonomy_ranks: [], metrics: [], bin_ranges: [] });
+    httpRequest.flush({ traits: [], modes: [], taxonomy_ranks: [], plans: [] });
 
     expect(responseSpy).toHaveBeenCalled();
   });
@@ -63,7 +63,7 @@ describe('MicrobialEnvironmentG4Service', () => {
     expect(responseSpy).toHaveBeenCalled();
   });
 
-  it('posts bin-based query requests without changing the body', () => {
+  it('posts correlation query requests without changing the body', () => {
     const responseSpy = jasmine.createSpy();
 
     service.query(request).subscribe(responseSpy);
@@ -72,29 +72,47 @@ describe('MicrobialEnvironmentG4Service', () => {
     expect(httpRequest.request.method).toBe('POST');
     expect(httpRequest.request.body).toEqual(request);
     httpRequest.flush({
-      summary: {},
-      bin_stats: [],
+      summary: {
+        plan_id: 'growth_temperature_g4',
+        assembly_count: 0,
+        phenotype_label: 'Growth temperature',
+        phenotype_unit: 'celsius',
+      },
+      correlation: {
+        method: 'spearman',
+        n: 0,
+        rho: null,
+        p_value: null,
+        status: 'insufficient_data',
+      },
+      regression: {
+        method: 'ols',
+        slope: null,
+        intercept: null,
+        r_squared: null,
+        line_points: [],
+        status: 'insufficient_data',
+      },
       scatter_points: [],
-      taxonomy_breakdown: [],
-      genome_preview: [],
-      sixteen_s_preview: [],
+      table_preview: [],
       preview_total: 0,
+      download_filename: 'microbial_environment_g4_growth_temperature_results.csv',
     });
 
     expect(responseSpy).toHaveBeenCalled();
   });
 
-  it('downloads 16S CSV as a Blob', () => {
+  it('downloads results CSV as a Blob', () => {
     const responseSpy = jasmine.createSpy();
 
-    service.downloadSixteenS(request).subscribe(responseSpy);
+    service.downloadResults(request).subscribe(responseSpy);
 
     const httpRequest = httpMock.expectOne(
-      '/api/v1/research/microbial-environment-g4/download/sixteen-s',
+      '/api/v1/research/microbial-environment-g4/download/results',
     );
     expect(httpRequest.request.method).toBe('POST');
     expect(httpRequest.request.responseType).toBe('blob');
-    httpRequest.flush(new Blob(['genome_accession\n']));
+    httpRequest.flush(new Blob(['assembly_accession\n']));
 
     expect(responseSpy).toHaveBeenCalled();
   });

@@ -23,4 +23,12 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.navbar')?.textContent).toContain('G4Vista');
   });
+
+  it('should expose research as a navbar menu trigger', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('.navbar-menu-button')?.textContent).toContain('Research');
+  });
 });

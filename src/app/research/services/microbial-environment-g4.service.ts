@@ -12,27 +12,27 @@ export type MicrobialTaxonomyRank =
   | 'family'
   | 'genus'
   | 'species';
+export type MicrobialAnalysisStatus = 'ok' | 'insufficient_data' | 'constant_input';
 
 export interface MicrobialEnvironmentOption {
   value: string;
   label: string;
 }
 
-export interface MicrobialTraitModeRange {
+export interface MicrobialEnvironmentPlanOption {
+  plan_id: string;
   trait: MicrobialEnvironmentTrait;
   mode: MicrobialEnvironmentMode;
-  bin_step: number;
-  min: number | null;
-  max: number | null;
-  eligible_genomes: number;
+  phenotype_label: string;
+  phenotype_unit: string;
+  eligible_assemblies: number;
 }
 
 export interface MicrobialEnvironmentG4Options {
   traits: MicrobialEnvironmentOption[];
   modes: MicrobialEnvironmentOption[];
   taxonomy_ranks: MicrobialEnvironmentOption[];
-  metrics: MicrobialEnvironmentOption[];
-  bin_ranges: MicrobialTraitModeRange[];
+  plans: MicrobialEnvironmentPlanOption[];
 }
 
 export interface MicrobialTaxonomySelection {
@@ -42,7 +42,7 @@ export interface MicrobialTaxonomySelection {
 
 export interface MicrobialTaxonomySearchResult extends MicrobialTaxonomySelection {
   label: string;
-  eligible_genome_count: number;
+  eligible_assembly_count: number;
 }
 
 export interface MicrobialTaxonomySearchResponse {
@@ -58,40 +58,35 @@ export interface MicrobialEnvironmentG4Query {
 }
 
 export interface MicrobialEnvironmentSummary {
-  matching_genomes: number;
-  bin_rows: number;
-  bin_count: number;
-  sixteen_s_genomes: number;
-  sixteen_s_rows: number;
+  plan_id: string;
+  assembly_count: number;
+  phenotype_label: string;
+  phenotype_unit: string;
 }
 
-export interface MicrobialEnvironmentBinStat {
-  bin_start: number;
-  bin_end: number;
-  bin_mid: number;
-  genome_count: number;
-  g4_density_mean: number | null;
-  g4_density_median: number | null;
-  g4_count_mean: number | null;
-  g4_mean_score_mean: number | null;
+export interface MicrobialEnvironmentCorrelation {
+  method: 'spearman';
+  n: number;
+  rho: number | null;
+  p_value: number | null;
+  status: MicrobialAnalysisStatus;
 }
 
-export interface MicrobialEnvironmentScatterPoint {
-  genome_accession: string;
-  bin_mid: number;
-  g4_density_per_mb: number | null;
-  g4_count: number | null;
-  g4_mean_score: number | null;
+export interface MicrobialRegressionLinePoint {
+  phenotype_value: number;
+  g4_density_per_mb: number;
 }
 
-export interface MicrobialTaxonomyBreakdown {
-  rank: MicrobialTaxonomyRank;
-  value: string;
-  genome_count: number;
+export interface MicrobialEnvironmentRegression {
+  method: 'ols';
+  slope: number | null;
+  intercept: number | null;
+  r_squared: number | null;
+  line_points: MicrobialRegressionLinePoint[];
+  status: MicrobialAnalysisStatus;
 }
 
-export interface MicrobialGenomePreviewRow {
-  genome_accession: string;
+export interface MicrobialEnvironmentTaxonomy {
   domain: string;
   phylum: string;
   class_name: string;
@@ -99,33 +94,39 @@ export interface MicrobialGenomePreviewRow {
   family: string;
   genus: string;
   species: string;
-  trait_min: number | null;
-  trait_max: number | null;
-  genome_size: number | null;
-  gc_percent: number | null;
-  g4_count: number;
-  g4_density_per_mb: number | null;
-  g4_mean_score: number | null;
 }
 
-export interface MicrobialSixteenSPreviewRow {
-  genome_accession: string;
-  sixteen_s_accession: string;
-  sixteen_s_gc: number | null;
-  sixteen_s_length: number | null;
-  sixteen_s_g4_count: number;
-  sixteen_s_g4_density_per_kb: number | null;
-  sixteen_s_g4_mean_score: number | null;
+export interface MicrobialEnvironmentScatterPoint {
+  assembly_accession: string;
+  phenotype_value: number;
+  phenotype_min: number | null;
+  phenotype_max: number | null;
+  g4_density_per_mb: number | null;
+  g4_count: number;
+  gc_percent: number | null;
+  genome_size: number | null;
+  taxonomy: MicrobialEnvironmentTaxonomy;
+}
+
+export interface MicrobialEnvironmentTableRow extends MicrobialEnvironmentScatterPoint {
+  phenotype_record_count: number;
+  raw_phenotype_values: string;
+  assembly_level: string;
+  g4_mean_score: number | null;
+  gene_g4_density_per_mb: number | null;
+  upstream_g4_density_per_mb: number | null;
+  downstream_g4_density_per_mb: number | null;
+  intergenic_g4_density_per_mb: number | null;
 }
 
 export interface MicrobialEnvironmentG4QueryResponse {
   summary: MicrobialEnvironmentSummary;
-  bin_stats: MicrobialEnvironmentBinStat[];
+  correlation: MicrobialEnvironmentCorrelation;
+  regression: MicrobialEnvironmentRegression;
   scatter_points: MicrobialEnvironmentScatterPoint[];
-  taxonomy_breakdown: MicrobialTaxonomyBreakdown[];
-  genome_preview: MicrobialGenomePreviewRow[];
-  sixteen_s_preview: MicrobialSixteenSPreviewRow[];
+  table_preview: MicrobialEnvironmentTableRow[];
   preview_total: number;
+  download_filename: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -157,19 +158,7 @@ export class MicrobialEnvironmentG4Service {
     return this.http.post<MicrobialEnvironmentG4QueryResponse>(`${this.apiUrl}/query`, request);
   }
 
-  downloadGenomes(request: MicrobialEnvironmentG4Query): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/download/genomes`, request, { responseType: 'blob' });
-  }
-
-  downloadBinStats(request: MicrobialEnvironmentG4Query): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/download/bin-stats`, request, { responseType: 'blob' });
-  }
-
-  downloadBinRows(request: MicrobialEnvironmentG4Query): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/download/bin-rows`, request, { responseType: 'blob' });
-  }
-
-  downloadSixteenS(request: MicrobialEnvironmentG4Query): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/download/sixteen-s`, request, { responseType: 'blob' });
+  downloadResults(request: MicrobialEnvironmentG4Query): Observable<Blob> {
+    return this.http.post(`${this.apiUrl}/download/results`, request, { responseType: 'blob' });
   }
 }

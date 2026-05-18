@@ -1,13 +1,17 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT, LowerCasePipe, TitleCasePipe } from '@angular/common';
+import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
+  ElementRef,
   inject,
+  OnDestroy,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -26,10 +30,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ChartData, ChartDataset, ChartOptions } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
+import embed, { VisualizationSpec } from 'vega-embed';
 import { finalize } from 'rxjs';
 import {
   MicrobialEnvironmentG4Options,
@@ -38,6 +40,8 @@ import {
   MicrobialEnvironmentG4Service,
   MicrobialEnvironmentMode,
   MicrobialEnvironmentOption,
+  MicrobialEnvironmentScatterPoint,
+  MicrobialEnvironmentTableRow,
   MicrobialEnvironmentTrait,
   MicrobialTaxonomyRank,
   MicrobialTaxonomySearchResult,
@@ -56,8 +60,22 @@ interface AxisSelection {
   readonly mode: MicrobialEnvironmentMode;
 }
 
+interface VegaPointDatum {
+  assembly_accession: string;
+  phenotype_value: number;
+  g4_density_per_mb: number;
+  genus: string;
+  species: string;
+}
+
+interface VegaLineDatum {
+  phenotype_value: number;
+  g4_density_per_mb: number;
+}
+
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 });
+const STAT_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
 const INITIAL_AXIS_SELECTION: AxisSelection = {
   trait: 'temperature',
   mode: 'growth',
@@ -80,12 +98,40 @@ const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
     { value: 'genus', label: 'Genus' },
     { value: 'species', label: 'Species' },
   ],
-  metrics: [
-    { value: 'g4_density_per_mb', label: 'G4 density per Mb' },
-    { value: 'g4_count', label: 'G4 count' },
-    { value: 'g4_mean_score', label: 'G4 mean score' },
+  plans: [
+    {
+      plan_id: 'growth_temperature_g4',
+      trait: 'temperature',
+      mode: 'growth',
+      phenotype_label: 'Growth temperature',
+      phenotype_unit: 'celsius',
+      eligible_assemblies: 0,
+    },
+    {
+      plan_id: 'optimum_temperature_g4',
+      trait: 'temperature',
+      mode: 'optimum',
+      phenotype_label: 'Optimum temperature',
+      phenotype_unit: 'celsius',
+      eligible_assemblies: 0,
+    },
+    {
+      plan_id: 'growth_ph_g4',
+      trait: 'ph',
+      mode: 'growth',
+      phenotype_label: 'Growth pH',
+      phenotype_unit: 'pH',
+      eligible_assemblies: 0,
+    },
+    {
+      plan_id: 'optimum_ph_g4',
+      trait: 'ph',
+      mode: 'optimum',
+      phenotype_label: 'Optimum pH',
+      phenotype_unit: 'pH',
+      eligible_assemblies: 0,
+    },
   ],
-  bin_ranges: [],
 };
 
 function optionLabel(options: MicrobialEnvironmentOption[], value: string): string {
@@ -97,6 +143,23 @@ function formatNumber(value: number | null | undefined): string {
     return 'NA';
   }
   return NUMBER_FORMATTER.format(value);
+}
+
+function formatStat(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 'NA';
+  }
+  return STAT_FORMATTER.format(value);
+}
+
+function formatPValue(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 'NA';
+  }
+  if (value > 0 && value < 0.001) {
+    return value.toExponential(2);
+  }
+  return STAT_FORMATTER.format(value);
 }
 
 function extractErrorMessage(error: unknown): string {
@@ -118,7 +181,8 @@ function extractErrorMessage(error: unknown): string {
 
 function isResearchTableError(message: string, error: unknown): boolean {
   return (
-    message.includes('microbial_environment_g4') ||
+    message.includes('microbial_environment_g4_assembly_plan') ||
+    message.includes('microbial_environment_g4_taxonomy_index') ||
     message.includes('environment-G4 data') ||
     (error instanceof HttpErrorResponse && error.status === 503)
   );
@@ -128,17 +192,9 @@ function selectionKey(selection: MicrobialTaxonomySelection): string {
   return `${selection.rank}:${selection.value}`;
 }
 
-function rangeLabel(min: number | null, max: number | null): string {
-  if (min === null || max === null) {
-    return 'Range pending';
-  }
-  return `${formatNumber(min)} to ${formatNumber(max)}`;
-}
-
 @Component({
   selector: 'app-microbial-environment-g4',
   imports: [
-    BaseChartDirective,
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
@@ -154,29 +210,30 @@ function rangeLabel(min: number | null, max: number | null): string {
     MatSnackBarModule,
     MatStepperModule,
     MatTableModule,
-    MatTabsModule,
     MatTooltipModule,
     ReactiveFormsModule,
-    LowerCasePipe,
     TitleCasePipe,
   ],
   templateUrl: './microbial-environment-g4.component.html',
   styleUrl: './microbial-environment-g4.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MicrobialEnvironmentG4Component {
+export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy {
+  @ViewChild('scatterPlot') private scatterPlot?: ElementRef<HTMLDivElement>;
+
   private readonly service = inject(MicrobialEnvironmentG4Service);
   private readonly destroyRef = inject(DestroyRef);
   private readonly snackBar = inject(MatSnackBar);
   private readonly document = inject(DOCUMENT);
   private readonly breakpointObserver = inject(BreakpointObserver);
-
   private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
+
+  private chartCleanup: (() => void) | null = null;
 
   readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
   readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
   readonly taxonomyCandidates = signal<MicrobialTaxonomySearchResult[]>([]);
-  readonly genomeCollection = signal<MicrobialTaxonomySelection[]>([]);
+  readonly assemblyCollection = signal<MicrobialTaxonomySelection[]>([]);
   readonly submittedQuery = signal<MicrobialEnvironmentG4Query | null>(null);
   readonly loadingOptions = signal(false);
   readonly loadingTaxonomy = signal(false);
@@ -184,6 +241,7 @@ export class MicrobialEnvironmentG4Component {
   readonly downloading = signal(false);
   readonly dataLayerUnavailable = signal(false);
   readonly errorMessage = signal('');
+  readonly chartError = signal('');
   readonly isNarrow = signal(false);
 
   readonly form = new FormGroup({
@@ -197,16 +255,7 @@ export class MicrobialEnvironmentG4Component {
     taxonomyKeyword: new FormControl('', { nonNullable: true }),
   });
 
-  readonly binStatColumns = [
-    'bin',
-    'genomes',
-    'meanDensity',
-    'medianDensity',
-    'meanCount',
-    'meanScore',
-  ];
-  readonly genomeColumns = ['genome', 'taxonomy', 'traitRange', 'density', 'count', 'score'];
-  readonly sixteenSColumns = ['genome', 'accession', 'length', 'density', 'count', 'score'];
+  readonly previewColumns = ['assembly', 'phenotype', 'density', 'taxonomy', 'gc', 'genomeSize'];
 
   readonly canSearch = computed(
     () =>
@@ -216,134 +265,64 @@ export class MicrobialEnvironmentG4Component {
       !this.dataLayerUnavailable(),
   );
 
-  readonly currentRange = computed(() => {
+  readonly currentPlan = computed(() => {
     const { trait, mode } = this.axisSelection();
     return (
-      this.options()?.bin_ranges.find((range) => range.trait === trait && range.mode === mode) ??
-      null
+      this.options()?.plans.find((plan) => plan.trait === trait && plan.mode === mode) ??
+      FALLBACK_OPTIONS.plans.find((plan) => plan.trait === trait && plan.mode === mode) ??
+      FALLBACK_OPTIONS.plans[0]
     );
   });
 
   readonly dataStatusLabel = computed(() =>
-    this.dataLayerUnavailable() ? 'Research data unavailable' : 'Ready for bin queries',
+    this.dataLayerUnavailable() ? 'Research data unavailable' : 'Ready for correlation queries',
   );
 
   readonly studySummary = computed(() => {
-    const { trait, mode } = this.axisSelection();
-    const traitText = trait === 'temperature' ? 'temperature' : 'pH';
-    const modeText = mode === 'growth' ? 'growth interval' : 'optimum interval';
-    return `Analyze whole-genome G4 density across ${traitText} bins using each genome's ${modeText}.`;
+    const plan = this.currentPlan();
+    return `Correlate ${plan.phenotype_label} with genome-wide G4 density.`;
   });
 
   readonly collectionSummary = computed(() => {
-    const count = this.genomeCollection().length;
+    const count = this.assemblyCollection().length;
     if (!count) {
-      return 'All eligible genomes will be used.';
+      return 'All eligible assemblies will be used.';
     }
-    return `${count} taxonomy ${count === 1 ? 'selection' : 'selections'} will be unioned into one genome set.`;
+    return `${count} taxonomy ${count === 1 ? 'selection' : 'selections'} will be unioned into one assembly set.`;
   });
 
   readonly summaryMetrics = computed<SummaryMetric[]>(() => {
-    const summary = this.result()?.summary;
-    if (!summary) {
+    const response = this.result();
+    if (!response) {
       return [];
     }
     return [
       {
-        label: 'Genomes',
-        value: COUNT_FORMATTER.format(summary.matching_genomes),
-        hint: 'Unique genomes in the submitted set',
+        label: 'Assemblies',
+        value: COUNT_FORMATTER.format(response.summary.assembly_count),
+        hint: 'Assemblies in the submitted set',
         icon: 'biotech',
       },
       {
-        label: 'Bin rows',
-        value: COUNT_FORMATTER.format(summary.bin_rows),
-        hint: 'Expanded genome-bin records',
-        icon: 'view_timeline',
+        label: 'Spearman rho',
+        value: formatStat(response.correlation.rho),
+        hint: `${response.correlation.n} complete pairs`,
+        icon: 'query_stats',
       },
       {
-        label: 'Bins',
-        value: COUNT_FORMATTER.format(summary.bin_count),
-        hint: 'Environment units represented',
-        icon: 'data_array',
+        label: 'p-value',
+        value: formatPValue(response.correlation.p_value),
+        hint: response.correlation.status.replace('_', ' '),
+        icon: 'functions',
       },
       {
-        label: '16S rows',
-        value: COUNT_FORMATTER.format(summary.sixteen_s_rows),
-        hint: 'Auxiliary 16S G4 records',
-        icon: 'hub',
+        label: 'Regression R2',
+        value: formatStat(response.regression.r_squared),
+        hint: response.regression.status.replace('_', ' '),
+        icon: 'show_chart',
       },
     ];
   });
-
-  readonly binChartData = computed<ChartData<'scatter'>>(() => {
-    const result = this.result();
-    const meanTrend: { x: number; y: number }[] =
-      result?.bin_stats
-        .filter((row) => row.g4_density_mean !== null)
-        .map((row) => ({ x: row.bin_mid, y: row.g4_density_mean as number })) ?? [];
-    const medianTrend: { x: number; y: number }[] =
-      result?.bin_stats
-        .filter((row) => row.g4_density_median !== null)
-        .map((row) => ({ x: row.bin_mid, y: row.g4_density_median as number })) ?? [];
-    const scatter: { x: number; y: number }[] =
-      result?.scatter_points
-        .filter((point) => point.g4_density_per_mb !== null)
-        .map((point) => ({ x: point.bin_mid, y: point.g4_density_per_mb as number })) ?? [];
-    const datasets: ChartDataset<'scatter'>[] = [
-      {
-        data: scatter,
-        label: 'Genome-bin G4 density',
-        pointBackgroundColor: '#577399',
-        pointBorderColor: '#577399',
-        pointRadius: 2.5,
-        pointHoverRadius: 5,
-      },
-      {
-        data: meanTrend,
-        label: 'Mean density',
-        borderColor: '#c2410c',
-        backgroundColor: '#c2410c',
-        pointRadius: 0,
-        showLine: true,
-        tension: 0.18,
-      },
-      {
-        data: medianTrend,
-        label: 'Median density',
-        borderColor: '#047857',
-        backgroundColor: '#047857',
-        borderDash: [6, 5],
-        pointRadius: 0,
-        showLine: true,
-        tension: 0.18,
-      },
-    ];
-    return { datasets };
-  });
-
-  readonly chartOptions = computed<ChartOptions<'scatter'>>(() => ({
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: true,
-        labels: { usePointStyle: true },
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) =>
-            `${context.dataset.label}: ${formatNumber(context.parsed.y)} at ${this.axisLabel()} ${formatNumber(context.parsed.x)}`,
-        },
-      },
-    },
-    responsive: true,
-    scales: {
-      x: { title: { display: true, text: this.axisLabel() } },
-      y: { title: { display: true, text: 'G4 density per Mb' } },
-    },
-  }));
-
-  readonly plottedPointCount = computed(() => this.binChartData().datasets[0]?.data.length ?? 0);
 
   constructor() {
     this.breakpointObserver
@@ -351,6 +330,14 @@ export class MicrobialEnvironmentG4Component {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((state) => this.isNarrow.set(state.matches));
     this.loadOptions();
+  }
+
+  ngAfterViewInit(): void {
+    this.scheduleChartRender();
+  }
+
+  ngOnDestroy(): void {
+    this.clearChart();
   }
 
   reloadOptions(): void {
@@ -402,18 +389,18 @@ export class MicrobialEnvironmentG4Component {
       value: selection.value,
     };
     const key = selectionKey(normalizedSelection);
-    this.genomeCollection.update((items) =>
+    this.assemblyCollection.update((items) =>
       items.some((item) => selectionKey(item) === key) ? items : [...items, normalizedSelection],
     );
   }
 
   removeTaxonomySelection(selection: MicrobialTaxonomySelection): void {
     const key = selectionKey(selection);
-    this.genomeCollection.update((items) => items.filter((item) => selectionKey(item) !== key));
+    this.assemblyCollection.update((items) => items.filter((item) => selectionKey(item) !== key));
   }
 
-  clearGenomeCollection(): void {
-    this.genomeCollection.set([]);
+  clearAssemblyCollection(): void {
+    this.assemblyCollection.set([]);
   }
 
   search(): void {
@@ -430,6 +417,7 @@ export class MicrobialEnvironmentG4Component {
     const request = this.buildQuery();
     this.loadingQuery.set(true);
     this.errorMessage.set('');
+    this.chartError.set('');
     this.service
       .query(request)
       .pipe(
@@ -440,29 +428,30 @@ export class MicrobialEnvironmentG4Component {
         next: (response) => {
           this.submittedQuery.set(request);
           this.result.set(response);
+          this.scheduleChartRender();
         },
         error: (error: unknown) => this.handleError(error),
       });
   }
 
-  downloadGenomes(): void {
-    this.download('genomes');
-  }
-
-  downloadBinStats(): void {
-    this.download('bin-stats');
-  }
-
-  downloadBinRows(): void {
-    this.download('bin-rows');
-  }
-
-  downloadSixteenS(): void {
-    this.download('sixteen-s');
-  }
-
-  axisLabel(): string {
-    return this.axisSelection().trait === 'temperature' ? 'Temperature bin' : 'pH bin';
+  downloadResults(): void {
+    const request = this.submittedQuery();
+    const response = this.result();
+    if (!request || !response) {
+      this.snackBar.open('Run Search before downloading CSV.', 'Dismiss', { duration: 3000 });
+      return;
+    }
+    this.downloading.set(true);
+    this.service
+      .downloadResults(request)
+      .pipe(
+        finalize(() => this.downloading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (blob) => this.saveBlob(blob, response.download_filename),
+        error: (error: unknown) => this.handleError(error),
+      });
   }
 
   currentTraitLabel(): string {
@@ -480,19 +469,17 @@ export class MicrobialEnvironmentG4Component {
     return optionLabel(this.options()?.taxonomy_ranks ?? FALLBACK_OPTIONS.taxonomy_ranks, rank);
   }
 
-  currentRangeLabel(): string {
-    const range = this.currentRange();
-    return range ? rangeLabel(range.min, range.max) : 'Range pending';
+  phenotypeLabel(): string {
+    return this.currentPlan().phenotype_label;
   }
 
-  currentStepLabel(): string {
-    const range = this.currentRange();
-    if (!range) {
-      return 'Step pending';
-    }
-    return this.axisSelection().trait === 'temperature'
-      ? `${formatNumber(range.bin_step)} °C bins`
-      : `${formatNumber(range.bin_step)} pH bins`;
+  phenotypeUnitLabel(): string {
+    const unit = this.currentPlan().phenotype_unit;
+    return unit === 'celsius' ? 'deg C' : unit;
+  }
+
+  eligibleAssemblyLabel(): string {
+    return `${COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies)} eligible assemblies`;
   }
 
   formatValue(value: string | number | null): string {
@@ -502,24 +489,23 @@ export class MicrobialEnvironmentG4Component {
     return value ?? 'NA';
   }
 
-  formatBin(row: { bin_start: number; bin_end: number }): string {
-    return `[${formatNumber(row.bin_start)}, ${formatNumber(row.bin_end)})`;
+  phenotypeRange(row: { phenotype_min: number | null; phenotype_max: number | null }): string {
+    if (row.phenotype_min === null || row.phenotype_max === null) {
+      return 'NA';
+    }
+    return `${formatNumber(row.phenotype_min)} to ${formatNumber(row.phenotype_max)}`;
   }
 
-  traitRange(row: { trait_min: number | null; trait_max: number | null }): string {
-    return rangeLabel(row.trait_min, row.trait_max);
-  }
-
-  taxonomyLabel(row: {
-    domain: string;
-    phylum: string;
-    class_name: string;
-    order: string;
-    family: string;
-    genus: string;
-    species: string;
-  }): string {
-    return [row.domain, row.phylum, row.class_name, row.order, row.family, row.genus, row.species]
+  taxonomyLabel(row: MicrobialEnvironmentScatterPoint | MicrobialEnvironmentTableRow): string {
+    return [
+      row.taxonomy.domain,
+      row.taxonomy.phylum,
+      row.taxonomy.class_name,
+      row.taxonomy.order,
+      row.taxonomy.family,
+      row.taxonomy.genus,
+      row.taxonomy.species,
+    ]
       .filter((value) => value)
       .join(' / ');
   }
@@ -528,7 +514,7 @@ export class MicrobialEnvironmentG4Component {
     return {
       trait: this.form.controls.trait.value,
       mode: this.form.controls.mode.value,
-      taxonomy_selections: this.genomeCollection(),
+      taxonomy_selections: this.assemblyCollection(),
       page_index: 0,
       page_size: 50,
     };
@@ -558,6 +544,7 @@ export class MicrobialEnvironmentG4Component {
             this.taxonomyCandidates.set([]);
             this.errorMessage.set('');
             this.dataLayerUnavailable.set(true);
+            this.clearChart();
             return;
           }
           this.handleError(error);
@@ -569,32 +556,144 @@ export class MicrobialEnvironmentG4Component {
     this.result.set(null);
     this.submittedQuery.set(null);
     this.errorMessage.set('');
+    this.chartError.set('');
+    this.clearChart();
   }
 
-  private download(kind: 'genomes' | 'bin-stats' | 'bin-rows' | 'sixteen-s'): void {
-    const request = this.submittedQuery();
-    if (!request) {
-      this.snackBar.open('Run Search before downloading CSV.', 'Dismiss', { duration: 3000 });
+  private scheduleChartRender(): void {
+    setTimeout(() => {
+      void this.renderChart();
+    });
+  }
+
+  private async renderChart(): Promise<void> {
+    const element = this.scatterPlot?.nativeElement;
+    const response = this.result();
+    if (!element || !response) {
       return;
     }
-    const call =
-      kind === 'genomes'
-        ? this.service.downloadGenomes(request)
-        : kind === 'bin-stats'
-          ? this.service.downloadBinStats(request)
-          : kind === 'bin-rows'
-            ? this.service.downloadBinRows(request)
-            : this.service.downloadSixteenS(request);
-    this.downloading.set(true);
-    call
-      .pipe(
-        finalize(() => this.downloading.set(false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (blob) => this.saveBlob(blob, `microbial_environment_g4_${kind}.csv`),
-        error: (error: unknown) => this.handleError(error),
+    const points = this.vegaPoints(response.scatter_points);
+    if (!points.length) {
+      this.clearChart();
+      return;
+    }
+    this.clearChart();
+    const width = Math.max(element.clientWidth - 24, 320);
+    const spec = this.vegaSpec(points, response.regression.line_points, width);
+    try {
+      const chart = await embed(element, spec, {
+        actions: false,
+        mode: 'vega',
+        renderer: 'canvas',
       });
+      this.chartCleanup = () => chart.view.finalize();
+      this.chartError.set('');
+    } catch (error) {
+      this.chartError.set(extractErrorMessage(error));
+    }
+  }
+
+  private vegaPoints(points: MicrobialEnvironmentScatterPoint[]): VegaPointDatum[] {
+    return points
+      .filter((point) => point.g4_density_per_mb !== null)
+      .map((point) => ({
+        assembly_accession: point.assembly_accession,
+        phenotype_value: point.phenotype_value,
+        g4_density_per_mb: point.g4_density_per_mb as number,
+        genus: point.taxonomy.genus,
+        species: point.taxonomy.species,
+      }));
+  }
+
+  private vegaSpec(
+    points: VegaPointDatum[],
+    linePoints: VegaLineDatum[],
+    width: number,
+  ): VisualizationSpec {
+    return {
+      $schema: 'https://vega.github.io/schema/vega/v6.json',
+      width,
+      height: 380,
+      padding: { left: 64, right: 24, top: 24, bottom: 56 },
+      data: [
+        { name: 'points', values: points },
+        { name: 'line', values: linePoints },
+      ],
+      scales: [
+        {
+          name: 'x',
+          type: 'linear',
+          domain: { data: 'points', field: 'phenotype_value' },
+          nice: true,
+          range: 'width',
+          zero: false,
+        },
+        {
+          name: 'y',
+          type: 'linear',
+          domain: { data: 'points', field: 'g4_density_per_mb' },
+          nice: true,
+          range: 'height',
+          zero: false,
+        },
+      ],
+      axes: [
+        {
+          orient: 'bottom',
+          scale: 'x',
+          title: `${this.phenotypeLabel()} (${this.phenotypeUnitLabel()})`,
+          grid: true,
+        },
+        { orient: 'left', scale: 'y', title: 'G4 density per Mb', grid: true },
+      ],
+      marks: [
+        {
+          type: 'symbol',
+          from: { data: 'points' },
+          encode: {
+            enter: {
+              fill: { value: '#4f7cac' },
+              fillOpacity: { value: 0.72 },
+              stroke: { value: '#1d3557' },
+              strokeWidth: { value: 0.6 },
+              size: { value: 62 },
+              tooltip: {
+                signal:
+                  "{'Assembly': datum.assembly_accession, 'Phenotype': datum.phenotype_value, 'G4 density': datum.g4_density_per_mb, 'Genus': datum.genus, 'Species': datum.species}",
+              },
+            },
+            update: {
+              x: { scale: 'x', field: 'phenotype_value' },
+              y: { scale: 'y', field: 'g4_density_per_mb' },
+            },
+            hover: { size: { value: 110 }, fill: { value: '#c7522a' } },
+          },
+        },
+        {
+          type: 'line',
+          from: { data: 'line' },
+          encode: {
+            enter: {
+              stroke: { value: '#c7522a' },
+              strokeWidth: { value: 3 },
+            },
+            update: {
+              x: { scale: 'x', field: 'phenotype_value' },
+              y: { scale: 'y', field: 'g4_density_per_mb' },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  private clearChart(): void {
+    this.chartCleanup?.();
+    this.chartCleanup = null;
+    const element = this.scatterPlot?.nativeElement;
+    if (element) {
+      element.innerHTML = '';
+    }
   }
 
   private saveBlob(blob: Blob, filename: string): void {

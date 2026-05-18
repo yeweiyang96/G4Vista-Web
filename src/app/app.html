@@ -9,6 +9,10 @@
         section.name
       }}</a>
     }
+    <button mat-button class="navbar-items navbar-menu-button" [matMenuTriggerFor]="researchMenu">
+      Research
+      <mat-icon iconPositionEnd>expand_more</mat-icon>
+    </button>
     <div class="flex-spacer"></div>
 
     <button mat-icon-button (click)="toggleTheme()" aria-label="Toggle Theme" class="theme-button">
@@ -44,12 +48,24 @@
       ></mat-icon>
     </a>
   </nav>
+  <mat-menu #researchMenu="matMenu">
+    @for (section of researchSections; track section.route) {
+      <a mat-menu-item [routerLink]="section.route">
+        <mat-icon>query_stats</mat-icon>
+        <span>{{ section.name }}</span>
+      </a>
+    }
+  </mat-menu>
   <nav class="navbar small-screen" aria-label="Section Nav Bar">
     @for (section of sections; track $index) {
       <a mat-button class="navbar-link" [routerLink]="section.route" routerLinkActive="selected">{{
         section.name
       }}</a>
     }
+    <button mat-button class="navbar-link" [matMenuTriggerFor]="researchMenu">
+      Research
+      <mat-icon iconPositionEnd>expand_more</mat-icon>
+    </button>
   </nav>
 </header>
 
