@@ -363,6 +363,10 @@
                   <th mat-header-cell *matHeaderCellDef>Assembly</th>
                   <td mat-cell *matCellDef="let row">{{ row.assembly_accession }}</td>
                 </ng-container>
+                <ng-container matColumnDef="strain">
+                  <th mat-header-cell *matHeaderCellDef>Strain</th>
+                  <td mat-cell *matCellDef="let row">{{ row.strain || 'NA' }}</td>
+                </ng-container>
                 <ng-container matColumnDef="phenotype">
                   <th mat-header-cell *matHeaderCellDef>{{ response.summary.phenotype_label }}</th>
                   <td mat-cell *matCellDef="let row">

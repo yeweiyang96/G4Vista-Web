@@ -64,6 +64,7 @@ interface VegaPointDatum {
   assembly_accession: string;
   phenotype_value: number;
   g4_density_per_mb: number;
+  strain: string;
   genus: string;
   species: string;
 }
@@ -255,7 +256,15 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     taxonomyKeyword: new FormControl('', { nonNullable: true }),
   });
 
-  readonly previewColumns = ['assembly', 'phenotype', 'density', 'taxonomy', 'gc', 'genomeSize'];
+  readonly previewColumns = [
+    'assembly',
+    'strain',
+    'phenotype',
+    'density',
+    'taxonomy',
+    'gc',
+    'genomeSize',
+  ];
 
   readonly canSearch = computed(
     () =>
@@ -600,6 +609,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         assembly_accession: point.assembly_accession,
         phenotype_value: point.phenotype_value,
         g4_density_per_mb: point.g4_density_per_mb as number,
+        strain: point.strain,
         genus: point.taxonomy.genus,
         species: point.taxonomy.species,
       }));
@@ -659,7 +669,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
               size: { value: 62 },
               tooltip: {
                 signal:
-                  "{'Assembly': datum.assembly_accession, 'Phenotype': datum.phenotype_value, 'G4 density': datum.g4_density_per_mb, 'Genus': datum.genus, 'Species': datum.species}",
+                  "{'Assembly': datum.assembly_accession, 'Strain': datum.strain, 'Phenotype': datum.phenotype_value, 'G4 density': datum.g4_density_per_mb, 'Genus': datum.genus, 'Species': datum.species}",
               },
             },
             update: {

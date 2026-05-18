@@ -105,6 +105,7 @@ export interface MicrobialEnvironmentScatterPoint {
   g4_count: number;
   gc_percent: number | null;
   genome_size: number | null;
+  strain: string;
   taxonomy: MicrobialEnvironmentTaxonomy;
 }
 

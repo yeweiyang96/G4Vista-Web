@@ -82,6 +82,7 @@ describe('MicrobialEnvironmentG4Component', () => {
         g4_count: 10,
         gc_percent: 50,
         genome_size: 1_000_000,
+        strain: 'Alpha strain',
         taxonomy: {
           domain: 'Bacteria',
           phylum: 'Firmicutes',
@@ -103,6 +104,7 @@ describe('MicrobialEnvironmentG4Component', () => {
         g4_count: 10,
         gc_percent: 50,
         genome_size: 1_000_000,
+        strain: 'Alpha strain',
         taxonomy: {
           domain: 'Bacteria',
           phylum: 'Firmicutes',
@@ -188,6 +190,7 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text).toContain('Spearman rho');
     expect(text).toContain('Regression R2');
     expect(text).toContain('Download CSV');
+    expect(text).toContain('Alpha strain');
     expect(text.toLowerCase()).not.toContain('bin statistics');
     expect(text.toLowerCase()).not.toContain('16s g4');
   });
