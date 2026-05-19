@@ -174,6 +174,7 @@ describe('GenomeViewerConfigService', () => {
     const annotationTrack = config.tracks.find(
       (track) => track.trackId === 'GCF_000021765.1_annotation',
     );
+    const g4Track = config.tracks.find((track) => track.trackId === 'GCF_000021765.1_g4');
     const g4DensityTrack = config.tracks.find(
       (track) => track.trackId === 'GCF_000021765.1_g4_density',
     );
@@ -229,7 +230,9 @@ describe('GenomeViewerConfigService', () => {
       negColor: '#d50000',
     });
     expect(iMotifTrack).toBeDefined();
-    expect((iMotifTrack as Record<string, unknown>)['textSearching']).toBeDefined();
+    expect(g4Track).toBeDefined();
+    expect((g4Track as Record<string, unknown>)['textSearching']).toBeUndefined();
+    expect((iMotifTrack as Record<string, unknown>)['textSearching']).toBeUndefined();
     expect(((g4DensityTrack as Record<string, unknown>)['type'] as string) ?? '').toBe(
       'QuantitativeTrack',
     );

@@ -321,22 +321,6 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
           },
         },
       },
-      textSearching: {
-        textSearchAdapter: {
-          type: 'TrixTextSearchAdapter',
-          textSearchAdapterId: `${assemblyAccession}_g4-index`,
-          ixFilePath: {
-            uri: buildAssemblyAssetUrl(params, `trix/${g4FileName}.ix`),
-          },
-          ixxFilePath: {
-            uri: buildAssemblyAssetUrl(params, `trix/${g4FileName}.ixx`),
-          },
-          metaFilePath: {
-            uri: buildAssemblyAssetUrl(params, `trix/${g4FileName}_meta.json`),
-          },
-          assemblyNames: [assemblyAccession],
-        },
-      },
     },
     {
       type: 'FeatureTrack',
@@ -354,22 +338,6 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
           location: {
             uri: buildAssemblyAssetUrl(params, `${iMotifFileName}.tbi`),
           },
-        },
-      },
-      textSearching: {
-        textSearchAdapter: {
-          type: 'TrixTextSearchAdapter',
-          textSearchAdapterId: `${assemblyAccession}_i-motif-index`,
-          ixFilePath: {
-            uri: buildAssemblyAssetUrl(params, `trix/${iMotifFileName}.ix`),
-          },
-          ixxFilePath: {
-            uri: buildAssemblyAssetUrl(params, `trix/${iMotifFileName}.ixx`),
-          },
-          metaFilePath: {
-            uri: buildAssemblyAssetUrl(params, `trix/${iMotifFileName}_meta.json`),
-          },
-          assemblyNames: [assemblyAccession],
         },
       },
     },
