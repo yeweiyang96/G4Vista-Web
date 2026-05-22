@@ -4,6 +4,17 @@ import { Observable } from 'rxjs';
 
 export type MicrobialEnvironmentTrait = 'temperature' | 'ph';
 export type MicrobialEnvironmentMode = 'growth' | 'optimum';
+export type MicrobialEnvironmentSortField =
+  | 'species'
+  | 'strain'
+  | 'phenotype_value'
+  | 'g4_density_per_mb'
+  | 'upstream_g4_density_per_mb'
+  | 'downstream_g4_density_per_mb'
+  | 'intergenic_g4_density_per_mb'
+  | 'genome_size'
+  | 'gc_percent';
+export type MicrobialEnvironmentSortOrder = 'asc' | 'desc';
 export type MicrobialTaxonomyRank =
   | 'domain'
   | 'phylum'
@@ -55,6 +66,8 @@ export interface MicrobialEnvironmentG4Query {
   taxonomy_selections: MicrobialTaxonomySelection[];
   page_index: number;
   page_size: number;
+  sort_field: MicrobialEnvironmentSortField;
+  sort_order: MicrobialEnvironmentSortOrder;
 }
 
 export interface MicrobialEnvironmentSummary {

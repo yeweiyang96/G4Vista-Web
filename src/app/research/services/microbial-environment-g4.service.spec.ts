@@ -16,6 +16,8 @@ describe('MicrobialEnvironmentG4Service', () => {
     taxonomy_selections: [{ rank: 'genus', value: 'Bacillus' }],
     page_index: 0,
     page_size: 50,
+    sort_field: 'phenotype_value',
+    sort_order: 'asc',
   };
 
   beforeEach(() => {
@@ -102,7 +104,7 @@ describe('MicrobialEnvironmentG4Service', () => {
     expect(responseSpy).toHaveBeenCalled();
   });
 
-  it('downloads results CSV as a Blob', () => {
+  it('downloads visible table CSV as a Blob', () => {
     const responseSpy = jasmine.createSpy();
 
     service.downloadResults(request).subscribe(responseSpy);

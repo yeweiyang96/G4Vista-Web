@@ -1,12 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { NEVER, of, throwError } from 'rxjs';
 import {
   MicrobialEnvironmentG4Options,
   MicrobialEnvironmentG4Query,
   MicrobialEnvironmentG4QueryResponse,
   MicrobialEnvironmentG4Service,
+  MicrobialTaxonomySearchResult,
 } from '../../services/microbial-environment-g4.service';
 import { MicrobialEnvironmentG4Component } from './microbial-environment-g4.component';
 
@@ -40,7 +42,7 @@ describe('MicrobialEnvironmentG4Component', () => {
         mode: 'growth',
         phenotype_label: 'Growth temperature',
         phenotype_unit: 'celsius',
-        eligible_assemblies: 2,
+        eligible_assemblies: 6,
       },
       {
         plan_id: 'optimum_ph_g4',
@@ -48,7 +50,7 @@ describe('MicrobialEnvironmentG4Component', () => {
         mode: 'optimum',
         phenotype_label: 'Optimum pH',
         phenotype_unit: 'pH',
-        eligible_assemblies: 3,
+        eligible_assemblies: 7,
       },
     ],
   };
@@ -56,7 +58,7 @@ describe('MicrobialEnvironmentG4Component', () => {
   const response: MicrobialEnvironmentG4QueryResponse = {
     summary: {
       plan_id: 'growth_temperature_g4',
-      assembly_count: 2,
+      assembly_count: 6,
       phenotype_label: 'Growth temperature',
       phenotype_unit: 'celsius',
     },
@@ -124,7 +126,7 @@ describe('MicrobialEnvironmentG4Component', () => {
         intergenic_g4_density_per_mb: 3,
       },
     ],
-    preview_total: 2,
+    preview_total: 6,
     download_filename: 'microbial_environment_g4_growth_temperature_results.csv',
   };
 
@@ -138,7 +140,7 @@ describe('MicrobialEnvironmentG4Component', () => {
     service.getOptions.and.returnValue(of(options));
     service.searchTaxonomy.and.returnValue(
       of({
-        results: [{ rank: 'genus', value: 'Alpha', label: 'Alpha', eligible_assembly_count: 2 }],
+        results: [{ rank: 'genus', value: 'Alpha', label: 'Alpha', eligible_assembly_count: 6 }],
       }),
     );
     service.query.and.returnValue(of(response));
@@ -174,6 +176,10 @@ describe('MicrobialEnvironmentG4Component', () => {
     const request = service.query.calls.mostRecent().args[0] as MicrobialEnvironmentG4Query;
     expect(request.trait).toBe('ph');
     expect(request.mode).toBe('optimum');
+    expect(request.page_index).toBe(0);
+    expect(request.page_size).toBe(50);
+    expect(request.sort_field).toBe('phenotype_value');
+    expect(request.sort_order).toBe('asc');
     expect(component.submittedQuery()).toEqual(request);
   });
 
@@ -185,11 +191,14 @@ describe('MicrobialEnvironmentG4Component', () => {
 
     expect(text).toContain('Microbial G4 Environment Research');
     expect(text).toContain('Environment condition');
-    expect(text).toContain('Assembly set');
-    expect(text).toContain('Run analysis');
+    expect(text).toContain('Strain set');
+    expect(text).not.toContain('Run analysis');
     expect(text).toContain('Spearman rho');
+    expect(text).toContain('p-value');
     expect(text).toContain('Regression R2');
-    expect(text).toContain('Download CSV');
+    expect(text).toContain('Download table');
+    expect(text).not.toContain('Download CSV');
+    expect(text).not.toContain('Submitted');
     expect(text).toContain('Alpha strain');
     expect(text.toLowerCase()).not.toContain('bin statistics');
     expect(text.toLowerCase()).not.toContain('16s g4');
@@ -207,7 +216,7 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text).toContain('Optimum pH');
   });
 
-  it('uses explicit taxonomy Find and Add to build an assembly collection', () => {
+  it('uses explicit taxonomy Find and Add to build a strain collection', () => {
     component.form.controls.taxonomyRank.setValue('genus');
     component.form.controls.taxonomyKeyword.setValue('Alp');
 
@@ -246,6 +255,66 @@ describe('MicrobialEnvironmentG4Component', () => {
     component.downloadResults();
 
     expect(service.downloadResults).toHaveBeenCalledOnceWith(component.submittedQuery()!);
+  });
+
+  it('requests server-backed table pages and sorts', () => {
+    component.search();
+    component.onTablePageChange({ pageIndex: 1, pageSize: 10, length: 6, previousPageIndex: 0 });
+    component.onTableSortChange({ active: 'species', direction: 'desc' });
+
+    const pageRequest = service.query.calls.all()[1].args[0] as MicrobialEnvironmentG4Query;
+    const sortRequest = service.query.calls.all()[2].args[0] as MicrobialEnvironmentG4Query;
+
+    expect(pageRequest.page_index).toBe(1);
+    expect(pageRequest.page_size).toBe(10);
+    expect(sortRequest.page_index).toBe(0);
+    expect(sortRequest.page_size).toBe(10);
+    expect(sortRequest.sort_field).toBe('species');
+    expect(sortRequest.sort_order).toBe('desc');
+  });
+
+  it('resets the analysis setup completely', () => {
+    component.form.controls.trait.setValue('ph');
+    component.form.controls.mode.setValue('optimum');
+    component.onAxisChange();
+    component.form.controls.taxonomyKeyword.setValue('Alpha');
+    component.addTaxonomySelection({ rank: 'genus', value: 'Alpha' });
+    component.search();
+
+    component.resetAnalysisSetup();
+
+    expect(component.form.getRawValue()).toEqual({
+      trait: 'temperature',
+      mode: 'growth',
+      taxonomyRank: 'genus',
+      taxonomyKeyword: '',
+    });
+    expect(component.assemblyCollection()).toEqual([]);
+    expect(component.taxonomyCandidates()).toEqual([]);
+    expect(component.result()).toBeNull();
+    expect(component.submittedQuery()).toBeNull();
+  });
+
+  it('shows a snackbar and skips submit when the known strain count is below five', () => {
+    const snackBar = (component as unknown as { snackBar: MatSnackBar }).snackBar;
+    const openSpy = spyOn(snackBar, 'open');
+    const smallSelection: MicrobialTaxonomySearchResult = {
+      rank: 'genus',
+      value: 'Tiny',
+      label: 'Tiny',
+      eligible_assembly_count: 4,
+    };
+    component.addTaxonomySelection(smallSelection);
+    service.query.calls.reset();
+
+    component.search();
+
+    expect(service.query).not.toHaveBeenCalled();
+    expect(openSpy).toHaveBeenCalledWith(
+      'At least 5 strains are required for analysis; current selection has 4 strains.',
+      'Dismiss',
+      { duration: 5000 },
+    );
   });
 
   it('shows a lightweight unavailable state when options return 503', () => {

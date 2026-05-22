@@ -7,7 +7,7 @@
       <mat-chip-set class="capability-chips" aria-label="Research state">
         <mat-chip>
           <mat-icon matChipAvatar>biotech</mat-icon>
-          {{ eligibleAssemblyLabel() }}
+          {{ eligibleStrainLabel() }}
         </mat-chip>
         <mat-chip>
           <mat-icon matChipAvatar>query_stats</mat-icon>
@@ -73,14 +73,11 @@
               </div>
 
               <div class="axis-note">
-                <mat-icon>info</mat-icon>
                 <span>{{ studySummary() }}</span>
               </div>
 
-              <div class="axis-meta">
-                <span>{{ phenotypeLabel() }}</span>
-                <span>{{ phenotypeUnitLabel() }}</span>
-                <span>{{ eligibleAssemblyLabel() }}</span>
+              <div class="condition-count">
+                {{ currentConditionStrainCountLabel() }}
               </div>
 
               <div class="step-actions">
@@ -93,11 +90,11 @@
           </mat-step>
 
           <mat-step>
-            <ng-template matStepLabel>Assembly set</ng-template>
+            <ng-template matStepLabel>Strain set</ng-template>
             <div class="control-stack">
               <p class="step-copy">
-                Add taxonomy groups to build the assembly set. Multiple selections are combined as
-                a union.
+                Add taxonomy groups to build the strain set. Multiple selections are combined as a
+                union.
               </p>
 
               <mat-form-field appearance="outline">
@@ -120,8 +117,11 @@
                   />
                 </mat-form-field>
                 <button
-                  mat-stroked-button
+                  mat-icon-button
+                  class="taxonomy-search-button"
                   type="button"
+                  aria-label="Find taxonomy groups"
+                  matTooltip="Find taxonomy groups"
                   (click)="findTaxonomy()"
                   [disabled]="loadingTaxonomy() || dataLayerUnavailable()"
                 >
@@ -130,40 +130,33 @@
                   } @else {
                     <mat-icon>search</mat-icon>
                   }
-                  Find
                 </button>
               </div>
 
               @if (taxonomyCandidates().length) {
-                <mat-selection-list
-                  class="candidate-list"
-                  aria-label="Taxonomy search results"
-                  [multiple]="false"
-                >
+                <div class="candidate-list" role="list" aria-label="Taxonomy search results">
                   @for (candidate of taxonomyCandidates(); track candidate.rank + candidate.value) {
-                    <mat-list-option [value]="candidate.value">
-                      <div class="candidate-row">
-                        <div>
-                          <strong>{{ candidate.label }}</strong>
-                          <span
-                            >{{ candidate.rank | titlecase }} ·
-                            {{ candidate.eligible_assembly_count }} assemblies</span
-                          >
-                        </div>
-                        <button mat-button type="button" (click)="addTaxonomySelection(candidate)">
-                          <mat-icon>add</mat-icon>
-                          Add
-                        </button>
+                    <div class="candidate-row" role="listitem">
+                      <div>
+                        <strong>{{ candidate.label }}</strong>
+                        <span
+                          >{{ candidate.rank | titlecase }} ·
+                          {{ candidate.eligible_assembly_count }} strains</span
+                        >
                       </div>
-                    </mat-list-option>
+                      <button mat-button type="button" (click)="addTaxonomySelection(candidate)">
+                        <mat-icon>add</mat-icon>
+                        Add
+                      </button>
+                    </div>
                   }
-                </mat-selection-list>
+                </div>
               }
 
-              <section class="collection-box" aria-label="Assembly collection">
+              <section class="collection-box" aria-label="Strain collection">
                 <div class="section-heading">
                   <div>
-                    <h3>Assembly set</h3>
+                    <h3>Strain set</h3>
                     <p>{{ collectionSummary() }}</p>
                   </div>
                   @if (assemblyCollection().length) {
@@ -176,7 +169,10 @@
 
                 @if (assemblyCollection().length) {
                   <mat-chip-set aria-label="Selected taxonomy groups">
-                    @for (selection of assemblyCollection(); track selection.rank + selection.value) {
+                    @for (
+                      selection of assemblyCollection();
+                      track selection.rank + selection.value
+                    ) {
                       <mat-chip-row (removed)="removeTaxonomySelection(selection)">
                         {{ taxonomyRankLabel(selection.rank) }}: {{ selection.value }}
                         <button matChipRemove [attr.aria-label]="'Remove ' + selection.value">
@@ -188,7 +184,7 @@
                 } @else {
                   <div class="collection-empty">
                     <mat-icon>public</mat-icon>
-                    <span>All eligible assemblies are included until taxonomy groups are added.</span>
+                    <span>All eligible strains are included until taxonomy groups are added.</span>
                   </div>
                 }
               </section>
@@ -198,43 +194,30 @@
                   <mat-icon>arrow_back</mat-icon>
                   Back
                 </button>
-                <button mat-button type="button" matStepperNext>
-                  Next
-                  <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-                </button>
-              </div>
-            </div>
-          </mat-step>
-
-          <mat-step>
-            <ng-template matStepLabel>Run analysis</ng-template>
-            <div class="control-stack">
-              <p class="step-copy">
-                Search submits the current condition and assembly set, then calculates correlation
-                statistics from matching assemblies.
-              </p>
-              <div class="result-actions">
-                <button mat-button type="button" (click)="clearAssemblyCollection()">
-                  <mat-icon>restart_alt</mat-icon>
-                  Reset set
-                </button>
-                <button
-                  mat-flat-button
-                  type="submit"
-                  [disabled]="!canSearch()"
-                  (click)="isNarrow() ? queryDrawer.close() : null"
-                >
-                  @if (loadingQuery()) {
-                    <mat-spinner diameter="18"></mat-spinner>
-                  } @else {
-                    <mat-icon>analytics</mat-icon>
-                  }
-                  Search
-                </button>
               </div>
             </div>
           </mat-step>
         </mat-stepper>
+
+        <div class="rail-footer-actions">
+          <button mat-button type="button" (click)="resetAnalysisSetup()">
+            <mat-icon>restart_alt</mat-icon>
+            Reset
+          </button>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="!canSearch()"
+            (click)="canSearch() && isNarrow() ? queryDrawer.close() : null"
+          >
+            @if (loadingQuery()) {
+              <mat-spinner diameter="18"></mat-spinner>
+            } @else {
+              <mat-icon>analytics</mat-icon>
+            }
+            Submit
+          </button>
+        </div>
       </mat-sidenav>
 
       <mat-sidenav-content class="workbench-content">
@@ -247,17 +230,12 @@
 
         <mat-card appearance="outlined" class="query-snapshot">
           <mat-card-header>
-            <mat-card-title>Current study</mat-card-title>
-            <mat-card-subtitle>
-              Draft controls do not run analysis until Search is submitted.
-            </mat-card-subtitle>
+            <mat-card-title>分析结果</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <mat-chip-set class="draft-chips" aria-label="Current study design">
+            <mat-chip-set class="draft-chips" aria-label="Environment condition">
               <mat-chip>{{ currentTraitLabel() }}</mat-chip>
               <mat-chip>{{ currentModeLabel() }}</mat-chip>
-              <mat-chip>{{ phenotypeLabel() }}</mat-chip>
-              <mat-chip>{{ collectionSummary() }}</mat-chip>
             </mat-chip-set>
 
             @if (dataLayerUnavailable()) {
@@ -287,15 +265,6 @@
           </mat-card-content>
         </mat-card>
 
-        @if (submittedQuery(); as query) {
-          <section class="submitted-bar" aria-label="Submitted study">
-            <span>Submitted</span>
-            <strong>{{ query.trait === 'temperature' ? 'Temperature' : 'pH' }}</strong>
-            <strong>{{ query.mode | titlecase }}</strong>
-            <span>{{ query.taxonomy_selections.length || 'All eligible' }} assembly-set filters</span>
-          </section>
-        }
-
         @if (result(); as response) {
           <section class="summary-grid" aria-label="Analysis summary">
             @for (metric of summaryMetrics(); track metric.label) {
@@ -319,19 +288,6 @@
                   correlation
                 </p>
               </div>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="downloadResults()"
-                [disabled]="downloading()"
-              >
-                @if (downloading()) {
-                  <mat-spinner diameter="18"></mat-spinner>
-                } @else {
-                  <mat-icon>download</mat-icon>
-                }
-                Download CSV
-              </button>
             </div>
 
             <div class="chart-frame">
@@ -343,7 +299,7 @@
               } @else {
                 <div class="no-points">
                   <mat-icon>query_stats</mat-icon>
-                  <span>No complete assembly points for the submitted set.</span>
+                  <span>No complete strain points for the submitted set.</span>
                 </div>
               }
             </div>
@@ -352,50 +308,49 @@
           <section class="results-panel">
             <div class="panel-heading">
               <div>
-                <h2>Assembly table</h2>
-                <p>{{ response.preview_total }} assemblies match the submitted study.</p>
+                <h2>Strain set</h2>
+                <p>{{ response.preview_total }} strains match the submitted study.</p>
               </div>
             </div>
 
-            <div class="table-wrap">
-              <table mat-table [dataSource]="response.table_preview" class="stats-table">
-                <ng-container matColumnDef="assembly">
-                  <th mat-header-cell *matHeaderCellDef>Assembly</th>
-                  <td mat-cell *matCellDef="let row">{{ row.assembly_accession }}</td>
-                </ng-container>
-                <ng-container matColumnDef="strain">
-                  <th mat-header-cell *matHeaderCellDef>Strain</th>
-                  <td mat-cell *matCellDef="let row">{{ row.strain || 'NA' }}</td>
-                </ng-container>
-                <ng-container matColumnDef="phenotype">
-                  <th mat-header-cell *matHeaderCellDef>{{ response.summary.phenotype_label }}</th>
-                  <td mat-cell *matCellDef="let row">
-                    <strong>{{ formatValue(row.phenotype_value) }}</strong>
-                    <span>{{ phenotypeRange(row) }}</span>
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="density">
-                  <th mat-header-cell *matHeaderCellDef>G4 density</th>
-                  <td mat-cell *matCellDef="let row">
-                    {{ formatValue(row.g4_density_per_mb) }}
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="taxonomy">
-                  <th mat-header-cell *matHeaderCellDef>Taxonomy</th>
-                  <td mat-cell *matCellDef="let row">{{ taxonomyLabel(row) }}</td>
-                </ng-container>
-                <ng-container matColumnDef="gc">
-                  <th mat-header-cell *matHeaderCellDef>GC%</th>
-                  <td mat-cell *matCellDef="let row">{{ formatValue(row.gc_percent) }}</td>
-                </ng-container>
-                <ng-container matColumnDef="genomeSize">
-                  <th mat-header-cell *matHeaderCellDef>Genome size</th>
-                  <td mat-cell *matCellDef="let row">{{ formatValue(row.genome_size) }}</td>
-                </ng-container>
-                <tr mat-header-row *matHeaderRowDef="previewColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: previewColumns"></tr>
-              </table>
-            </div>
+            <ng-template #tableToolbar>
+              <div class="table-toolbar">
+                <span>{{ response.preview_total }} strains</span>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="downloadResults()"
+                  [disabled]="downloading()"
+                >
+                  @if (downloading()) {
+                    <mat-spinner diameter="18"></mat-spinner>
+                  } @else {
+                    <mat-icon>download</mat-icon>
+                  }
+                  Download table
+                </button>
+              </div>
+            </ng-template>
+
+            <mtx-grid
+              class="strain-grid"
+              [data]="response.table_preview"
+              [columns]="tableColumns()"
+              [length]="response.preview_total"
+              [loading]="loadingQuery()"
+              [pageIndex]="tablePageIndex()"
+              [pageSize]="tablePageSize()"
+              [pageSizeOptions]="pageSizeOptions"
+              [pageOnFront]="false"
+              [sortOnFront]="false"
+              [sortActive]="tableSortState().active"
+              [sortDirection]="tableSortState().direction"
+              [sortDisableClear]="true"
+              [showToolbar]="true"
+              [toolbarTemplate]="tableToolbar"
+              (page)="onTablePageChange($event)"
+              (sortChange)="onTableSortChange($event)"
+            ></mtx-grid>
           </section>
         } @else {
           <section class="empty-state">
@@ -406,7 +361,6 @@
               <mat-icon>query_stats</mat-icon>
               <div>
                 <strong>Build a microbial G4 study</strong>
-                <span>{{ studySummary() }}</span>
               </div>
             }
           </section>

@@ -23,14 +23,15 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatListModule } from '@angular/material/list';
+import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Sort } from '@angular/material/sort';
 import { MatStepperModule } from '@angular/material/stepper';
-import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { finalize } from 'rxjs';
 import {
@@ -41,6 +42,8 @@ import {
   MicrobialEnvironmentMode,
   MicrobialEnvironmentOption,
   MicrobialEnvironmentScatterPoint,
+  MicrobialEnvironmentSortField,
+  MicrobialEnvironmentSortOrder,
   MicrobialEnvironmentTableRow,
   MicrobialEnvironmentTrait,
   MicrobialTaxonomyRank,
@@ -58,6 +61,11 @@ interface SummaryMetric {
 interface AxisSelection {
   readonly trait: MicrobialEnvironmentTrait;
   readonly mode: MicrobialEnvironmentMode;
+}
+
+interface TableSortState {
+  readonly active: MicrobialEnvironmentSortField;
+  readonly direction: MicrobialEnvironmentSortOrder;
 }
 
 interface VegaPointDatum {
@@ -80,6 +88,15 @@ const STAT_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4
 const INITIAL_AXIS_SELECTION: AxisSelection = {
   trait: 'temperature',
   mode: 'growth',
+};
+const INITIAL_TAXONOMY_RANK: MicrobialTaxonomyRank = 'genus';
+const INITIAL_PAGE_INDEX = 0;
+const INITIAL_PAGE_SIZE = 50;
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const MINIMUM_ANALYSIS_STRAINS = 5;
+const INITIAL_TABLE_SORT: TableSortState = {
+  active: 'phenotype_value',
+  direction: 'asc',
 };
 const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
   traits: [
@@ -204,14 +221,13 @@ function selectionKey(selection: MicrobialTaxonomySelection): string {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatListModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSidenavModule,
     MatSnackBarModule,
     MatStepperModule,
-    MatTableModule,
     MatTooltipModule,
+    MtxGridModule,
     ReactiveFormsModule,
     TitleCasePipe,
   ],
@@ -228,8 +244,14 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private readonly document = inject(DOCUMENT);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
+  private readonly taxonomySelectionCounts = signal<Record<string, number>>({});
+  private readonly pageIndex = signal(INITIAL_PAGE_INDEX);
+  private readonly pageSize = signal(INITIAL_PAGE_SIZE);
+  private readonly sortStateSignal = signal<TableSortState>(INITIAL_TABLE_SORT);
 
   private chartCleanup: (() => void) | null = null;
+  private taxonomyRequestVersion = 0;
+  private queryRequestVersion = 0;
 
   readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
   readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
@@ -252,19 +274,16 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     mode: new FormControl<MicrobialEnvironmentMode>(INITIAL_AXIS_SELECTION.mode, {
       nonNullable: true,
     }),
-    taxonomyRank: new FormControl<MicrobialTaxonomyRank>('genus', { nonNullable: true }),
+    taxonomyRank: new FormControl<MicrobialTaxonomyRank>(INITIAL_TAXONOMY_RANK, {
+      nonNullable: true,
+    }),
     taxonomyKeyword: new FormControl('', { nonNullable: true }),
   });
 
-  readonly previewColumns = [
-    'assembly',
-    'strain',
-    'phenotype',
-    'density',
-    'taxonomy',
-    'gc',
-    'genomeSize',
-  ];
+  readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+  readonly tablePageIndex = this.pageIndex.asReadonly();
+  readonly tablePageSize = this.pageSize.asReadonly();
+  readonly tableSortState = this.sortStateSignal.asReadonly();
 
   readonly canSearch = computed(
     () =>
@@ -295,9 +314,14 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   readonly collectionSummary = computed(() => {
     const count = this.assemblyCollection().length;
     if (!count) {
-      return 'All eligible assemblies will be used.';
+      return 'All eligible strains will be used.';
     }
-    return `${count} taxonomy ${count === 1 ? 'selection' : 'selections'} will be unioned into one assembly set.`;
+    return `${count} taxonomy ${count === 1 ? 'selection' : 'selections'} will be unioned into one strain set.`;
+  });
+
+  readonly currentConditionStrainCountLabel = computed(() => {
+    const count = COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies);
+    return `Current condition has ${count} analyzable strains.`;
   });
 
   readonly summaryMetrics = computed<SummaryMetric[]>(() => {
@@ -307,22 +331,16 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
     return [
       {
-        label: 'Assemblies',
+        label: 'Strains',
         value: COUNT_FORMATTER.format(response.summary.assembly_count),
-        hint: 'Assemblies in the submitted set',
+        hint: 'Strains in the submitted set',
         icon: 'biotech',
       },
       {
         label: 'Spearman rho',
         value: formatStat(response.correlation.rho),
-        hint: `${response.correlation.n} complete pairs`,
+        hint: `${response.correlation.n} complete pairs · p-value ${formatPValue(response.correlation.p_value)}`,
         icon: 'query_stats',
-      },
-      {
-        label: 'p-value',
-        value: formatPValue(response.correlation.p_value),
-        hint: response.correlation.status.replace('_', ' '),
-        icon: 'functions',
       },
       {
         label: 'Regression R2',
@@ -332,6 +350,65 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       },
     ];
   });
+
+  readonly tableColumns = computed<MtxGridColumn<MicrobialEnvironmentTableRow>[]>(() => [
+    {
+      header: 'Species',
+      field: 'taxonomy.species',
+      sortable: true,
+      sortProp: { id: 'species' },
+    },
+    { header: 'Strain', field: 'strain', sortable: true },
+    {
+      header: `${this.phenotypeLabel()} median`,
+      field: 'phenotype_value',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.phenotype_value),
+    },
+    {
+      header: 'G4 density',
+      field: 'g4_density_per_mb',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.g4_density_per_mb),
+    },
+    {
+      header: 'Upstream G4 density',
+      field: 'upstream_g4_density_per_mb',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.upstream_g4_density_per_mb),
+    },
+    {
+      header: 'Downstream G4 density',
+      field: 'downstream_g4_density_per_mb',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.downstream_g4_density_per_mb),
+    },
+    {
+      header: 'Intergenic G4 density',
+      field: 'intergenic_g4_density_per_mb',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.intergenic_g4_density_per_mb),
+    },
+    {
+      header: 'Genome size',
+      field: 'genome_size',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.genome_size),
+    },
+    {
+      header: 'GC%',
+      field: 'gc_percent',
+      sortable: true,
+      type: 'number',
+      formatter: (row) => this.formatValue(row.gc_percent),
+    },
+  ]);
 
   constructor() {
     this.breakpointObserver
@@ -360,6 +437,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     };
     this.axisSelection.set(axisSelection);
     this.taxonomyCandidates.set([]);
+    this.taxonomySelectionCounts.set({});
     this.clearSubmittedResult();
   }
 
@@ -372,15 +450,23 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
     const rank = this.form.controls.taxonomyRank.value;
     const keyword = this.form.controls.taxonomyKeyword.value;
+    const requestVersion = ++this.taxonomyRequestVersion;
     this.loadingTaxonomy.set(true);
     this.service
       .searchTaxonomy(rank, keyword, this.form.controls.trait.value, this.form.controls.mode.value)
       .pipe(
-        finalize(() => this.loadingTaxonomy.set(false)),
+        finalize(() => {
+          if (requestVersion === this.taxonomyRequestVersion) {
+            this.loadingTaxonomy.set(false);
+          }
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (response) => {
+          if (requestVersion !== this.taxonomyRequestVersion) {
+            return;
+          }
           this.taxonomyCandidates.set(response.results);
           if (!response.results.length) {
             this.snackBar.open('No taxonomy matches for the current axis.', 'Dismiss', {
@@ -388,7 +474,11 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
             });
           }
         },
-        error: (error: unknown) => this.handleError(error),
+        error: (error: unknown) => {
+          if (requestVersion === this.taxonomyRequestVersion) {
+            this.handleError(error);
+          }
+        },
       });
   }
 
@@ -401,15 +491,54 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.assemblyCollection.update((items) =>
       items.some((item) => selectionKey(item) === key) ? items : [...items, normalizedSelection],
     );
+    const eligibleAssemblyCount = (selection as Partial<MicrobialTaxonomySearchResult>)
+      .eligible_assembly_count;
+    if (typeof eligibleAssemblyCount === 'number') {
+      this.taxonomySelectionCounts.update((counts) => ({
+        ...counts,
+        [key]: eligibleAssemblyCount,
+      }));
+    }
   }
 
   removeTaxonomySelection(selection: MicrobialTaxonomySelection): void {
     const key = selectionKey(selection);
     this.assemblyCollection.update((items) => items.filter((item) => selectionKey(item) !== key));
+    this.taxonomySelectionCounts.update((counts) => {
+      const next = { ...counts };
+      delete next[key];
+      return next;
+    });
   }
 
   clearAssemblyCollection(): void {
     this.assemblyCollection.set([]);
+    this.taxonomySelectionCounts.set({});
+  }
+
+  resetAnalysisSetup(): void {
+    this.taxonomyRequestVersion++;
+    this.queryRequestVersion++;
+    this.form.setValue({
+      trait: INITIAL_AXIS_SELECTION.trait,
+      mode: INITIAL_AXIS_SELECTION.mode,
+      taxonomyRank: INITIAL_TAXONOMY_RANK,
+      taxonomyKeyword: '',
+    });
+    this.axisSelection.set(INITIAL_AXIS_SELECTION);
+    this.taxonomyCandidates.set([]);
+    this.clearAssemblyCollection();
+    this.result.set(null);
+    this.submittedQuery.set(null);
+    this.loadingTaxonomy.set(false);
+    this.loadingQuery.set(false);
+    this.downloading.set(false);
+    this.errorMessage.set('');
+    this.chartError.set('');
+    this.pageIndex.set(INITIAL_PAGE_INDEX);
+    this.pageSize.set(INITIAL_PAGE_SIZE);
+    this.sortStateSignal.set(INITIAL_TABLE_SORT);
+    this.clearChart();
   }
 
   search(): void {
@@ -423,23 +552,97 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       });
       return;
     }
+    const knownStrainCount = this.knownSelectedStrainCount();
+    if (knownStrainCount !== null && knownStrainCount < MINIMUM_ANALYSIS_STRAINS) {
+      this.snackBar.open(
+        `At least ${MINIMUM_ANALYSIS_STRAINS} strains are required for analysis; current selection has ${knownStrainCount} strains.`,
+        'Dismiss',
+        { duration: 5000 },
+      );
+      this.result.set(null);
+      this.submittedQuery.set(null);
+      this.clearChart();
+      return;
+    }
+    this.pageIndex.set(INITIAL_PAGE_INDEX);
     const request = this.buildQuery();
+    this.runQuery(request, true);
+  }
+
+  onTablePageChange(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.runSubmittedQuery();
+  }
+
+  onTableSortChange(sort: Sort): void {
+    const sortField = this.tableSortField(sort.active);
+    if (!sortField || !sort.direction) {
+      return;
+    }
+    this.sortStateSignal.set({
+      active: sortField,
+      direction: sort.direction as MicrobialEnvironmentSortOrder,
+    });
+    this.pageIndex.set(INITIAL_PAGE_INDEX);
+    this.runSubmittedQuery();
+  }
+
+  private runSubmittedQuery(): void {
+    const submittedQuery = this.submittedQuery();
+    if (!submittedQuery) {
+      return;
+    }
+    const request: MicrobialEnvironmentG4Query = {
+      ...submittedQuery,
+      page_index: this.pageIndex(),
+      page_size: this.pageSize(),
+      sort_field: this.sortStateSignal().active,
+      sort_order: this.sortStateSignal().direction,
+    };
+    this.runQuery(request, false);
+  }
+
+  private runQuery(request: MicrobialEnvironmentG4Query, clearExistingResult: boolean): void {
+    const requestVersion = ++this.queryRequestVersion;
     this.loadingQuery.set(true);
     this.errorMessage.set('');
     this.chartError.set('');
+    if (clearExistingResult) {
+      this.result.set(null);
+      this.submittedQuery.set(null);
+      this.clearChart();
+    }
     this.service
       .query(request)
       .pipe(
-        finalize(() => this.loadingQuery.set(false)),
+        finalize(() => {
+          if (requestVersion === this.queryRequestVersion) {
+            this.loadingQuery.set(false);
+          }
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (response) => {
+          if (requestVersion !== this.queryRequestVersion) {
+            return;
+          }
           this.submittedQuery.set(request);
           this.result.set(response);
           this.scheduleChartRender();
         },
-        error: (error: unknown) => this.handleError(error),
+        error: (error: unknown) => {
+          if (requestVersion !== this.queryRequestVersion) {
+            return;
+          }
+          if (clearExistingResult) {
+            this.result.set(null);
+            this.submittedQuery.set(null);
+            this.clearChart();
+          }
+          this.handleError(error);
+        },
       });
   }
 
@@ -484,11 +687,11 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
 
   phenotypeUnitLabel(): string {
     const unit = this.currentPlan().phenotype_unit;
-    return unit === 'celsius' ? 'deg C' : unit;
+    return unit === 'celsius' ? '°C' : unit;
   }
 
-  eligibleAssemblyLabel(): string {
-    return `${COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies)} eligible assemblies`;
+  eligibleStrainLabel(): string {
+    return `${COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies)} eligible strains`;
   }
 
   formatValue(value: string | number | null): string {
@@ -498,35 +701,42 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     return value ?? 'NA';
   }
 
-  phenotypeRange(row: { phenotype_min: number | null; phenotype_max: number | null }): string {
-    if (row.phenotype_min === null || row.phenotype_max === null) {
-      return 'NA';
-    }
-    return `${formatNumber(row.phenotype_min)} to ${formatNumber(row.phenotype_max)}`;
-  }
-
-  taxonomyLabel(row: MicrobialEnvironmentScatterPoint | MicrobialEnvironmentTableRow): string {
-    return [
-      row.taxonomy.domain,
-      row.taxonomy.phylum,
-      row.taxonomy.class_name,
-      row.taxonomy.order,
-      row.taxonomy.family,
-      row.taxonomy.genus,
-      row.taxonomy.species,
-    ]
-      .filter((value) => value)
-      .join(' / ');
-  }
-
   private buildQuery(): MicrobialEnvironmentG4Query {
     return {
       trait: this.form.controls.trait.value,
       mode: this.form.controls.mode.value,
       taxonomy_selections: this.assemblyCollection(),
-      page_index: 0,
-      page_size: 50,
+      page_index: this.pageIndex(),
+      page_size: this.pageSize(),
+      sort_field: this.sortStateSignal().active,
+      sort_order: this.sortStateSignal().direction,
     };
+  }
+
+  private knownSelectedStrainCount(): number | null {
+    const selections = this.assemblyCollection();
+    if (!selections.length) {
+      return this.currentPlan().eligible_assemblies;
+    }
+    if (selections.length === 1) {
+      return this.taxonomySelectionCounts()[selectionKey(selections[0])] ?? null;
+    }
+    return null;
+  }
+
+  private tableSortField(field: string): MicrobialEnvironmentSortField | null {
+    const fields: Record<string, MicrobialEnvironmentSortField> = {
+      species: 'species',
+      strain: 'strain',
+      phenotype_value: 'phenotype_value',
+      g4_density_per_mb: 'g4_density_per_mb',
+      upstream_g4_density_per_mb: 'upstream_g4_density_per_mb',
+      downstream_g4_density_per_mb: 'downstream_g4_density_per_mb',
+      intergenic_g4_density_per_mb: 'intergenic_g4_density_per_mb',
+      genome_size: 'genome_size',
+      gc_percent: 'gc_percent',
+    };
+    return fields[field] ?? null;
   }
 
   private loadOptions(): void {
@@ -662,19 +872,19 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           from: { data: 'points' },
           encode: {
             enter: {
-              fill: { value: '#4f7cac' },
               fillOpacity: { value: 0.72 },
               stroke: { value: '#1d3557' },
               strokeWidth: { value: 0.6 },
-              size: { value: 62 },
               tooltip: {
                 signal:
-                  "{'Assembly': datum.assembly_accession, 'Strain': datum.strain, 'Phenotype': datum.phenotype_value, 'G4 density': datum.g4_density_per_mb, 'Genus': datum.genus, 'Species': datum.species}",
+                  "{'Strain accession': datum.assembly_accession, 'Strain': datum.strain, 'Phenotype': datum.phenotype_value, 'G4 density': datum.g4_density_per_mb, 'Genus': datum.genus, 'Species': datum.species}",
               },
             },
             update: {
               x: { scale: 'x', field: 'phenotype_value' },
               y: { scale: 'y', field: 'g4_density_per_mb' },
+              fill: { value: '#4f7cac' },
+              size: { value: 62 },
             },
             hover: { size: { value: 110 }, fill: { value: '#c7522a' } },
           },
