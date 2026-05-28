@@ -12,6 +12,10 @@ import {
 } from '../../services/microbial-environment-g4.service';
 import { MicrobialEnvironmentG4Component } from './microbial-environment-g4.component';
 
+interface ChartRenderScheduler {
+  scheduleChartRender(): void;
+}
+
 describe('MicrobialEnvironmentG4Component', () => {
   let fixture: ComponentFixture<MicrobialEnvironmentG4Component>;
   let component: MicrobialEnvironmentG4Component;
@@ -177,7 +181,7 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(request.trait).toBe('ph');
     expect(request.mode).toBe('optimum');
     expect(request.page_index).toBe(0);
-    expect(request.page_size).toBe(50);
+    expect(request.page_size).toBe(10);
     expect(request.sort_field).toBe('phenotype_value');
     expect(request.sort_order).toBe('asc');
     expect(component.submittedQuery()).toEqual(request);
@@ -192,6 +196,11 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text).toContain('Microbial G4 Environment Research');
     expect(text).toContain('Environment condition');
     expect(text).toContain('Strain set');
+    expect(text).toContain('Analysis Results');
+    expect(text).not.toContain('分析结果');
+    expect(fixture.nativeElement.querySelector('.axis-note')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.condition-count')).toBeNull();
+    expect(text).not.toContain('Current condition has');
     expect(text).not.toContain('Run analysis');
     expect(text).toContain('Spearman rho');
     expect(text).toContain('p-value');
@@ -258,7 +267,14 @@ describe('MicrobialEnvironmentG4Component', () => {
   });
 
   it('requests server-backed table pages and sorts', () => {
+    const chartRenderSpy = spyOn(
+      component as unknown as ChartRenderScheduler,
+      'scheduleChartRender',
+    );
     component.search();
+    expect(chartRenderSpy).toHaveBeenCalledTimes(1);
+    chartRenderSpy.calls.reset();
+
     component.onTablePageChange({ pageIndex: 1, pageSize: 10, length: 6, previousPageIndex: 0 });
     component.onTableSortChange({ active: 'species', direction: 'desc' });
 
@@ -271,6 +287,7 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(sortRequest.page_size).toBe(10);
     expect(sortRequest.sort_field).toBe('species');
     expect(sortRequest.sort_order).toBe('desc');
+    expect(chartRenderSpy).not.toHaveBeenCalled();
   });
 
   it('resets the analysis setup completely', () => {

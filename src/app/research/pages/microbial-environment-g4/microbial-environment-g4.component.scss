@@ -40,11 +40,13 @@ h1 {
 }
 
 .query-rail {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  width: 460px;
-  padding: 20px;
+  width: clamp(360px, 28vw, 400px);
+  padding: 18px 28px 18px 16px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   background: var(--mat-sys-surface-container-low);
   border-right: 1px solid var(--mat-sys-outline-variant);
 }
@@ -66,7 +68,6 @@ h1 {
 .section-heading,
 .panel-heading,
 .status-note,
-.axis-note,
 .taxonomy-search,
 .rail-footer-actions,
 .table-toolbar {
@@ -106,21 +107,27 @@ h1 {
 
 .rail-footer-actions {
   position: sticky;
-  bottom: -20px;
+  bottom: 0;
   z-index: 2;
-  padding-top: 14px;
+  padding-top: 12px;
   margin-top: auto;
+  margin-right: 10px;
   background: var(--mat-sys-surface-container-low);
   border-top: 1px solid var(--mat-sys-outline-variant);
 }
 
 :host ::ng-deep .query-stepper {
   .mat-vertical-content {
-    padding: 14px 0 18px 24px;
+    box-sizing: border-box;
+    padding: 14px 10px 18px 16px;
   }
 
   .mat-button-toggle-checkbox-wrapper {
     display: none;
+  }
+
+  .mat-step-header {
+    padding-inline: 0;
   }
 }
 
@@ -153,27 +160,17 @@ h1 {
   white-space: nowrap;
 }
 
-.axis-note,
 .collection-empty,
-.status-note,
-.condition-count {
+.status-note {
   padding: 12px;
   border-radius: 8px;
 }
 
-.axis-note {
-  align-items: flex-start;
-  color: var(--mat-sys-on-secondary-container);
-  background: var(--mat-sys-secondary-container);
-}
-
-.condition-count,
 .collection-empty,
 .candidate-row {
   background: var(--mat-sys-surface-container);
 }
 
-.condition-count,
 .candidate-row {
   border: 1px solid var(--mat-sys-outline-variant);
 }
@@ -183,6 +180,7 @@ h1 {
 
   mat-form-field {
     flex: 1;
+    min-width: 0;
   }
 
   button {
@@ -237,12 +235,13 @@ h1 {
   background: var(--mat-sys-error-container);
 }
 
-.chart-frame {
-  min-height: 440px;
+.chart-frame,
+.vega-host {
+  min-height: 420px;
 }
 
 .vega-host {
-  min-height: 420px;
+  display: block;
 }
 
 .chart-error,
@@ -255,7 +254,7 @@ h1 {
 
 @media (width <= 980px) {
   .query-rail {
-    width: min(460px, 90vw);
+    width: min(380px, 90vw);
   }
 
   :host ::ng-deep .query-stepper .mat-vertical-content {

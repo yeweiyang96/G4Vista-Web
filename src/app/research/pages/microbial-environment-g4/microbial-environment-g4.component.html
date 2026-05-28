@@ -72,14 +72,6 @@
                 </mat-button-toggle-group>
               </div>
 
-              <div class="axis-note">
-                <span>{{ studySummary() }}</span>
-              </div>
-
-              <div class="condition-count">
-                {{ currentConditionStrainCountLabel() }}
-              </div>
-
               <div class="step-actions">
                 <button mat-button type="button" matStepperNext>
                   Next
@@ -230,7 +222,7 @@
 
         <mat-card appearance="outlined" class="query-snapshot">
           <mat-card-header>
-            <mat-card-title>分析结果</mat-card-title>
+            <mat-card-title>Analysis Results</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <mat-chip-set class="draft-chips" aria-label="Environment condition">

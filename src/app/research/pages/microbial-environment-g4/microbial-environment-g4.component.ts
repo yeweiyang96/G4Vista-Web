@@ -82,6 +82,18 @@ interface VegaLineDatum {
   g4_density_per_mb: number;
 }
 
+interface QueryExecutionBehavior {
+  readonly clearExistingResult: boolean;
+  readonly refreshChart: boolean;
+}
+
+interface VegaChartPadding {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+}
+
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 });
 const STAT_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
@@ -91,13 +103,23 @@ const INITIAL_AXIS_SELECTION: AxisSelection = {
 };
 const INITIAL_TAXONOMY_RANK: MicrobialTaxonomyRank = 'genus';
 const INITIAL_PAGE_INDEX = 0;
-const INITIAL_PAGE_SIZE = 50;
+const INITIAL_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const MINIMUM_ANALYSIS_STRAINS = 5;
 const INITIAL_TABLE_SORT: TableSortState = {
   active: 'phenotype_value',
   direction: 'asc',
 };
+const ANALYSIS_QUERY_BEHAVIOR: QueryExecutionBehavior = {
+  clearExistingResult: true,
+  refreshChart: true,
+};
+const TABLE_QUERY_BEHAVIOR: QueryExecutionBehavior = {
+  clearExistingResult: false,
+  refreshChart: false,
+};
+const VEGA_CHART_PADDING: VegaChartPadding = { left: 64, right: 24, top: 24, bottom: 56 };
+const MINIMUM_VEGA_PLOT_WIDTH = 320;
 const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
   traits: [
     { value: 'temperature', label: 'Temperature' },
@@ -317,11 +339,6 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       return 'All eligible strains will be used.';
     }
     return `${count} taxonomy ${count === 1 ? 'selection' : 'selections'} will be unioned into one strain set.`;
-  });
-
-  readonly currentConditionStrainCountLabel = computed(() => {
-    const count = COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies);
-    return `Current condition has ${count} analyzable strains.`;
   });
 
   readonly summaryMetrics = computed<SummaryMetric[]>(() => {
@@ -566,7 +583,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
     this.pageIndex.set(INITIAL_PAGE_INDEX);
     const request = this.buildQuery();
-    this.runQuery(request, true);
+    this.runQuery(request, ANALYSIS_QUERY_BEHAVIOR);
   }
 
   onTablePageChange(event: PageEvent): void {
@@ -600,15 +617,18 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       sort_field: this.sortStateSignal().active,
       sort_order: this.sortStateSignal().direction,
     };
-    this.runQuery(request, false);
+    this.runQuery(request, TABLE_QUERY_BEHAVIOR);
   }
 
-  private runQuery(request: MicrobialEnvironmentG4Query, clearExistingResult: boolean): void {
+  private runQuery(
+    request: MicrobialEnvironmentG4Query,
+    behavior: QueryExecutionBehavior,
+  ): void {
     const requestVersion = ++this.queryRequestVersion;
     this.loadingQuery.set(true);
     this.errorMessage.set('');
     this.chartError.set('');
-    if (clearExistingResult) {
+    if (behavior.clearExistingResult) {
       this.result.set(null);
       this.submittedQuery.set(null);
       this.clearChart();
@@ -630,13 +650,15 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           }
           this.submittedQuery.set(request);
           this.result.set(response);
-          this.scheduleChartRender();
+          if (behavior.refreshChart) {
+            this.scheduleChartRender();
+          }
         },
         error: (error: unknown) => {
           if (requestVersion !== this.queryRequestVersion) {
             return;
           }
-          if (clearExistingResult) {
+          if (behavior.clearExistingResult) {
             this.result.set(null);
             this.submittedQuery.set(null);
             this.clearChart();
@@ -796,8 +818,8 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       this.clearChart();
       return;
     }
+    const width = this.vegaPlotWidth(element);
     this.clearChart();
-    const width = Math.max(element.clientWidth - 24, 320);
     const spec = this.vegaSpec(points, response.regression.line_points, width);
     try {
       const chart = await embed(element, spec, {
@@ -834,7 +856,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       $schema: 'https://vega.github.io/schema/vega/v6.json',
       width,
       height: 380,
-      padding: { left: 64, right: 24, top: 24, bottom: 56 },
+      padding: VEGA_CHART_PADDING,
       data: [
         { name: 'points', values: points },
         { name: 'line', values: linePoints },
@@ -913,7 +935,16 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     const element = this.scatterPlot?.nativeElement;
     if (element) {
       element.innerHTML = '';
+      element.className = 'vega-host';
+      element.removeAttribute('style');
     }
+  }
+
+  private vegaPlotWidth(element: HTMLDivElement): number {
+    const parentWidth = element.parentElement?.clientWidth ?? 0;
+    const availableWidth = Math.max(parentWidth, element.clientWidth);
+    const horizontalPadding = VEGA_CHART_PADDING.left + VEGA_CHART_PADDING.right;
+    return Math.max(availableWidth - horizontalPadding, MINIMUM_VEGA_PLOT_WIDTH);
   }
 
   private saveBlob(blob: Blob, filename: string): void {
