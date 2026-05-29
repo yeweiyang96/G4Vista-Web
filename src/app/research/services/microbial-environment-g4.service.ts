@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 
 export type MicrobialEnvironmentTrait = 'temperature' | 'ph';
 export type MicrobialEnvironmentMode = 'growth' | 'optimum';
+export type MicrobialEnvironmentDensityMetric =
+  | 'g4_density_per_mb'
+  | 'upstream_g4_density_per_mb'
+  | 'downstream_g4_density_per_mb'
+  | 'intergenic_g4_density_per_mb';
 export type MicrobialEnvironmentSortField =
   | 'species'
   | 'strain'
@@ -68,6 +73,7 @@ export interface MicrobialEnvironmentG4Query {
   page_size: number;
   sort_field: MicrobialEnvironmentSortField;
   sort_order: MicrobialEnvironmentSortOrder;
+  density_metric: MicrobialEnvironmentDensityMetric;
 }
 
 export interface MicrobialEnvironmentSummary {
@@ -87,7 +93,7 @@ export interface MicrobialEnvironmentCorrelation {
 
 export interface MicrobialRegressionLinePoint {
   phenotype_value: number;
-  g4_density_per_mb: number;
+  density_value: number;
 }
 
 export interface MicrobialEnvironmentRegression {
@@ -115,6 +121,9 @@ export interface MicrobialEnvironmentScatterPoint {
   phenotype_min: number | null;
   phenotype_max: number | null;
   g4_density_per_mb: number | null;
+  upstream_g4_density_per_mb: number | null;
+  downstream_g4_density_per_mb: number | null;
+  intergenic_g4_density_per_mb: number | null;
   g4_count: number;
   gc_percent: number | null;
   genome_size: number | null;
@@ -128,9 +137,6 @@ export interface MicrobialEnvironmentTableRow extends MicrobialEnvironmentScatte
   assembly_level: string;
   g4_mean_score: number | null;
   gene_g4_density_per_mb: number | null;
-  upstream_g4_density_per_mb: number | null;
-  downstream_g4_density_per_mb: number | null;
-  intergenic_g4_density_per_mb: number | null;
 }
 
 export interface MicrobialEnvironmentG4QueryResponse {

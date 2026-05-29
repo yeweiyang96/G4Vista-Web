@@ -18,6 +18,7 @@ describe('MicrobialEnvironmentG4Service', () => {
     page_size: 50,
     sort_field: 'phenotype_value',
     sort_order: 'asc',
+    density_metric: 'g4_density_per_mb',
   };
 
   beforeEach(() => {

@@ -238,10 +238,7 @@ h1 {
 .chart-frame,
 .vega-host {
   min-height: 420px;
-}
-
-.vega-host {
-  display: block;
+  overflow: hidden;
 }
 
 .chart-error,

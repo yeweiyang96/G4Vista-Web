@@ -130,7 +130,7 @@
               <div class="type-switch">
                 <mat-button-toggle-group
                   [value]="g4Type()"
-                  (change)="selectG4Type($event.value)"
+                  (valueChange)="selectG4Type($event)"
                   aria-label="G4/i-motif type selector"
                 >
                   <mat-button-toggle value="g4">G4</mat-button-toggle>

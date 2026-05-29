@@ -71,7 +71,7 @@
           <div class="summary-position-controls" aria-label="Summary position controls">
             <mat-button-toggle-group
               [value]="g4Type()"
-              (change)="changeG4Type($event.value)"
+              (valueChange)="changeG4Type($event)"
               aria-label="Whole-genome G4/i-motif type"
             >
               <mat-button-toggle value="g4">G4</mat-button-toggle>

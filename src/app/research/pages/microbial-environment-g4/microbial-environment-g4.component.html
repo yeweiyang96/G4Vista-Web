@@ -274,24 +274,42 @@
           <section class="results-panel plot-panel">
             <div class="panel-heading">
               <div>
-                <h2>{{ response.summary.phenotype_label }} vs G4 density</h2>
+                <h2>{{ response.summary.phenotype_label }} vs {{ densityMetricLabel() }}</h2>
                 <p>
-                  {{ response.scatter_points.length }} points · {{ response.correlation.method }}
+                  {{ chartPointCount(response.scatter_points) }} points ·
+                  {{ response.correlation.method }}
                   correlation
                 </p>
+              </div>
+              <div class="segmented-field" style="width: min(720px, 100%)">
+                <mat-button-toggle-group
+                  style="grid-template-columns: repeat(auto-fit, minmax(148px, 1fr))"
+                  [value]="selectedDensityMetric()"
+                  [disabled]="loadingQuery()"
+                  aria-label="Chart density metric"
+                  (change)="onDensityMetricChange($event.value)"
+                >
+                  @for (option of densityMetricOptions; track option.value) {
+                    <mat-button-toggle [value]="option.value">{{ option.label }}</mat-button-toggle>
+                  }
+                </mat-button-toggle-group>
               </div>
             </div>
 
             <div class="chart-frame">
-              @if (response.scatter_points.length) {
-                <div #scatterPlot class="vega-host" aria-label="G4 density scatter plot"></div>
+              @if (chartPointCount(response.scatter_points)) {
+                <div
+                  #scatterPlot
+                  class="vega-host"
+                  [attr.aria-label]="densityMetricLabel() + ' scatter plot'"
+                ></div>
                 @if (chartError()) {
                   <div class="chart-error">{{ chartError() }}</div>
                 }
               } @else {
                 <div class="no-points">
                   <mat-icon>query_stats</mat-icon>
-                  <span>No complete strain points for the submitted set.</span>
+                  <span>No complete strain points for {{ densityMetricLabel() }}.</span>
                 </div>
               }
             </div>
@@ -329,7 +347,7 @@
               [data]="response.table_preview"
               [columns]="tableColumns()"
               [length]="response.preview_total"
-              [loading]="loadingQuery()"
+              [loading]="tableLoading()"
               [pageIndex]="tablePageIndex()"
               [pageSize]="tablePageSize()"
               [pageSizeOptions]="pageSizeOptions"

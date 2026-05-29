@@ -35,6 +35,7 @@ import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { finalize } from 'rxjs';
 import {
+  MicrobialEnvironmentDensityMetric,
   MicrobialEnvironmentG4Options,
   MicrobialEnvironmentG4Query,
   MicrobialEnvironmentG4QueryResponse,
@@ -68,10 +69,15 @@ interface TableSortState {
   readonly direction: MicrobialEnvironmentSortOrder;
 }
 
+interface DensityMetricOption {
+  readonly value: MicrobialEnvironmentDensityMetric;
+  readonly label: string;
+}
+
 interface VegaPointDatum {
   assembly_accession: string;
   phenotype_value: number;
-  g4_density_per_mb: number;
+  density_value: number;
   strain: string;
   genus: string;
   species: string;
@@ -79,12 +85,14 @@ interface VegaPointDatum {
 
 interface VegaLineDatum {
   phenotype_value: number;
-  g4_density_per_mb: number;
+  density_value: number;
 }
 
 interface QueryExecutionBehavior {
   readonly clearExistingResult: boolean;
   readonly refreshChart: boolean;
+  readonly showTableLoading: boolean;
+  readonly preserveTablePayload: boolean;
 }
 
 interface VegaChartPadding {
@@ -101,6 +109,7 @@ const INITIAL_AXIS_SELECTION: AxisSelection = {
   trait: 'temperature',
   mode: 'growth',
 };
+const INITIAL_DENSITY_METRIC: MicrobialEnvironmentDensityMetric = 'g4_density_per_mb';
 const INITIAL_TAXONOMY_RANK: MicrobialTaxonomyRank = 'genus';
 const INITIAL_PAGE_INDEX = 0;
 const INITIAL_PAGE_SIZE = 10;
@@ -113,13 +122,29 @@ const INITIAL_TABLE_SORT: TableSortState = {
 const ANALYSIS_QUERY_BEHAVIOR: QueryExecutionBehavior = {
   clearExistingResult: true,
   refreshChart: true,
+  showTableLoading: true,
+  preserveTablePayload: false,
 };
 const TABLE_QUERY_BEHAVIOR: QueryExecutionBehavior = {
   clearExistingResult: false,
   refreshChart: false,
+  showTableLoading: true,
+  preserveTablePayload: false,
+};
+const CHART_QUERY_BEHAVIOR: QueryExecutionBehavior = {
+  clearExistingResult: false,
+  refreshChart: true,
+  showTableLoading: false,
+  preserveTablePayload: true,
 };
 const VEGA_CHART_PADDING: VegaChartPadding = { left: 64, right: 24, top: 24, bottom: 56 };
 const MINIMUM_VEGA_PLOT_WIDTH = 320;
+const DENSITY_METRIC_OPTIONS: readonly DensityMetricOption[] = [
+  { value: 'g4_density_per_mb', label: 'G4 density' },
+  { value: 'upstream_g4_density_per_mb', label: 'Upstream G4 density' },
+  { value: 'downstream_g4_density_per_mb', label: 'Downstream G4 density' },
+  { value: 'intergenic_g4_density_per_mb', label: 'Intergenic G4 density' },
+];
 const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
   traits: [
     { value: 'temperature', label: 'Temperature' },
@@ -174,8 +199,19 @@ const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
   ],
 };
 
-function optionLabel(options: MicrobialEnvironmentOption[], value: string): string {
+function optionLabel(options: readonly MicrobialEnvironmentOption[], value: string): string {
   return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 function formatNumber(value: number | null | undefined): string {
@@ -200,6 +236,21 @@ function formatPValue(value: number | null | undefined): string {
     return value.toExponential(2);
   }
   return STAT_FORMATTER.format(value);
+}
+
+function preserveTablePayload(
+  response: MicrobialEnvironmentG4QueryResponse,
+  currentResult: MicrobialEnvironmentG4QueryResponse | null,
+): MicrobialEnvironmentG4QueryResponse {
+  if (!currentResult) {
+    return response;
+  }
+  return {
+    ...response,
+    table_preview: currentResult.table_preview,
+    preview_total: currentResult.preview_total,
+    download_filename: currentResult.download_filename,
+  };
 }
 
 function extractErrorMessage(error: unknown): string {
@@ -270,10 +321,15 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private readonly pageIndex = signal(INITIAL_PAGE_INDEX);
   private readonly pageSize = signal(INITIAL_PAGE_SIZE);
   private readonly sortStateSignal = signal<TableSortState>(INITIAL_TABLE_SORT);
+  private readonly densityMetric =
+    signal<MicrobialEnvironmentDensityMetric>(INITIAL_DENSITY_METRIC);
+  private readonly resultDensityMetric =
+    signal<MicrobialEnvironmentDensityMetric>(INITIAL_DENSITY_METRIC);
 
   private chartCleanup: (() => void) | null = null;
   private taxonomyRequestVersion = 0;
   private queryRequestVersion = 0;
+  private tableLoadingRequestVersion = 0;
 
   readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
   readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
@@ -283,6 +339,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   readonly loadingOptions = signal(false);
   readonly loadingTaxonomy = signal(false);
   readonly loadingQuery = signal(false);
+  readonly tableLoading = signal(false);
   readonly downloading = signal(false);
   readonly dataLayerUnavailable = signal(false);
   readonly errorMessage = signal('');
@@ -303,9 +360,11 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   });
 
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+  readonly densityMetricOptions = DENSITY_METRIC_OPTIONS;
   readonly tablePageIndex = this.pageIndex.asReadonly();
   readonly tablePageSize = this.pageSize.asReadonly();
   readonly tableSortState = this.sortStateSignal.asReadonly();
+  readonly selectedDensityMetric = this.densityMetric.asReadonly();
 
   readonly canSearch = computed(
     () =>
@@ -356,13 +415,13 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       {
         label: 'Spearman rho',
         value: formatStat(response.correlation.rho),
-        hint: `${response.correlation.n} complete pairs · p-value ${formatPValue(response.correlation.p_value)}`,
+        hint: `${response.correlation.n} complete ${this.densityMetricLabel()} pairs · p-value ${formatPValue(response.correlation.p_value)}`,
         icon: 'query_stats',
       },
       {
         label: 'Regression R2',
         value: formatStat(response.regression.r_squared),
-        hint: response.regression.status.replace('_', ' '),
+        hint: `${this.densityMetricLabel()} · ${response.regression.status.replace('_', ' ')}`,
         icon: 'show_chart',
       },
     ];
@@ -536,6 +595,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   resetAnalysisSetup(): void {
     this.taxonomyRequestVersion++;
     this.queryRequestVersion++;
+    this.tableLoadingRequestVersion++;
     this.form.setValue({
       trait: INITIAL_AXIS_SELECTION.trait,
       mode: INITIAL_AXIS_SELECTION.mode,
@@ -549,12 +609,15 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.submittedQuery.set(null);
     this.loadingTaxonomy.set(false);
     this.loadingQuery.set(false);
+    this.tableLoading.set(false);
     this.downloading.set(false);
     this.errorMessage.set('');
     this.chartError.set('');
     this.pageIndex.set(INITIAL_PAGE_INDEX);
     this.pageSize.set(INITIAL_PAGE_SIZE);
     this.sortStateSignal.set(INITIAL_TABLE_SORT);
+    this.densityMetric.set(INITIAL_DENSITY_METRIC);
+    this.resultDensityMetric.set(INITIAL_DENSITY_METRIC);
     this.clearChart();
   }
 
@@ -605,6 +668,26 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.runSubmittedQuery();
   }
 
+  onDensityMetricChange(metric: MicrobialEnvironmentDensityMetric): void {
+    if (metric === this.densityMetric()) {
+      return;
+    }
+    this.densityMetric.set(metric);
+    const submittedQuery = this.submittedQuery();
+    if (!submittedQuery) {
+      return;
+    }
+    const request: MicrobialEnvironmentG4Query = {
+      ...submittedQuery,
+      density_metric: metric,
+      page_index: this.pageIndex(),
+      page_size: this.pageSize(),
+      sort_field: this.sortStateSignal().active,
+      sort_order: this.sortStateSignal().direction,
+    };
+    this.runQuery(request, CHART_QUERY_BEHAVIOR);
+  }
+
   private runSubmittedQuery(): void {
     const submittedQuery = this.submittedQuery();
     if (!submittedQuery) {
@@ -616,16 +699,20 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       page_size: this.pageSize(),
       sort_field: this.sortStateSignal().active,
       sort_order: this.sortStateSignal().direction,
+      density_metric: this.densityMetric(),
     };
     this.runQuery(request, TABLE_QUERY_BEHAVIOR);
   }
 
-  private runQuery(
-    request: MicrobialEnvironmentG4Query,
-    behavior: QueryExecutionBehavior,
-  ): void {
+  private runQuery(request: MicrobialEnvironmentG4Query, behavior: QueryExecutionBehavior): void {
     const requestVersion = ++this.queryRequestVersion;
+    const tableLoadingRequestVersion = behavior.showTableLoading
+      ? ++this.tableLoadingRequestVersion
+      : this.tableLoadingRequestVersion;
     this.loadingQuery.set(true);
+    if (behavior.showTableLoading) {
+      this.tableLoading.set(true);
+    }
     this.errorMessage.set('');
     this.chartError.set('');
     if (behavior.clearExistingResult) {
@@ -640,6 +727,12 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           if (requestVersion === this.queryRequestVersion) {
             this.loadingQuery.set(false);
           }
+          if (
+            behavior.showTableLoading &&
+            tableLoadingRequestVersion === this.tableLoadingRequestVersion
+          ) {
+            this.tableLoading.set(false);
+          }
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -649,7 +742,12 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
             return;
           }
           this.submittedQuery.set(request);
-          this.result.set(response);
+          this.resultDensityMetric.set(request.density_metric);
+          this.result.set(
+            behavior.preserveTablePayload
+              ? preserveTablePayload(response, this.result())
+              : response,
+          );
           if (behavior.refreshChart) {
             this.scheduleChartRender();
           }
@@ -663,6 +761,9 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
             this.submittedQuery.set(null);
             this.clearChart();
           }
+          this.densityMetric.set(
+            this.submittedQuery()?.density_metric ?? this.resultDensityMetric(),
+          );
           this.handleError(error);
         },
       });
@@ -716,6 +817,15 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     return `${COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies)} eligible strains`;
   }
 
+  densityMetricLabel(): string {
+    return optionLabel(DENSITY_METRIC_OPTIONS, this.resultDensityMetric());
+  }
+
+  chartPointCount(points: MicrobialEnvironmentScatterPoint[]): number {
+    const metric = this.resultDensityMetric();
+    return points.filter((point) => toFiniteNumber(point[metric]) !== null).length;
+  }
+
   formatValue(value: string | number | null): string {
     if (typeof value === 'number') {
       return formatNumber(value);
@@ -732,6 +842,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       page_size: this.pageSize(),
       sort_field: this.sortStateSignal().active,
       sort_order: this.sortStateSignal().direction,
+      density_metric: this.densityMetric(),
     };
   }
 
@@ -818,9 +929,10 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       this.clearChart();
       return;
     }
+    const linePoints = this.vegaLinePoints(response.regression.line_points);
     const width = this.vegaPlotWidth(element);
     this.clearChart();
-    const spec = this.vegaSpec(points, response.regression.line_points, width);
+    const spec = this.vegaSpec(points, linePoints, width);
     try {
       const chart = await embed(element, spec, {
         actions: false,
@@ -835,16 +947,36 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   }
 
   private vegaPoints(points: MicrobialEnvironmentScatterPoint[]): VegaPointDatum[] {
-    return points
-      .filter((point) => point.g4_density_per_mb !== null)
-      .map((point) => ({
-        assembly_accession: point.assembly_accession,
-        phenotype_value: point.phenotype_value,
-        g4_density_per_mb: point.g4_density_per_mb as number,
-        strain: point.strain,
-        genus: point.taxonomy.genus,
-        species: point.taxonomy.species,
-      }));
+    const metric = this.resultDensityMetric();
+    return points.flatMap((point) => {
+      const densityValue = point[metric];
+      const normalizedDensityValue = toFiniteNumber(densityValue);
+      const normalizedPhenotypeValue = toFiniteNumber(point.phenotype_value);
+      if (normalizedDensityValue === null || normalizedPhenotypeValue === null) {
+        return [];
+      }
+      return [
+        {
+          assembly_accession: point.assembly_accession,
+          phenotype_value: normalizedPhenotypeValue,
+          density_value: normalizedDensityValue,
+          strain: point.strain,
+          genus: point.taxonomy.genus,
+          species: point.taxonomy.species,
+        },
+      ];
+    });
+  }
+
+  private vegaLinePoints(linePoints: VegaLineDatum[]): VegaLineDatum[] {
+    return linePoints.flatMap((point) => {
+      const phenotypeValue = toFiniteNumber(point.phenotype_value);
+      const densityValue = toFiniteNumber(point.density_value);
+      if (phenotypeValue === null || densityValue === null) {
+        return [];
+      }
+      return [{ phenotype_value: phenotypeValue, density_value: densityValue }];
+    });
   }
 
   private vegaSpec(
@@ -852,6 +984,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     linePoints: VegaLineDatum[],
     width: number,
   ): VisualizationSpec {
+    const densityLabel = this.densityMetricLabel();
     return {
       $schema: 'https://vega.github.io/schema/vega/v6.json',
       width,
@@ -873,7 +1006,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         {
           name: 'y',
           type: 'linear',
-          domain: { data: 'points', field: 'g4_density_per_mb' },
+          domain: { data: 'points', field: 'density_value' },
           nice: true,
           range: 'height',
           zero: false,
@@ -886,7 +1019,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           title: `${this.phenotypeLabel()} (${this.phenotypeUnitLabel()})`,
           grid: true,
         },
-        { orient: 'left', scale: 'y', title: 'G4 density per Mb', grid: true },
+        { orient: 'left', scale: 'y', title: `${densityLabel} per Mb`, grid: true },
       ],
       marks: [
         {
@@ -898,13 +1031,12 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
               stroke: { value: '#1d3557' },
               strokeWidth: { value: 0.6 },
               tooltip: {
-                signal:
-                  "{'Strain accession': datum.assembly_accession, 'Strain': datum.strain, 'Phenotype': datum.phenotype_value, 'G4 density': datum.g4_density_per_mb, 'Genus': datum.genus, 'Species': datum.species}",
+                signal: `{'Strain accession': datum.assembly_accession, 'Strain': datum.strain, 'Phenotype': datum.phenotype_value, '${densityLabel}': datum.density_value, 'Genus': datum.genus, 'Species': datum.species}`,
               },
             },
             update: {
               x: { scale: 'x', field: 'phenotype_value' },
-              y: { scale: 'y', field: 'g4_density_per_mb' },
+              y: { scale: 'y', field: 'density_value' },
               fill: { value: '#4f7cac' },
               size: { value: 62 },
             },
@@ -921,7 +1053,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
             },
             update: {
               x: { scale: 'x', field: 'phenotype_value' },
-              y: { scale: 'y', field: 'g4_density_per_mb' },
+              y: { scale: 'y', field: 'density_value' },
             },
           },
         },
@@ -941,10 +1073,9 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   }
 
   private vegaPlotWidth(element: HTMLDivElement): number {
-    const parentWidth = element.parentElement?.clientWidth ?? 0;
-    const availableWidth = Math.max(parentWidth, element.clientWidth);
+    const parentWidth = element.parentElement?.clientWidth ?? element.clientWidth;
     const horizontalPadding = VEGA_CHART_PADDING.left + VEGA_CHART_PADDING.right;
-    return Math.max(availableWidth - horizontalPadding, MINIMUM_VEGA_PLOT_WIDTH);
+    return Math.max(parentWidth - horizontalPadding, MINIMUM_VEGA_PLOT_WIDTH);
   }
 
   private saveBlob(blob: Blob, filename: string): void {

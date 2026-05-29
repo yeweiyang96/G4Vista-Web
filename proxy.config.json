@@ -1,6 +1,6 @@
 {
   "/api/**": {
-    "target": "https://g4vista.med.niigata-u.ac.jp",
+    "target": "http://127.0.0.1:8000",
     "secure": false,
     "changeOrigin": true
   }
