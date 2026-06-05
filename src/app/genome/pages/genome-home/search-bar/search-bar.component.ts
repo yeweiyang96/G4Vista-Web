@@ -13,10 +13,10 @@ import { GenomeSearch, GenomeSearchService } from '../../../services/genome-sear
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 const EXAMPLE_DATA: GenomeSearch[] = [
-  { asm_name: 'GRCh38.p13', assembly_accession: 'GCF_000001405.39', organism_name: 'Homo sapiens' },
+  { asm_name: 'GRCh38.p14', assembly_accession: 'GCF_000001405.40', organism_name: 'Homo sapiens' },
   {
-    asm_name: 'TAIR10',
-    assembly_accession: 'GCF_000001735.3',
+    asm_name: 'TAIR10.1',
+    assembly_accession: 'GCF_000001735.4',
     organism_name: 'Arabidopsis thaliana',
   },
 ];
