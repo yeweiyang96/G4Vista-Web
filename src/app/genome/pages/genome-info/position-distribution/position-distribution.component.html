@@ -298,6 +298,10 @@
           } @else if (statisticsErrorMessage()) {
             <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
           } @else if (hasStatistics()) {
+            <p class="table-note">
+              Density normalizes motif counts by region size. Genome enrichment is density divided
+              by the genome-wide density; 1x means genome average.
+            </p>
             <div class="stats-wrap">
               <table class="stats-table density-table">
                 <thead>
@@ -329,17 +333,9 @@
                     <th>
                       <span
                         class="header-help"
-                        [matTooltip]="statisticTooltips.foldVsGenome"
+                        [matTooltip]="statisticTooltips.genomeEnrichment"
                         matTooltipPosition="above"
-                        >vs genome</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.foldVsNonFeature"
-                        matTooltipPosition="above"
-                        >vs outside annotations</span
+                        >Genome enrichment</span
                       >
                     </th>
                   </tr>
@@ -359,10 +355,7 @@
                       </td>
                       <td>{{ formatNullableNumber(category.length_mb) }}</td>
                       <td>{{ formatNullableNumber(motifStats(category).density_per_mb) }}</td>
-                      <td>{{ formatNullableNumber(motifStats(category).fold_vs_genome) }}</td>
-                      <td>
-                        {{ formatNullableNumber(motifStats(category).fold_vs_non_feature) }}
-                      </td>
+                      <td>{{ formatFold(motifStats(category).fold_vs_genome) }}</td>
                     </tr>
                   }
                 </tbody>
@@ -384,92 +377,14 @@
           } @else if (statisticsErrorMessage()) {
             <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
           } @else if (hasStatistics()) {
+            <p class="table-note">{{ strengthIntroText() }}</p>
             <div class="strength-plot-grid">
               @for (plot of strengthBoxPlots(); track plot.key) {
-                <section class="strength-plot" [attr.aria-label]="plot.title + ' box plot'">
-                  <h3 class="breakdown-title">
-                    <span
-                      class="header-help"
-                      [matTooltip]="statisticTooltips.boxPlot"
-                      matTooltipPosition="above"
-                      >{{ plot.title }}</span
-                    >
-                  </h3>
-                  @if (plot.rows.length > 0) {
-                    <div class="strength-plot-axis">
-                      <span>{{ plot.minLabel }}</span>
-                      <span>{{ plot.maxLabel }}</span>
-                    </div>
-                    <div class="strength-plot-rows">
-                      @for (row of plot.rows; track row.key) {
-                        <div class="strength-plot-row">
-                          <span class="strength-plot-label">
-                            <span
-                              class="category-swatch"
-                              [style.background]="row.color"
-                              aria-hidden="true"
-                            ></span>
-                            {{ row.label }}
-                          </span>
-                          <svg
-                            class="box-plot-svg"
-                            viewBox="0 0 100 18"
-                            preserveAspectRatio="none"
-                            role="img"
-                          >
-                            <title>
-                              {{ row.label }} {{ plot.title }}: min
-                              {{ formatNullableNumber(row.minValue) }}, q1
-                              {{ formatNullableNumber(row.q1Value) }}, median
-                              {{ formatNullableNumber(row.medianValue) }}, p75
-                              {{ formatNullableNumber(row.p75Value) }}, max
-                              {{ formatNullableNumber(row.maxValue) }}
-                            </title>
-                            <line
-                              [attr.x1]="row.minX"
-                              y1="9"
-                              [attr.x2]="row.maxX"
-                              y2="9"
-                              class="box-plot-whisker"
-                            />
-                            <line
-                              [attr.x1]="row.minX"
-                              y1="4"
-                              [attr.x2]="row.minX"
-                              y2="14"
-                              class="box-plot-cap"
-                            />
-                            <line
-                              [attr.x1]="row.maxX"
-                              y1="4"
-                              [attr.x2]="row.maxX"
-                              y2="14"
-                              class="box-plot-cap"
-                            />
-                            <rect
-                              [attr.x]="row.q1X"
-                              y="4"
-                              [attr.width]="row.boxWidth"
-                              height="10"
-                              rx="0"
-                              [attr.fill]="row.color"
-                              class="box-plot-box"
-                            />
-                            <line
-                              [attr.x1]="row.medianX"
-                              y1="3"
-                              [attr.x2]="row.medianX"
-                              y2="15"
-                              class="box-plot-median"
-                            />
-                          </svg>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <p class="state" role="status">No {{ plot.title }} box plot data.</p>
-                  }
-                </section>
+                <app-strength-box-plot-vega
+                  [title]="plot.title"
+                  [rows]="plot.rows"
+                  [tooltip]="statisticTooltips.boxPlot"
+                />
               }
             </div>
 

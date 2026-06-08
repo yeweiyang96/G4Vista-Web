@@ -25,6 +25,10 @@ import {
   G4PositionStatisticsWindow,
   G4Type,
 } from '../../../services/g4.service';
+import {
+  StrengthBoxPlotDatum,
+  StrengthBoxPlotVegaComponent,
+} from './strength-box-plot-vega.component';
 
 interface PositionCategoryView extends G4PositionCategory {
   color: string;
@@ -70,7 +74,7 @@ interface PositionDistributionFilterModel {
   maxScore: string;
 }
 
-type StrengthBoxPlotKey = 'score' | 'tetrads' | 'length';
+type StrengthBoxPlotKey = 'score' | 'length';
 
 interface SummaryDoughnutSegment {
   key: string;
@@ -80,29 +84,10 @@ interface SummaryDoughnutSegment {
   color: string;
 }
 
-interface StrengthBoxPlotRow {
-  key: string;
-  label: string;
-  color: string;
-  minValue: number;
-  q1Value: number;
-  medianValue: number;
-  p75Value: number;
-  maxValue: number;
-  minX: number;
-  q1X: number;
-  medianX: number;
-  p75X: number;
-  maxX: number;
-  boxWidth: number;
-}
-
 interface StrengthBoxPlotView {
   key: StrengthBoxPlotKey;
   title: string;
-  minLabel: string;
-  maxLabel: string;
-  rows: readonly StrengthBoxPlotRow[];
+  rows: readonly StrengthBoxPlotDatum[];
 }
 
 const POSITION_CATEGORY_COLORS: Record<string, string> = {
@@ -121,8 +106,6 @@ const POSITION_CATEGORY_KEYS = [
 ] as const;
 const FALLBACK_POSITION_CATEGORY_COLOR = '#5f6368';
 const MERGED_SUMMARY_CATEGORY_COLOR = '#87919f';
-const SVG_BOX_PLOT_WIDTH = 100;
-const SVG_BOX_PLOT_PADDING = 6;
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
@@ -137,9 +120,9 @@ const POSITION_STATISTIC_TOOLTIPS = {
   category: 'Mutually exclusive genomic position category used for this statistics row.',
   count: 'Observed motif count assigned to this category.',
   intervalLength: 'Category denominator is the merged non-overlapping interval length.',
-  densityPerMb: 'Motif count divided by merged interval length in megabases.',
-  foldVsGenome: 'Category density divided by genome-wide density.',
-  foldVsNonFeature: 'Category density divided by outside-annotation density.',
+  densityPerMb: 'Motif count normalized by region size.',
+  genomeEnrichment:
+    'Category density divided by genome-wide motif density. 1x is genome average; values above 1x are enriched.',
   medianP75:
     'Median is the typical value; p75 is the 75th percentile and the upper edge of the box plot.',
   boxPlot:
@@ -252,6 +235,19 @@ function motifTypeShortLabel(g4Type: G4Type): string {
   return g4Type === 'i-motif' ? 'i-motif' : 'G4';
 }
 
+function strengthIntroText(g4Type: G4Type): string {
+  const motifLabel = motifTypeShortLabel(g4Type);
+  return [
+    `These plots summarize ${motifLabel} site properties by position category.`,
+    `Score is the numeric score stored for each detected ${motifLabel} site and used by the Min score / Max score filters; the Score plot compares ${motifLabel} score distributions.`,
+    'Length compares motif lengths in base pairs.',
+  ].join(' ');
+}
+
+function formatFold(value: number | null): string {
+  return formatNullableNumber(value, 'x');
+}
+
 const EMPTY_MOTIF_STATS: G4PositionMotifStats = {
   count: 0,
   density_per_mb: null,
@@ -289,21 +285,13 @@ function completeBoxPlotValues(
   const values: [number | null, number | null, number | null, number | null, number | null] =
     metric === 'score'
       ? [stats.min_score, stats.q1_score, stats.median_score, stats.p75_score, stats.max_score]
-      : metric === 'tetrads'
-        ? [
-            stats.min_tetrads,
-            stats.q1_tetrads,
-            stats.median_tetrads,
-            stats.p75_tetrads,
-            stats.max_tetrads,
-          ]
-        : [
-            stats.min_length,
-            stats.q1_length,
-            stats.median_length,
-            stats.p75_length,
-            stats.max_length,
-          ];
+      : [
+          stats.min_length,
+          stats.q1_length,
+          stats.median_length,
+          stats.p75_length,
+          stats.max_length,
+        ];
 
   const [minValue, q1Value, medianValue, p75Value, maxValue] = values;
   if (
@@ -316,14 +304,6 @@ function completeBoxPlotValues(
     return null;
   }
   return [minValue, q1Value, medianValue, p75Value, maxValue];
-}
-
-function scaledBoxPlotX(value: number, domainMin: number, domainMax: number): number {
-  if (domainMax <= domainMin) {
-    return SVG_BOX_PLOT_WIDTH / 2;
-  }
-  const plotWidth = SVG_BOX_PLOT_WIDTH - SVG_BOX_PLOT_PADDING * 2;
-  return SVG_BOX_PLOT_PADDING + ((value - domainMin) / (domainMax - domainMin)) * plotWidth;
 }
 
 @Component({
@@ -340,6 +320,7 @@ function scaledBoxPlotX(value: number, domainMin: number, domainMax: number): nu
     MatSelectModule,
     MatTabsModule,
     MatTooltipModule,
+    StrengthBoxPlotVegaComponent,
   ],
   templateUrl: './position-distribution.component.html',
   styleUrl: './position-distribution.component.scss',
@@ -369,9 +350,11 @@ export class PositionDistributionComponent {
   readonly formatCount = formatCount;
   readonly formatRatio = formatRatio;
   readonly formatNullableNumber = formatNullableNumber;
+  readonly formatFold = formatFold;
   readonly statisticTooltips = POSITION_STATISTIC_TOOLTIPS;
   readonly motifTypeLabel = computed(() => motifTypeLabel(this.g4Type()));
   readonly motifTypeShortLabel = computed(() => motifTypeShortLabel(this.g4Type()));
+  readonly strengthIntroText = computed(() => strengthIntroText(this.g4Type()));
   readonly summaryDoughnutPlugins: Plugin<'doughnut'>[] = [ChartDataLabels as Plugin<'doughnut'>];
   readonly summaryDoughnutOptions: ChartOptions<'doughnut'> = {
     responsive: true,
@@ -450,6 +433,7 @@ export class PositionDistributionComponent {
       tooltip: {
         filter: (context) => this.showGeneBiotypeDoughnutTooltip(context),
         callbacks: {
+          title: (contexts) => this.geneBiotypeDoughnutTooltipTitle(contexts),
           label: (context) => this.geneBiotypeDoughnutTooltipLabel(context),
         },
       },
@@ -648,7 +632,6 @@ export class PositionDistributionComponent {
     (
       [
         { key: 'score', title: 'Score' },
-        { key: 'tetrads', title: 'Tetrads' },
         { key: 'length', title: 'Length' },
       ] as const
     ).map((metric) => this.createStrengthBoxPlot(metric.key, metric.title)),
@@ -780,14 +763,38 @@ export class PositionDistributionComponent {
       return '';
     }
     if (context.datasetIndex === 0) {
-      return `${row.display_label}: ${formatCount(row.total_count)} (${formatRatio(
+      return `Total: ${formatCount(row.total_count)} (${formatRatio(
         this.geneBiotypeTotal() ? row.total_count / this.geneBiotypeTotal() : 0,
       )})`;
     }
     const category = row.categories[categoryIndex];
-    return `${row.display_label} / ${category.label}: ${formatCount(category.count)} (${formatRatio(
-      category.ratio,
-    )})`;
+    if (!category) {
+      return '';
+    }
+    return `${formatCount(category.count)} (${formatRatio(category.ratio)})`;
+  }
+
+  private geneBiotypeDoughnutTooltipTitle(contexts: TooltipItem<'doughnut'>[]): string {
+    const context = contexts[0];
+    if (!context) {
+      return '';
+    }
+
+    const rowIndex = Math.floor(context.dataIndex / this.geneBiotypeCategoryColumns.length);
+    const categoryIndex = context.dataIndex % this.geneBiotypeCategoryColumns.length;
+    const row = this.geneBiotypeBreakdown()[rowIndex];
+    if (!row) {
+      return '';
+    }
+    if (context.datasetIndex === 0) {
+      return row.display_label;
+    }
+
+    const category = row.categories[categoryIndex];
+    if (!category) {
+      return row.display_label;
+    }
+    return `${row.display_label} / ${category.label}`;
   }
 
   private statisticsWindowRows(
@@ -821,22 +828,11 @@ export class PositionDistributionComponent {
           row !== null,
       );
 
-    const flatValues = metricRows.flatMap((row) => row.values);
-    const domainMin = Math.min(...flatValues);
-    const domainMax = Math.max(...flatValues);
-
     return {
       key,
       title,
-      minLabel: flatValues.length ? formatNullableNumber(domainMin) : 'N/A',
-      maxLabel: flatValues.length ? formatNullableNumber(domainMax) : 'N/A',
       rows: metricRows.map(({ row, values }) => {
         const [minValue, q1Value, medianValue, p75Value, maxValue] = values;
-        const minX = scaledBoxPlotX(minValue, domainMin, domainMax);
-        const q1X = scaledBoxPlotX(q1Value, domainMin, domainMax);
-        const medianX = scaledBoxPlotX(medianValue, domainMin, domainMax);
-        const p75X = scaledBoxPlotX(p75Value, domainMin, domainMax);
-        const maxX = scaledBoxPlotX(maxValue, domainMin, domainMax);
         return {
           key: row.category.key,
           label: row.category.displayLabel,
@@ -846,12 +842,6 @@ export class PositionDistributionComponent {
           medianValue,
           p75Value,
           maxValue,
-          minX,
-          q1X,
-          medianX,
-          p75X,
-          maxX,
-          boxWidth: Math.max(1, p75X - q1X),
         };
       }),
     };

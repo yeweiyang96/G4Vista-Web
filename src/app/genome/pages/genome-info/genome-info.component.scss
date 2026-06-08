@@ -14,7 +14,12 @@
 .main-column {
   display: grid;
   gap: 16px;
+  min-width: 0;
   width: 100%;
+}
+
+.main-column > * {
+  min-width: 0;
 }
 
 .detail-list {

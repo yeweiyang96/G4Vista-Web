@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { By } from '@angular/platform-browser';
 import { MatTabGroupHarness } from '@angular/material/tabs/testing';
 import { ArcElement, DoughnutController, Legend, Tooltip } from 'chart.js';
+import type { TooltipItem, TooltipModel } from 'chart.js';
 import { BaseChartDirective, provideCharts } from 'ng2-charts';
 import {
   EMPTY_G4_POSITION_DISTRIBUTION,
@@ -289,20 +290,24 @@ describe('PositionDistributionComponent', () => {
     expect(text).toContain('Category');
     expect(text).toContain('Region size (Mb)');
     expect(text).toContain('Density / Mb');
-    expect(text).toContain('vs genome');
-    expect(text).toContain('vs outside annotations');
+    expect(text).toContain('Genome enrichment');
+    expect(text).toContain('2x');
+    expect(text).not.toContain('vs genome');
+    expect(text).not.toContain('vs outside annotations');
     expect(text).toContain('In genes');
     expect(text).toContain('2,000');
     expect(text).not.toContain('G4 density / Mb');
     expect(text).not.toContain('i-motif density / Mb');
   });
 
-  it('renders selected-motif Strength box plots and p75 table values', async () => {
+  it('renders selected-motif Vega Strength box plots and p75 table values', async () => {
     const panel = await selectTab('Strength');
     const text = panel.textContent ?? '';
 
-    expect(panel.querySelectorAll('.strength-plot').length).toBe(3);
-    expect(panel.querySelectorAll('.box-plot-svg').length).toBeGreaterThan(0);
+    expect(panel.querySelectorAll('app-strength-box-plot-vega').length).toBe(2);
+    expect(panel.querySelectorAll('.box-plot-svg').length).toBe(0);
+    expect(text).toContain('These plots summarize G4 site properties by position category.');
+    expect(text).toContain('Score plot compares G4 score distributions.');
     expect(text).toContain('Score median / p75');
     expect(text).toContain('Tetrads median / p75');
     expect(text).toContain('Length median / p75');
@@ -322,12 +327,29 @@ describe('PositionDistributionComponent', () => {
       'Upstream flank',
     ]);
     expect(component.strengthRows().map((row) => row.stats.count)).toEqual([2, 1]);
-    expect(component.strengthBoxPlots().map((plot) => plot.title)).toEqual([
-      'Score',
-      'Tetrads',
-      'Length',
-    ]);
+    expect(component.strengthBoxPlots().map((plot) => plot.title)).toEqual(['Score', 'Length']);
     expect(component.strengthBoxPlots()[0].rows[0].medianValue).toBe(20);
     expect(component.strengthBoxPlots()[0].rows[0].p75Value).toBe(30);
+  });
+
+  it('uses biotype-only tooltip titles for the outer gene biotype ring', () => {
+    const component = fixture.componentInstance;
+    const tooltipOptions = component.geneBiotypeDoughnutOptions.plugins?.tooltip;
+    if (!tooltipOptions || typeof tooltipOptions === 'boolean') {
+      fail('Expected gene biotype tooltip options.');
+      return;
+    }
+
+    const callbacks = tooltipOptions.callbacks;
+    const outerContext = { datasetIndex: 0, dataIndex: 0 } as TooltipItem<'doughnut'>;
+    const innerContext = { datasetIndex: 1, dataIndex: 1 } as TooltipItem<'doughnut'>;
+    const tooltipModel = {} as TooltipModel<'doughnut'>;
+
+    expect(callbacks?.title?.call(tooltipModel, [outerContext])).toBe('protein_coding');
+    expect(callbacks?.label?.call(tooltipModel, outerContext)).toBe('Total: 3 (100%)');
+    expect(callbacks?.title?.call(tooltipModel, [innerContext])).toBe(
+      'protein_coding / Upstream flank',
+    );
+    expect(callbacks?.label?.call(tooltipModel, innerContext)).toBe('1 (33.3%)');
   });
 });

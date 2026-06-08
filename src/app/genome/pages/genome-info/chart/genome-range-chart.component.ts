@@ -79,6 +79,7 @@ const DENSITY_UNIT_OPTIONS: readonly DensityUnitOption[] = [
   { label: '10kb', bp: 10_000 },
   { label: '1kb', bp: 1_000 },
 ];
+const FALLBACK_CHART_WIDTH = 960;
 
 @Component({
   selector: 'app-genome-range-chart',
@@ -575,7 +576,7 @@ export class GenomeRangeChartComponent {
 
   private computeChartSize(host: HTMLElement): ChartSize {
     const bounds = host.getBoundingClientRect();
-    const width = Math.max(360, Math.trunc(host.clientWidth || bounds.width || 960));
+    const width = Math.max(1, Math.trunc(host.clientWidth || bounds.width || FALLBACK_CHART_WIDTH));
     const height = Math.max(220, Math.min(420, Math.round(width * 0.34)));
     return {
       width,

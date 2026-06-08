@@ -87,14 +87,16 @@
 
 .summary-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  grid-template-columns: minmax(500px, 0.9fr) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
 
 .summary-chart-panel {
   display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(180px, 1fr);
   gap: 14px;
+  align-items: start;
 }
 
 .pie-wrap {
@@ -110,6 +112,7 @@
 .summary-category-controls {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .summary-category-checkboxes {
@@ -250,7 +253,16 @@
 
 .warnings p {
   margin: 0;
-  font: var(--mat-sys-body-small);
+  font: var(--mat-sys-body-medium);
+  line-height: 1.5;
+}
+
+.table-note {
+  max-width: 900px;
+  margin: 0 0 14px;
+  font: var(--mat-sys-body-medium);
+  line-height: 1.55;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .stats-category {
@@ -296,80 +308,9 @@
 
 .strength-plot-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
-}
-
-.strength-plot {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px;
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 8px;
-}
-
-.strength-plot-axis {
-  display: flex;
-  justify-content: space-between;
-  font: var(--mat-sys-label-small);
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.strength-plot-rows {
-  display: grid;
-  gap: 8px;
-}
-
-.strength-plot-row {
-  display: grid;
-  grid-template-columns: minmax(112px, 0.42fr) minmax(120px, 1fr);
-  gap: 10px;
-  align-items: center;
-  min-width: 0;
-}
-
-.strength-plot-label {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font: var(--mat-sys-body-small);
-  white-space: nowrap;
-}
-
-.box-plot-svg {
-  width: 100%;
-  height: 26px;
-  overflow: visible;
-}
-
-.box-plot-whisker,
-.box-plot-cap,
-.box-plot-median {
-  vector-effect: non-scaling-stroke;
-  stroke-linecap: round;
-}
-
-.box-plot-whisker,
-.box-plot-cap {
-  stroke: var(--mat-sys-on-surface-variant);
-  stroke-width: 1.4;
-}
-
-.box-plot-box {
-  fill-opacity: 0.72;
-  stroke: rgba(0, 0, 0, 0.18);
-  vector-effect: non-scaling-stroke;
-}
-
-.box-plot-median {
-  stroke: var(--mat-sys-on-surface);
-  stroke-width: 1.7;
 }
 
 @media (width <= 959.98px) {
@@ -402,6 +343,10 @@
 }
 
 @media (width <= 599.98px) {
+  .summary-chart-panel {
+    grid-template-columns: 1fr;
+  }
+
   .category-row {
     grid-template-columns: 14px minmax(0, 1fr);
   }
