@@ -209,43 +209,58 @@
                 </div>
               </section>
 
-              <mat-form-field appearance="outline" class="filter-field">
-                <mat-label>Tetrads</mat-label>
-                <mat-select [formField]="filterForm.selectedTetrads" multiple>
-                  @for (option of g4Page().tetrads_list; track option) {
-                    <mat-option [value]="option">{{ option }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <section class="filter-group filter-group-motif" aria-labelledby="motif-filter-title">
+                <div class="filter-group-header">
+                  <p class="filter-group-eyebrow">Motif filter</p>
+                  <h3 id="motif-filter-title" class="filter-group-title">
+                    Filter G4 and i-motif sites
+                  </h3>
+                  <p class="filter-group-description">
+                    Limit the explorer table by tetrad count and score range, then submit to refresh
+                    the listed motif sites.
+                  </p>
+                </div>
 
-              <mat-form-field appearance="outline" class="filter-field">
-                <mat-label>Min score</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  inputmode="numeric"
-                  step="1"
-                  placeholder="{{ g4Page().min_score }}"
-                  [formField]="filterForm.minScore"
-                />
-              </mat-form-field>
+                <div class="filter-group-fields filter-group-fields-motif">
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Tetrads</mat-label>
+                    <mat-select [formField]="filterForm.selectedTetrads" multiple>
+                      @for (option of g4Page().tetrads_list; track option) {
+                        <mat-option [value]="option">{{ option }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
 
-              <mat-form-field appearance="outline" class="filter-field">
-                <mat-label>Max score</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  inputmode="numeric"
-                  step="1"
-                  placeholder="{{ g4Page().max_score }}"
-                  [formField]="filterForm.maxScore"
-                />
-              </mat-form-field>
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Min score</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      inputmode="numeric"
+                      step="1"
+                      placeholder="{{ g4Page().min_score }}"
+                      [formField]="filterForm.minScore"
+                    />
+                  </mat-form-field>
 
-              <div class="filter-actions">
-                <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
-                <button mat-flat-button type="submit">Search</button>
-              </div>
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Max score</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      inputmode="numeric"
+                      step="1"
+                      placeholder="{{ g4Page().max_score }}"
+                      [formField]="filterForm.maxScore"
+                    />
+                  </mat-form-field>
+
+                  <div class="filter-actions">
+                    <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
+                    <button mat-flat-button type="submit">Submit</button>
+                  </div>
+                </div>
+              </section>
             </form>
 
             <app-g4-table

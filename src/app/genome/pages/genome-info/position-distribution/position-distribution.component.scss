@@ -41,19 +41,20 @@
 
 .gene-window-field {
   flex: 0 0 260px;
+  margin-top: 8px;
   width: 260px;
 }
 
 .position-filter-form {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 140px) auto;
   gap: 10px;
   align-items: flex-start;
   justify-content: flex-end;
 }
 
 .position-filter-title {
-  flex: 1 0 100%;
+  grid-column: 1 / -1;
 }
 
 .position-filter-field {
@@ -319,7 +320,13 @@
   }
 
   .position-filter-form {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: flex-start;
+  }
+
+  .position-filter-title {
+    flex: 1 0 100%;
   }
 
   .gene-window-field {
@@ -343,6 +350,10 @@
 }
 
 @media (width <= 599.98px) {
+  .gene-window-field {
+    margin-top: 0;
+  }
+
   .summary-chart-panel {
     grid-template-columns: 1fr;
   }
