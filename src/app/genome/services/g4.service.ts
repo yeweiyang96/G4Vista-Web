@@ -211,6 +211,7 @@ export interface G4PositionDistributionResponse {
 
 export interface G4PositionStatisticsFilters {
   windows: number[];
+  g4_type: G4Type | null;
   tetrads: number[];
   min_score: number | null;
   max_score: number | null;
@@ -223,12 +224,21 @@ export interface G4PositionMotifStats {
   expected_vs_genome: number | null;
   fold_vs_genome: number | null;
   fold_vs_non_feature: number | null;
+  min_score: number | null;
+  q1_score: number | null;
   median_score: number | null;
-  p95_score: number | null;
+  p75_score: number | null;
+  max_score: number | null;
+  min_tetrads: number | null;
+  q1_tetrads: number | null;
   median_tetrads: number | null;
-  p95_tetrads: number | null;
+  p75_tetrads: number | null;
+  max_tetrads: number | null;
+  min_length: number | null;
+  q1_length: number | null;
   median_length: number | null;
-  p95_length: number | null;
+  p75_length: number | null;
+  max_length: number | null;
 }
 
 export interface G4PositionAsymmetry {
@@ -246,7 +256,7 @@ export interface G4PositionStatisticsCategory {
   precedence_rank: number;
   merged_interval_length_bp: number;
   length_mb: number;
-  motifs: Record<G4Type, G4PositionMotifStats>;
+  motifs: Partial<Record<G4Type, G4PositionMotifStats>>;
   asymmetry: G4PositionAsymmetry;
 }
 
@@ -279,6 +289,7 @@ export interface G4PositionDistributionRequest {
 export interface G4PositionStatisticsRequest {
   assemblyAccession: string;
   windows?: number[];
+  g4Type?: G4Type;
   tetrads: number[];
   minScore?: number;
   maxScore?: number;
@@ -371,6 +382,7 @@ export const EMPTY_G4_POSITION_STATISTICS: G4PositionStatisticsResponse = {
   assembly_accession: '',
   filters: {
     windows: [],
+    g4_type: null,
     tetrads: [],
     min_score: null,
     max_score: null,
@@ -536,6 +548,9 @@ export class G4Service {
     let params = new HttpParams();
     for (const window of request.windows ?? [100, 500, 1000, 5000]) {
       params = params.append('windows', window);
+    }
+    if (request.g4Type !== undefined) {
+      params = params.set('g4_type', request.g4Type);
     }
     params = this.appendCommonFilterParams(params, request);
 

@@ -15,6 +15,30 @@
   min-width: 0;
 }
 
+.position-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.motif-type-control {
+  display: grid;
+  gap: 6px;
+}
+
+.control-label,
+.position-filter-title {
+  margin: 0;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.motif-type-control mat-button-toggle-group {
+  max-width: 100%;
+}
+
 .gene-window-field {
   flex: 0 0 260px;
   width: 260px;
@@ -26,6 +50,10 @@
   gap: 10px;
   align-items: flex-start;
   justify-content: flex-end;
+}
+
+.position-filter-title {
+  flex: 1 0 100%;
 }
 
 .position-filter-field {
@@ -57,23 +85,16 @@
   padding-top: 18px;
 }
 
-.summary-position-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-}
-
-.summary-position-controls mat-button-toggle-group {
-  max-width: 100%;
-}
-
 .summary-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
   gap: 24px;
-  align-items: center;
+  align-items: start;
+}
+
+.summary-chart-panel {
+  display: grid;
+  gap: 14px;
 }
 
 .pie-wrap {
@@ -84,6 +105,16 @@
 .summary-doughnut {
   width: min(280px, 100%);
   height: 300px;
+}
+
+.summary-category-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.summary-category-checkboxes {
+  display: grid;
+  gap: 4px;
 }
 
 .metric-value {
@@ -185,10 +216,10 @@
 
 .feature-breakdown-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(112px, auto));
+  grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(112px, auto));
   gap: 12px;
   align-items: center;
-  min-width: 680px;
+  min-width: 520px;
   padding: 9px 12px;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
@@ -235,6 +266,11 @@
   border-collapse: collapse;
 }
 
+.density-table,
+.strength-table {
+  min-width: 720px;
+}
+
 .stats-table th,
 .stats-table td {
   padding: 9px 12px;
@@ -258,6 +294,84 @@
   width: 100%;
 }
 
+.strength-plot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.strength-plot {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.strength-plot-axis {
+  display: flex;
+  justify-content: space-between;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.strength-plot-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.strength-plot-row {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.42fr) minmax(120px, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.strength-plot-label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: var(--mat-sys-body-small);
+  white-space: nowrap;
+}
+
+.box-plot-svg {
+  width: 100%;
+  height: 26px;
+  overflow: visible;
+}
+
+.box-plot-whisker,
+.box-plot-cap,
+.box-plot-median {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+
+.box-plot-whisker,
+.box-plot-cap {
+  stroke: var(--mat-sys-on-surface-variant);
+  stroke-width: 1.4;
+}
+
+.box-plot-box {
+  fill-opacity: 0.72;
+  stroke: rgba(0, 0, 0, 0.18);
+  vector-effect: non-scaling-stroke;
+}
+
+.box-plot-median {
+  stroke: var(--mat-sys-on-surface);
+  stroke-width: 1.7;
+}
+
 @media (width <= 959.98px) {
   .position-card-header {
     display: grid;
@@ -277,7 +391,8 @@
 
   .summary-grid,
   .metrics,
-  .gene-biotype-layout {
+  .gene-biotype-layout,
+  .strength-plot-grid {
     grid-template-columns: 1fr;
   }
 

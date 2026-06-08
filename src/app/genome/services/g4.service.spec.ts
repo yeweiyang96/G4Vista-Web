@@ -343,7 +343,8 @@ describe('G4Service', () => {
     service
       .getPositionStatistics({
         assemblyAccession: 'GCF_000021765.1',
-        windows: [100, 500, 1000, 5000],
+        windows: [1000],
+        g4Type: 'g4',
         tetrads: [2, 4],
         minScore: 12,
         maxScore: 40,
@@ -352,14 +353,15 @@ describe('G4Service', () => {
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=100&windows=500&windows=1000&windows=5000&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=1000&g4_type=g4&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
     );
 
     expect(request.request.method).toBe('GET');
     request.flush({
       assembly_accession: 'GCF_000021765.1',
       filters: {
-        windows: [100, 500, 1000, 5000],
+        windows: [1000],
+        g4_type: 'g4',
         tetrads: [2, 4],
         min_score: 12,
         max_score: 40,

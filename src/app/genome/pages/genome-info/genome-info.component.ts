@@ -117,7 +117,6 @@ interface AccessionIdOption {
 
 const DEFAULT_GENE_POSITION = G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value;
 const DEFAULT_FLANK_WINDOW: G4FlankWindow = 1000;
-const POSITION_STATISTICS_WINDOWS = [100, 500, 1000, 5000] as const;
 const SORTABLE_COLUMNS: Record<string, G4SortField> = {
   start: 'start',
   end: 'end',
@@ -661,7 +660,8 @@ export class GenomeInfoComponent {
 
       return {
         assemblyAccession: this.assemblyAccession(),
-        windows: [...POSITION_STATISTICS_WINDOWS],
+        windows: [this.positionDistributionFlankWindow()],
+        g4Type: this.positionDistributionG4Type(),
         tetrads: this.positionDistributionFilters().tetrads,
         minScore: this.positionDistributionFilters().minScore,
         maxScore: this.positionDistributionFilters().maxScore,

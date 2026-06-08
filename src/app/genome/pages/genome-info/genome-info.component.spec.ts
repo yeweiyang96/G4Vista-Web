@@ -352,7 +352,8 @@ describe('GenomeInfoComponent', () => {
         genome_length_bp: 30_000,
         genome_length_mb: 0.03,
         filters: {
-          windows: [100, 500, 1000, 5000],
+          windows: [1000],
+          g4_type: 'g4',
           tetrads: [],
           min_score: null,
           max_score: null,
@@ -360,7 +361,7 @@ describe('GenomeInfoComponent', () => {
         },
         windows: [
           {
-            window_bp: 100,
+            window_bp: 1000,
             categories: [
               {
                 key: 'gene_inside',
@@ -376,25 +377,21 @@ describe('GenomeInfoComponent', () => {
                     expected_vs_genome: 1,
                     fold_vs_genome: 2,
                     fold_vs_non_feature: 3,
+                    min_score: 10,
+                    q1_score: 15,
                     median_score: 20,
-                    p95_score: 40,
+                    p75_score: 40,
+                    max_score: 50,
+                    min_tetrads: 2,
+                    q1_tetrads: 2,
                     median_tetrads: 3,
-                    p95_tetrads: 4,
+                    p75_tetrads: 4,
+                    max_tetrads: 5,
+                    min_length: 20,
+                    q1_length: 22,
                     median_length: 24,
-                    p95_length: 32,
-                  },
-                  'i-motif': {
-                    count: 1,
-                    density_per_mb: 1000,
-                    expected_vs_genome: 0.5,
-                    fold_vs_genome: 1,
-                    fold_vs_non_feature: 1.5,
-                    median_score: 18,
-                    p95_score: 30,
-                    median_tetrads: 2,
-                    p95_tetrads: 3,
-                    median_length: 20,
-                    p95_length: 28,
+                    p75_length: 32,
+                    max_length: 40,
                   },
                 },
                 asymmetry: {
@@ -538,8 +535,19 @@ describe('GenomeInfoComponent', () => {
         maxScore: undefined,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [1000],
+        g4Type: 'g4',
+        tetrads: [],
+        minScore: undefined,
+        maxScore: undefined,
+      }),
+    );
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
     component.filterModel.update((current) => ({
       ...current,
       selectedTetrads: [3],
@@ -551,6 +559,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.submitFilters();
     fixture.detectChanges();
@@ -558,6 +567,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.setPositionDistributionFilterModel({
       selectedTetrads: [3],
@@ -569,6 +579,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.submitPositionDistributionFilters();
     fixture.detectChanges();
@@ -585,8 +596,19 @@ describe('GenomeInfoComponent', () => {
         maxScore: 40,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [1000],
+        g4Type: 'g4',
+        tetrads: [3],
+        minScore: 12,
+        maxScore: 40,
+      }),
+    );
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
     component.resetPositionDistributionFilters();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -602,8 +624,19 @@ describe('GenomeInfoComponent', () => {
         maxScore: undefined,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [1000],
+        g4Type: 'g4',
+        tetrads: [],
+        minScore: undefined,
+        maxScore: undefined,
+      }),
+    );
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
 
     component.selectG4Type('i-motif');
     fixture.detectChanges();
@@ -611,6 +644,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.setPositionDistributionFlankWindow(500);
     fixture.detectChanges();
@@ -625,9 +659,18 @@ describe('GenomeInfoComponent', () => {
         tetrads: [],
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [500],
+        g4Type: 'g4',
+        tetrads: [],
+      }),
+    );
     expect(component.positionDistributionFlankWindowLabel()).toBe('500 bp');
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
     component.setPositionDistributionG4Type('i-motif');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -638,6 +681,14 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         g4Type: 'i-motif',
         flankWindow: 500,
+        tetrads: [],
+      }),
+    );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [500],
+        g4Type: 'i-motif',
         tetrads: [],
       }),
     );

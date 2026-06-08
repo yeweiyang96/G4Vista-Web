@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -41,23 +42,12 @@ interface PositionSummaryMetric {
 interface PositionStatisticsCategoryView extends G4PositionStatisticsCategory {
   color: string;
   displayLabel: string;
-  window_bp: number;
-  windowLabel: string;
 }
 
 interface PositionStrengthRow {
   id: string;
   category: PositionStatisticsCategoryView;
-  motifType: G4Type;
-  motifLabel: string;
   stats: G4PositionMotifStats;
-}
-
-interface PositionWindowSensitivityRow {
-  id: string;
-  category: PositionStatisticsCategoryView;
-  g4DensityRatio: number;
-  iMotifDensityRatio: number;
 }
 
 interface GeneBiotypeCategoryCell {
@@ -80,6 +70,41 @@ interface PositionDistributionFilterModel {
   maxScore: string;
 }
 
+type StrengthBoxPlotKey = 'score' | 'tetrads' | 'length';
+
+interface SummaryDoughnutSegment {
+  key: string;
+  label: string;
+  count: number;
+  ratio: number;
+  color: string;
+}
+
+interface StrengthBoxPlotRow {
+  key: string;
+  label: string;
+  color: string;
+  minValue: number;
+  q1Value: number;
+  medianValue: number;
+  p75Value: number;
+  maxValue: number;
+  minX: number;
+  q1X: number;
+  medianX: number;
+  p75X: number;
+  maxX: number;
+  boxWidth: number;
+}
+
+interface StrengthBoxPlotView {
+  key: StrengthBoxPlotKey;
+  title: string;
+  minLabel: string;
+  maxLabel: string;
+  rows: readonly StrengthBoxPlotRow[];
+}
+
 const POSITION_CATEGORY_COLORS: Record<string, string> = {
   gene_inside: '#2a6f68',
   gene_upstream: '#b75f2a',
@@ -87,7 +112,17 @@ const POSITION_CATEGORY_COLORS: Record<string, string> = {
   other_root_non_gene_feature: '#b33f62',
   non_feature: '#58606f',
 };
+const POSITION_CATEGORY_KEYS = [
+  'gene_inside',
+  'gene_upstream',
+  'gene_downstream',
+  'other_root_non_gene_feature',
+  'non_feature',
+] as const;
 const FALLBACK_POSITION_CATEGORY_COLOR = '#5f6368';
+const MERGED_SUMMARY_CATEGORY_COLOR = '#87919f';
+const SVG_BOX_PLOT_WIDTH = 100;
+const SVG_BOX_PLOT_PADDING = 6;
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
@@ -98,28 +133,17 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 0,
   style: 'percent',
 });
-const SIGNED_PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 0,
-  signDisplay: 'exceptZero',
-  style: 'percent',
-});
 const POSITION_STATISTIC_TOOLTIPS = {
-  window: 'Upstream/downstream flank size used for this statistics row.',
   category: 'Mutually exclusive genomic position category used for this statistics row.',
-  type: 'Motif class: G4 or i-motif.',
   count: 'Observed motif count assigned to this category.',
   intervalLength: 'Category denominator is the merged non-overlapping interval length.',
   densityPerMb: 'Motif count divided by merged interval length in megabases.',
   foldVsGenome: 'Category density divided by genome-wide density.',
-  foldVsNonFeature: 'Category density divided by non-feature density.',
-  medianP95: 'Median is the typical value; p95 is the 95th percentile, not the maximum.',
-  fraction: 'Share of G4 or i-motif counts within the same category.',
-  fractionDelta: 'G4 fraction minus i-motif fraction in the same category.',
-  densityRatio:
-    'G4 density divided by i-motif density; N/A when denominator is zero or unavailable.',
-  relativeDensity:
-    'Bar scaled to the largest upstream/downstream density for that motif type across displayed windows; not a time trend.',
+  foldVsNonFeature: 'Category density divided by outside-annotation density.',
+  medianP75:
+    'Median is the typical value; p75 is the 75th percentile and the upper edge of the box plot.',
+  boxPlot:
+    'Whiskers show minimum and maximum. The box spans q1 to p75, with the median line inside.',
   geneBiotypeBreakdown:
     'Ratios are within each gene biotype row; the same site can appear in multiple biotype rows when it has multiple gene relations.',
   geneBiotypeDonut:
@@ -127,11 +151,11 @@ const POSITION_STATISTIC_TOOLTIPS = {
 } as const;
 const TRANSPARENT_CHART_SEGMENT = 'rgba(0, 0, 0, 0)';
 const GENE_BIOTYPE_CATEGORY_COLUMNS = [
-  { key: 'gene_inside', label: 'Inside genes' },
-  { key: 'gene_upstream', label: 'Upstream' },
-  { key: 'gene_downstream', label: 'Downstream' },
-  { key: 'other_root_non_gene_feature', label: 'Root non-gene' },
-  { key: 'non_feature', label: 'Non-feature' },
+  { key: 'gene_inside', label: 'In genes' },
+  { key: 'gene_upstream', label: 'Upstream flank' },
+  { key: 'gene_downstream', label: 'Downstream flank' },
+  { key: 'other_root_non_gene_feature', label: 'Other annotations' },
+  { key: 'non_feature', label: 'Outside annotations' },
 ] as const;
 const GENE_BIOTYPE_COLORS = [
   '#3f6c8a',
@@ -154,35 +178,34 @@ function motifTypeLabel(g4Type: G4Type): string {
 
 function categoryDisplayText(
   category: Pick<G4PositionCategory, 'key' | 'label' | 'description'>,
-  flankWindowLabel: string,
 ): Pick<PositionCategoryView, 'displayLabel' | 'displayDescription'> {
   switch (category.key) {
     case 'gene_inside':
       return {
-        displayLabel: 'Inside annotated genes',
-        displayDescription: 'Predicted G4/i-motif sites that fall within annotated gene intervals.',
+        displayLabel: 'In genes',
+        displayDescription: 'Predicted motif sites that fall within annotated gene intervals.',
       };
     case 'gene_upstream':
       return {
-        displayLabel: `Within ${flankWindowLabel} upstream of genes`,
-        displayDescription: 'Predicted G4/i-motif sites in the upstream gene-neighbor window.',
+        displayLabel: 'Upstream flank',
+        displayDescription: 'Predicted motif sites in the selected upstream gene flank.',
       };
     case 'gene_downstream':
       return {
-        displayLabel: `Within ${flankWindowLabel} downstream of genes`,
-        displayDescription: 'Predicted G4/i-motif sites in the downstream gene-neighbor window.',
+        displayLabel: 'Downstream flank',
+        displayDescription: 'Predicted motif sites in the selected downstream gene flank.',
       };
     case 'other_root_non_gene_feature':
       return {
-        displayLabel: 'Inside root non-gene features',
+        displayLabel: 'Other annotations',
         displayDescription:
-          'Predicted G4/i-motif sites assigned to parentless non-gene annotations such as promoters or repeat regions.',
+          'Predicted motif sites assigned to parentless non-gene annotations such as promoters or repeat regions.',
       };
     case 'non_feature':
       return {
-        displayLabel: 'No gene or root-feature assignment',
+        displayLabel: 'Outside annotations',
         displayDescription:
-          'Predicted G4/i-motif sites outside genes, gene-neighbor windows, and root non-gene features.',
+          'Predicted motif sites outside genes, selected gene flanks, and other annotations.',
       };
     default:
       return {
@@ -199,15 +222,15 @@ function categoryCount(categories: readonly G4PositionCategory[], key: string): 
 function summaryChartLabel(category: Pick<G4PositionCategory, 'key' | 'label'>): string {
   switch (category.key) {
     case 'gene_inside':
-      return 'Inside genes';
+      return 'In genes';
     case 'gene_upstream':
-      return 'Upstream';
+      return 'Upstream flank';
     case 'gene_downstream':
-      return 'Downstream';
+      return 'Downstream flank';
     case 'other_root_non_gene_feature':
-      return 'Root non-gene';
+      return 'Other annotations';
     case 'non_feature':
-      return 'Non-feature';
+      return 'Outside annotations';
     default:
       return category.label;
   }
@@ -221,24 +244,86 @@ function formatRatio(value: number): string {
   return PERCENT_FORMATTER.format(value);
 }
 
-function formatWindowLabel(windowBp: number): string {
-  return windowBp >= 1000 ? `${windowBp / 1000} kb` : `${windowBp} bp`;
-}
-
 function formatNullableNumber(value: number | null, suffix = ''): string {
   return value === null ? 'N/A' : `${NUMBER_FORMATTER.format(value)}${suffix}`;
 }
 
-function formatNullablePercent(value: number | null): string {
-  return value === null ? 'N/A' : PERCENT_FORMATTER.format(value);
-}
-
-function formatSignedPercent(value: number | null): string {
-  return value === null ? 'N/A' : SIGNED_PERCENT_FORMATTER.format(value);
-}
-
 function motifTypeShortLabel(g4Type: G4Type): string {
   return g4Type === 'i-motif' ? 'i-motif' : 'G4';
+}
+
+const EMPTY_MOTIF_STATS: G4PositionMotifStats = {
+  count: 0,
+  density_per_mb: null,
+  expected_vs_genome: null,
+  fold_vs_genome: null,
+  fold_vs_non_feature: null,
+  min_score: null,
+  q1_score: null,
+  median_score: null,
+  p75_score: null,
+  max_score: null,
+  min_tetrads: null,
+  q1_tetrads: null,
+  median_tetrads: null,
+  p75_tetrads: null,
+  max_tetrads: null,
+  min_length: null,
+  q1_length: null,
+  median_length: null,
+  p75_length: null,
+  max_length: null,
+};
+
+function motifStatsForType(
+  category: G4PositionStatisticsCategory,
+  g4Type: G4Type,
+): G4PositionMotifStats {
+  return category.motifs[g4Type] ?? EMPTY_MOTIF_STATS;
+}
+
+function completeBoxPlotValues(
+  stats: G4PositionMotifStats,
+  metric: StrengthBoxPlotKey,
+): [number, number, number, number, number] | null {
+  const values: [number | null, number | null, number | null, number | null, number | null] =
+    metric === 'score'
+      ? [stats.min_score, stats.q1_score, stats.median_score, stats.p75_score, stats.max_score]
+      : metric === 'tetrads'
+        ? [
+            stats.min_tetrads,
+            stats.q1_tetrads,
+            stats.median_tetrads,
+            stats.p75_tetrads,
+            stats.max_tetrads,
+          ]
+        : [
+            stats.min_length,
+            stats.q1_length,
+            stats.median_length,
+            stats.p75_length,
+            stats.max_length,
+          ];
+
+  const [minValue, q1Value, medianValue, p75Value, maxValue] = values;
+  if (
+    minValue === null ||
+    q1Value === null ||
+    medianValue === null ||
+    p75Value === null ||
+    maxValue === null
+  ) {
+    return null;
+  }
+  return [minValue, q1Value, medianValue, p75Value, maxValue];
+}
+
+function scaledBoxPlotX(value: number, domainMin: number, domainMax: number): number {
+  if (domainMax <= domainMin) {
+    return SVG_BOX_PLOT_WIDTH / 2;
+  }
+  const plotWidth = SVG_BOX_PLOT_WIDTH - SVG_BOX_PLOT_PADDING * 2;
+  return SVG_BOX_PLOT_PADDING + ((value - domainMin) / (domainMax - domainMin)) * plotWidth;
 }
 
 @Component({
@@ -248,6 +333,7 @@ function motifTypeShortLabel(g4Type: G4Type): string {
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
@@ -279,13 +365,13 @@ export class PositionDistributionComponent {
   readonly applyFilters = output<void>();
   readonly resetFilters = output<void>();
   readonly flankWindowOptions = G4_FLANK_WINDOW_OPTIONS;
+  readonly summaryVisibleCategoryKeys = signal<string[]>([...POSITION_CATEGORY_KEYS]);
   readonly formatCount = formatCount;
   readonly formatRatio = formatRatio;
   readonly formatNullableNumber = formatNullableNumber;
-  readonly formatNullablePercent = formatNullablePercent;
-  readonly formatSignedPercent = formatSignedPercent;
   readonly statisticTooltips = POSITION_STATISTIC_TOOLTIPS;
   readonly motifTypeLabel = computed(() => motifTypeLabel(this.g4Type()));
+  readonly motifTypeShortLabel = computed(() => motifTypeShortLabel(this.g4Type()));
   readonly summaryDoughnutPlugins: Plugin<'doughnut'>[] = [ChartDataLabels as Plugin<'doughnut'>];
   readonly summaryDoughnutOptions: ChartOptions<'doughnut'> = {
     responsive: true,
@@ -372,7 +458,7 @@ export class PositionDistributionComponent {
 
   readonly categoryRows = computed<readonly PositionCategoryView[]>(() =>
     this.distribution().categories.map((category) => {
-      const displayText = categoryDisplayText(category, this.flankWindowLabel());
+      const displayText = categoryDisplayText(category);
       return {
         ...category,
         ...displayText,
@@ -380,10 +466,42 @@ export class PositionDistributionComponent {
       };
     }),
   );
+  readonly summaryDoughnutSegments = computed<readonly SummaryDoughnutSegment[]>(() => {
+    const selectedKeys = new Set(this.summaryVisibleCategoryKeys());
+    const total = this.distribution().total_count;
+    const separateSegments: SummaryDoughnutSegment[] = [];
+    let mergedCount = 0;
+
+    for (const category of this.categoryRows()) {
+      if (selectedKeys.has(category.key)) {
+        separateSegments.push({
+          key: category.key,
+          label: summaryChartLabel(category),
+          count: category.count,
+          ratio: category.ratio,
+          color: category.color,
+        });
+        continue;
+      }
+      mergedCount += category.count;
+    }
+
+    if (mergedCount > 0) {
+      separateSegments.push({
+        key: 'other_categories',
+        label: 'Other categories',
+        count: mergedCount,
+        ratio: total ? mergedCount / total : 0,
+        color: MERGED_SUMMARY_CATEGORY_COLOR,
+      });
+    }
+
+    return separateSegments;
+  });
   readonly summaryDoughnutData = computed<ChartData<'doughnut', number[], string>>(() => {
-    const categories = this.categoryRows();
+    const categories = this.summaryDoughnutSegments();
     return {
-      labels: categories.map((category) => summaryChartLabel(category)),
+      labels: categories.map((category) => category.label),
       datasets: [
         {
           label: motifTypeShortLabel(this.g4Type()),
@@ -492,27 +610,27 @@ export class PositionDistributionComponent {
     return [
       {
         key: 'total',
-        label: 'Predicted G4/i-motif sites',
+        label: `${this.motifTypeShortLabel()} sites`,
         value: formatCount(total),
         detail: 'Whole genome, all accessions',
       },
       {
         key: 'gene',
-        label: 'Inside annotated genes',
+        label: 'In genes',
         value: formatRatio(total ? geneInside / total : 0),
-        detail: `${formatCount(geneInside)} G4/i-motif sites`,
+        detail: `${formatCount(geneInside)} sites`,
       },
       {
         key: 'regulatory',
-        label: `Within ${this.flankWindowLabel()} of genes`,
+        label: 'In gene flanks',
         value: formatRatio(total ? regulatoryNeighborhood / total : 0),
-        detail: `${formatCount(regulatoryNeighborhood)} upstream or downstream sites`,
+        detail: `${formatCount(regulatoryNeighborhood)} sites within ${this.flankWindowLabel()}`,
       },
       {
         key: 'non-feature',
-        label: 'Outside annotated features',
+        label: 'Outside annotations',
         value: formatRatio(total ? nonFeature / total : 0),
-        detail: `${formatCount(nonFeature)} unassigned; ${formatCount(otherFeature)} in root non-gene features`,
+        detail: `${formatCount(nonFeature)} outside; ${formatCount(otherFeature)} in other annotations`,
       },
     ];
   });
@@ -520,46 +638,21 @@ export class PositionDistributionComponent {
     this.statistics().windows.flatMap((window) => this.statisticsWindowRows(window)),
   );
   readonly strengthRows = computed<readonly PositionStrengthRow[]>(() =>
-    this.statisticsRows().flatMap((category) =>
-      (['g4', 'i-motif'] as const).map((motifType) => ({
-        id: `${category.window_bp}:${category.key}:${motifType}`,
-        category,
-        motifType,
-        motifLabel: motifTypeShortLabel(motifType),
-        stats: category.motifs[motifType],
-      })),
-    ),
-  );
-  readonly asymmetryRows = computed<readonly PositionStatisticsCategoryView[]>(() =>
-    this.statisticsRows().filter((category) => category.key !== 'non_feature'),
-  );
-  readonly windowSensitivityRows = computed<readonly PositionWindowSensitivityRow[]>(() => {
-    const rows = this.statisticsRows().filter(
-      (category) => category.key === 'gene_upstream' || category.key === 'gene_downstream',
-    );
-    const sortedRows = [...rows].sort((a, b) => {
-      const labelComparison = a.label.localeCompare(b.label);
-      if (labelComparison !== 0) {
-        return labelComparison;
-      }
-      return a.window_bp - b.window_bp;
-    });
-    const maxG4Density = Math.max(0, ...sortedRows.map((row) => row.motifs.g4.density_per_mb ?? 0));
-    const maxIMotifDensity = Math.max(
-      0,
-      ...sortedRows.map((row) => row.motifs['i-motif'].density_per_mb ?? 0),
-    );
-    return sortedRows.map((category) => ({
-      id: `${category.window_bp}:${category.key}`,
+    this.statisticsRows().map((category) => ({
+      id: category.key,
       category,
-      g4DensityRatio: maxG4Density
-        ? ((category.motifs.g4.density_per_mb ?? 0) / maxG4Density) * 100
-        : 0,
-      iMotifDensityRatio: maxIMotifDensity
-        ? ((category.motifs['i-motif'].density_per_mb ?? 0) / maxIMotifDensity) * 100
-        : 0,
-    }));
-  });
+      stats: motifStatsForType(category, this.g4Type()),
+    })),
+  );
+  readonly strengthBoxPlots = computed<readonly StrengthBoxPlotView[]>(() =>
+    (
+      [
+        { key: 'score', title: 'Score' },
+        { key: 'tetrads', title: 'Tetrads' },
+        { key: 'length', title: 'Length' },
+      ] as const
+    ).map((metric) => this.createStrengthBoxPlot(metric.key, metric.title)),
+  );
   readonly hasStatistics = computed(() => this.statistics().windows.length > 0);
 
   changeG4Type(value: G4Type): void {
@@ -568,6 +661,23 @@ export class PositionDistributionComponent {
 
   changeFlankWindow(value: G4FlankWindow): void {
     this.flankWindowChange.emit(value);
+  }
+
+  isSummaryCategoryVisible(key: string): boolean {
+    return this.summaryVisibleCategoryKeys().includes(key);
+  }
+
+  changeSummaryCategoryVisibility(key: string, checked: boolean): void {
+    this.summaryVisibleCategoryKeys.update((keys) => {
+      if (checked) {
+        return keys.includes(key) ? keys : [...keys, key];
+      }
+      return keys.filter((currentKey) => currentKey !== key);
+    });
+  }
+
+  motifStats(category: PositionStatisticsCategoryView): G4PositionMotifStats {
+    return motifStatsForType(category, this.g4Type());
   }
 
   onMinScoreInput(event: Event): void {
@@ -655,13 +765,11 @@ export class PositionDistributionComponent {
   }
 
   private summaryDoughnutTooltipLabel(context: TooltipItem<'doughnut'>): string {
-    const category = this.categoryRows()[context.dataIndex];
-    if (!category) {
+    const segment = this.summaryDoughnutSegments()[context.dataIndex];
+    if (!segment) {
       return '';
     }
-    return `${category.displayLabel}: ${formatCount(category.count)} (${formatRatio(
-      category.ratio,
-    )})`;
+    return `${segment.label}: ${formatCount(segment.count)} (${formatRatio(segment.ratio)})`;
   }
 
   private geneBiotypeDoughnutTooltipLabel(context: TooltipItem<'doughnut'>): string {
@@ -686,14 +794,66 @@ export class PositionDistributionComponent {
     window: G4PositionStatisticsWindow,
   ): readonly PositionStatisticsCategoryView[] {
     return window.categories.map((category) => {
-      const displayText = categoryDisplayText(category, formatWindowLabel(window.window_bp));
+      const displayText = categoryDisplayText(category);
       return {
         ...category,
         ...displayText,
         color: POSITION_CATEGORY_COLORS[category.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
-        window_bp: window.window_bp,
-        windowLabel: formatWindowLabel(window.window_bp),
       };
     });
+  }
+
+  private createStrengthBoxPlot(key: StrengthBoxPlotKey, title: string): StrengthBoxPlotView {
+    const metricRows = this.strengthRows()
+      .map((row) => {
+        const values = completeBoxPlotValues(row.stats, key);
+        return values
+          ? {
+              row,
+              values,
+            }
+          : null;
+      })
+      .filter(
+        (
+          row,
+        ): row is { row: PositionStrengthRow; values: [number, number, number, number, number] } =>
+          row !== null,
+      );
+
+    const flatValues = metricRows.flatMap((row) => row.values);
+    const domainMin = Math.min(...flatValues);
+    const domainMax = Math.max(...flatValues);
+
+    return {
+      key,
+      title,
+      minLabel: flatValues.length ? formatNullableNumber(domainMin) : 'N/A',
+      maxLabel: flatValues.length ? formatNullableNumber(domainMax) : 'N/A',
+      rows: metricRows.map(({ row, values }) => {
+        const [minValue, q1Value, medianValue, p75Value, maxValue] = values;
+        const minX = scaledBoxPlotX(minValue, domainMin, domainMax);
+        const q1X = scaledBoxPlotX(q1Value, domainMin, domainMax);
+        const medianX = scaledBoxPlotX(medianValue, domainMin, domainMax);
+        const p75X = scaledBoxPlotX(p75Value, domainMin, domainMax);
+        const maxX = scaledBoxPlotX(maxValue, domainMin, domainMax);
+        return {
+          key: row.category.key,
+          label: row.category.displayLabel,
+          color: row.category.color,
+          minValue,
+          q1Value,
+          medianValue,
+          p75Value,
+          maxValue,
+          minX,
+          q1X,
+          medianX,
+          p75X,
+          maxX,
+          boxWidth: Math.max(1, p75X - q1X),
+        };
+      }),
+    };
   }
 }
