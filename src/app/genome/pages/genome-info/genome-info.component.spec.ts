@@ -483,6 +483,17 @@ describe('GenomeInfoComponent', () => {
     );
   });
 
+  it('ignores invalid g4 type toggle values', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+
+    component.selectG4Type(null);
+    fixture.detectChanges();
+
+    expect(component.g4Type()).toBe('g4');
+    expect(component.defaultGenePosition()).toBe(G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value);
+  });
+
   it('uses seqid-scoped browse by default and initializes chart/JBrowse to full seqid range', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;

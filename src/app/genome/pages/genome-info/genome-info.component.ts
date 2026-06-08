@@ -128,6 +128,10 @@ const SORTABLE_COLUMNS: Record<string, G4SortField> = {
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const WHOLE_GENOME_SCOPE = 'whole-genome';
 const CHART_TARGET_BUCKETS = 200;
+
+function isG4Type(value: unknown): value is G4Type {
+  return value === 'g4' || value === 'i-motif';
+}
 const CHART_FOCUS_HALF_WINDOW_BP = 5000;
 const TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP = 100;
 const GENE_SEARCH_FOCUS_HALF_WINDOW_BP = 1000;
@@ -930,7 +934,11 @@ export class GenomeInfoComponent {
     this.accessionFilter.set('');
   }
 
-  selectG4Type(type: G4Type): void {
+  selectG4Type(type: unknown): void {
+    if (!isG4Type(type)) {
+      return;
+    }
+
     if (type === this.g4Type()) {
       return;
     }
