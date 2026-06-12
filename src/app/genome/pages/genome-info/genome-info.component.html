@@ -140,125 +140,136 @@
             </div>
 
             <form class="filters" aria-label="G4/i-motif filters" (submit)="submitFilters($event)">
-              <section class="filter-group filter-group-gene" aria-labelledby="gene-filter-title">
+              <section
+                class="filter-group filter-group-explorer"
+                aria-labelledby="explorer-filter-title"
+              >
                 <div class="filter-group-header">
-                  <p class="filter-group-eyebrow">Gene filter</p>
-                  <h3 id="gene-filter-title" class="filter-group-title">
-                    Find genes around each G4 or i-motif
-                  </h3>
-                  <p class="filter-group-description">
-                    Choose where the gene sits relative to the selected G4 or i-motif, then search
-                    by feature ID, gene name, or locus tag across the current assembly.
-                  </p>
-                </div>
-
-                <div class="filter-group-fields">
-                  <mat-form-field appearance="outline" class="filter-field filter-field-scope">
-                    <mat-label>Search scope</mat-label>
-                    <mat-select [formField]="filterForm.selectedPosition">
-                      @for (option of genePositionOptions(); track option.value) {
-                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                      }
-                    </mat-select>
-                    <mat-hint
-                      >Defines where the matched gene sits relative to the selected G4 or
-                      i-motif.</mat-hint
-                    >
-                  </mat-form-field>
-
-                  <mat-form-field
-                    appearance="outline"
-                    class="filter-field filter-field-gene-search"
-                  >
-                    <mat-label>Gene keyword</mat-label>
-                    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-                    <input
-                      matInput
-                      type="search"
-                      autocomplete="off"
-                      spellcheck="false"
-                      placeholder="Feature ID, gene name, or locus tag…"
-                      [value]="draftGeneInput()"
-                      [matAutocomplete]="geneAuto"
-                      (input)="onGeneInput($event)"
-                    />
-                    <mat-autocomplete
-                      #geneAuto="matAutocomplete"
-                      [displayWith]="displayGeneCandidate"
-                      autoActiveFirstOption
-                      (optionSelected)="onGeneCandidateSelected($event)"
-                    >
-                      @for (
-                        candidate of geneCandidates();
-                        track trackByGeneCandidate($index, candidate)
-                      ) {
-                        <mat-option [value]="candidate">{{
-                          geneOptionLabel(candidate)
-                        }}</mat-option>
-                      }
-                      @if (showGeneCandidateEmptyState()) {
-                        <mat-option disabled>No matching genes found.</mat-option>
-                      }
-                    </mat-autocomplete>
-                    @if (geneInputError(); as errorMessage) {
-                      <mat-error>{{ errorMessage }}</mat-error>
-                    } @else {
-                      <mat-hint>{{ geneSearchScopeHint() }}</mat-hint>
-                    }
-                  </mat-form-field>
-                </div>
-              </section>
-
-              <section class="filter-group filter-group-motif" aria-labelledby="motif-filter-title">
-                <div class="filter-group-header">
-                  <p class="filter-group-eyebrow">Motif filter</p>
-                  <h3 id="motif-filter-title" class="filter-group-title">
+                  <p class="filter-group-eyebrow">Explorer filters</p>
+                  <h3 id="explorer-filter-title" class="filter-group-title">
                     Filter G4 and i-motif sites
                   </h3>
                   <p class="filter-group-description">
-                    Limit the explorer table by tetrad count and score range, then submit to refresh
-                    the listed motif sites.
+                    Combine gene context, tetrad count, and score range filters, then submit once
+                    to refresh the explorer table.
                   </p>
                 </div>
 
-                <div class="filter-group-fields filter-group-fields-motif">
-                  <mat-form-field appearance="outline" class="filter-field">
-                    <mat-label>Tetrads</mat-label>
-                    <mat-select [formField]="filterForm.selectedTetrads" multiple>
-                      @for (option of g4Page().tetrads_list; track option) {
-                        <mat-option [value]="option">{{ option }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                <div class="filter-subsections">
+                  <section class="filter-subsection" aria-labelledby="gene-filter-title">
+                    <div class="filter-subsection-header">
+                      <h4 id="gene-filter-title" class="filter-subsection-title">Gene filter</h4>
+                      <p class="filter-subsection-description">
+                        Choose where the gene sits relative to the selected G4 or i-motif, then
+                        search by feature ID, gene name, or locus tag.
+                      </p>
+                    </div>
 
-                  <mat-form-field appearance="outline" class="filter-field">
-                    <mat-label>Min score</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      inputmode="numeric"
-                      step="1"
-                      placeholder="{{ g4Page().min_score }}"
-                      [formField]="filterForm.minScore"
-                    />
-                  </mat-form-field>
+                    <div class="filter-group-fields">
+                      <mat-form-field appearance="outline" class="filter-field filter-field-scope">
+                        <mat-label>Search scope</mat-label>
+                        <mat-select [formField]="filterForm.selectedPosition">
+                          @for (option of genePositionOptions(); track option.value) {
+                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                          }
+                        </mat-select>
+                        <mat-hint
+                          >Defines where the matched gene sits relative to the selected G4 or
+                          i-motif.</mat-hint
+                        >
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="filter-field">
-                    <mat-label>Max score</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      inputmode="numeric"
-                      step="1"
-                      placeholder="{{ g4Page().max_score }}"
-                      [formField]="filterForm.maxScore"
-                    />
-                  </mat-form-field>
+                      <mat-form-field
+                        appearance="outline"
+                        class="filter-field filter-field-gene-search"
+                      >
+                        <mat-label>Gene keyword</mat-label>
+                        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                        <input
+                          matInput
+                          type="search"
+                          autocomplete="off"
+                          spellcheck="false"
+                          placeholder="Feature ID, gene name, or locus tag…"
+                          [value]="draftGeneInput()"
+                          [matAutocomplete]="geneAuto"
+                          (input)="onGeneInput($event)"
+                        />
+                        <mat-autocomplete
+                          #geneAuto="matAutocomplete"
+                          [displayWith]="displayGeneCandidate"
+                          autoActiveFirstOption
+                          (optionSelected)="onGeneCandidateSelected($event)"
+                        >
+                          @for (
+                            candidate of geneCandidates();
+                            track trackByGeneCandidate($index, candidate)
+                          ) {
+                            <mat-option [value]="candidate">{{
+                              geneOptionLabel(candidate)
+                            }}</mat-option>
+                          }
+                          @if (showGeneCandidateEmptyState()) {
+                            <mat-option disabled>No matching genes found.</mat-option>
+                          }
+                        </mat-autocomplete>
+                        @if (geneInputError(); as errorMessage) {
+                          <mat-error>{{ errorMessage }}</mat-error>
+                        } @else {
+                          <mat-hint>{{ geneSearchScopeHint() }}</mat-hint>
+                        }
+                      </mat-form-field>
+                    </div>
+                  </section>
 
-                  <div class="filter-actions">
-                    <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
-                    <button mat-flat-button type="submit">Submit</button>
-                  </div>
+                  <section class="filter-subsection" aria-labelledby="motif-filter-title">
+                    <div class="filter-subsection-header">
+                      <h4 id="motif-filter-title" class="filter-subsection-title">Motif filter</h4>
+                      <p class="filter-subsection-description">
+                        Limit motif sites by tetrad count and score range.
+                      </p>
+                    </div>
+
+                    <div class="filter-group-fields filter-group-fields-motif">
+                      <mat-form-field appearance="outline" class="filter-field">
+                        <mat-label>Tetrads</mat-label>
+                        <mat-select [formField]="filterForm.selectedTetrads" multiple>
+                          @for (option of g4Page().tetrads_list; track option) {
+                            <mat-option [value]="option">{{ option }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="filter-field">
+                        <mat-label>Min score</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          inputmode="numeric"
+                          step="1"
+                          placeholder="{{ g4Page().min_score }}"
+                          [formField]="filterForm.minScore"
+                        />
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="filter-field">
+                        <mat-label>Max score</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          inputmode="numeric"
+                          step="1"
+                          placeholder="{{ g4Page().max_score }}"
+                          [formField]="filterForm.maxScore"
+                        />
+                      </mat-form-field>
+                    </div>
+                  </section>
+                </div>
+
+                <div class="filter-actions">
+                  <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
+                  <button mat-flat-button type="submit">Submit</button>
                 </div>
               </section>
             </form>

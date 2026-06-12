@@ -135,9 +135,28 @@
   gap: 4px;
 }
 
+.filter-subsections {
+  display: grid;
+  gap: 16px;
+}
+
+.filter-subsection {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.filter-subsection-header {
+  display: grid;
+  gap: 4px;
+}
+
 .filter-group-eyebrow,
 .filter-group-title,
-.filter-group-description {
+.filter-group-description,
+.filter-subsection-title,
+.filter-subsection-description {
   margin: 0;
 }
 
@@ -152,7 +171,17 @@
   font: var(--mat-sys-title-medium);
 }
 
+.filter-subsection-title {
+  font: var(--mat-sys-title-small);
+}
+
 .filter-group-description {
+  max-width: 70ch;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.filter-subsection-description {
   max-width: 70ch;
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
@@ -165,7 +194,7 @@
 }
 
 .filter-group-fields-motif {
-  grid-template-columns: repeat(3, minmax(160px, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
 }
 
 .filter-field {
