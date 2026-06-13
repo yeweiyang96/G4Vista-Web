@@ -533,6 +533,7 @@ describe('GenomeInfoComponent', () => {
         tetrads: [],
         minScore: undefined,
         maxScore: undefined,
+        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
@@ -594,6 +595,7 @@ describe('GenomeInfoComponent', () => {
         tetrads: [3],
         minScore: 12,
         maxScore: 40,
+        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
@@ -622,6 +624,7 @@ describe('GenomeInfoComponent', () => {
         tetrads: [],
         minScore: undefined,
         maxScore: undefined,
+        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
@@ -657,6 +660,7 @@ describe('GenomeInfoComponent', () => {
         g4Type: 'g4',
         flankWindow: 500,
         tetrads: [],
+        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
@@ -682,6 +686,7 @@ describe('GenomeInfoComponent', () => {
         g4Type: 'i-motif',
         flankWindow: 500,
         tetrads: [],
+        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(

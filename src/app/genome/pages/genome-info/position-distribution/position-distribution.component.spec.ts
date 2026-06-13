@@ -63,13 +63,13 @@ describe('PositionDistributionComponent', () => {
     ...EMPTY_G4_POSITION_DISTRIBUTION,
     assembly_accession: 'GCF_1',
     g4_type: 'g4',
-    total_count: 4,
+    total_count: 5,
     categories: [
       {
         key: 'gene_inside',
         label: 'Gene inside',
         count: 2,
-        ratio: 0.5,
+        ratio: 0.4,
         precedence_rank: 1,
         description: 'Inside gene',
       },
@@ -77,9 +77,17 @@ describe('PositionDistributionComponent', () => {
         key: 'gene_upstream',
         label: 'Gene upstream',
         count: 1,
-        ratio: 0.25,
+        ratio: 0.2,
         precedence_rank: 2,
         description: 'Upstream gene',
+      },
+      {
+        key: 'gene_downstream',
+        label: 'Gene downstream',
+        count: 1,
+        ratio: 0.2,
+        precedence_rank: 3,
+        description: 'Downstream gene',
       },
       {
         key: 'non_feature',
@@ -94,13 +102,13 @@ describe('PositionDistributionComponent', () => {
       {
         bio_type: 'protein_coding',
         display_label: 'protein_coding',
-        total_count: 3,
+        total_count: 4,
         categories: [
           {
             key: 'gene_inside',
             label: 'Gene inside',
             count: 2,
-            ratio: 2 / 3,
+            ratio: 0.5,
             precedence_rank: 1,
             description: 'Inside gene',
           },
@@ -108,9 +116,32 @@ describe('PositionDistributionComponent', () => {
             key: 'gene_upstream',
             label: 'Gene upstream',
             count: 1,
-            ratio: 1 / 3,
+            ratio: 0.25,
             precedence_rank: 2,
             description: 'Upstream gene',
+          },
+          {
+            key: 'gene_downstream',
+            label: 'Gene downstream',
+            count: 1,
+            ratio: 0.25,
+            precedence_rank: 3,
+            description: 'Downstream gene',
+          },
+        ],
+      },
+      {
+        bio_type: null,
+        display_label: 'Unspecified gene biotype',
+        total_count: 1,
+        categories: [
+          {
+            key: 'non_feature',
+            label: 'Non-feature',
+            count: 1,
+            ratio: 1,
+            precedence_rank: 5,
+            description: 'No feature assignment',
           },
         ],
       },
@@ -254,7 +285,7 @@ describe('PositionDistributionComponent', () => {
     expect(header.querySelector('.position-filter-form')).not.toBeNull();
   });
 
-  it('renders the Summary doughnut and merges unchecked categories into Other categories', () => {
+  it('renders the Summary doughnut with only visible gene-context categories', () => {
     const panel = activeTabPanel();
     const component = fixture.componentInstance;
 
@@ -265,7 +296,7 @@ describe('PositionDistributionComponent', () => {
     expect(component.summaryDoughnutData().labels).toEqual([
       'In genes',
       'Upstream flank',
-      'Outside annotations',
+      'Downstream flank',
     ]);
 
     component.changeSummaryCategoryVisibility('gene_upstream', false);
@@ -273,14 +304,18 @@ describe('PositionDistributionComponent', () => {
 
     expect(component.summaryDoughnutData().labels).toEqual([
       'In genes',
-      'Outside annotations',
+      'Downstream flank',
       'Other categories',
     ]);
     expect(component.summaryDoughnutData().datasets[0].data).toEqual([2, 1, 1]);
     expect(panel.textContent).toContain('Chart categories');
     expect(panel.textContent).toContain('In genes');
     expect(panel.textContent).toContain('Upstream flank');
-    expect(panel.textContent).toContain('Outside annotations');
+    expect(panel.textContent).toContain('Downstream flank');
+    expect(panel.textContent).not.toContain('Outside annotations');
+    expect(panel.textContent).not.toContain('Other annotations');
+    expect(panel.textContent).not.toContain('Unspecified gene biotype');
+    expect(panel.textContent).not.toContain('Other annotation feature types');
   });
 
   it('shows Density columns for only the selected motif type', async () => {
@@ -332,6 +367,23 @@ describe('PositionDistributionComponent', () => {
     expect(component.strengthBoxPlots()[0].rows[0].p75Value).toBe(30);
   });
 
+  it('filters unspecified biotype rows and hidden biotype category columns', () => {
+    const component = fixture.componentInstance;
+
+    expect(component.geneBiotypeCategoryColumns.map((column) => column.label)).toEqual([
+      'In genes',
+      'Upstream flank',
+      'Downstream flank',
+    ]);
+    expect(component.geneBiotypeBreakdown().map((row) => row.display_label)).toEqual([
+      'protein_coding',
+    ]);
+    expect(component.geneBiotypeBreakdown()[0].total_count).toBe(4);
+    expect(
+      component.geneBiotypeBreakdown()[0].categories.map((category) => category.value),
+    ).toEqual(['2 (50%)', '1 (25%)', '1 (25%)']);
+  });
+
   it('uses biotype-only tooltip titles for the outer gene biotype ring', () => {
     const component = fixture.componentInstance;
     const tooltipOptions = component.geneBiotypeDoughnutOptions.plugins?.tooltip;
@@ -346,10 +398,10 @@ describe('PositionDistributionComponent', () => {
     const tooltipModel = {} as TooltipModel<'doughnut'>;
 
     expect(callbacks?.title?.call(tooltipModel, [outerContext])).toBe('protein_coding');
-    expect(callbacks?.label?.call(tooltipModel, outerContext)).toBe('Total: 3 (100%)');
+    expect(callbacks?.label?.call(tooltipModel, outerContext)).toBe('Total: 4 (100%)');
     expect(callbacks?.title?.call(tooltipModel, [innerContext])).toBe(
       'protein_coding / Upstream flank',
     );
-    expect(callbacks?.label?.call(tooltipModel, innerContext)).toBe('1 (33.3%)');
+    expect(callbacks?.label?.call(tooltipModel, innerContext)).toBe('1 (25%)');
   });
 });

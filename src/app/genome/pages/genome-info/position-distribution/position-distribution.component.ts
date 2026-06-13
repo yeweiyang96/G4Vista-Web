@@ -14,7 +14,6 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { BaseChartDirective } from 'ng2-charts';
 import {
   G4FlankWindow,
-  G4FeatureBreakdownItem,
   G4GeneBiotypePositionBreakdown,
   G4_FLANK_WINDOW_OPTIONS,
   G4PositionCategory,
@@ -68,6 +67,13 @@ interface GeneBiotypeBreakdownView extends Omit<G4GeneBiotypePositionBreakdown, 
   categories: readonly GeneBiotypeCategoryCell[];
 }
 
+interface GeneBiotypeBreakdownSourceRow {
+  readonly bio_type: string;
+  readonly display_label: string;
+  readonly total_count: number;
+  readonly categories: readonly G4PositionCategory[];
+}
+
 interface PositionDistributionFilterModel {
   selectedTetrads: number[];
   minScore: string;
@@ -94,16 +100,15 @@ const POSITION_CATEGORY_COLORS: Record<string, string> = {
   gene_inside: '#2a6f68',
   gene_upstream: '#b75f2a',
   gene_downstream: '#6f5ba7',
-  other_root_non_gene_feature: '#b33f62',
-  non_feature: '#58606f',
 };
-const POSITION_CATEGORY_KEYS = [
+const DISPLAYED_POSITION_CATEGORY_KEYS = [
   'gene_inside',
   'gene_upstream',
   'gene_downstream',
-  'other_root_non_gene_feature',
-  'non_feature',
 ] as const;
+const DISPLAYED_POSITION_CATEGORY_KEY_SET: ReadonlySet<string> = new Set<string>(
+  DISPLAYED_POSITION_CATEGORY_KEYS,
+);
 const FALLBACK_POSITION_CATEGORY_COLOR = '#5f6368';
 const MERGED_SUMMARY_CATEGORY_COLOR = '#87919f';
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
@@ -137,8 +142,6 @@ const GENE_BIOTYPE_CATEGORY_COLUMNS = [
   { key: 'gene_inside', label: 'In genes' },
   { key: 'gene_upstream', label: 'Upstream flank' },
   { key: 'gene_downstream', label: 'Downstream flank' },
-  { key: 'other_root_non_gene_feature', label: 'Other annotations' },
-  { key: 'non_feature', label: 'Outside annotations' },
 ] as const;
 const GENE_BIOTYPE_COLORS = [
   '#3f6c8a',
@@ -178,18 +181,6 @@ function categoryDisplayText(
         displayLabel: 'Downstream flank',
         displayDescription: 'Predicted motif sites in the selected downstream gene flank.',
       };
-    case 'other_root_non_gene_feature':
-      return {
-        displayLabel: 'Other annotations',
-        displayDescription:
-          'Predicted motif sites assigned to parentless non-gene annotations such as promoters or repeat regions.',
-      };
-    case 'non_feature':
-      return {
-        displayLabel: 'Outside annotations',
-        displayDescription:
-          'Predicted motif sites outside genes, selected gene flanks, and other annotations.',
-      };
     default:
       return {
         displayLabel: category.label,
@@ -210,13 +201,47 @@ function summaryChartLabel(category: Pick<G4PositionCategory, 'key' | 'label'>):
       return 'Upstream flank';
     case 'gene_downstream':
       return 'Downstream flank';
-    case 'other_root_non_gene_feature':
-      return 'Other annotations';
-    case 'non_feature':
-      return 'Outside annotations';
     default:
       return category.label;
   }
+}
+
+function isDisplayedPositionCategoryKey(key: string): boolean {
+  return DISPLAYED_POSITION_CATEGORY_KEY_SET.has(key);
+}
+
+function normalizedOptionalText(value: string | null): string | null {
+  const normalizedValue = value?.trim() ?? '';
+  return normalizedValue ? normalizedValue : null;
+}
+
+function displayedCategoryTotal(
+  categories: readonly G4PositionCategory[],
+  columns: readonly { key: string }[],
+): number {
+  return columns.reduce((sum, column) => sum + categoryCount(categories, column.key), 0);
+}
+
+function createGeneBiotypeSourceRow(
+  row: G4GeneBiotypePositionBreakdown,
+  columns: readonly { key: string }[],
+): GeneBiotypeBreakdownSourceRow | null {
+  const bioType = normalizedOptionalText(row.bio_type);
+  if (!bioType) {
+    return null;
+  }
+
+  const totalCount = displayedCategoryTotal(row.categories, columns);
+  if (totalCount <= 0) {
+    return null;
+  }
+
+  return {
+    bio_type: bioType,
+    display_label: normalizedOptionalText(row.display_label) ?? bioType,
+    total_count: totalCount,
+    categories: row.categories,
+  };
 }
 
 function formatCount(value: number): string {
@@ -346,7 +371,7 @@ export class PositionDistributionComponent {
   readonly applyFilters = output<void>();
   readonly resetFilters = output<void>();
   readonly flankWindowOptions = G4_FLANK_WINDOW_OPTIONS;
-  readonly summaryVisibleCategoryKeys = signal<string[]>([...POSITION_CATEGORY_KEYS]);
+  readonly summaryVisibleCategoryKeys = signal<string[]>([...DISPLAYED_POSITION_CATEGORY_KEYS]);
   readonly formatCount = formatCount;
   readonly formatRatio = formatRatio;
   readonly formatNullableNumber = formatNullableNumber;
@@ -440,19 +465,28 @@ export class PositionDistributionComponent {
     },
   };
 
-  readonly categoryRows = computed<readonly PositionCategoryView[]>(() =>
-    this.distribution().categories.map((category) => {
+  readonly categoryRows = computed<readonly PositionCategoryView[]>(() => {
+    const categories = this.distribution().categories.filter((category) =>
+      isDisplayedPositionCategoryKey(category.key),
+    );
+    const total = categories.reduce((sum, category) => sum + category.count, 0);
+
+    return categories.map((category) => {
       const displayText = categoryDisplayText(category);
       return {
         ...category,
         ...displayText,
+        ratio: total ? category.count / total : 0,
         color: POSITION_CATEGORY_COLORS[category.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
       };
-    }),
+    });
+  });
+  readonly displayedPositionTotal = computed(() =>
+    this.categoryRows().reduce((sum, category) => sum + category.count, 0),
   );
   readonly summaryDoughnutSegments = computed<readonly SummaryDoughnutSegment[]>(() => {
     const selectedKeys = new Set(this.summaryVisibleCategoryKeys());
-    const total = this.distribution().total_count;
+    const total = this.displayedPositionTotal();
     const separateSegments: SummaryDoughnutSegment[] = [];
     let mergedCount = 0;
 
@@ -462,7 +496,7 @@ export class PositionDistributionComponent {
           key: category.key,
           label: summaryChartLabel(category),
           count: category.count,
-          ratio: category.ratio,
+          ratio: total ? category.count / total : 0,
           color: category.color,
         });
         continue;
@@ -497,9 +531,6 @@ export class PositionDistributionComponent {
       ],
     };
   });
-  readonly featureBreakdown = computed<readonly G4FeatureBreakdownItem[]>(() =>
-    this.distribution().feature_breakdown.slice(0, 12),
-  );
   readonly geneBiotypeCategoryColumns = GENE_BIOTYPE_CATEGORY_COLUMNS.map((column) => ({
     ...column,
     color: POSITION_CATEGORY_COLORS[column.key] ?? FALLBACK_POSITION_CATEGORY_COLOR,
@@ -508,13 +539,13 @@ export class PositionDistributionComponent {
     this.geneBiotypeBreakdownSource().map((row, index) => {
       return {
         bio_type: row.bio_type,
-        display_label: row.display_label || row.bio_type || 'Unspecified gene biotype',
+        display_label: row.display_label,
         total_count: row.total_count,
         color: GENE_BIOTYPE_COLORS[index % GENE_BIOTYPE_COLORS.length],
         categories: this.geneBiotypeCategoryColumns.map((column) => {
           const category = row.categories.find((item) => item.key === column.key);
           const count = category?.count ?? 0;
-          const ratio = category?.ratio ?? 0;
+          const ratio = row.total_count ? count / row.total_count : 0;
           return {
             key: column.key,
             label: column.label,
@@ -570,7 +601,11 @@ export class PositionDistributionComponent {
     };
   });
   private readonly geneBiotypeBreakdownSource = computed(() =>
-    [...this.distribution().gene_biotype_breakdown]
+    this.distribution()
+      .gene_biotype_breakdown.map((row) =>
+        createGeneBiotypeSourceRow(row, this.geneBiotypeCategoryColumns),
+      )
+      .filter((row): row is GeneBiotypeBreakdownSourceRow => row !== null)
       .sort((a, b) => {
         const totalComparison = b.total_count - a.total_count;
         if (totalComparison !== 0) {
@@ -581,22 +616,19 @@ export class PositionDistributionComponent {
       .slice(0, 12),
   );
   readonly summaryMetrics = computed<readonly PositionSummaryMetric[]>(() => {
-    const distribution = this.distribution();
-    const categories = distribution.categories;
-    const total = distribution.total_count;
+    const categories = this.distribution().categories;
+    const total = this.displayedPositionTotal();
     const geneInside = categoryCount(categories, 'gene_inside');
     const upstream = categoryCount(categories, 'gene_upstream');
     const downstream = categoryCount(categories, 'gene_downstream');
-    const otherFeature = categoryCount(categories, 'other_root_non_gene_feature');
-    const nonFeature = categoryCount(categories, 'non_feature');
     const regulatoryNeighborhood = upstream + downstream;
 
     return [
       {
         key: 'total',
-        label: `${this.motifTypeShortLabel()} sites`,
+        label: `${this.motifTypeShortLabel()} gene-context sites`,
         value: formatCount(total),
-        detail: 'Whole genome, all accessions',
+        detail: `Visible gene categories within ${this.flankWindowLabel()}`,
       },
       {
         key: 'gene',
@@ -610,16 +642,12 @@ export class PositionDistributionComponent {
         value: formatRatio(total ? regulatoryNeighborhood / total : 0),
         detail: `${formatCount(regulatoryNeighborhood)} sites within ${this.flankWindowLabel()}`,
       },
-      {
-        key: 'non-feature',
-        label: 'Outside annotations',
-        value: formatRatio(total ? nonFeature / total : 0),
-        detail: `${formatCount(nonFeature)} outside; ${formatCount(otherFeature)} in other annotations`,
-      },
     ];
   });
   readonly statisticsRows = computed<readonly PositionStatisticsCategoryView[]>(() =>
-    this.statistics().windows.flatMap((window) => this.statisticsWindowRows(window)),
+    this.statistics()
+      .windows.flatMap((window) => this.statisticsWindowRows(window))
+      .filter((category) => isDisplayedPositionCategoryKey(category.key)),
   );
   readonly strengthRows = computed<readonly PositionStrengthRow[]>(() =>
     this.statisticsRows().map((category) => ({
@@ -636,7 +664,7 @@ export class PositionDistributionComponent {
       ] as const
     ).map((metric) => this.createStrengthBoxPlot(metric.key, metric.title)),
   );
-  readonly hasStatistics = computed(() => this.statistics().windows.length > 0);
+  readonly hasStatistics = computed(() => this.statisticsRows().length > 0);
 
   changeG4Type(value: G4Type): void {
     this.g4TypeChange.emit(value);

@@ -638,7 +638,7 @@ export class GenomeInfoComponent {
         maxScore: this.positionDistributionFilters().maxScore,
         overlap: false,
         flankWindow: this.positionDistributionFlankWindow(),
-        includeFeatureBreakdown: true,
+        includeFeatureBreakdown: false,
       };
     },
     stream: ({ params }) => {

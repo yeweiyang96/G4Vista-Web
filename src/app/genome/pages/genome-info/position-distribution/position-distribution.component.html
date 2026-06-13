@@ -98,7 +98,7 @@
             </div>
           } @else if (errorMessage()) {
             <p class="state" role="status">{{ errorMessage() }}</p>
-          } @else if (distribution().total_count > 0) {
+          } @else if (displayedPositionTotal() > 0) {
             <div class="summary-grid">
               <div class="summary-chart-panel">
                 <div class="pie-wrap" aria-label="Whole-genome motif position summary chart">
@@ -251,30 +251,6 @@
               </section>
             }
 
-            @if (featureBreakdown().length > 0) {
-              <section class="feature-breakdown" aria-label="Other annotation feature breakdown">
-                <h3 class="breakdown-title">Other annotation feature types</h3>
-                <div class="feature-breakdown-table">
-                  <div class="feature-breakdown-row feature-breakdown-header">
-                    <span>Feature</span>
-                    <span
-                      matTooltip="Count of deduplicated motif sites assigned to this feature type."
-                      matTooltipPosition="above"
-                      >Sites</span
-                    >
-                    <span>Share</span>
-                  </div>
-                  @for (feature of featureBreakdown(); track feature.feature_type) {
-                    <div class="feature-breakdown-row">
-                      <span class="feature-breakdown-name">{{ feature.feature_type }}</span>
-                      <span>{{ formatCount(feature.unique_g4_count) }}</span>
-                      <span>{{ formatRatio(feature.ratio_of_total) }}</span>
-                    </div>
-                  }
-                </div>
-              </section>
-            }
-
             @if (distribution().quality.warnings.length > 0) {
               <div class="warnings" role="status">
                 @for (warning of distribution().quality.warnings; track warning) {
@@ -283,7 +259,13 @@
               </div>
             }
           } @else {
-            <p class="state" role="status">No whole-genome motif site counts are available.</p>
+            <p class="state" role="status">
+              {{
+                distribution().total_count > 0
+                  ? 'No gene-context motif site counts are available.'
+                  : 'No whole-genome motif site counts are available.'
+              }}
+            </p>
           }
         </section>
       </mat-tab>
