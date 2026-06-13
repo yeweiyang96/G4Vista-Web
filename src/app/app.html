@@ -15,38 +15,46 @@
     </button>
     <div class="flex-spacer"></div>
 
-    <button mat-icon-button (click)="toggleTheme()" aria-label="Toggle Theme" class="theme-button">
-      <mat-icon class="icon">{{ theme() }}</mat-icon>
-    </button>
-    <a
-      mat-button
-      class="navbar-items"
-      href="https://github.com"
-      aria-label="GitHub Repository"
-      target="_blank"
-    >
-      <mat-icon
-        class="icon"
-        svgIcon="github"
-        aria-hidden="false"
-        aria-label="Github SVG icon"
-      ></mat-icon>
-      GitHub
-    </a>
-    <a
-      mat-icon-button
-      class="small-screen"
-      href="https://github.com"
-      aria-label="GitHub Repository"
-      target="_blank"
-    >
-      <mat-icon
-        class="icon"
-        svgIcon="github"
-        aria-hidden="false"
-        aria-label="Github SVG icon"
-      ></mat-icon>
-    </a>
+    <div class="navbar-actions">
+      <a mat-button class="navbar-items" routerLink="/help" routerLinkActive="selected">Help</a>
+      <button
+        mat-icon-button
+        (click)="toggleTheme()"
+        aria-label="Toggle Theme"
+        class="theme-button"
+      >
+        <mat-icon class="icon">{{ theme() }}</mat-icon>
+      </button>
+      <a
+        mat-button
+        class="navbar-items"
+        href="https://github.com"
+        aria-label="GitHub Repository"
+        target="_blank"
+      >
+        <mat-icon
+          class="icon"
+          svgIcon="github"
+          aria-hidden="false"
+          aria-label="Github SVG icon"
+        ></mat-icon>
+        GitHub
+      </a>
+      <a
+        mat-icon-button
+        class="small-screen"
+        href="https://github.com"
+        aria-label="GitHub Repository"
+        target="_blank"
+      >
+        <mat-icon
+          class="icon"
+          svgIcon="github"
+          aria-hidden="false"
+          aria-label="Github SVG icon"
+        ></mat-icon>
+      </a>
+    </div>
   </nav>
   <mat-menu #researchMenu="matMenu">
     @for (section of researchSections; track section.route) {
@@ -66,10 +74,35 @@
       Research
       <mat-icon iconPositionEnd>expand_more</mat-icon>
     </button>
+    <a mat-button class="navbar-link" routerLink="/help" routerLinkActive="selected">Help</a>
   </nav>
 </header>
 
+@if (showGuideHint()) {
+  <aside class="help-hint" aria-label="Help guidance is available">
+    <div>
+      <strong>Need help on this page?</strong>
+      <span>Start a page guide or open the Help Center.</span>
+    </div>
+    <div class="help-hint-actions">
+      <a mat-button routerLink="/help" (click)="dismissHelpHint()">Help Center</a>
+      <button mat-flat-button type="button" (click)="startGuideForCurrentPage()">
+        Start guide
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Dismiss help hint"
+        (click)="dismissHelpHint()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </aside>
+}
+
 <router-outlet />
+<app-help-tour-overlay />
 <footer class="footer">
   <div class="footer-left">
     <app-logo class="logo" />

@@ -1,11 +1,21 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { LogoComponent } from './logo/logo.component';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
+import { HelpTourOverlay } from './help/help-tour-overlay/help-tour-overlay';
+import { HelpTourService } from './help/help-tour';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type ThemeMode = 'brightness_medium' | 'dark_mode' | 'light_mode';
 const THEME_STORAGE_KEY = 'theme';
@@ -42,6 +52,7 @@ const GITHUB_ICON = `
     RouterLinkActive,
     MatIconModule,
     MatMenuModule,
+    HelpTourOverlay,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -59,6 +70,14 @@ export class App {
     { name: 'Microbial environment G4', route: '/research/microbial-environment-g4' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');
+  readonly helpTour = inject(HelpTourService);
+
+  private readonly router = inject(Router);
+
+  readonly currentUrl = signal(this.router.url);
+  readonly showGuideHint = computed(() =>
+    this.helpTour.shouldShowGuideHintForUrl(this.currentUrl()),
+  );
 
   private readonly iconRegistry = inject(MatIconRegistry);
   private readonly sanitizer = inject(DomSanitizer);
@@ -85,11 +104,28 @@ export class App {
       this.setTheme(currentTheme);
       this.saveTheme(currentTheme);
     });
+
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((event) => {
+        this.currentUrl.set(event.urlAfterRedirects);
+      });
   }
 
   toggleTheme(): void {
     this.theme.set(getNextTheme(this.theme()));
     this.hasThemePreference.set(true);
+  }
+
+  startGuideForCurrentPage(): void {
+    this.helpTour.startWorkflowForUrl(this.currentUrl());
+  }
+
+  dismissHelpHint(): void {
+    this.helpTour.dismissGuideHintForUrl(this.currentUrl());
   }
 
   private setTheme(theme: ThemeMode): void {

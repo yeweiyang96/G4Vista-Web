@@ -1,0 +1,62 @@
+@if (helpTour.currentStep(); as step) {
+  <div class="tour-root" aria-live="polite">
+    @if (highlightVisible()) {
+      <div
+        class="tour-highlight"
+        aria-hidden="true"
+        [style.top.px]="targetRect()?.top"
+        [style.left.px]="targetRect()?.left"
+        [style.width.px]="targetRect()?.width"
+        [style.height.px]="targetRect()?.height"
+      ></div>
+    }
+
+    <section
+      class="tour-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-tour-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      [style.top.px]="panelPosition().top"
+      [style.left.px]="panelPosition().left"
+      [style.width.px]="panelPosition().width"
+    >
+      <div class="tour-panel-header">
+        <span class="tour-context">
+          <mat-icon aria-hidden="true">{{ step.icon }}</mat-icon>
+          {{ helpTour.session()?.label }}
+        </span>
+        <button mat-icon-button type="button" aria-label="Close guide" (click)="closeTour()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="tour-copy">
+        <p class="tour-progress">Step {{ progressLabel() }} of {{ helpTour.stepCount() }}</p>
+        <h2 id="help-tour-title">{{ step.title }}</h2>
+        <p>{{ step.body }}</p>
+      </div>
+
+      <div class="tour-actions">
+        <button
+          mat-button
+          type="button"
+          [disabled]="!helpTour.canGoBack()"
+          (click)="previousStep()"
+        >
+          <mat-icon>arrow_back</mat-icon>
+          Back
+        </button>
+        <button mat-flat-button type="button" (click)="nextStep()">
+          {{ helpTour.currentStepIndex() + 1 === helpTour.stepCount() ? 'Finish' : 'Next' }}
+          <mat-icon iconPositionEnd>
+            {{
+              helpTour.currentStepIndex() + 1 === helpTour.stepCount() ? 'check' : 'arrow_forward'
+            }}
+          </mat-icon>
+        </button>
+      </div>
+    </section>
+  </div>
+}

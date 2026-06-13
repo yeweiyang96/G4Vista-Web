@@ -1,10 +1,10 @@
 <section class="gene-page" aria-label="Gene search">
-  <header class="page-header">
+  <header class="page-header" data-help-target="gene-header">
     <h1>Gene</h1>
     <p class="subtitle">Search by feature ID, gene ID, or gene name</p>
   </header>
 
-  <form class="search-container" (submit)="onSubmit($event)">
+  <form class="search-container" data-help-target="gene-search" (submit)="onSubmit($event)">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label for="search-box">Search</mat-label>
       <input
@@ -31,6 +31,7 @@
 
   @if (isLoading() || results().length > 0) {
     <mtx-grid
+      data-help-target="gene-results"
       class="gene-grid"
       [data]="results()"
       [columns]="columns()"

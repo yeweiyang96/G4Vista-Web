@@ -1,9 +1,9 @@
 <section class="taxonomy-page" aria-label="Taxonomy">
-  <header class="page-header">
+  <header class="page-header" data-help-target="taxonomy-header">
     <h1>Taxonomy</h1>
     <p class="subtitle">Search by taxonomic name, taxonomy ID, or anything else</p>
   </header>
-  <form>
+  <form data-help-target="taxonomy-search">
     <mat-form-field appearance="outline" class="search-bar">
       <mat-label for="search-box">Search</mat-label>
       <input
@@ -44,7 +44,7 @@
     </mat-form-field>
   </form>
 
-  <div class="page-content">
+  <div class="page-content" data-help-target="taxonomy-tree">
     @if (isDisplay()) {
       <div class="tree-head">
         <span>Taxonomic name</span>

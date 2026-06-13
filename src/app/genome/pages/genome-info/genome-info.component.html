@@ -2,7 +2,7 @@
   @if (assemblyDetail(); as assembly) {
     <div class="genome-layout">
       <div class="main-column">
-        <mat-card appearance="outlined" class="overview-card">
+        <mat-card appearance="outlined" class="overview-card" data-help-target="genome-overview">
           <mat-card-header>
             <mat-card-title>{{ assembly.asm_name || assembly.assembly_accession }}</mat-card-title>
             <mat-card-subtitle>{{ assembly.organism_name }}</mat-card-subtitle>
@@ -35,6 +35,7 @@
         </mat-card>
 
         <app-position-distribution
+          data-help-target="position-distribution"
           [distribution]="positionDistribution()"
           [isLoading]="positionDistributionResource.isLoading()"
           [errorMessage]="positionDistributionErrorMessage()"
@@ -55,7 +56,7 @@
           (resetFilters)="resetPositionDistributionFilters()"
         />
 
-        <mat-card appearance="outlined" class="explorer-card">
+        <mat-card appearance="outlined" class="explorer-card" data-help-target="g4-explorer">
           <mat-card-header>
             <mat-card-title>G4 Explorer</mat-card-title>
             <mat-card-subtitle>{{ explorerSubtitle() }}</mat-card-subtitle>
@@ -139,7 +140,12 @@
               </div>
             </div>
 
-            <form class="filters" aria-label="G4/i-motif filters" (submit)="submitFilters($event)">
+            <form
+              class="filters"
+              aria-label="G4/i-motif filters"
+              data-help-target="g4-explorer-filters"
+              (submit)="submitFilters($event)"
+            >
               <section
                 class="filter-group filter-group-explorer"
                 aria-labelledby="explorer-filter-title"
@@ -150,8 +156,8 @@
                     Filter G4 and i-motif sites
                   </h3>
                   <p class="filter-group-description">
-                    Combine gene context, tetrad count, and score range filters, then submit once
-                    to refresh the explorer table.
+                    Combine gene context, tetrad count, and score range filters, then submit once to
+                    refresh the explorer table.
                   </p>
                 </div>
 
@@ -275,6 +281,7 @@
             </form>
 
             <app-g4-table
+              data-help-target="g4-explorer-table"
               [page]="g4Page()"
               [filterScopeLabel]="selectedPositionLabel()"
               [filterSelectedGeneLabel]="submittedSelectedGeneLabel()"
@@ -328,7 +335,7 @@
           </mat-card>
         }
 
-        <mat-card appearance="outlined" class="browser-card">
+        <mat-card appearance="outlined" class="browser-card" data-help-target="genome-browser">
           <mat-card-header>
             <mat-card-title>Genome Browser</mat-card-title>
             <mat-card-subtitle>{{ viewerRegion() }}</mat-card-subtitle>

@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { NEVER, of, throwError } from 'rxjs';
 import {
   MicrobialEnvironmentG4Options,
@@ -456,9 +455,7 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(component.selectedDensityMetric()).toBe('g4_density_per_mb');
   });
 
-  it('shows a snackbar and skips submit when the known strain count is below five', () => {
-    const snackBar = (component as unknown as { snackBar: MatSnackBar }).snackBar;
-    const openSpy = spyOn(snackBar, 'open');
+  it('shows an inline notice and skips submit when the known strain count is below five', () => {
     const smallSelection: MicrobialTaxonomySearchResult = {
       rank: 'genus',
       value: 'Tiny',
@@ -471,11 +468,11 @@ describe('MicrobialEnvironmentG4Component', () => {
     component.search();
 
     expect(service.query).not.toHaveBeenCalled();
-    expect(openSpy).toHaveBeenCalledWith(
+    expect(component.errorMessage()).toBe(
       'At least 5 strains are required for analysis; current selection has 4 strains.',
-      'Dismiss',
-      { duration: 5000 },
     );
+    expect(component.result()).toBeNull();
+    expect(component.submittedQuery()).toBeNull();
   });
 
   it('shows a lightweight unavailable state when options return 503', () => {

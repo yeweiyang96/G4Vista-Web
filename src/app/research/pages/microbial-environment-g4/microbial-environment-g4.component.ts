@@ -1,4 +1,3 @@
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -8,6 +7,7 @@ import {
   computed,
   DestroyRef,
   ElementRef,
+  HostListener,
   inject,
   OnDestroy,
   signal,
@@ -27,7 +27,6 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -139,6 +138,7 @@ const CHART_QUERY_BEHAVIOR: QueryExecutionBehavior = {
 };
 const VEGA_CHART_PADDING: VegaChartPadding = { left: 64, right: 24, top: 24, bottom: 56 };
 const MINIMUM_VEGA_PLOT_WIDTH = 320;
+const NARROW_MEDIA_QUERY = '(max-width: 980px)';
 const DENSITY_METRIC_OPTIONS: readonly DensityMetricOption[] = [
   { value: 'g4_density_per_mb', label: 'G4 density' },
   { value: 'upstream_g4_density_per_mb', label: 'Upstream G4 density' },
@@ -283,6 +283,10 @@ function selectionKey(selection: MicrobialTaxonomySelection): string {
   return `${selection.rank}:${selection.value}`;
 }
 
+function isNarrowViewport(documentRef: Document): boolean {
+  return documentRef.defaultView?.matchMedia(NARROW_MEDIA_QUERY).matches ?? false;
+}
+
 @Component({
   selector: 'app-microbial-environment-g4',
   imports: [
@@ -297,7 +301,6 @@ function selectionKey(selection: MicrobialTaxonomySelection): string {
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSidenavModule,
-    MatSnackBarModule,
     MatStepperModule,
     MatTooltipModule,
     MtxGridModule,
@@ -313,9 +316,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
 
   private readonly service = inject(MicrobialEnvironmentG4Service);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly snackBar = inject(MatSnackBar);
   private readonly document = inject(DOCUMENT);
-  private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
   private readonly taxonomySelectionCounts = signal<Record<string, number>>({});
   private readonly pageIndex = signal(INITIAL_PAGE_INDEX);
@@ -487,11 +488,13 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   ]);
 
   constructor() {
-    this.breakpointObserver
-      .observe('(max-width: 980px)')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((state) => this.isNarrow.set(state.matches));
+    this.updateNarrowState();
     this.loadOptions();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateNarrowState();
   }
 
   ngAfterViewInit(): void {
@@ -519,9 +522,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
 
   findTaxonomy(): void {
     if (!this.options() || this.dataLayerUnavailable()) {
-      this.snackBar.open('Load research data before searching taxonomy.', 'Dismiss', {
-        duration: 3000,
-      });
+      this.showNotice('Load research data before searching taxonomy.');
       return;
     }
     const rank = this.form.controls.taxonomyRank.value;
@@ -545,9 +546,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           }
           this.taxonomyCandidates.set(response.results);
           if (!response.results.length) {
-            this.snackBar.open('No taxonomy matches for the current axis.', 'Dismiss', {
-              duration: 3000,
-            });
+            this.showNotice('No taxonomy matches for the current axis.');
           }
         },
         error: (error: unknown) => {
@@ -623,21 +622,17 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
 
   search(): void {
     if (!this.options()) {
-      this.snackBar.open('Load research options before Search.', 'Dismiss', { duration: 3000 });
+      this.showNotice('Load research options before Search.');
       return;
     }
     if (this.dataLayerUnavailable()) {
-      this.snackBar.open('Environment-G4 data is not available yet.', 'Dismiss', {
-        duration: 3000,
-      });
+      this.showNotice('Environment-G4 data is not available yet.');
       return;
     }
     const knownStrainCount = this.knownSelectedStrainCount();
     if (knownStrainCount !== null && knownStrainCount < MINIMUM_ANALYSIS_STRAINS) {
-      this.snackBar.open(
+      this.showNotice(
         `At least ${MINIMUM_ANALYSIS_STRAINS} strains are required for analysis; current selection has ${knownStrainCount} strains.`,
-        'Dismiss',
-        { duration: 5000 },
       );
       this.result.set(null);
       this.submittedQuery.set(null);
@@ -773,7 +768,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     const request = this.submittedQuery();
     const response = this.result();
     if (!request || !response) {
-      this.snackBar.open('Run Search before downloading CSV.', 'Dismiss', { duration: 3000 });
+      this.showNotice('Run Search before downloading CSV.');
       return;
     }
     this.downloading.set(true);
@@ -1072,6 +1067,10 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
   }
 
+  private updateNarrowState(): void {
+    this.isNarrow.set(isNarrowViewport(this.document));
+  }
+
   private vegaPlotWidth(element: HTMLDivElement): number {
     const parentWidth = element.parentElement?.clientWidth ?? element.clientWidth;
     const horizontalPadding = VEGA_CHART_PADDING.left + VEGA_CHART_PADDING.right;
@@ -1097,6 +1096,10 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     const message = unavailable ? 'Environment-G4 data is not available yet.' : rawMessage;
     this.dataLayerUnavailable.set(unavailable);
     this.errorMessage.set(message);
-    this.snackBar.open(message, 'Dismiss', { duration: unavailable ? 3000 : 5000 });
+    this.showNotice(message);
+  }
+
+  private showNotice(message: string): void {
+    this.errorMessage.set(message);
   }
 }

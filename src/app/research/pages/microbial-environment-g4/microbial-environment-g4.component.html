@@ -1,5 +1,5 @@
 <main class="environment-page">
-  <section class="service-header">
+  <section class="service-header" data-help-target="microbial-header">
     <div class="header-copy">
       <p class="eyebrow">Microbial G4Vista</p>
       <h1>Microbial G4 Environment Research</h1>
@@ -55,7 +55,7 @@
         <mat-stepper class="query-stepper" orientation="vertical" [linear]="false">
           <mat-step>
             <ng-template matStepLabel>Environment condition</ng-template>
-            <div class="control-stack">
+            <div class="control-stack" data-help-target="microbial-condition">
               <div class="segmented-field">
                 <span>Trait</span>
                 <mat-button-toggle-group formControlName="trait" (change)="onAxisChange()">
@@ -98,7 +98,7 @@
                 </mat-select>
               </mat-form-field>
 
-              <div class="taxonomy-search">
+              <div class="taxonomy-search" data-help-target="microbial-taxonomy">
                 <mat-form-field appearance="outline">
                   <mat-label>Keyword</mat-label>
                   <input
@@ -191,7 +191,7 @@
           </mat-step>
         </mat-stepper>
 
-        <div class="rail-footer-actions">
+        <div class="rail-footer-actions" data-help-target="microbial-submit">
           <button mat-button type="button" (click)="resetAnalysisSetup()">
             <mat-icon>restart_alt</mat-icon>
             Reset
@@ -271,7 +271,7 @@
             }
           </section>
 
-          <section class="results-panel plot-panel">
+          <section class="results-panel plot-panel" data-help-target="microbial-chart">
             <div class="panel-heading">
               <div>
                 <h2>{{ response.summary.phenotype_label }} vs {{ densityMetricLabel() }}</h2>
@@ -315,7 +315,7 @@
             </div>
           </section>
 
-          <section class="results-panel">
+          <section class="results-panel" data-help-target="microbial-table">
             <div class="panel-heading">
               <div>
                 <h2>Strain set</h2>

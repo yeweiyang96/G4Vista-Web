@@ -7,12 +7,6 @@
   padding: 8px 16px;
   color: var(--mat-sys-on-primary-container);
   background: var(--mat-sys-primary-container);
-
-  > .mat-mdc-button {
-    &:last-child {
-      margin-left: auto;
-    }
-  }
 }
 
 .icon {
@@ -31,7 +25,14 @@
 }
 
 .flex-spacer {
-  flex-grow: 1;
+  flex: 1 1 auto;
+  min-width: 12px;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .navbar-link {
@@ -44,8 +45,50 @@
   margin-left: 4px;
 }
 
+.navbar-menu-button mat-icon:first-child {
+  margin-right: 4px;
+  margin-left: 0;
+}
+
 .small-screen {
   display: none;
+}
+
+.help-hint {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 900;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  max-width: min(640px, calc(100vw - 36px));
+  padding: 14px;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  box-shadow: var(--mat-sys-level3);
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 2px;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.help-hint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 // Rules for when the device is detected to be a small screen.
@@ -61,6 +104,17 @@
 
   .github-logo {
     margin: 0;
+  }
+
+  .help-hint {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    grid-template-columns: 1fr;
+  }
+
+  .help-hint-actions {
+    justify-content: flex-start;
   }
 }
 

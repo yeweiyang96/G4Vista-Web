@@ -64,4 +64,9 @@ export const routes: Routes = [
         (m) => m.MicrobialEnvironmentG4Component,
       ),
   },
+  {
+    path: 'help',
+    title: 'G4Vista Help',
+    loadComponent: () => import('./help/help-page/help-page').then((m) => m.HelpPage),
+  },
 ];

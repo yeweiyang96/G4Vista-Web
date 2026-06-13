@@ -1,0 +1,78 @@
+<main class="help-page">
+  <section class="help-hero" aria-labelledby="help-title">
+    <div class="hero-copy">
+      <h1 id="help-title">G4Vista Help</h1>
+      <p>
+        Learn the main workflows with screenshot-backed guides, short action lists, and page-level
+        tours that are prompted from each feature page.
+      </p>
+      <div class="hero-actions">
+        <a mat-flat-button routerLink="/">
+          <mat-icon>home</mat-icon>
+          Back to G4Vista
+        </a>
+      </div>
+    </div>
+    <div class="hero-panel" aria-label="Help workflow summary">
+      <div class="hero-panel-stat">
+        <strong>{{ topics.length }}</strong>
+        <span>feature workflows</span>
+      </div>
+      <div class="hero-panel-stat">
+        <strong>Guide</strong>
+        <span>prompted on feature pages</span>
+      </div>
+      <div class="hero-panel-stat">
+        <strong>Esc</strong>
+        <span>closes any active guide</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="workflow-index" aria-label="Workflow shortcuts">
+    @for (topic of topics; track topic.id) {
+      <a class="workflow-link" [routerLink]="topic.route">
+        <mat-icon aria-hidden="true">{{ topic.icon }}</mat-icon>
+        <span>{{ topic.title }}</span>
+      </a>
+    }
+  </section>
+
+  <section class="topic-list" aria-label="Help topics">
+    @for (topic of topics; track topic.id) {
+      <article class="topic">
+        <div class="topic-media">
+          <img [src]="topic.screenshotSrc" [alt]="topic.screenshotAlt" loading="eager" />
+        </div>
+        <div class="topic-copy">
+          <div class="topic-heading">
+            <mat-icon aria-hidden="true">{{ topic.icon }}</mat-icon>
+            <div>
+              <h2>{{ topic.title }}</h2>
+              <p>{{ topic.summary }}</p>
+            </div>
+          </div>
+
+          <ol class="step-list">
+            @for (step of topic.steps; track step.title) {
+              <li>
+                <mat-icon aria-hidden="true">{{ step.icon }}</mat-icon>
+                <div>
+                  <strong>{{ step.title }}</strong>
+                  <span>{{ step.body }}</span>
+                </div>
+              </li>
+            }
+          </ol>
+
+          <div class="topic-actions">
+            <a mat-button [routerLink]="topic.route">
+              Open workflow
+              <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            </a>
+          </div>
+        </div>
+      </article>
+    }
+  </section>
+</main>

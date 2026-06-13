@@ -10,33 +10,46 @@
 <main class="homepage-promo">
   <div class="homepage-row introduction">
     <div class="homepage-row-column">
-      <h2 class="text-shadow">How to use G4Vista</h2>
-      <p>The best way to start is to chose your interested option in the nav bar.</p>
-      <p>If you want to look G4 ...</p>
+      <h2 class="text-shadow">
+        <mat-icon>account_tree</mat-icon>
+        Browse by taxonomy
+      </h2>
+      <p>
+        Search a taxonomic name or identifier, inspect the lineage tree, and open assembly counts
+        for the groups you care about.
+      </p>
+      <a mat-button routerLink="/taxonomy">
+        Open Taxonomy
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
     </div>
     <div class="homepage-row-column">
-      <h2 class="text-shadow">Why G4Vista</h2>
+      <h2 class="text-shadow">
+        <mat-icon>manage_search</mat-icon>
+        Explore genomes
+      </h2>
       <p>
-        Provide tools that help users build their own custom results with common interaction
-        patterns.
+        Find an assembly by name or accession, then filter G4 and i-motif sites with linked tables,
+        charts, and genome browser context.
       </p>
-      <p>Customizable within the bounds of the Design specification.</p>
+      <a mat-button routerLink="/genome">
+        Open Genome
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
     </div>
     <div class="homepage-row-column">
-      <h2 class="text-shadow">What is G4Vista</h2>
-      <p>Built by the Medical AI Center to integrate seamlessly with JBrose.</p>
+      <h2 class="text-shadow">
+        <mat-icon>query_stats</mat-icon>
+        Run research workflows
+      </h2>
       <p>
-        This database includes graphical representations of G4 density, showcasing variations across
-        different window sizes and G4 patterns.
+        Build microbial strain sets, compare environmental traits with G4 density metrics, and
+        export strain-level tables.
       </p>
-    </div>
-  </div>
-
-  <mat-divider></mat-divider>
-
-  <div class="homepage-carousel-row">
-    <div class="homepage-header">
-      <h2>Featured Function</h2>
+      <a mat-button routerLink="/research/microbial-environment-g4">
+        Open Research
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
     </div>
   </div>
 </main>

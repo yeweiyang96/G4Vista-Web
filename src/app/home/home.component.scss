@@ -79,10 +79,6 @@ $margin-promotion-sections-small: 15px;
     line-height: 28px;
   }
 
-  mat-divider {
-    width: 100%;
-  }
-
   mat-icon {
     vertical-align: middle;
   }
@@ -94,33 +90,21 @@ $margin-promotion-sections-small: 15px;
   margin: $margin-promotion-sections 0;
 }
 
-.homepage-carousel-row {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin: $margin-promotion-sections 0;
-
-  h2 {
-    margin-top: 0;
-  }
-}
-
-.homepage-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin-bottom: 16px;
-
-  h2 {
-    margin: 0;
-  }
-}
-
 .homepage-row-column {
   display: flex;
   flex-direction: column;
   width: 32%;
+
+  h2 {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  a {
+    align-self: flex-start;
+    margin-top: auto;
+  }
 
   & + & {
     margin-left: 2%;
@@ -159,13 +143,11 @@ $margin-promotion-sections-small: 15px;
   * Rules for when the device is detected to be a small screen.
   */
 @media (width <= 720px) {
-  .homepage-row,
-  .homepage-carousel-row {
+  .homepage-row {
     margin: $margin-promotion-sections-small 0;
   }
 }
 
-.homepage-row,
-.homepage-carousel-row h2 {
+.homepage-row {
   color: var(--mat-sys-on-surface-variant);
 }

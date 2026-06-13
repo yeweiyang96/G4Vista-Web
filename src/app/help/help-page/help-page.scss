@@ -1,0 +1,220 @@
+.help-page {
+  display: grid;
+  gap: 28px;
+  max-width: 1240px;
+  padding: 32px 24px 56px;
+  margin: 0 auto;
+}
+
+:where(h1, h2, p) {
+  margin: 0;
+}
+
+.help-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 24px;
+  align-items: stretch;
+  padding: 28px;
+  color: var(--mat-sys-on-primary-container);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mat-sys-primary-container) 88%, var(--mat-sys-surface)) 0%,
+    var(--mat-sys-secondary-container) 100%
+  );
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 18px;
+  align-content: center;
+
+  h1 {
+    font: var(--mat-sys-display-small);
+  }
+
+  p {
+    max-width: 760px;
+    font: var(--mat-sys-title-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.hero-actions,
+.topic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  color: var(--mat-sys-on-surface);
+  background: color-mix(in srgb, var(--mat-sys-surface-container-lowest) 86%, transparent);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+.hero-panel-stat {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  background: var(--mat-sys-surface-container-low);
+  border-radius: 8px;
+
+  strong {
+    font: var(--mat-sys-headline-small);
+    color: var(--mat-sys-primary);
+  }
+
+  span {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.workflow-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.workflow-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 56px;
+  padding: 12px;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--mat-sys-primary);
+    border-color: var(--mat-sys-primary);
+  }
+
+  mat-icon {
+    color: var(--mat-sys-primary);
+  }
+}
+
+.topic-list {
+  display: grid;
+  gap: 20px;
+}
+
+.topic {
+  display: grid;
+  grid-template-columns: minmax(280px, 44%) minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+.topic-media {
+  min-height: 260px;
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.topic-copy,
+.topic-heading,
+.step-list {
+  display: grid;
+  gap: 14px;
+}
+
+.topic-heading {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+
+  > mat-icon {
+    padding: 10px;
+    color: var(--mat-sys-on-primary-container);
+    background: var(--mat-sys-primary-container);
+    border-radius: 8px;
+  }
+
+  h2 {
+    font: var(--mat-sys-headline-small);
+  }
+
+  p {
+    margin-top: 6px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.step-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 12px;
+    background: var(--mat-sys-surface-container-low);
+    border-radius: 8px;
+  }
+
+  mat-icon {
+    color: var(--mat-sys-tertiary);
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 3px;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.topic-actions {
+  align-self: end;
+  justify-content: flex-end;
+}
+
+@media (width <= 860px) {
+  .help-page {
+    padding: 18px 14px 36px;
+  }
+
+  .help-hero,
+  .topic {
+    grid-template-columns: 1fr;
+  }
+
+  .help-hero {
+    padding: 20px;
+  }
+
+  .topic-media {
+    min-height: 210px;
+  }
+}
