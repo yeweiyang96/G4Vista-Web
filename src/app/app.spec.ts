@@ -24,11 +24,13 @@ describe('App', () => {
     expect(compiled.querySelector('.navbar')?.textContent).toContain('G4Vista');
   });
 
-  it('should expose research as a navbar menu trigger', () => {
+  it('should expose analysis as a navbar menu trigger', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.navbar-menu-button')?.textContent).toContain('Research');
+    const navbarText = compiled.querySelector('.navbar')?.textContent ?? '';
+    expect(navbarText).toContain('Analysis');
+    expect(navbarText).not.toContain('Research');
   });
 });

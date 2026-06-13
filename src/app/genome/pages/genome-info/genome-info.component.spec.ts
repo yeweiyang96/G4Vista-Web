@@ -241,6 +241,7 @@ describe('GenomeInfoComponent', () => {
       'getGeneRelations',
       'getPositionDistribution',
       'getPositionStatistics',
+      'downloadG4Table',
     ]);
     g4Service.getG4Page.and.callFake(({ seqid, pageSize }) =>
       of(
@@ -270,6 +271,7 @@ describe('GenomeInfoComponent', () => {
       }),
     );
     g4Service.getGeneCandidates.and.returnValue(of([]));
+    g4Service.downloadG4Table.and.returnValue(of(new Blob(['test'])));
     g4Service.getGeneRelations.and.callFake(({ seqid, starts }) =>
       of<G4GeneRelationsResponse>({
         relations: starts.map((start) => ({
@@ -491,32 +493,30 @@ describe('GenomeInfoComponent', () => {
     expect(component.defaultGenePosition()).toBe(G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value);
   });
 
-  it('uses seqid-scoped browse by default and initializes chart/JBrowse to full seqid range', async () => {
+  it('uses whole-genome browse by default and initializes chart/JBrowse to the default region', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(component.browseScope()).toBe('chr1');
-    expect(component.displayedAccessionIdValue()).toBe('chr1');
-    expect(component.displayedAccessionIdLabel()).toBe('Main chromosome');
-    expect(component.showAccessionIdColumn()).toBeFalse();
-    expect(g4Service.getG4Page).toHaveBeenCalledWith(
+    expect(component.browseScope()).toBe(component.wholeGenomeScope);
+    expect(component.displayedAccessionIdValue()).toBe(component.wholeGenomeScope);
+    expect(component.displayedAccessionIdLabel()).toBe('Whole genome');
+    expect(component.showAccessionIdColumn()).toBeTrue();
+    expect(g4Service.getAssemblyG4Page).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
         g4Type: 'g4',
-        seqid: 'chr1',
         pageSize: 10,
       }),
     );
     expect(component.chartSeqid()).toBe('chr1');
     expect(component.chartViewport()).toEqual({
       start: 1,
-      end: 10_000,
+      end: 1000,
       binSize: 50,
     });
-    expect(g4Service.getAssemblyG4Page).not.toHaveBeenCalled();
-    expect(viewerState.region()).toBe('chr1:1..10000');
+    expect(viewerState.region()).toBe('chr1:1..1000');
   });
 
   it('loads position distribution from independent whole-genome controls only', async () => {
@@ -536,19 +536,8 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [1000],
-        g4Type: 'g4',
-        tetrads: [],
-        minScore: undefined,
-        maxScore: undefined,
-      }),
-    );
 
     g4Service.getPositionDistribution.calls.reset();
-    g4Service.getPositionStatistics.calls.reset();
     component.filterModel.update((current) => ({
       ...current,
       selectedTetrads: [3],
@@ -560,7 +549,6 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
-    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.submitFilters();
     fixture.detectChanges();
@@ -568,7 +556,6 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
-    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.setPositionDistributionFilterModel({
       selectedTetrads: [3],
@@ -580,7 +567,6 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
-    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.submitPositionDistributionFilters();
     fixture.detectChanges();
@@ -598,19 +584,8 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [1000],
-        g4Type: 'g4',
-        tetrads: [3],
-        minScore: 12,
-        maxScore: 40,
-      }),
-    );
 
     g4Service.getPositionDistribution.calls.reset();
-    g4Service.getPositionStatistics.calls.reset();
     component.resetPositionDistributionFilters();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -627,19 +602,8 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [1000],
-        g4Type: 'g4',
-        tetrads: [],
-        minScore: undefined,
-        maxScore: undefined,
-      }),
-    );
 
     g4Service.getPositionDistribution.calls.reset();
-    g4Service.getPositionStatistics.calls.reset();
 
     component.selectG4Type('i-motif');
     fixture.detectChanges();
@@ -647,7 +611,6 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
-    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.setPositionDistributionFlankWindow(500);
     fixture.detectChanges();
@@ -663,18 +626,9 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [500],
-        g4Type: 'g4',
-        tetrads: [],
-      }),
-    );
     expect(component.positionDistributionFlankWindowLabel()).toBe('500 bp');
 
     g4Service.getPositionDistribution.calls.reset();
-    g4Service.getPositionStatistics.calls.reset();
     component.setPositionDistributionG4Type('i-motif');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -689,14 +643,6 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [500],
-        g4Type: 'i-motif',
-        tetrads: [],
-      }),
-    );
   });
 
   it('displays accession names and filters options without changing seqid values', async () => {
@@ -705,7 +651,8 @@ describe('GenomeInfoComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(component.displayedRegionFnaHeader()).toBe('chr1 FASTA header');
+    expect(component.displayedAccessionIdValue()).toBe(component.wholeGenomeScope);
+    expect(component.displayedRegionFnaHeader()).toBe('');
     expect(component.allAccessionIdOptions().map((option) => option.label)).toEqual([
       'Whole genome',
       'Main chromosome',
@@ -776,8 +723,12 @@ describe('GenomeInfoComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    g4Service.getAssemblyG4Page.calls.reset();
+    component.selectBrowseScope('chr2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
+    g4Service.getAssemblyG4Page.calls.reset();
     component.selectBrowseScope(component.wholeGenomeScope);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -1297,7 +1248,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.submittedSelectedGene()).toBeNull();
     expect(component.draftSelectedGene()).toBeNull();
     expect(component.draftGeneInput()).toBe('');
-    expect(component.browseScope()).toBe('chrA');
+    expect(component.browseScope()).toBe(component.wholeGenomeScope);
     const assembly2GeneSearchCall = g4Service.getGeneSearchPage.calls
       .allArgs()
       .map((args) => args[0])

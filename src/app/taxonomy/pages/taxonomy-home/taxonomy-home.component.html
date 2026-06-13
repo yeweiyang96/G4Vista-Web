@@ -1,111 +1,143 @@
-<section class="taxonomy-page" aria-label="Taxonomy">
-  <header class="page-header" data-help-target="taxonomy-header">
-    <h1>Taxonomy</h1>
-    <p class="subtitle">Search by taxonomic name, taxonomy ID, or anything else</p>
-  </header>
-  <form data-help-target="taxonomy-search">
-    <mat-form-field appearance="outline" class="search-bar">
-      <mat-label for="search-box">Search</mat-label>
-      <input
-        matInput
-        placeholder="Search"
-        [formControl]="searchControl"
-        type="search"
-        [matAutocomplete]="auto"
-      />
-      <mat-autocomplete
-        #auto="matAutocomplete"
-        [displayWith]="displayFn"
-        (optionSelected)="loadLineage($event)"
-        autoActiveFirstOption
-      >
-        @if (filteredOptions$ | async; as filteredOptions) {
-          @if (filteredOptions.length > 0) {
-            @for (option of filteredOptions; track $index) {
-              <mat-option [value]="option">
-                <div>
-                  <span class="tax-scientific-name">{{ option.scientific_name }}</span>
-                  <span class="tax-name">({{ option.name }})</span>
-                </div>
-                <div>
-                  <span class="tax-rank">{{ option.rank }}</span>
-                </div>
+<main class="g4v-page taxonomy-page" aria-label="Taxonomy">
+  <section class="taxonomy-hero" data-help-target="taxonomy-header">
+    <div class="hero-copy">
+      <p class="eyebrow">G4Vista taxonomy</p>
+      <h1>Taxonomy</h1>
+      <p>
+        Search NCBI taxonomic names or Taxon IDs to find genome assemblies and predicted
+        G-quadruplex (G4) and i-motif sites.
+      </p>
+    </div>
+
+    <form
+      class="taxonomy-search-panel"
+      data-help-target="taxonomy-search"
+      aria-label="Taxonomy search"
+      (ngSubmit)="submitSearch()"
+    >
+      <label class="field-label" for="taxonomy-search-box">Taxon search</label>
+      <mat-form-field appearance="outline" class="search-bar" subscriptSizing="dynamic">
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          id="taxonomy-search-box"
+          matInput
+          [formControl]="searchControl"
+          type="text"
+          placeholder="Enter a taxon"
+          autocomplete="off"
+          spellcheck="false"
+          [matAutocomplete]="auto"
+          (input)="onSearchInput($event)"
+        />
+        @if (searchText().length > 0 || autocompleteOpen()) {
+          <button
+            mat-icon-button
+            matSuffix
+            class="taxonomy-clear-button"
+            type="button"
+            aria-label="Clear taxonomy search"
+            (click)="clearSearch($event)"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+        <button
+          mat-icon-button
+          matSuffix
+          class="taxonomy-submit-button"
+          type="submit"
+          aria-label="Open selected taxon"
+          [disabled]="!canSubmitSearch()"
+        >
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+
+        <mat-autocomplete
+          #auto="matAutocomplete"
+          class="taxonomy-search-autocomplete-panel"
+          [displayWith]="displayFn"
+          hideSingleSelectionIndicator
+          autoActiveFirstOption
+          (opened)="setAutocompleteOpen(true)"
+          (closed)="setAutocompleteOpen(false)"
+          (optionSelected)="selectTaxon($event)"
+        >
+          @if (filteredOptions$ | async; as filteredOptions) {
+            @if (filteredOptions.length > 0) {
+              @for (option of filteredOptions; track option.taxon_id + option.name) {
+                <mat-option class="taxonomy-result-option" [value]="option">
+                  <span class="taxonomy-result-row">
+                    <span class="result-name">{{ option.scientific_name || option.name }}</span>
+                    <span class="result-description">{{ resultDescription(option) }}</span>
+                    <span class="result-rank">{{ option.rank }}</span>
+                    <span class="result-id">Taxon ID: {{ option.taxon_id }}</span>
+                  </span>
+                </mat-option>
+              }
+            } @else if (searchText().length > 0) {
+              <mat-option disabled class="taxonomy-result-option">
+                <span class="taxonomy-empty-option">
+                  <mat-icon aria-hidden="true">info</mat-icon>
+                  <span>No matching taxon found.</span>
+                </span>
               </mat-option>
             }
-          } @else {
-            <mat-option>
-              <mat-icon>error</mat-icon>
-              <div mat-line>0 results</div>
-              <span mat-line class="no-match"> No matching taxon found.</span>
-            </mat-option>
           }
-        }
-      </mat-autocomplete>
-    </mat-form-field>
-  </form>
+        </mat-autocomplete>
+      </mat-form-field>
+      <p class="search-hint">
+        Try a scientific name, common name, taxonomic group, or NCBI Taxon ID.
+      </p>
+    </form>
+  </section>
 
-  <div class="page-content" data-help-target="taxonomy-tree">
-    @if (isDisplay()) {
-      <div class="tree-head">
-        <span>Taxonomic name</span>
-        <span>Assemblies</span>
-      </div>
+  <section class="taxonomy-section browse-section" data-help-target="taxonomy-browse">
+    <div class="section-heading">
+      <p class="eyebrow">Browse taxonomy</p>
+      <h2>Common starting taxa</h2>
+      <p>
+        These groups provide quick entry points into taxon records and genome assembly lists.
+      </p>
+      @if (browseCountsResource.error()) {
+        <p class="count-warning">Assembly counts are temporarily unavailable.</p>
+      }
+    </div>
 
-      <mat-tree
-        class="tree"
-        #tree
-        [dataSource]="dataSource()"
-        [childrenAccessor]="childrenAccessor"
-        [trackBy]="trackBy"
-      >
-        <!-- This is the tree node template for leaf nodes -->
-        <mat-tree-node class="node" *matTreeNodeDef="let node" matTreeNodePadding>
-          <div class="node-continer-left">
-            <!-- use a disabled button to provide padding for tree leaf -->
-            <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
-            <button mat-icon-button disabled></button>
-            <a mat-button [routerLink]="node.taxon_id" [matTooltip]="node.rank">{{ node.name }}</a>
+    <div class="browse-grid">
+      @for (taxon of browseTaxa(); track taxon.taxonId) {
+        <article class="browse-card {{ taxon.accentClass }}">
+          <div class="browse-card-header">
+            <span class="browse-icon">
+              <mat-icon aria-hidden="true">{{ taxon.icon }}</mat-icon>
+            </span>
+            <span class="rank-chip">{{ taxon.rank }}</span>
           </div>
-
-          <a
-            mat-button
-            class="genome-count"
-            [routerLink]="node.taxon_id"
-            [matTooltip]="
-              'G4 information was calculated for ' + node.assembly_count + ' assemblies'
-            "
-            >{{ node.assembly_count }}</a
-          >
-        </mat-tree-node>
-
-        <!-- This is the tree node template for expandable nodes -->
-        <mat-tree-node
-          class="node"
-          *matTreeNodeDef="let node; when: hasChild"
-          matTreeNodePadding
-          matTreeNodeToggle
-          [cdkTreeNodeTypeaheadLabel]="node.name"
-        >
-          <div class="node-continer-left">
-            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
-              <mat-icon class="mat-icon-rtl-mirror">
-                {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-              </mat-icon>
-            </button>
-            <a mat-button [routerLink]="node.taxon_id" [matTooltip]="node.rank">{{ node.name }}</a>
+          <div class="browse-copy">
+            <h3>{{ taxon.name }}</h3>
+            <p>{{ taxon.description }}</p>
           </div>
-          <a
-            mat-button
-            class="genome-count"
-            [routerLink]="node.taxon_id"
-            [matTooltip]="
-              'G4 information was calculated for ' + node.assembly_count + ' assemblies'
-            "
-            >{{ node.assembly_count }}</a
-          >
-        </mat-tree-node>
-      </mat-tree>
-    }
-    <app-taxonomy-statistics></app-taxonomy-statistics>
-  </div>
-</section>
+          <dl class="browse-meta">
+            <div>
+              <dt>Taxon ID</dt>
+              <dd>{{ taxon.taxonId }}</dd>
+            </div>
+            <div>
+              <dt>Assemblies</dt>
+              <dd>
+                @if (browseCountsResource.isLoading()) {
+                  Loading
+                } @else {
+                  {{ formatCount(taxon.assemblyCount) }}
+                }
+              </dd>
+            </div>
+          </dl>
+          <a mat-stroked-button [routerLink]="['/taxonomy', taxon.taxonId]">
+            Open taxon
+            <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </a>
+        </article>
+      }
+    </div>
+  </section>
+</main>

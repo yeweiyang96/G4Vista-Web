@@ -15,8 +15,13 @@ import { RouterLink } from '@angular/router';
 
 export interface AssemblySummary {
   assembly_accession: string;
-  asm_name: string;
+  asm_name: string | null;
   organism_name: string;
+  genome_length_bp?: number;
+  g4_count?: number;
+  i_motif_count?: number;
+  g4_density_per_mb?: number | null;
+  i_motif_density_per_mb?: number | null;
 }
 
 /**
@@ -46,7 +51,18 @@ export class AssemblyListComponent implements AfterViewInit {
 
   constructor() {
     effect(() => {
-      this.dataSource.data = this.assemblies();
+      const assemblies = this.assemblies();
+      this.dataSource.data = assemblies;
+      this.displayedColumns = hasAssemblyMetrics(assemblies)
+        ? [
+            'organism_name',
+            'asm_name',
+            'assembly_accession',
+            'genome_length_bp',
+            'g4_density_per_mb',
+            'i_motif_density_per_mb',
+          ]
+        : ['organism_name', 'asm_name', 'assembly_accession'];
 
       if (this.dataSource.paginator) {
         this.dataSource.paginator.firstPage();
@@ -59,11 +75,41 @@ export class AssemblyListComponent implements AfterViewInit {
     this.dataSource.sort = this.sort;
   }
 
-  applyFilter(event: Event) {
+  applyFilter(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value;
     this.dataSource.filter = filterValue.trim().toLowerCase();
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
   }
+
+  formatGenomeLength(value: number | undefined): string {
+    return value === undefined ? 'N/A' : formatGenomeLength(value);
+  }
+
+  formatDensity(value: number | null | undefined): string {
+    return value === null || value === undefined ? 'N/A' : `${DENSITY_FORMATTER.format(value)}/Mb`;
+  }
+}
+
+const DENSITY_FORMATTER = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 0,
+});
+
+function hasAssemblyMetrics(assemblies: readonly AssemblySummary[]): boolean {
+  return assemblies.some((assembly) => assembly.genome_length_bp !== undefined);
+}
+
+function formatGenomeLength(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `${DENSITY_FORMATTER.format(value / 1_000_000_000)} Gb`;
+  }
+  if (value >= 1_000_000) {
+    return `${DENSITY_FORMATTER.format(value / 1_000_000)} Mb`;
+  }
+  if (value >= 1_000) {
+    return `${DENSITY_FORMATTER.format(value / 1_000)} kb`;
+  }
+  return `${DENSITY_FORMATTER.format(value)} bp`;
 }

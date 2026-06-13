@@ -10,7 +10,6 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { LogoComponent } from './logo/logo.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
 import { HelpTourOverlay } from './help/help-tour-overlay/help-tour-overlay';
 import { HelpTourService } from './help/help-tour';
@@ -34,6 +33,28 @@ function getNextTheme(current: ThemeMode): ThemeMode {
   return 'brightness_medium';
 }
 
+function routePath(url: string): string {
+  return url.split('?')[0]?.split('#')[0] ?? url;
+}
+
+const FOOTER_HIDDEN_PATHS = new Set<string>([
+  '/',
+  '/gene',
+  '/genome',
+  '/help',
+  '/research/microbial-environment-g4',
+  '/taxonomy',
+]);
+const FOOTER_HIDDEN_PREFIXES = ['/gene/', '/genome/', '/taxonomy/'] as const;
+
+function shouldShowFooter(url: string): boolean {
+  const path = routePath(url);
+  return (
+    !FOOTER_HIDDEN_PATHS.has(path) &&
+    !FOOTER_HIDDEN_PREFIXES.some((hiddenPrefix: string) => path.startsWith(hiddenPrefix))
+  );
+}
+
 const GITHUB_ICON = `
 <svg viewBox="0 0 20 20" class="github-logo" aria-hidden="true">
       <path
@@ -51,7 +72,6 @@ const GITHUB_ICON = `
     RouterLink,
     RouterLinkActive,
     MatIconModule,
-    MatMenuModule,
     HelpTourOverlay,
   ],
   templateUrl: './app.html',
@@ -62,12 +82,11 @@ export class App {
   readonly title = 'G4Vista';
   readonly year = new Date().getFullYear();
   readonly sections = [
-    { name: 'Taxonomy', route: '/taxonomy' },
-    { name: 'Genome', route: '/genome' },
-    { name: 'Gene', route: '/gene' },
-  ];
-  readonly researchSections = [
-    { name: 'Microbial environment G4', route: '/research/microbial-environment-g4' },
+    { name: 'Taxonomy', route: '/taxonomy', icon: 'account_tree' },
+    { name: 'Genome', route: '/genome', icon: 'biotech' },
+    { name: 'Gene', route: '/gene', icon: 'search' },
+    { name: 'Analysis', route: '/research/microbial-environment-g4', icon: 'query_stats' },
+    { name: 'Help', route: '/help', icon: 'help_outline' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');
   readonly helpTour = inject(HelpTourService);
@@ -78,6 +97,7 @@ export class App {
   readonly showGuideHint = computed(() =>
     this.helpTour.shouldShowGuideHintForUrl(this.currentUrl()),
   );
+  readonly showFooter = computed(() => shouldShowFooter(this.currentUrl()));
 
   private readonly iconRegistry = inject(MatIconRegistry);
   private readonly sanitizer = inject(DomSanitizer);

@@ -47,6 +47,15 @@ export type G4GenePosition = (typeof G4_GENE_POSITION_OPTIONS)[number]['value'];
 export type G4SortField = 'start' | 'end' | 'length' | 'tetrads' | 'score' | 'y1' | 'y2' | 'y3';
 export type G4Type = 'g4' | 'i-motif';
 export type G4FlankWindow = 100 | 200 | 300 | 500 | 1000 | 2000 | 3000 | 4000 | 5000;
+export type G4DownloadColumn =
+  | 'seqid'
+  | 'start'
+  | 'end'
+  | 'length'
+  | 'tetrads'
+  | 'score'
+  | 'sequence'
+  | `gene_relation:${G4GenePosition}`;
 
 export const G4_FLANK_WINDOW_OPTIONS: readonly { value: G4FlankWindow; label: string }[] = [
   { value: 100, label: '100 bp' },
@@ -174,6 +183,11 @@ export interface G4PositionCategory {
   ratio: number;
   precedence_rank: number;
   description: string;
+  display_label?: string;
+  display_description?: string;
+  category_group?: 'gene_context' | 'background';
+  is_default_chart_category?: boolean;
+  display_order?: number;
 }
 
 export interface G4FeatureBreakdownItem {
@@ -254,6 +268,11 @@ export interface G4PositionStatisticsCategory {
   label: string;
   description: string;
   precedence_rank: number;
+  display_label?: string;
+  display_description?: string;
+  category_group?: 'gene_context' | 'background';
+  is_default_chart_category?: boolean;
+  display_order?: number;
   merged_interval_length_bp: number;
   length_mb: number;
   motifs: Partial<Record<G4Type, G4PositionMotifStats>>;
@@ -310,6 +329,22 @@ export interface G4GeneSearchRequest {
   selectedPosition: G4GenePosition;
   searchTerm?: string;
   overlap?: boolean;
+}
+
+export interface G4DownloadRequest {
+  assemblyAccession: string;
+  g4Type: G4Type;
+  seqid?: string;
+  sort: G4SortField;
+  order: 'asc' | 'desc';
+  tetrads: number[];
+  minScore?: number;
+  maxScore?: number;
+  selectedFeatureId?: string;
+  selectedPosition?: G4GenePosition;
+  searchTerm?: string;
+  overlap?: boolean;
+  columns: readonly G4DownloadColumn[];
 }
 
 export interface G4GeneRelationsRequest {
@@ -454,6 +489,17 @@ export class G4Service {
     return this.appendCommonFilterParams(params, request);
   }
 
+  private appendDownloadColumnParams(
+    params: HttpParams,
+    columns: readonly G4DownloadColumn[],
+  ): HttpParams {
+    let nextParams = params;
+    for (const column of columns) {
+      nextParams = nextParams.append('columns', column);
+    }
+    return nextParams;
+  }
+
   getAssemblyG4Page(request: G4PageRequest): Observable<G4PageResponse> {
     const params = this.buildCommonPageParams(request);
 
@@ -483,6 +529,33 @@ export class G4Service {
     return this.http.get<G4PageResponse>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-search`,
       { params: searchParams },
+    );
+  }
+
+  downloadG4Table(request: G4DownloadRequest): Observable<Blob> {
+    const params = this.appendDownloadColumnParams(
+      this.appendCommonFilterParams(
+        new HttpParams()
+          .set('sort', SORT_FIELD_PARAM_MAP[request.sort])
+          .set('order', request.order),
+        request,
+      ),
+      request.columns,
+    );
+    const scopedParams = request.seqid ? params.set('seqid', request.seqid) : params;
+    const geneParams =
+      request.selectedFeatureId && request.selectedPosition
+        ? scopedParams
+            .set('selected_feature_id', request.selectedFeatureId)
+            .set('selected_position', request.selectedPosition)
+        : scopedParams;
+    const searchParams = request.searchTerm
+      ? geneParams.set('search_term', request.searchTerm)
+      : geneParams;
+
+    return this.http.get(
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/download`,
+      { params: searchParams, responseType: 'blob' },
     );
   }
 

@@ -1,162 +1,218 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  ViewChild,
-  ChangeDetectorRef,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
-import {
-  Observable,
-  of,
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  startWith,
-  switchMap,
-} from 'rxjs';
-import { MatTreeModule, MatTree } from '@angular/material/tree';
-import { AsyncPipe } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
-import { TaxonomyNode, TaxonomySearch, TaxonomyService } from '../../services/taxonomy.service';
-import { TaxonomyStatisticsComponent } from './taxonomy-statistics/taxonomy-statistics.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { Router, RouterLink } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, map, Observable, of, startWith, switchMap, tap } from 'rxjs';
+import { AssemblyCount, TaxonomySearch, TaxonomyService } from '../../services/taxonomy.service';
 
-const EXAMPLE_DATA: TaxonomySearch[] = [
+interface BrowseTaxon {
+  readonly name: string;
+  readonly taxonId: number;
+  readonly rank: string;
+  readonly description: string;
+  readonly icon: string;
+  readonly accentClass: string;
+}
+
+interface BrowseTaxonView extends BrowseTaxon {
+  readonly assemblyCount: number | undefined;
+}
+
+const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
+const SEARCH_DEBOUNCE_MS = 250;
+const NUMERIC_TAXON_ID_PATTERN = /^\d+$/;
+const BROWSE_TAXA: readonly BrowseTaxon[] = [
   {
-    name: 'Homo sapiens',
-    rank: 'species',
-    taxon_id: 9606,
-    name_class: 'scientific_name',
-    scientific_name: 'Homo sapiens',
+    name: 'Eukaryota',
+    taxonId: 2759,
+    rank: 'superkingdom',
+    description: 'Animals, plants, fungi, and other eukaryotic organisms.',
+    icon: 'public',
+    accentClass: 'browse-card-eukaryota',
   },
   {
-    name: 'Arabidopsis thaliana',
-    rank: 'species',
-    taxon_id: 3702,
-    name_class: 'scientific_name',
-    scientific_name: 'Arabidopsis thaliana',
+    name: 'Viridiplantae',
+    taxonId: 33090,
+    rank: 'kingdom',
+    description: 'Green plants, including major model organisms.',
+    icon: 'eco',
+    accentClass: 'browse-card-plant',
   },
   {
-    name: 'Escherichia coli',
-    rank: 'species',
-    taxon_id: 562,
-    name_class: 'scientific_name',
-    scientific_name: 'Escherichia coli',
+    name: 'Bacteria',
+    taxonId: 2,
+    rank: 'superkingdom',
+    description: 'Bacterial genomes with predicted G4 and i-motif data.',
+    icon: 'hub',
+    accentClass: 'browse-card-bacteria',
+  },
+  {
+    name: 'Archaea',
+    taxonId: 2157,
+    rank: 'superkingdom',
+    description: 'Archaeal taxa and their available genome assemblies.',
+    icon: 'grain',
+    accentClass: 'browse-card-archaea',
   },
 ];
+const BROWSE_TAXON_IDS = BROWSE_TAXA.map((taxon) => taxon.taxonId);
+
+function normalizeSearchValue(value: string | TaxonomySearch | null): string {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  return value?.scientific_name.trim() ?? '';
+}
+
+function formatNameClass(nameClass: string): string {
+  return nameClass.replaceAll('_', ' ');
+}
+
+function getTaxonomyResultDescription(option: TaxonomySearch): string {
+  const scientificName = option.scientific_name || option.name;
+  if (option.name !== scientificName) {
+    return option.name;
+  }
+
+  return formatNameClass(option.name_class);
+}
+
+function assemblyCountMapFromResponse(counts: readonly AssemblyCount[]): ReadonlyMap<number, number> {
+  const countByTaxonId = new Map<number, number>();
+  counts.forEach((count) => countByTaxonId.set(count.taxon_id, count.assembly_count));
+  return countByTaxonId;
+}
 
 @Component({
   selector: 'app-taxonomy',
   imports: [
-    MatInputModule,
-    MatFormFieldModule,
-    MatAutocompleteModule,
-    ReactiveFormsModule,
-    MatTreeModule,
     AsyncPipe,
-    MatIconModule,
+    MatAutocompleteModule,
     MatButtonModule,
-    MatTooltipModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    ReactiveFormsModule,
     RouterLink,
-    TaxonomyStatisticsComponent,
   ],
   templateUrl: './taxonomy-home.component.html',
   styleUrl: './taxonomy-home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaxonomyHomeComponent {
-  // 搜索框部分变量声明
   readonly searchControl = new FormControl<string | TaxonomySearch>('');
-  readonly currentSearchValue = toSignal(this.searchControl.valueChanges.pipe(startWith('')), {
-    initialValue: '',
-  });
-  readonly isTypingQuery = computed(() => typeof this.currentSearchValue() === 'string');
-  //Example options
-  readonly options: TaxonomySearch[] = EXAMPLE_DATA;
-  // 订阅搜索结果列表
-  readonly filteredOptions$: Observable<TaxonomySearch[]> = this.searchControl.valueChanges.pipe(
-    startWith(''),
-    // wait 300ms after each keystroke before considering the term
-    debounceTime(300),
-    // ignore new term if same as previous term
-    distinctUntilChanged(
-      (prev: string | TaxonomySearch | null, curr: string | TaxonomySearch | null) => {
-        const curr_name = typeof curr === 'string' ? curr.trim() : curr?.name;
-        const prev_name = typeof prev === 'string' ? prev.trim() : prev?.name;
-        return prev_name === curr_name;
-      },
-    ),
-    switchMap((value) => {
-      const name = typeof value === 'string' ? value.trim() : value?.scientific_name;
-      return name ? this._filter(name) : of(this.options.slice());
-    }),
-  );
-  readonly selectedTaxonId = signal<number | null>(null);
-  readonly lineageResource = rxResource<TaxonomyNode | null, number | null>({
-    params: () => this.selectedTaxonId(),
+  readonly searchText = signal('');
+  readonly autocompleteOpen = signal(false);
+  readonly searchResults = signal<readonly TaxonomySearch[]>([]);
+  readonly browseCountsResource = rxResource<ReadonlyMap<number, number>, readonly number[]>({
+    params: () => BROWSE_TAXON_IDS,
     stream: ({ params }) =>
-      params === null
-        ? of(null)
-        : this.taxonomyService.getLineage(params).pipe(catchError(() => of(null))),
-    defaultValue: null,
+      this.taxonomyService.getAssemblyCounts([...params]).pipe(map(assemblyCountMapFromResponse)),
+    defaultValue: new Map<number, number>(),
   });
-  readonly isDisplay = computed(
-    () =>
-      !this.isTypingQuery() &&
-      !this.lineageResource.isLoading() &&
-      this.lineageResource.value() !== null,
-  );
+  readonly browseTaxa = computed<readonly BrowseTaxonView[]>(() => {
+    const countByTaxonId = this.browseCountsResource.value();
+    return BROWSE_TAXA.map((taxon) => ({
+      ...taxon,
+      assemblyCount: countByTaxonId.get(taxon.taxonId),
+    }));
+  });
+  readonly filteredOptions$: Observable<readonly TaxonomySearch[]> =
+    this.searchControl.valueChanges.pipe(
+      startWith(''),
+      debounceTime(SEARCH_DEBOUNCE_MS),
+      map((value) => normalizeSearchValue(value)),
+      distinctUntilChanged(),
+      switchMap((searchTerm) =>
+        searchTerm.length > 0 ? this.taxonomyService.searchTaxonomy(searchTerm) : of([]),
+      ),
+      tap((options) => this.searchResults.set(options)),
+    );
 
+  private readonly router = inject(Router);
   private readonly taxonomyService = inject(TaxonomyService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
-  constructor() {
-    effect(() => {
-      if (!this.lineageResource.value()) {
-        return;
-      }
+  displayFn(taxon: string | TaxonomySearch | null): string {
+    if (typeof taxon === 'string') {
+      return taxon;
+    }
 
-      // Ensure tree nodes are rendered before expanding all branches.
-      this.cdr.detectChanges();
-      this.tree?.expandAll();
-    });
+    return taxon?.scientific_name ?? '';
   }
 
-  displayFn(taxa: TaxonomySearch): string {
-    return taxa && taxa.scientific_name ? taxa.scientific_name : '';
+  onSearchInput(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      throw new TypeError('Expected taxonomy search input event target to be an HTMLInputElement.');
+    }
+
+    this.searchText.set(target.value);
   }
 
-  private _filter(name: string): Observable<TaxonomySearch[]> {
-    const filterValue = name.toLowerCase();
-    return this.taxonomyService.searchTaxonomy(filterValue);
+  clearSearch(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.searchText.set('');
+    this.searchResults.set([]);
+    this.searchControl.setValue('');
   }
 
-  //lineage tree部分
-  readonly dataSource = computed<TaxonomyNode[]>(() => {
-    const lineage = this.lineageResource.value();
-    return lineage ? [lineage] : [];
-  });
-  @ViewChild('tree') tree!: MatTree<TaxonomyNode>;
-  childrenAccessor = (node: TaxonomyNode) => node.children ?? [];
-  // 节点追踪方法（trackBy）
-  trackBy = (_index: number, node: TaxonomyNode) => node.taxon_id;
-  hasChild = (_: number, node: TaxonomyNode) => !!node.children && node.children.length > 0;
+  setAutocompleteOpen(isOpen: boolean): void {
+    this.autocompleteOpen.set(isOpen);
+  }
 
-  // 点击选项触发
-  loadLineage(event: MatAutocompleteSelectedEvent): void {
-    this.selectedTaxonId.set(event.option.value.taxon_id);
+  selectTaxon(event: MatAutocompleteSelectedEvent): void {
+    const selectedTaxon = event.option.value as TaxonomySearch;
+    this.searchText.set(selectedTaxon.scientific_name);
+    this.searchControl.setValue(selectedTaxon, { emitEvent: false });
+    void this.openTaxon(selectedTaxon.taxon_id);
+  }
+
+  submitSearch(): void {
+    const value = this.searchControl.value;
+    if (value !== null && typeof value !== 'string') {
+      void this.openTaxon(value.taxon_id);
+      return;
+    }
+
+    const searchTerm = this.searchText().trim();
+    if (NUMERIC_TAXON_ID_PATTERN.test(searchTerm)) {
+      void this.openTaxon(Number(searchTerm));
+      return;
+    }
+
+    const firstResult = this.searchResults()[0];
+    if (firstResult) {
+      this.searchText.set(firstResult.scientific_name);
+      this.searchControl.setValue(firstResult, { emitEvent: false });
+      void this.openTaxon(firstResult.taxon_id);
+    }
+  }
+
+  canSubmitSearch(): boolean {
+    const value = this.searchControl.value;
+    return (value !== null && typeof value !== 'string') || this.searchText().trim().length > 0;
+  }
+
+  resultDescription(option: TaxonomySearch): string {
+    return getTaxonomyResultDescription(option);
+  }
+
+  formatCount(value: number | undefined): string {
+    return value === undefined ? 'Not available' : COUNT_FORMATTER.format(value);
+  }
+
+  private openTaxon(taxonId: number): Promise<boolean> {
+    return this.router.navigate(['/taxonomy', taxonId]);
   }
 }

@@ -11,7 +11,6 @@ interface TaxonomyStats {
   assemblyCount: number;
 }
 
-// 分类名称到 taxon_id 的映射
 const TAXONOMY_CATEGORIES: { category: string; taxon_id: number }[] = [
   { category: 'Archaea', taxon_id: 2157 },
   { category: 'Bacteria', taxon_id: 2 },

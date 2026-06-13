@@ -1,8 +1,91 @@
-.no-match {
-  font-size: 0.8rem;
-  color: gray;
+.search-form {
+  width: 100%;
+  transition: margin-bottom 160ms ease;
+}
+
+.search-form.autocomplete-open {
+  margin-bottom: 164px;
 }
 
 .search-bar {
   width: 100%;
+}
+
+:host ::ng-deep .search-bar .mat-mdc-form-field-infix {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+:host ::ng-deep .search-bar .mat-mdc-text-field-wrapper {
+  min-height: 58px;
+  background: var(--mat-sys-surface-container-lowest);
+  border-radius: 6px;
+}
+
+:host ::ng-deep .search-bar .mat-mdc-form-field-icon-prefix {
+  padding: 0 12px 0 16px;
+  color: var(--mat-sys-on-surface);
+}
+
+:host ::ng-deep .search-bar .mat-mdc-form-field-icon-suffix {
+  padding-right: 8px;
+}
+
+:host ::ng-deep .search-clear-button {
+  --mdc-icon-button-state-layer-size: 34px;
+
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  color: var(--mat-sys-on-surface-variant);
+  background: var(--mat-sys-surface-container);
+  border-radius: 50%;
+}
+
+:host ::ng-deep .search-clear-button mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+:host ::ng-deep .search-bar input {
+  font: var(--mat-sys-title-medium);
+  letter-spacing: 0;
+}
+
+:host ::ng-deep .search-bar input::placeholder {
+  color: var(--mat-sys-on-surface-variant);
+  opacity: 1;
+}
+
+.genome-search-option-content {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.genome-search-option-content mat-icon {
+  flex: 0 0 auto;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.genome-search-option-label {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.genome-search-option-label em {
+  color: var(--mat-sys-on-surface-variant);
 }

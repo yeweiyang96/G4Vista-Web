@@ -1,0 +1,72 @@
+<article class="guide-panel" aria-labelledby="genome-help-title">
+  <header class="guide-header">
+    <mat-icon aria-hidden="true">manage_search</mat-icon>
+    <div class="guide-title">
+      <h2 id="genome-help-title">Find a genome assembly</h2>
+      <p>
+        Search for a genome assembly by accession, assembly name, or organism name.
+      </p>
+    </div>
+    <a mat-stroked-button routerLink="/genome">
+      Open genome search
+      <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+    </a>
+  </header>
+
+  <div class="guide-grid" aria-label="Genome search inputs and outputs">
+    <section class="info-card">
+      <h3>What to enter</h3>
+      <ul>
+        <li>
+          <mat-icon aria-hidden="true">tag</mat-icon>
+          <span>Assembly accession, such as GCF_000001735.4.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">badge</mat-icon>
+          <span>Assembly name, such as TAIR10.1 or GRCh38.p14.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">science</mat-icon>
+          <span>Organism name, such as Arabidopsis thaliana or Homo sapiens.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="info-card">
+      <h3>What you will see</h3>
+      <ul>
+        <li>
+          <mat-icon aria-hidden="true">table_view</mat-icon>
+          <span>Recommended assemblies with sequence-record counts and predicted motif counts.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">open_in_new</mat-icon>
+          <span>A link to the genome detail page for the selected assembly.</span>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <ol class="process-list" aria-label="Genome search workflow steps">
+    <li class="process-step">
+      <div class="step-body">
+        <h3>Search assembly records</h3>
+        <p class="step-copy">Type an assembly accession, assembly name, or organism name.</p>
+      </div>
+    </li>
+
+    <li class="process-step">
+      <div class="step-body">
+        <h3>Select one assembly</h3>
+        <p class="step-copy">Choose the assembly that matches your organism and reference version.</p>
+      </div>
+    </li>
+
+    <li class="process-step">
+      <div class="step-body">
+        <h3>Open the genome page</h3>
+        <p class="step-copy">Open the selected assembly to review predicted G4 and i-motif sites.</p>
+      </div>
+    </li>
+  </ol>
+</article>

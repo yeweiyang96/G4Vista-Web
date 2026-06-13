@@ -63,6 +63,9 @@ export interface GeneSearchItem {
   assembly_accession: string;
   organism_name: string;
   seqid: string;
+  feature_start: number | null;
+  feature_end: number | null;
+  strand: string | null;
   feature_id: string | null;
   gene_id: string | null;
   gene_name: string | null;

@@ -1,47 +1,192 @@
-.gene-page {
-  width: min(1400px, calc(100% - 32px));
-  padding: 24px 0 40px;
-  margin: 0 auto;
-}
-
-.gene-layout {
+.gene-detail-page {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+  --g4v-page-max: 1440px;
 }
 
-.summary-card {
+.gene-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(520px, auto);
+  gap: 32px;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.gene-title {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.gene-kicker,
+.gene-title h1,
+.gene-title p,
+.gene-panel h2,
+.detail-list,
+.detail-list dt,
+.detail-list dd,
+.relation-section h2 {
+  margin: 0;
+}
+
+.gene-kicker {
+  font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  color: var(--mat-sys-primary);
+}
+
+.gene-title h1 {
+  overflow-wrap: anywhere;
+  font: var(--mat-sys-display-small);
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--mat-sys-on-surface);
+}
+
+.gene-title p {
+  overflow-wrap: anywhere;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.gene-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.gene-summary div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 12px;
+  min-height: 82px;
+  padding: 14px 16px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 30%, var(--mat-sys-outline-variant));
+  border-radius: var(--g4v-radius);
+}
+
+.gene-summary mat-icon {
+  grid-row: span 2;
+  color: var(--mat-sys-primary);
+}
+
+.gene-summary span {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.gene-summary strong {
   overflow: hidden;
+  font: var(--mat-sys-title-large);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+}
+
+.gene-panel {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: 20px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius-large);
+}
+
+.gene-panel-header,
+.relation-section > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.gene-panel-header mat-icon,
+.relation-section mat-icon {
+  color: var(--mat-sys-primary);
+}
+
+.gene-panel h2,
+.relation-section h2 {
+  font: var(--mat-sys-title-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
 }
 
 .detail-list {
   display: grid;
-  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
-  gap: 12px 16px;
-  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.detail-list div {
+  min-width: 0;
+  padding: 14px 16px;
+  border-right: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.detail-list div:nth-child(3n) {
+  border-right: 0;
+}
+
+.detail-list div:nth-last-child(-n + 3) {
+  border-bottom: 0;
 }
 
 .detail-list dt {
-  font: var(--mat-sys-title-small);
+  font: var(--mat-sys-label-large);
   color: var(--mat-sys-on-surface-variant);
 }
 
 .detail-list dd {
-  margin: 0;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
   font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface);
+}
+
+.detail-link {
+  color: var(--mat-sys-primary);
+  font-weight: 700;
+}
+
+.detail-link:hover {
+  text-decoration: underline;
 }
 
 .relation-section {
-  margin-top: 20px;
-}
-
-.section-label {
-  margin: 0 0 12px;
-  font: var(--mat-sys-title-small);
-  color: var(--mat-sys-on-surface-variant);
+  display: grid;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
 }
 
 .loading-state {
   display: grid;
   place-items: center;
   min-height: 40vh;
+}
+
+@media (width <= 1120px) {
+  .gene-hero,
+  .gene-summary,
+  .detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-list div,
+  .detail-list div:nth-child(3n),
+  .detail-list div:nth-last-child(-n + 3) {
+    border-right: 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  .detail-list div:last-child {
+    border-bottom: 0;
+  }
 }

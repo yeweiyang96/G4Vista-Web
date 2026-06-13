@@ -1,69 +1,56 @@
 .taxonomy-statistics {
-  max-width: 1200px;
-  padding: 2rem 0;
-  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius-large);
+}
 
-  .title {
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--mat-sys-on-surface);
-  }
+.statistics-heading {
+  display: grid;
+  gap: 4px;
+}
 
-  .stats-grid {
-    display: grid;
-    gap: 1rem;
+.stats-grid {
+  display: grid;
+  gap: 10px;
+}
 
-    // 竖屏模式：单列布局
-    @media (orientation: portrait) {
-      grid-template-columns: 1fr;
-    }
+.stat-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-items: center;
+  min-height: 56px;
+  padding: 12px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--mat-sys-surface-container-low);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius);
+}
 
-    // 横屏模式：多列布局
-    @media (orientation: landscape) {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-  }
+.stat-card:hover {
+  border-color: color-mix(in srgb, var(--g4v-g4) 36%, var(--mat-sys-outline-variant));
+}
 
-  .stat-card {
-    display: block;
-    padding: 1.5rem;
-    color: inherit;
-    text-align: center;
-    text-decoration: none;
-    background: var(--mat-sys-surface-container-low);
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: 8px;
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
+.category {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: var(--mat-sys-title-small);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
 
-    &:hover {
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
+.count {
+  font: var(--mat-sys-title-large);
+  color: var(--g4v-g4);
+}
 
-    .category {
-      margin-bottom: 0.75rem;
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--mat-sys-on-surface-variant);
-      text-transform: capitalize;
-    }
-
-    .count {
-      margin-bottom: 0.25rem;
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--mat-sys-primary);
-    }
-
-    .label {
-      font-size: 0.875rem;
-      color: var(--mat-sys-on-surface-variant);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-  }
+.label {
+  grid-column: 1 / -1;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
 }

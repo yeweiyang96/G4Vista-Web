@@ -1,58 +1,100 @@
-<section class="gene-page" aria-label="Gene search">
-  <header class="page-header" data-help-target="gene-header">
-    <h1>Gene</h1>
-    <p class="subtitle">Search by feature ID, gene ID, or gene name</p>
-  </header>
+<main class="g4v-page gene-page" aria-label="Gene search">
+  <section class="page-heading" data-help-target="gene-header">
+    <h1>Search genes and features</h1>
+    <p>Find annotated features by feature ID, gene ID, gene symbol, or locus tag.</p>
+  </section>
 
-  <form class="search-container" data-help-target="gene-search" (submit)="onSubmit($event)">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label for="search-box">Search</mat-label>
-      <input
-        id="search-box"
-        matInput
-        type="search"
-        [formControl]="searchControl"
-        placeholder="Ex. gene-ATP6, TP53, ATCG0001"
-      />
-    </mat-form-field>
+  <div class="gene-workspace">
+    <section class="gene-main">
+      <form class="gene-search-row" data-help-target="gene-search" (submit)="onSubmit($event)">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Gene or feature keyword</mat-label>
+          <input
+            id="search-box"
+            matInput
+            type="search"
+            [formControl]="searchControl"
+            placeholder="Example: ATCG0001, gene-ATP6, TP53"
+          />
+        </mat-form-field>
 
-    <button mat-fab type="submit" class="search-button" aria-label="Search genes">
-      <mat-icon>search</mat-icon>
-    </button>
-  </form>
+        <button mat-flat-button type="submit">
+          <mat-icon>search</mat-icon>
+          Search
+        </button>
+      </form>
 
-  @if (showPromptMessage()) {
-    <p class="state-message">Enter a gene keyword to start searching.</p>
-  }
+      @if (showPromptMessage()) {
+        <div class="state-message">
+          <mat-icon>manage_search</mat-icon>
+          <span>Enter a gene keyword to start searching.</span>
+        </div>
+      }
 
-  @if (showNoResultMessage()) {
-    <p class="state-message">0 results. No matching genes found.</p>
-  }
+      @if (showNoResultMessage()) {
+        <div class="state-message">
+          <mat-icon>search_off</mat-icon>
+          <span>No matching genes found.</span>
+        </div>
+      }
 
-  @if (isLoading() || results().length > 0) {
-    <mtx-grid
-      data-help-target="gene-results"
-      class="gene-grid"
-      [data]="results()"
-      [columns]="columns()"
-      [length]="results().length"
-      [loading]="isLoading()"
-      [pageOnFront]="true"
-      [pageSize]="20"
-      [pageSizeOptions]="pageSizeOptions"
-      [showToolbar]="true"
-      [showColumnMenuButton]="true"
-      [columnHideable]="true"
-      [columnHideableChecked]="'show'"
-    ></mtx-grid>
-  }
-</section>
+      @if (showResultsPanel()) {
+        <section class="gene-results-panel">
+          <div class="result-count">
+            Showing 1-{{ results().length }} of {{ results().length }} results
+          </div>
+          <mtx-grid
+            data-help-target="gene-results"
+            class="gene-grid"
+            [data]="results()"
+            [columns]="columns()"
+            [length]="results().length"
+            [loading]="isLoading()"
+            [pageOnFront]="true"
+            [pageSize]="10"
+            [pageSizeOptions]="pageSizeOptions"
+            [showToolbar]="true"
+            [showColumnMenuButton]="false"
+            [columnHideable]="false"
+          ></mtx-grid>
+        </section>
+      }
+    </section>
+
+    <aside class="gene-guide" aria-label="Open a result to">
+      <div class="guide-heading">
+        <mat-icon>ballot</mat-icon>
+        <h2>Open a result to</h2>
+      </div>
+      <div class="guide-row">
+        <mat-icon>map</mat-icon>
+        <div>
+          <strong>Review gene coordinates</strong>
+          <span>See location, strand, and biotype details.</span>
+        </div>
+      </div>
+      <div class="guide-row">
+        <mat-icon>hub</mat-icon>
+        <div>
+          <strong>See linked G4 windows</strong>
+          <span>View G4 sites associated with the feature.</span>
+        </div>
+      </div>
+      <div class="guide-row">
+        <mat-icon>location_on</mat-icon>
+        <div>
+          <strong>Jump to the genome page</strong>
+          <span>Explore the assembly and genomic context.</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
 
 <ng-template #assemblyTpl let-row="rowData">
   <a mat-button class="assembly-link" [routerLink]="['/genome', row.assembly_accession]">
     {{ row.assembly_accession }}
   </a>
-  <span class="secondary-text">{{ row.organism_name }}</span>
 </ng-template>
 
 <ng-template #featureTpl let-row="rowData">
@@ -62,10 +104,10 @@
       class="feature-link"
       [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
     >
-      {{ row.feature_id }}
+      {{ row.gene_name || row.feature_id }}
     </a>
   } @else {
-    <span class="muted-text">—</span>
+    <span class="muted-text">Unavailable</span>
   }
 </ng-template>
 
@@ -74,8 +116,6 @@
     <a
       mat-button
       class="gene-link"
-      [class.gene-id-link]="col.field === 'gene_id'"
-      [class.gene-name-link]="col.field === 'gene_name'"
       [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
     >
       {{ row[col.field] }}
@@ -83,6 +123,24 @@
   } @else if (row[col.field]) {
     <span>{{ row[col.field] }}</span>
   } @else {
-    <span class="muted-text">—</span>
+    <span class="muted-text">Unavailable</span>
+  }
+</ng-template>
+
+<ng-template #rangeTpl let-row="rowData">
+  <span>{{ formatRange(row) }}</span>
+</ng-template>
+
+<ng-template #linkedTpl let-row="rowData">
+  @if (row.feature_id) {
+    <a
+      mat-button
+      class="gene-link linked-count"
+      [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
+    >
+      {{ linkedG4Count(row) }}
+    </a>
+  } @else {
+    <span>{{ linkedG4Count(row) }}</span>
   }
 </ng-template>

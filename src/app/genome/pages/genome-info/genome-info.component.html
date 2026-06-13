@@ -1,47 +1,65 @@
-<section class="genome-page" aria-label="Genome detail">
+<section class="g4v-page genome-page" aria-label="Genome detail">
   @if (assemblyDetail(); as assembly) {
     <div class="genome-layout">
       <div class="main-column">
-        <mat-card appearance="outlined" class="overview-card" data-help-target="genome-overview">
-          <mat-card-header>
-            <mat-card-title>{{ assembly.asm_name || assembly.assembly_accession }}</mat-card-title>
-            <mat-card-subtitle>{{ assembly.organism_name }}</mat-card-subtitle>
-          </mat-card-header>
+        <section class="genome-hero" data-help-target="genome-overview">
+          <div class="assembly-copy">
+            <h1 class="g4v-page-title">{{ assembly.asm_name || assembly.assembly_accession }}</h1>
+            <p class="g4v-subtitle">
+              <em>{{ assembly.species_name }}</em>
+              <span>·</span>
+              <span>{{ assembly.assembly_accession }}</span>
+            </p>
 
-          <mat-card-content>
-            <dl class="detail-list">
-              <dt>Assembly accession</dt>
-              <dd>{{ assembly.assembly_accession }}</dd>
-              <dt>Scientific name</dt>
-              <dd>
-                @if (assembly.taxon_id !== null) {
-                  <a mat-button [routerLink]="['/taxonomy', assembly.taxon_id]">
-                    {{ assembly.species_name }}
-                  </a>
+            @if (assembly.taxon_id !== null) {
+              <a mat-button class="taxon-link" [routerLink]="['/taxonomy', assembly.taxon_id]">
+                Taxon {{ assembly.taxon_id }}
+                <mat-icon iconPositionEnd>open_in_new</mat-icon>
+              </a>
+            }
+          </div>
+
+          <div class="assembly-stats" aria-label="Assembly summary">
+            <div class="assembly-stat-card">
+              <mat-icon>straighten</mat-icon>
+              <strong>{{ formatLength(genomeLengthBp()) }}</strong>
+              <span>Genome length</span>
+            </div>
+            <div class="assembly-stat-card g4-stat">
+              <mat-icon>view_in_ar</mat-icon>
+              <strong>
+                @if (assemblyOverview(); as overview) {
+                  {{ formatCount(overview.g4_count) }}
                 } @else {
-                  {{ assembly.species_name }}
+                  Loading
                 }
-              </dd>
-              <dt>Assembly name</dt>
-              <dd>{{ assembly.asm_name || 'Unavailable' }}</dd>
-              <dt>Release date</dt>
-              <dd>{{ assembly.seq_rel_date || 'Unavailable' }}</dd>
-              <dt>Taxon ID</dt>
-              <dd>{{ assembly.taxon_id ?? 'Unavailable' }}</dd>
-              <dt>Accession IDs</dt>
-              <dd>{{ assembly.seqids.length }}</dd>
-            </dl>
-          </mat-card-content>
-        </mat-card>
+              </strong>
+              <span>G4 sites</span>
+            </div>
+            <div class="assembly-stat-card imotif-stat">
+              <mat-icon>table_rows</mat-icon>
+              <strong>
+                @if (assemblyOverview(); as overview) {
+                  {{ formatCount(overview.i_motif_count) }}
+                } @else {
+                  Loading
+                }
+              </strong>
+              <span>i-motif sites</span>
+            </div>
+            <div class="assembly-stat-card release-stat">
+              <mat-icon>calendar_month</mat-icon>
+              <span>Released</span>
+              <strong>{{ assembly.seq_rel_date || 'Unavailable' }}</strong>
+            </div>
+          </div>
+        </section>
 
         <app-position-distribution
           data-help-target="position-distribution"
           [distribution]="positionDistribution()"
           [isLoading]="positionDistributionResource.isLoading()"
           [errorMessage]="positionDistributionErrorMessage()"
-          [statistics]="positionStatistics()"
-          [statisticsLoading]="positionStatisticsResource.isLoading()"
-          [statisticsErrorMessage]="positionStatisticsErrorMessage()"
           [flankWindow]="positionDistributionFlankWindow()"
           [flankWindowLabel]="positionDistributionFlankWindowLabel()"
           [g4Type]="positionDistributionG4Type()"
@@ -49,35 +67,46 @@
           [filterSelectedTetrads]="positionDistributionFilterModel().selectedTetrads"
           [filterMinScore]="positionDistributionFilterModel().minScore"
           [filterMaxScore]="positionDistributionFilterModel().maxScore"
+          [selectedCategoryKeys]="selectedPositionDistributionCategoryKeys()"
           (g4TypeChange)="setPositionDistributionG4Type($event)"
           (flankWindowChange)="setPositionDistributionFlankWindow($event)"
           (filterModelChange)="setPositionDistributionFilterModel($event)"
           (applyFilters)="submitPositionDistributionFilters()"
           (resetFilters)="resetPositionDistributionFilters()"
+          (categorySelectionChange)="setSelectedPositionDistributionCategoryKeys($event)"
         />
 
-        <mat-card appearance="outlined" class="explorer-card" data-help-target="g4-explorer">
-          <mat-card-header>
-            <mat-card-title>G4 Explorer</mat-card-title>
-            <mat-card-subtitle>{{ explorerSubtitle() }}</mat-card-subtitle>
-          </mat-card-header>
+        <section class="explorer-card section-panel" data-help-target="g4-explorer">
+          <header class="section-panel-header">
+            <h2>Explore motif sites</h2>
+          </header>
 
-          <mat-card-content>
-            @if (displayedRegionFnaHeader(); as fnaHeader) {
-              <div class="region-fna-header">
-                <span class="region-fna-header-label">FASTA header</span>
-                <span class="region-fna-header-value">{{ fnaHeader }}</span>
-              </div>
-            }
-
-            <div class="selector-row">
-              <mat-form-field appearance="outline" class="selector-field">
-                <mat-label>Accession name</mat-label>
-                <mat-select
-                  [value]="displayedAccessionIdValue()"
-                  (valueChange)="selectBrowseScope($event)"
+          <div class="section-panel-content">
+            <form
+              class="explore-filters"
+              aria-label="G4/i-motif filters"
+              data-help-target="g4-explorer-filters"
+              (submit)="submitFilters($event)"
+            >
+              <div class="motif-filter-control">
+                <span class="filter-label">Motif type</span>
+                <mat-button-toggle-group
+                  [value]="draftG4Type()"
+                  (valueChange)="selectDraftG4Type($event)"
+                  aria-label="Motif type filter"
                 >
-                  <mat-select-trigger>{{ displayedAccessionIdLabel() }}</mat-select-trigger>
+                  <mat-button-toggle value="g4">G4</mat-button-toggle>
+                  <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+                <mat-label>Sequence / region</mat-label>
+                <mat-select
+                  [value]="draftAccessionIdValue()"
+                  (valueChange)="selectDraftBrowseScope($event)"
+                >
+                  <mat-select-trigger>{{ draftAccessionIdLabel() }}</mat-select-trigger>
                   <div
                     class="accession-filter-panel"
                     tabindex="0"
@@ -89,7 +118,7 @@
                       subscriptSizing="dynamic"
                       class="accession-filter-input"
                     >
-                      <mat-label>Filter accessions</mat-label>
+                      <mat-label>Filter sequence records</mat-label>
                       <mat-icon matPrefix aria-hidden="true">search</mat-icon>
                       <input
                         matInput
@@ -123,235 +152,191 @@
                     </mat-option>
                   }
                   @if (accessionIdOptions().length === 0) {
-                    <mat-option disabled>No matching accessions</mat-option>
+                    <mat-option disabled>No matching sequence records</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
-              <div class="type-switch">
-                <mat-button-toggle-group
-                  [value]="g4Type()"
-                  (valueChange)="selectG4Type($event)"
-                  aria-label="G4/i-motif type selector"
-                >
-                  <mat-button-toggle value="g4">G4</mat-button-toggle>
-                  <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
-                </mat-button-toggle-group>
-              </div>
-            </div>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+                <mat-label>Gene relation</mat-label>
+                <mat-select [formField]="filterForm.selectedPosition">
+                  @for (option of draftGenePositionOptions(); track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
 
-            <form
-              class="filters"
-              aria-label="G4/i-motif filters"
-              data-help-target="g4-explorer-filters"
-              (submit)="submitFilters($event)"
-            >
-              <section
-                class="filter-group filter-group-explorer"
-                aria-labelledby="explorer-filter-title"
+              <mat-form-field
+                appearance="outline"
+                subscriptSizing="dynamic"
+                class="filter-field filter-field-gene-search"
               >
-                <div class="filter-group-header">
-                  <p class="filter-group-eyebrow">Explorer filters</p>
-                  <h3 id="explorer-filter-title" class="filter-group-title">
-                    Filter G4 and i-motif sites
-                  </h3>
-                  <p class="filter-group-description">
-                    Combine gene context, tetrad count, and score range filters, then submit once to
-                    refresh the explorer table.
-                  </p>
+                <mat-label>Gene keyword</mat-label>
+                <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                <input
+                  matInput
+                  type="search"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Feature ID, gene name, or locus tag"
+                  [value]="draftGeneInput()"
+                  [matAutocomplete]="geneAuto"
+                  (input)="onGeneInput($event)"
+                />
+                <mat-autocomplete
+                  #geneAuto="matAutocomplete"
+                  [displayWith]="displayGeneCandidate"
+                  autoActiveFirstOption
+                  (optionSelected)="onGeneCandidateSelected($event)"
+                >
+                  @for (
+                    candidate of geneCandidates();
+                    track trackByGeneCandidate($index, candidate)
+                  ) {
+                    <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
+                  }
+                  @if (showGeneCandidateEmptyState()) {
+                    <mat-option disabled>No matching genes found.</mat-option>
+                  }
+                </mat-autocomplete>
+                @if (geneInputError(); as errorMessage) {
+                  <mat-error>{{ errorMessage }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+                <mat-label>G-tetrads</mat-label>
+                <mat-select [formField]="filterForm.selectedTetrads" multiple>
+                  @for (option of g4Page().tetrads_list; track option) {
+                    <mat-option [value]="option">{{ option }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <div class="score-range">
+                <span class="filter-label">Score range</span>
+                <div class="score-range-fields">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Min</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      inputmode="numeric"
+                      step="1"
+                      placeholder="{{ g4Page().min_score }}"
+                      [formField]="filterForm.minScore"
+                    />
+                  </mat-form-field>
+                  <span aria-hidden="true">-</span>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Max</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      inputmode="numeric"
+                      step="1"
+                      placeholder="{{ g4Page().max_score }}"
+                      [formField]="filterForm.maxScore"
+                    />
+                  </mat-form-field>
                 </div>
+              </div>
 
-                <div class="filter-subsections">
-                  <section class="filter-subsection" aria-labelledby="gene-filter-title">
-                    <div class="filter-subsection-header">
-                      <h4 id="gene-filter-title" class="filter-subsection-title">Gene filter</h4>
-                      <p class="filter-subsection-description">
-                        Choose where the gene sits relative to the selected G4 or i-motif, then
-                        search by feature ID, gene name, or locus tag.
-                      </p>
-                    </div>
-
-                    <div class="filter-group-fields">
-                      <mat-form-field appearance="outline" class="filter-field filter-field-scope">
-                        <mat-label>Search scope</mat-label>
-                        <mat-select [formField]="filterForm.selectedPosition">
-                          @for (option of genePositionOptions(); track option.value) {
-                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                          }
-                        </mat-select>
-                        <mat-hint
-                          >Defines where the matched gene sits relative to the selected G4 or
-                          i-motif.</mat-hint
-                        >
-                      </mat-form-field>
-
-                      <mat-form-field
-                        appearance="outline"
-                        class="filter-field filter-field-gene-search"
-                      >
-                        <mat-label>Gene keyword</mat-label>
-                        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-                        <input
-                          matInput
-                          type="search"
-                          autocomplete="off"
-                          spellcheck="false"
-                          placeholder="Feature ID, gene name, or locus tag…"
-                          [value]="draftGeneInput()"
-                          [matAutocomplete]="geneAuto"
-                          (input)="onGeneInput($event)"
-                        />
-                        <mat-autocomplete
-                          #geneAuto="matAutocomplete"
-                          [displayWith]="displayGeneCandidate"
-                          autoActiveFirstOption
-                          (optionSelected)="onGeneCandidateSelected($event)"
-                        >
-                          @for (
-                            candidate of geneCandidates();
-                            track trackByGeneCandidate($index, candidate)
-                          ) {
-                            <mat-option [value]="candidate">{{
-                              geneOptionLabel(candidate)
-                            }}</mat-option>
-                          }
-                          @if (showGeneCandidateEmptyState()) {
-                            <mat-option disabled>No matching genes found.</mat-option>
-                          }
-                        </mat-autocomplete>
-                        @if (geneInputError(); as errorMessage) {
-                          <mat-error>{{ errorMessage }}</mat-error>
-                        } @else {
-                          <mat-hint>{{ geneSearchScopeHint() }}</mat-hint>
-                        }
-                      </mat-form-field>
-                    </div>
-                  </section>
-
-                  <section class="filter-subsection" aria-labelledby="motif-filter-title">
-                    <div class="filter-subsection-header">
-                      <h4 id="motif-filter-title" class="filter-subsection-title">Motif filter</h4>
-                      <p class="filter-subsection-description">
-                        Limit motif sites by tetrad count and score range.
-                      </p>
-                    </div>
-
-                    <div class="filter-group-fields filter-group-fields-motif">
-                      <mat-form-field appearance="outline" class="filter-field">
-                        <mat-label>Tetrads</mat-label>
-                        <mat-select [formField]="filterForm.selectedTetrads" multiple>
-                          @for (option of g4Page().tetrads_list; track option) {
-                            <mat-option [value]="option">{{ option }}</mat-option>
-                          }
-                        </mat-select>
-                      </mat-form-field>
-
-                      <mat-form-field appearance="outline" class="filter-field">
-                        <mat-label>Min score</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          inputmode="numeric"
-                          step="1"
-                          placeholder="{{ g4Page().min_score }}"
-                          [formField]="filterForm.minScore"
-                        />
-                      </mat-form-field>
-
-                      <mat-form-field appearance="outline" class="filter-field">
-                        <mat-label>Max score</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          inputmode="numeric"
-                          step="1"
-                          placeholder="{{ g4Page().max_score }}"
-                          [formField]="filterForm.maxScore"
-                        />
-                      </mat-form-field>
-                    </div>
-                  </section>
-                </div>
-
-                <div class="filter-actions">
-                  <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
-                  <button mat-flat-button type="submit">Submit</button>
-                </div>
-              </section>
+              <div class="filter-actions">
+                <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
+                <button mat-flat-button type="submit">Apply filters</button>
+              </div>
             </form>
 
-            <app-g4-table
-              data-help-target="g4-explorer-table"
-              [page]="g4Page()"
-              [filterScopeLabel]="selectedPositionLabel()"
-              [filterSelectedGeneLabel]="submittedSelectedGeneLabel()"
-              [hasSelectedGene]="hasSubmittedSelectedGene()"
-              [filterSelectedTetrads]="submittedFilters().selectedTetrads"
-              [filterMinScore]="submittedMinScore()"
-              [filterMaxScore]="submittedMaxScore()"
-              [showAccessionIdColumn]="showAccessionIdColumn()"
-              [sortState]="sortState()"
-              [pageIndex]="pageIndex()"
-              [pageSize]="pageSize()"
-              [isLoading]="g4PageResource.isLoading()"
-              [geneRelationsByRowKey]="geneRelationsByRowKey()"
-              [genePositionOptions]="genePositionOptions()"
-              (sortChanged)="changeSort($event)"
-              (pageChanged)="changePage($event)"
-              (navigateToG4)="navigateToG4($event)"
-              (resetScope)="resetScopeFilter()"
-              (resetGene)="resetGeneFilter()"
-              (resetTetrads)="resetTetradsFilter()"
-              (resetScore)="resetScoreFilter()"
-            />
-          </mat-card-content>
-        </mat-card>
+            <div class="results-layout">
+              <section class="results-panel" aria-label="Motif site results">
+                <mat-tab-group class="results-tabs" animationDuration="160ms">
+                  <mat-tab label="Table">
+                    <app-g4-table
+                      data-help-target="g4-explorer-table"
+                      [page]="g4Page()"
+                      [filterScopeLabel]="selectedPositionLabel()"
+                      [filterSelectedGeneLabel]="submittedSelectedGeneLabel()"
+                      [hasSelectedGene]="hasSubmittedSelectedGene()"
+                      [filterSelectedTetrads]="submittedFilters().selectedTetrads"
+                      [filterMinScore]="submittedMinScore()"
+                      [filterMaxScore]="submittedMaxScore()"
+                      [showAccessionIdColumn]="showAccessionIdColumn()"
+                      [sortState]="sortState()"
+                      [pageIndex]="pageIndex()"
+                      [pageSize]="pageSize()"
+                      [isLoading]="g4PageResource.isLoading()"
+                      [isDownloading]="isTableDownloadPending()"
+                      [geneRelationsByRowKey]="geneRelationsByRowKey()"
+                      [genePositionOptions]="genePositionOptions()"
+                      (sortChanged)="changeSort($event)"
+                      (pageChanged)="changePage($event)"
+                      (navigateToG4)="navigateToG4($event)"
+                      (resetScope)="resetScopeFilter()"
+                      (resetGene)="resetGeneFilter()"
+                      (resetTetrads)="resetTetradsFilter()"
+                      (resetScore)="resetScoreFilter()"
+                      (downloadRequested)="downloadTable($event)"
+                      (visibleColumnKeysChange)="setTableDownloadColumns($event)"
+                    />
+                  </mat-tab>
 
-        @if (canRenderChart()) {
-          <mat-card appearance="outlined" class="chart-card">
-            <mat-card-header>
-              <mat-card-title>Genome Range Chart</mat-card-title>
-              <mat-card-subtitle
-                >{{ chartSeqid() }}: {{ chartViewport().start }}..{{
-                  chartViewport().end
-                }}</mat-card-subtitle
-              >
-            </mat-card-header>
-            <mat-card-content>
-              <section aria-label="Genome range chart">
-                <app-genome-range-chart
-                  [assemblyAccession]="assemblyAccession()"
-                  [seqid]="chartSeqid()"
-                  [g4Type]="g4Type()"
-                  [viewport]="chartViewport()"
-                  [seqidLength]="chartSeqidLength()"
-                  [filters]="chartFilters()"
-                  [axisFeatureRange]="chartAxisFeatureRange()"
-                  (viewportChange)="applyChartViewport($event)"
-                  (resetRange)="resetChartViewport()"
-                />
+                  <mat-tab label="Range chart">
+                    <section class="tab-body" aria-label="Genome range chart">
+                      @if (canRenderChart()) {
+                        <app-genome-range-chart
+                          [assemblyAccession]="assemblyAccession()"
+                          [seqid]="chartSeqid()"
+                          [g4Type]="g4Type()"
+                          [viewport]="chartViewport()"
+                          [seqidLength]="chartSeqidLength()"
+                          [filters]="chartFilters()"
+                          [axisFeatureRange]="chartAxisFeatureRange()"
+                          (viewportChange)="applyChartViewport($event)"
+                          (resetRange)="resetChartViewport()"
+                        />
+                      } @else {
+                        <p class="state" role="status">
+                          No sequence record is available for a chart.
+                        </p>
+                      }
+                    </section>
+                  </mat-tab>
+
+                  <mat-tab label="Genome browser">
+                    <section class="tab-body" data-help-target="genome-browser">
+                      <div class="browser-actions">
+                        <span>{{ viewerRegion() }}</span>
+                        <button mat-button type="button" (click)="resetBrowser()">
+                          Reset browser view
+                        </button>
+                      </div>
+                      <app-jbrowse-host
+                        [viewerConfig]="viewerConfig()"
+                        [navigationCommand]="navCommand()"
+                        (regionChanged)="handleViewerRegionChange($event)"
+                      />
+                    </section>
+                  </mat-tab>
+                </mat-tab-group>
               </section>
-            </mat-card-content>
-          </mat-card>
-        }
 
-        <mat-card appearance="outlined" class="browser-card" data-help-target="genome-browser">
-          <mat-card-header>
-            <mat-card-title>Genome Browser</mat-card-title>
-            <mat-card-subtitle>{{ viewerRegion() }}</mat-card-subtitle>
-          </mat-card-header>
-
-          <mat-card-content>
-            <div class="browser-actions">
-              <button mat-button type="button" (click)="resetBrowser()">Reset to default G4</button>
+              <aside class="selection-panel" aria-label="Current selection">
+                <h3>Current selection</h3>
+                @for (row of currentSelectionRows(); track row.label) {
+                  <dl>
+                    <dt>{{ row.label }}</dt>
+                    <dd>{{ row.value }}</dd>
+                  </dl>
+                }
+                <button mat-stroked-button type="button" (click)="resetFilters()">
+                  <mat-icon aria-hidden="true">refresh</mat-icon>
+                  Reset filters
+                </button>
+              </aside>
             </div>
-            <app-jbrowse-host
-              [viewerConfig]="viewerConfig()"
-              [navigationCommand]="navCommand()"
-              (regionChanged)="handleViewerRegionChange($event)"
-            />
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </section>
       </div>
     </div>
   } @else {

@@ -18,6 +18,8 @@ import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import { of } from 'rxjs';
 import { GeneSearchItem, GeneService } from '../../services/gene.service';
 
+const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
+
 @Component({
   selector: 'app-gene-home',
   imports: [
@@ -37,6 +39,8 @@ export class GeneHomeComponent {
   @ViewChild('assemblyTpl', { static: true }) assemblyTpl!: TemplateRef<unknown>;
   @ViewChild('featureTpl', { static: true }) featureTpl!: TemplateRef<unknown>;
   @ViewChild('geneTpl', { static: true }) geneTpl!: TemplateRef<unknown>;
+  @ViewChild('rangeTpl', { static: true }) rangeTpl!: TemplateRef<unknown>;
+  @ViewChild('linkedTpl', { static: true }) linkedTpl!: TemplateRef<unknown>;
 
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly pageSizeOptions = [10, 20, 50];
@@ -54,7 +58,7 @@ export class GeneHomeComponent {
   readonly results = computed(() => this.searchResultResource.value());
   readonly isLoading = this.searchResultResource.isLoading;
 
-  readonly showPromptMessage = computed(() => this.hasSubmitted() && !this.submittedQuery());
+  readonly showPromptMessage = computed(() => !this.hasSubmitted() || !this.submittedQuery());
   readonly showNoResultMessage = computed(
     () =>
       this.hasSubmitted() &&
@@ -62,19 +66,16 @@ export class GeneHomeComponent {
       !this.isLoading() &&
       this.results().length === 0,
   );
+  readonly showResultsPanel = computed(
+    () =>
+      this.hasSubmitted() &&
+      !!this.submittedQuery() &&
+      (this.isLoading() || this.results().length > 0),
+  );
 
   readonly columns = computed<MtxGridColumn<GeneSearchItem>[]>(() => [
     {
-      header: 'Assembly',
-      field: 'assembly_accession',
-      cellTemplate: this.assemblyTpl as unknown as never,
-    },
-    {
-      header: 'SeqID',
-      field: 'seqid',
-    },
-    {
-      header: 'Feature ID',
+      header: 'Gene / feature',
       field: 'feature_id',
       cellTemplate: this.featureTpl as unknown as never,
     },
@@ -84,30 +85,27 @@ export class GeneHomeComponent {
       cellTemplate: this.geneTpl as unknown as never,
     },
     {
-      header: 'Gene Name',
-      field: 'gene_name',
-      cellTemplate: this.geneTpl as unknown as never,
+      header: 'Assembly',
+      field: 'assembly_accession',
+      cellTemplate: this.assemblyTpl as unknown as never,
+    },
+    {
+      header: 'Sequence record',
+      field: 'seqid',
     },
     {
       header: 'Biotype',
       field: 'gene_biotype',
     },
     {
-      header: 'Inside Gene (G4)',
+      header: 'Range',
+      field: 'feature_start',
+      cellTemplate: this.rangeTpl as unknown as never,
+    },
+    {
+      header: 'Linked G4 sites',
       field: 'insideOf_gene_g4_count',
-      type: 'number',
-      sortable: true,
-    },
-    {
-      header: 'Upstream 1kb (G4)',
-      field: 'insideOf_genes_upstream_1k_g4_count',
-      type: 'number',
-      sortable: true,
-    },
-    {
-      header: 'Downstream 1kb (G4)',
-      field: 'insideOf_genes_downstream_1k_g4_count',
-      type: 'number',
+      cellTemplate: this.linkedTpl as unknown as never,
       sortable: true,
     },
   ]);
@@ -118,5 +116,21 @@ export class GeneHomeComponent {
 
     const query = this.searchControl.value.trim();
     this.submittedQuery.set(query || null);
+  }
+
+  formatRange(row: GeneSearchItem): string {
+    if (row.feature_start === null || row.feature_end === null) {
+      return 'Unavailable';
+    }
+    const strand = row.strand ? ` (${row.strand})` : '';
+    return `${COUNT_FORMATTER.format(row.feature_start)}..${COUNT_FORMATTER.format(row.feature_end)}${strand}`;
+  }
+
+  linkedG4Count(row: GeneSearchItem): string {
+    const count =
+      row.insideOf_gene_g4_count +
+      row.insideOf_genes_upstream_1k_g4_count +
+      row.insideOf_genes_downstream_1k_g4_count;
+    return COUNT_FORMATTER.format(count);
   }
 }

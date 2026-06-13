@@ -25,6 +25,17 @@
       }
     </mat-chip>
   </mat-chip-set>
+
+  <button
+    mat-button
+    type="button"
+    class="download-button"
+    [disabled]="isDownloading()"
+    (click)="onDownload()"
+  >
+    <mat-icon aria-hidden="true">download</mat-icon>
+    {{ isDownloading() ? 'Preparing download...' : 'Download table (.tsv)' }}
+  </button>
 </div>
 
 <ng-template #sequenceTpl let-row="rowData">
@@ -73,6 +84,9 @@
   [columnHideableChecked]="'show'"
   [pageOnFront]="false"
   [showColumnMenuButton]="true"
+  [columnMenuButtonText]="'Customize Columns'"
+  [columnMenuButtonType]="'outlined'"
+  [columnMenuButtonIcon]="'view_column'"
   [sortDisableClear]="true"
   [showToolbar]="true"
   [sortActive]="sortState().active"

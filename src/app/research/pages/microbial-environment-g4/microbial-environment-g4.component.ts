@@ -1,4 +1,4 @@
-import { DOCUMENT, TitleCasePipe } from '@angular/common';
+import { DOCUMENT, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   AfterViewInit,
@@ -7,7 +7,6 @@ import {
   computed,
   DestroyRef,
   ElementRef,
-  HostListener,
   inject,
   OnDestroy,
   signal,
@@ -17,18 +16,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
-import { MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import embed, { VisualizationSpec } from 'vega-embed';
@@ -136,9 +131,9 @@ const CHART_QUERY_BEHAVIOR: QueryExecutionBehavior = {
   showTableLoading: false,
   preserveTablePayload: true,
 };
-const VEGA_CHART_PADDING: VegaChartPadding = { left: 64, right: 24, top: 24, bottom: 56 };
+const VEGA_CHART_PADDING: VegaChartPadding = { left: 64, right: 24, top: 10, bottom: 36 };
+const VEGA_CHART_HEIGHT = 360;
 const MINIMUM_VEGA_PLOT_WIDTH = 320;
-const NARROW_MEDIA_QUERY = '(max-width: 980px)';
 const DENSITY_METRIC_OPTIONS: readonly DensityMetricOption[] = [
   { value: 'g4_density_per_mb', label: 'G4 density' },
   { value: 'upstream_g4_density_per_mb', label: 'Upstream G4 density' },
@@ -283,28 +278,21 @@ function selectionKey(selection: MicrobialTaxonomySelection): string {
   return `${selection.rank}:${selection.value}`;
 }
 
-function isNarrowViewport(documentRef: Document): boolean {
-  return documentRef.defaultView?.matchMedia(NARROW_MEDIA_QUERY).matches ?? false;
-}
-
 @Component({
   selector: 'app-microbial-environment-g4',
   imports: [
     MatButtonModule,
     MatButtonToggleModule,
-    MatCardModule,
     MatChipsModule,
-    MatDividerModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatSidenavModule,
-    MatStepperModule,
     MatTooltipModule,
     MtxGridModule,
     ReactiveFormsModule,
+    DecimalPipe,
     TitleCasePipe,
   ],
   templateUrl: './microbial-environment-g4.component.html',
@@ -331,6 +319,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private taxonomyRequestVersion = 0;
   private queryRequestVersion = 0;
   private tableLoadingRequestVersion = 0;
+  private hasRunInitialQuery = false;
 
   readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
   readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
@@ -345,7 +334,6 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   readonly dataLayerUnavailable = signal(false);
   readonly errorMessage = signal('');
   readonly chartError = signal('');
-  readonly isNarrow = signal(false);
 
   readonly form = new FormGroup({
     trait: new FormControl<MicrobialEnvironmentTrait>(INITIAL_AXIS_SELECTION.trait, {
@@ -408,36 +396,42 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
     return [
       {
-        label: 'Strains',
+        label: 'strains',
         value: COUNT_FORMATTER.format(response.summary.assembly_count),
         hint: 'Strains in the submitted set',
-        icon: 'biotech',
+        icon: 'groups',
       },
       {
-        label: 'Spearman rho',
+        label: 'Spearman r',
         value: formatStat(response.correlation.rho),
-        hint: `${response.correlation.n} complete ${this.densityMetricLabel()} pairs · p-value ${formatPValue(response.correlation.p_value)}`,
+        hint: `${response.correlation.n} complete pairs`,
         icon: 'query_stats',
       },
       {
-        label: 'Regression R2',
-        value: formatStat(response.regression.r_squared),
-        hint: `${this.densityMetricLabel()} · ${response.regression.status.replace('_', ' ')}`,
-        icon: 'show_chart',
+        label: 'p-value',
+        value: formatPValue(response.correlation.p_value),
+        hint: response.correlation.method,
+        icon: 'notifications_none',
+      },
+      {
+        label: 'G4 density metric',
+        value: 'sites/Mb',
+        hint: this.densityMetricLabel(),
+        icon: 'biotech',
       },
     ];
   });
 
   readonly tableColumns = computed<MtxGridColumn<MicrobialEnvironmentTableRow>[]>(() => [
     {
-      header: 'Species',
+      header: 'Organism',
       field: 'taxonomy.species',
       sortable: true,
       sortProp: { id: 'species' },
     },
-    { header: 'Strain', field: 'strain', sortable: true },
+    { header: 'Assembly accession', field: 'assembly_accession', sortable: false },
     {
-      header: `${this.phenotypeLabel()} median`,
+      header: `${this.phenotypeLabel()} (${this.phenotypeUnitLabel()})`,
       field: 'phenotype_value',
       sortable: true,
       type: 'number',
@@ -451,50 +445,21 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       formatter: (row) => this.formatValue(row.g4_density_per_mb),
     },
     {
-      header: 'Upstream G4 density',
-      field: 'upstream_g4_density_per_mb',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.upstream_g4_density_per_mb),
-    },
-    {
-      header: 'Downstream G4 density',
-      field: 'downstream_g4_density_per_mb',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.downstream_g4_density_per_mb),
-    },
-    {
-      header: 'Intergenic G4 density',
-      field: 'intergenic_g4_density_per_mb',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.intergenic_g4_density_per_mb),
-    },
-    {
-      header: 'Genome size',
+      header: 'Genome size (Mb)',
       field: 'genome_size',
       sortable: true,
       type: 'number',
       formatter: (row) => this.formatValue(row.genome_size),
     },
     {
-      header: 'GC%',
-      field: 'gc_percent',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.gc_percent),
+      header: 'Taxonomy',
+      field: 'taxonomy.genus',
+      sortable: false,
     },
   ]);
 
   constructor() {
-    this.updateNarrowState();
     this.loadOptions();
-  }
-
-  @HostListener('window:resize')
-  onWindowResize(): void {
-    this.updateNarrowState();
   }
 
   ngAfterViewInit(): void {
@@ -881,6 +846,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         next: (options) => {
           this.options.set(options);
           this.dataLayerUnavailable.set(false);
+          this.runInitialQuery();
         },
         error: (error: unknown) => {
           const message = extractErrorMessage(error);
@@ -897,6 +863,14 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           this.handleError(error);
         },
       });
+  }
+
+  private runInitialQuery(): void {
+    if (this.hasRunInitialQuery) {
+      return;
+    }
+    this.hasRunInitialQuery = true;
+    this.search();
   }
 
   private clearSubmittedResult(): void {
@@ -983,7 +957,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     return {
       $schema: 'https://vega.github.io/schema/vega/v6.json',
       width,
-      height: 380,
+      height: VEGA_CHART_HEIGHT,
       padding: VEGA_CHART_PADDING,
       data: [
         { name: 'points', values: points },
@@ -1065,10 +1039,6 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       element.className = 'vega-host';
       element.removeAttribute('style');
     }
-  }
-
-  private updateNarrowState(): void {
-    this.isNarrow.set(isNarrowViewport(this.document));
   }
 
   private vegaPlotWidth(element: HTMLDivElement): number {

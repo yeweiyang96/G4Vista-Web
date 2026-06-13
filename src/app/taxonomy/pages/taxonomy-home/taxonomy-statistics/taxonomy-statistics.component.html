@@ -1,5 +1,8 @@
 <div class="taxonomy-statistics">
-  <!-- <h2 class="title">分类统计</h2> -->
+  <div class="statistics-heading">
+    <h2 class="g4v-panel-title">Assembly-rich groups</h2>
+    <p class="g4v-subtitle">Common branches with available G4Vista genome assemblies.</p>
+  </div>
   <div class="stats-grid">
     @for (stat of taxonomyStats(); track stat.category) {
       <a [routerLink]="['/taxonomy', stat.taxon_id]" class="stat-card">

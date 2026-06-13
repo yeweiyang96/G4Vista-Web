@@ -1,93 +1,98 @@
-<main class="environment-page">
+<main class="g4v-page environment-page">
   <section class="service-header" data-help-target="microbial-header">
     <div class="header-copy">
       <p class="eyebrow">Microbial G4Vista</p>
-      <h1>Microbial G4 Environment Research</h1>
+      <h1 class="g4v-page-title">Microbial G4 environment research</h1>
       <p class="subtitle">{{ studySummary() }}</p>
-      <mat-chip-set class="capability-chips" aria-label="Research state">
-        <mat-chip>
-          <mat-icon matChipAvatar>biotech</mat-icon>
-          {{ eligibleStrainLabel() }}
-        </mat-chip>
-        <mat-chip>
-          <mat-icon matChipAvatar>query_stats</mat-icon>
-          Spearman correlation
-        </mat-chip>
-        <mat-chip>
-          <mat-icon matChipAvatar>show_chart</mat-icon>
-          OLS regression line
-        </mat-chip>
-        <mat-chip [class.status-pending]="dataLayerUnavailable()">
-          <mat-icon matChipAvatar>{{
-            dataLayerUnavailable() ? 'sync_problem' : 'check_circle'
-          }}</mat-icon>
-          {{ dataStatusLabel() }}
-        </mat-chip>
-      </mat-chip-set>
+    </div>
+
+    <div class="capability-grid" aria-label="Research state">
+      <div class="capability-card">
+        <mat-icon>groups</mat-icon>
+        <strong>{{ currentPlan().eligible_assemblies | number }}</strong>
+        <span>eligible strains</span>
+      </div>
+      <div class="capability-card">
+        <mat-icon>query_stats</mat-icon>
+        <strong>Spearman</strong>
+        <span>correlation</span>
+      </div>
+      <div class="capability-card">
+        <mat-icon>timeline</mat-icon>
+        <strong>OLS</strong>
+        <span>regression line</span>
+      </div>
+      <div
+        class="capability-card capability-ready"
+        [class.capability-pending]="dataLayerUnavailable()"
+      >
+        <mat-icon>{{ dataLayerUnavailable() ? 'sync_problem' : 'check_circle' }}</mat-icon>
+        <strong>Data</strong>
+        <span>{{ dataLayerUnavailable() ? 'unavailable' : 'ready' }}</span>
+      </div>
     </div>
   </section>
 
   <form class="workbench-form" [formGroup]="form" (submit)="$event.preventDefault(); search()">
-    <mat-sidenav-container class="workbench-shell" autosize>
-      <mat-sidenav
-        #queryDrawer
-        class="query-rail"
-        [mode]="isNarrow() ? 'over' : 'side'"
-        [opened]="!isNarrow()"
-      >
+    <div class="workbench-shell">
+      <aside class="query-rail">
         <div class="rail-title">
           <div>
-            <span>Research workflow</span>
             <h2>Analysis setup</h2>
+            <p>Set the environment condition and strain scope.</p>
           </div>
-          @if (isNarrow()) {
-            <button
-              mat-icon-button
-              type="button"
-              aria-label="Close workflow"
-              (click)="queryDrawer.close()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          }
         </div>
 
-        <mat-stepper class="query-stepper" orientation="vertical" [linear]="false">
-          <mat-step>
-            <ng-template matStepLabel>Environment condition</ng-template>
-            <div class="control-stack" data-help-target="microbial-condition">
+        <div class="setup-steps">
+          <section class="setup-step-card" data-help-target="microbial-condition">
+            <div class="control-stack">
+              <div class="setup-step-heading">
+                <span class="setup-step-number">1</span>
+                <div>
+                  <h3>Environment condition</h3>
+                  <p>Define the environmental trait and mode.</p>
+                </div>
+              </div>
+
               <div class="segmented-field">
                 <span>Trait</span>
                 <mat-button-toggle-group formControlName="trait" (change)="onAxisChange()">
-                  <mat-button-toggle value="temperature">Temperature</mat-button-toggle>
-                  <mat-button-toggle value="ph">pH</mat-button-toggle>
+                  <mat-button-toggle value="temperature">
+                    <mat-icon>device_thermostat</mat-icon>
+                    Temperature
+                  </mat-button-toggle>
+                  <mat-button-toggle value="ph">
+                    <mat-icon>thermostat</mat-icon>
+                    pH
+                  </mat-button-toggle>
                 </mat-button-toggle-group>
               </div>
 
               <div class="segmented-field">
                 <span>Mode</span>
                 <mat-button-toggle-group formControlName="mode" (change)="onAxisChange()">
-                  <mat-button-toggle value="growth">Growth</mat-button-toggle>
-                  <mat-button-toggle value="optimum">Optimum</mat-button-toggle>
+                  <mat-button-toggle value="growth">
+                    <mat-icon>trending_up</mat-icon>
+                    Growth
+                  </mat-button-toggle>
+                  <mat-button-toggle value="optimum">
+                    <mat-icon>track_changes</mat-icon>
+                    Optimum
+                  </mat-button-toggle>
                 </mat-button-toggle-group>
               </div>
-
-              <div class="step-actions">
-                <button mat-button type="button" matStepperNext>
-                  Next
-                  <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-                </button>
-              </div>
             </div>
-          </mat-step>
+          </section>
 
-          <mat-step>
-            <ng-template matStepLabel>Strain set</ng-template>
+          <section class="setup-step-card">
             <div class="control-stack">
-              <p class="step-copy">
-                Add taxonomy groups to build the strain set. Multiple selections are combined as a
-                union.
-              </p>
+              <div class="setup-step-heading">
+                <span class="setup-step-number">2</span>
+                <div>
+                  <h3>Strain set</h3>
+                  <p>Select taxonomy groups to build the strain set.</p>
+                </div>
+              </div>
 
               <mat-form-field appearance="outline">
                 <mat-label>Taxonomy rank</mat-label>
@@ -100,7 +105,7 @@
 
               <div class="taxonomy-search" data-help-target="microbial-taxonomy">
                 <mat-form-field appearance="outline">
-                  <mat-label>Keyword</mat-label>
+                  <mat-label>Search taxonomy</mat-label>
                   <input
                     matInput
                     type="search"
@@ -148,7 +153,7 @@
               <section class="collection-box" aria-label="Strain collection">
                 <div class="section-heading">
                   <div>
-                    <h3>Strain set</h3>
+                    <h3>Selected set</h3>
                     <p>{{ collectionSummary() }}</p>
                   </div>
                   @if (assemblyCollection().length) {
@@ -160,19 +165,21 @@
                 </div>
 
                 @if (assemblyCollection().length) {
-                  <mat-chip-set aria-label="Selected taxonomy groups">
-                    @for (
-                      selection of assemblyCollection();
-                      track selection.rank + selection.value
-                    ) {
-                      <mat-chip-row (removed)="removeTaxonomySelection(selection)">
-                        {{ taxonomyRankLabel(selection.rank) }}: {{ selection.value }}
-                        <button matChipRemove [attr.aria-label]="'Remove ' + selection.value">
-                          <mat-icon>cancel</mat-icon>
-                        </button>
-                      </mat-chip-row>
-                    }
-                  </mat-chip-set>
+                  <div class="collection-chip-scroll">
+                    <mat-chip-set aria-label="Selected taxonomy groups">
+                      @for (
+                        selection of assemblyCollection();
+                        track selection.rank + selection.value
+                      ) {
+                        <mat-chip-row (removed)="removeTaxonomySelection(selection)">
+                          {{ taxonomyRankLabel(selection.rank) }}: {{ selection.value }}
+                          <button matChipRemove [attr.aria-label]="'Remove ' + selection.value">
+                            <mat-icon>cancel</mat-icon>
+                          </button>
+                        </mat-chip-row>
+                      }
+                    </mat-chip-set>
+                  </div>
                 } @else {
                   <div class="collection-empty">
                     <mat-icon>public</mat-icon>
@@ -180,19 +187,12 @@
                   </div>
                 }
               </section>
-
-              <div class="step-actions">
-                <button mat-button type="button" matStepperPrevious>
-                  <mat-icon>arrow_back</mat-icon>
-                  Back
-                </button>
-              </div>
             </div>
-          </mat-step>
-        </mat-stepper>
+          </section>
+        </div>
 
         <div class="rail-footer-actions" data-help-target="microbial-submit">
-          <button mat-button type="button" (click)="resetAnalysisSetup()">
+          <button mat-stroked-button type="button" (click)="resetAnalysisSetup()">
             <mat-icon>restart_alt</mat-icon>
             Reset
           </button>
@@ -200,62 +200,42 @@
             mat-flat-button
             type="submit"
             [disabled]="!canSearch()"
-            (click)="canSearch() && isNarrow() ? queryDrawer.close() : null"
           >
             @if (loadingQuery()) {
               <mat-spinner diameter="18"></mat-spinner>
             } @else {
               <mat-icon>analytics</mat-icon>
             }
-            Submit
+            Run analysis
           </button>
         </div>
-      </mat-sidenav>
+      </aside>
 
-      <mat-sidenav-content class="workbench-content">
-        @if (isNarrow()) {
-          <button mat-stroked-button type="button" class="open-rail" (click)="queryDrawer.open()">
-            <mat-icon>tune</mat-icon>
-            Edit workflow
-          </button>
+      <section class="workbench-content">
+        @if (dataLayerUnavailable()) {
+          <div class="status-note pending" aria-live="polite">
+            <mat-icon>cloud_off</mat-icon>
+            <span>Research query tables are unavailable in this session.</span>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="reloadOptions()"
+              [disabled]="loadingOptions()"
+            >
+              @if (loadingOptions()) {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>refresh</mat-icon>
+              }
+              Reload
+            </button>
+          </div>
+        } @else if (errorMessage()) {
+          <div class="status-note error" aria-live="polite">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
         }
-
-        <mat-card appearance="outlined" class="query-snapshot">
-          <mat-card-header>
-            <mat-card-title>Analysis Results</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <mat-chip-set class="draft-chips" aria-label="Environment condition">
-              <mat-chip>{{ currentTraitLabel() }}</mat-chip>
-              <mat-chip>{{ currentModeLabel() }}</mat-chip>
-            </mat-chip-set>
-
-            @if (dataLayerUnavailable()) {
-              <div class="status-note pending" aria-live="polite">
-                <mat-icon>cloud_off</mat-icon>
-                <span>Research query tables are unavailable in this session.</span>
-                <button
-                  mat-stroked-button
-                  type="button"
-                  (click)="reloadOptions()"
-                  [disabled]="loadingOptions()"
-                >
-                  @if (loadingOptions()) {
-                    <mat-spinner diameter="18"></mat-spinner>
-                  } @else {
-                    <mat-icon>refresh</mat-icon>
-                  }
-                  Reload
-                </button>
-              </div>
-            } @else if (errorMessage()) {
-              <div class="status-note error" aria-live="polite">
-                <mat-icon>error</mat-icon>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
-          </mat-card-content>
-        </mat-card>
 
         @if (result(); as response) {
           <section class="summary-grid" aria-label="Analysis summary">
@@ -275,11 +255,6 @@
             <div class="panel-heading">
               <div>
                 <h2>{{ response.summary.phenotype_label }} vs {{ densityMetricLabel() }}</h2>
-                <p>
-                  {{ chartPointCount(response.scatter_points) }} points ·
-                  {{ response.correlation.method }}
-                  correlation
-                </p>
               </div>
               <div class="segmented-field" style="width: min(720px, 100%)">
                 <mat-button-toggle-group
@@ -318,7 +293,7 @@
           <section class="results-panel" data-help-target="microbial-table">
             <div class="panel-heading">
               <div>
-                <h2>Strain set</h2>
+                <h2>Strain set ({{ response.preview_total | number }})</h2>
                 <p>{{ response.preview_total }} strains match the submitted study.</p>
               </div>
             </div>
@@ -375,7 +350,7 @@
             }
           </section>
         }
-      </mat-sidenav-content>
-    </mat-sidenav-container>
+      </section>
+    </div>
   </form>
 </main>

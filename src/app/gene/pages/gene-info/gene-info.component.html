@@ -1,59 +1,91 @@
-<section class="gene-page" aria-label="Gene detail">
+<main class="g4v-page gene-detail-page" aria-label="Gene detail">
   @if (geneDetail(); as gene) {
-    <div class="gene-layout">
-      <mat-card appearance="outlined" class="summary-card">
-        <mat-card-header>
-          <mat-card-title>{{ gene.gene_name || gene.locus_tag || gene.feature_id }}</mat-card-title>
-          <mat-card-subtitle>{{ gene.feature_id }}</mat-card-subtitle>
-        </mat-card-header>
+    <section class="gene-hero">
+      <div class="gene-title">
+        <p class="gene-kicker">Gene / feature</p>
+        <h1>{{ gene.gene_name || gene.locus_tag || gene.feature_id || featureId() }}</h1>
+        <p>{{ gene.feature_id || featureId() }}</p>
+      </div>
 
-        <mat-card-content>
-          <dl class="detail-list">
-            <dt>Assembly</dt>
-            <dd>
-              <a mat-button [routerLink]="['/genome', assemblyAccession()]">{{
-                assemblyAccession()
-              }}</a>
-            </dd>
-            <dt>SeqID</dt>
-            <dd>{{ gene.seqid }}</dd>
-            <dt>Feature</dt>
-            <dd>{{ gene.feature || 'gene' }}</dd>
-            <dt>Range</dt>
-            <dd>
-              @if (gene.feature_start !== null && gene.feature_end !== null) {
-                {{ gene.feature_start }}..{{ gene.feature_end }}
-              } @else {
-                Unavailable
-              }
-            </dd>
-            <dt>Biotype</dt>
-            <dd>{{ gene.gene_biotype || 'Unspecified' }}</dd>
-            <dt>Strand</dt>
-            <dd>{{ gene.strand || 'Unspecified' }}</dd>
-            <dt>Locus tag</dt>
-            <dd>{{ gene.locus_tag || 'Unavailable' }}</dd>
-            <dt>Related G4 starts</dt>
-            <dd>{{ relatedStartCount() }}</dd>
-          </dl>
+      <div class="gene-summary" aria-label="Gene summary">
+        <div>
+          <mat-icon>description</mat-icon>
+          <span>Feature</span>
+          <strong>{{ gene.feature || 'gene' }}</strong>
+        </div>
+        <div>
+          <mat-icon>hub</mat-icon>
+          <span>Linked G4 starts</span>
+          <strong>{{ relatedStartCount() }}</strong>
+        </div>
+        <div>
+          <mat-icon>label</mat-icon>
+          <span>Biotype</span>
+          <strong>{{ gene.gene_biotype || 'Unspecified' }}</strong>
+        </div>
+      </div>
+    </section>
 
-          @if (relationSummaries().length) {
-            <mat-divider></mat-divider>
-            <div class="relation-section">
-              <p class="section-label">Linked G4 windows</p>
-              <mat-chip-listbox aria-label="Linked G4 windows">
-                @for (summary of relationSummaries(); track summary.key) {
-                  <mat-chip>{{ summary.label }}: {{ summary.count }}</mat-chip>
-                }
-              </mat-chip-listbox>
-            </div>
-          }
-        </mat-card-content>
-      </mat-card>
-    </div>
+    <section class="gene-panel" aria-label="Gene coordinates">
+      <header class="gene-panel-header">
+        <mat-icon>map</mat-icon>
+        <h2>Gene coordinates</h2>
+      </header>
+
+      <dl class="detail-list">
+        <div>
+          <dt>Assembly</dt>
+          <dd>
+            <a class="detail-link" [routerLink]="['/genome', assemblyAccession()]">{{
+              assemblyAccession()
+            }}</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Sequence record</dt>
+          <dd>{{ gene.seqid }}</dd>
+        </div>
+        <div>
+          <dt>Range</dt>
+          <dd>
+            @if (gene.feature_start !== null && gene.feature_end !== null) {
+              {{ gene.feature_start }}..{{ gene.feature_end }}
+            } @else {
+              Unavailable
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Strand</dt>
+          <dd>{{ gene.strand || 'Unspecified' }}</dd>
+        </div>
+        <div>
+          <dt>Locus tag</dt>
+          <dd>{{ gene.locus_tag || 'Unavailable' }}</dd>
+        </div>
+        <div>
+          <dt>Gene ID</dt>
+          <dd>{{ gene.gene_id || 'Unavailable' }}</dd>
+        </div>
+      </dl>
+
+      @if (relationSummaries().length) {
+        <section class="relation-section" aria-label="Linked G4 and i-motif windows">
+          <div>
+            <mat-icon>table_rows</mat-icon>
+            <h2>Linked motif windows</h2>
+          </div>
+          <mat-chip-listbox aria-label="Linked motif windows">
+            @for (summary of relationSummaries(); track summary.key) {
+              <mat-chip>{{ summary.label }}: {{ summary.count }}</mat-chip>
+            }
+          </mat-chip-listbox>
+        </section>
+      }
+    </section>
   } @else {
     <div class="loading-state">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   }
-</section>
+</main>

@@ -1,0 +1,100 @@
+<section class="position-statistics-panel" aria-label="Gene-context position statistics">
+  <header class="statistics-header">
+    <div>
+      <span class="eyebrow">Position statistics</span>
+      <h2>Gene-context position statistics</h2>
+    </div>
+    <p>
+      Density, G-score, and length for selected gene-context categories using the current
+      {{ motifTypeLabel() }} filters.
+    </p>
+  </header>
+
+  @if (isLoading()) {
+    <div class="state">
+      <mat-spinner diameter="28"></mat-spinner>
+      <span>Loading position statistics...</span>
+    </div>
+  } @else if (errorMessage()) {
+    <p class="state" role="status">{{ errorMessage() }}</p>
+  } @else if (hasStatistics()) {
+    <div class="density-summary-grid">
+      <section class="density-chart" aria-label="Motif density by gene context">
+        <h3>Density by gene context</h3>
+
+        <div class="density-list">
+          @for (row of densityRows(); track row.key) {
+            <div class="density-row">
+              <span class="density-label">
+                <span class="category-swatch" [style.background]="row.color" aria-hidden="true">
+                </span>
+                {{ row.label }}
+              </span>
+              <span class="density-track" aria-hidden="true">
+                <span
+                  class="density-bar"
+                  [style.width.%]="row.densityWidth"
+                  [style.background]="row.color"
+                ></span>
+              </span>
+              <strong>{{ formatNullableNumber(row.densityPerMb) }}</strong>
+              <span class="density-unit">sites/Mb</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="category-summary" aria-label="Gene-context category summary">
+        <h3>Category summary</h3>
+
+        <div class="summary-rows">
+          @for (row of densityRows(); track row.key) {
+            <article class="summary-row">
+              <div>
+                <span class="category-name">
+                  <span class="category-swatch" [style.background]="row.color" aria-hidden="true">
+                  </span>
+                  {{ row.label }}
+                </span>
+              </div>
+              <dl>
+                <div>
+                  <dt>Sites</dt>
+                  <dd>{{ formatCount(row.count) }}</dd>
+                </div>
+                <div>
+                  <dt>Region size</dt>
+                  <dd>{{ formatNullableNumber(row.lengthMb) }} Mb</dd>
+                </div>
+                <div>
+                  <dt>Density</dt>
+                  <dd>{{ formatNullableNumber(row.densityPerMb) }} sites/Mb</dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
+      </section>
+    </div>
+
+    <div class="strength-stack" aria-label="Motif score and length distributions">
+      @for (plot of strengthBoxPlots(); track plot.key) {
+        <app-strength-box-plot-vega
+          [title]="plot.title"
+          [rows]="plot.rows"
+          [tooltip]="boxPlotTooltip"
+        />
+      }
+    </div>
+
+    @if (statistics().quality.warnings.length > 0) {
+      <div class="warnings" role="status">
+        @for (warning of statistics().quality.warnings; track warning) {
+          <p>{{ warning }}</p>
+        }
+      </div>
+    }
+  } @else {
+    <p class="state" role="status">No position statistics are available.</p>
+  }
+</section>

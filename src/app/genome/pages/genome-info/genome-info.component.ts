@@ -17,7 +17,6 @@ import {
 } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -25,8 +24,9 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import { Sort } from '@angular/material/sort';
-import { Observable, catchError, forkJoin, map, of, switchMap, timer } from 'rxjs';
+import { Observable, catchError, finalize, forkJoin, map, of, switchMap, timer } from 'rxjs';
 import { GeneService } from '../../../gene/services/gene.service';
 import {
   type G4ChartAxisFeatureRange,
@@ -34,11 +34,12 @@ import {
 } from './chart/genome-range-chart.component';
 import { G4TableComponent } from './g4-table/g4-table.component';
 import { PositionDistributionComponent } from './position-distribution/position-distribution.component';
+import { DEFAULT_POSITION_CATEGORY_KEYS } from './position-distribution/position-category-view';
 import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome-detail.service';
 import {
   EMPTY_G4_PAGE,
   EMPTY_G4_POSITION_DISTRIBUTION,
-  EMPTY_G4_POSITION_STATISTICS,
+  G4DownloadColumn,
   G4FlankWindow,
   G4_FLANK_WINDOW_OPTIONS,
   G4ChartViewport,
@@ -55,8 +56,6 @@ import {
   G4PageResponse,
   G4PositionDistributionRequest,
   G4PositionDistributionResponse,
-  G4PositionStatisticsRequest,
-  G4PositionStatisticsResponse,
   G4Service,
   G4SortField,
   G4Type,
@@ -67,6 +66,8 @@ import {
   JbrowseHostComponent,
 } from '../../viewer';
 import { UiThemeService } from '../../../theme/ui-theme.service';
+import { formatCompactCount, formatGenomeLength } from '../../utils/overview-format';
+import type { GenomeOverviewAssembly } from '../../services/genome-search.service';
 
 interface G4FilterModel {
   selectedTetrads: number[];
@@ -127,6 +128,15 @@ const SORTABLE_COLUMNS: Record<string, G4SortField> = {
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const WHOLE_GENOME_SCOPE = 'whole-genome';
 const CHART_TARGET_BUCKETS = 200;
+const DEFAULT_TABLE_DOWNLOAD_COLUMNS: readonly G4DownloadColumn[] = [
+  'start',
+  'end',
+  'length',
+  'tetrads',
+  'score',
+  'sequence',
+  'gene_relation:insideOf_gene_g4',
+];
 
 function isG4Type(value: unknown): value is G4Type {
   return value === 'g4' || value === 'i-motif';
@@ -203,11 +213,6 @@ function normalizeFlankWindow(value: number): G4FlankWindow {
 
 function buildViewerLocation(seqid: string, start: number, end: number): string {
   return `${seqid}:${start}..${end}`;
-}
-
-function parseSeqidFromRegion(region: string): string | undefined {
-  const match = region.match(/^(.*):[\d,]+\.\.[\d,]+$/);
-  return match?.[1] || undefined;
 }
 
 function parseRegionLocation(region: string): GenomeViewportTarget | null {
@@ -314,13 +319,13 @@ function focusWindowAroundCenter(
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
-    MatCardModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSnackBarModule,
+    MatTabsModule,
     RouterLink,
   ],
   templateUrl: './genome-info.component.html',
@@ -341,14 +346,24 @@ export class GenomeInfoComponent {
   private readonly uiThemeService = inject(UiThemeService);
 
   readonly g4Type = signal<G4Type>('g4');
+  readonly draftG4Type = signal<G4Type>('g4');
   readonly genePositionOptions = computed(() =>
     G4_GENE_POSITION_OPTIONS_BY_TYPE[this.g4Type()].map((option) => ({
       ...option,
       label: formatGeneRelationLabel(option.label),
     })),
   );
+  readonly draftGenePositionOptions = computed(() =>
+    G4_GENE_POSITION_OPTIONS_BY_TYPE[this.draftG4Type()].map((option) => ({
+      ...option,
+      label: formatGeneRelationLabel(option.label),
+    })),
+  );
   readonly defaultGenePosition = computed(
     () => G4_GENE_POSITION_OPTIONS_BY_TYPE[this.g4Type()][0]?.value ?? DEFAULT_GENE_POSITION,
+  );
+  readonly defaultDraftGenePosition = computed(
+    () => G4_GENE_POSITION_OPTIONS_BY_TYPE[this.draftG4Type()][0]?.value ?? DEFAULT_GENE_POSITION,
   );
   readonly pageSize = signal(10);
   readonly sortState = signal<{ active: G4SortField; direction: 'asc' | 'desc' }>({
@@ -368,6 +383,13 @@ export class GenomeInfoComponent {
   readonly submittedPositionDistributionFilters = signal(
     createInitialPositionDistributionFilterModel(),
   );
+  readonly selectedPositionDistributionCategoryKeys = signal<readonly string[]>([
+    ...DEFAULT_POSITION_CATEGORY_KEYS,
+  ]);
+  readonly tableDownloadColumns = signal<readonly G4DownloadColumn[]>([
+    ...DEFAULT_TABLE_DOWNLOAD_COLUMNS,
+  ]);
+  readonly isTableDownloadPending = signal(false);
   readonly geneInputError = signal<string | null>(null);
   readonly accessionFilter = signal('');
 
@@ -378,6 +400,14 @@ export class GenomeInfoComponent {
   readonly assemblyDetail = computed<GenomeAssemblyDetail | undefined>(() => {
     const assembly = this.assemblyResource.value();
     return assembly?.assembly_accession === this.assemblyAccession() ? assembly : undefined;
+  });
+  readonly assemblyOverviewResource = rxResource<GenomeOverviewAssembly, string>({
+    params: () => this.assemblyAccession(),
+    stream: ({ params }) => this.genomeDetailService.getAssemblyOverview(params),
+  });
+  readonly assemblyOverview = computed<GenomeOverviewAssembly | undefined>(() => {
+    const overview = this.assemblyOverviewResource.value();
+    return overview?.assembly_accession === this.assemblyAccession() ? overview : undefined;
   });
   readonly viewerConfig = computed(() =>
     this.genomeViewerConfigService.createViewerConfig({
@@ -402,20 +432,9 @@ export class GenomeInfoComponent {
     seqids: this.assemblyDetail()?.seqids ?? [],
     defaultRegion: this.defaultRegionResource.value(),
   }));
-  readonly defaultBrowseScope = computed<BrowseScope>(() => {
-    const source = this.browseScopeSource();
-    if (!source.seqids.length) {
-      return WHOLE_GENOME_SCOPE;
-    }
-
-    const defaultSeqid = parseSeqidFromRegion(source.defaultRegion);
-    if (defaultSeqid && source.seqids.includes(defaultSeqid)) {
-      return defaultSeqid;
-    }
-
-    return source.seqids[0];
-  });
+  readonly defaultBrowseScope = computed<BrowseScope>(() => WHOLE_GENOME_SCOPE);
   readonly browseScope = signal<BrowseScope>('');
+  readonly draftBrowseScope = signal<BrowseScope>('');
   readonly chartSeqid = signal<string>('');
   readonly chartViewport = signal<G4ChartViewport>({
     start: 1,
@@ -487,7 +506,7 @@ export class GenomeInfoComponent {
   );
   readonly draftPositionLabel = computed(
     () =>
-      this.genePositionOptions().find(
+      this.draftGenePositionOptions().find(
         (option) => option.value === this.filterForm().value().selectedPosition,
       )?.label ?? 'Gene scope',
   );
@@ -525,7 +544,7 @@ export class GenomeInfoComponent {
 
       return {
         assemblyAccession: this.assemblyAccession(),
-        g4Type: this.g4Type(),
+        g4Type: this.draftG4Type(),
         selectedPosition: this.filterForm().value().selectedPosition,
         searchTerm,
         limit: GENE_CANDIDATE_LIMIT,
@@ -562,6 +581,10 @@ export class GenomeInfoComponent {
   );
   readonly displayedAccessionIdLabel = computed(() =>
     this.accessionNameForSeqid(this.displayedAccessionIdValue()),
+  );
+  readonly draftAccessionIdValue = computed(() => this.draftBrowseScope() || this.browseScope());
+  readonly draftAccessionIdLabel = computed(() =>
+    this.accessionNameForSeqid(this.draftAccessionIdValue()),
   );
   readonly displayedRegionFnaHeader = computed(() => {
     const scope = this.displayedAccessionIdValue();
@@ -660,52 +683,16 @@ export class GenomeInfoComponent {
     },
     defaultValue: EMPTY_G4_POSITION_DISTRIBUTION,
   });
-  readonly positionStatisticsResource = rxResource<
-    G4PositionStatisticsResponse,
-    G4PositionStatisticsRequest | undefined
-  >({
-    params: () => {
-      if (!this.assemblyDetail()) {
-        return undefined;
-      }
-
-      return {
-        assemblyAccession: this.assemblyAccession(),
-        windows: [this.positionDistributionFlankWindow()],
-        g4Type: this.positionDistributionG4Type(),
-        tetrads: this.positionDistributionFilters().tetrads,
-        minScore: this.positionDistributionFilters().minScore,
-        maxScore: this.positionDistributionFilters().maxScore,
-        overlap: false,
-      };
-    },
-    stream: ({ params }) => {
-      if (!params) {
-        return of(EMPTY_G4_POSITION_STATISTICS);
-      }
-      return this.g4Service.getPositionStatistics(params);
-    },
-    defaultValue: EMPTY_G4_POSITION_STATISTICS,
-  });
   readonly positionDistribution = computed<G4PositionDistributionResponse>(() =>
     this.positionDistributionResource.value(),
   );
-  readonly positionStatistics = computed<G4PositionStatisticsResponse>(() =>
-    this.positionStatisticsResource.value(),
-  );
   readonly positionDistributionStatus = computed(
     () => this.positionDistributionResource.snapshot().status,
-  );
-  readonly positionStatisticsStatus = computed(
-    () => this.positionStatisticsResource.snapshot().status,
   );
   readonly positionDistributionErrorMessage = computed(() =>
     this.positionDistributionStatus() === 'error'
       ? 'Whole-genome G4/i-motif position summary unavailable.'
       : '',
-  );
-  readonly positionStatisticsErrorMessage = computed(() =>
-    this.positionStatisticsStatus() === 'error' ? 'Research position statistics unavailable.' : '',
   );
   readonly geneRelationsResource = rxResource<
     GeneRelationBatchResponse[],
@@ -773,6 +760,44 @@ export class GenomeInfoComponent {
 
     return `${this.g4Page().count} ${gcType} in chr ${this.accessionNameForSeqid(browseScope)}`;
   });
+  readonly currentSelectionRows = computed(() => [
+    {
+      label: 'Sequence / region',
+      value: this.displayedAccessionIdLabel(),
+    },
+    {
+      label: 'Motif type',
+      value: this.g4Type() === 'i-motif' ? 'i-motif' : 'G4',
+    },
+    {
+      label: 'Gene relation',
+      value: this.selectedPositionLabel(),
+    },
+    {
+      label: 'Gene',
+      value: this.submittedSelectedGeneLabel(),
+    },
+    {
+      label: 'G-tetrads',
+      value: this.submittedFilters().selectedTetrads.length
+        ? this.submittedFilters().selectedTetrads.join(', ')
+        : 'All',
+    },
+    {
+      label: 'Score range',
+      value: this.currentScoreRangeLabel(),
+    },
+  ]);
+  readonly genomeLengthBp = computed(() => {
+    const overviewLength = this.assemblyOverview()?.genome_length_bp;
+    if (overviewLength !== undefined) {
+      return overviewLength;
+    }
+    return Object.values(this.assemblyDetail()?.seqid_lengths ?? {}).reduce(
+      (total, value) => total + value,
+      0,
+    );
+  });
   readonly geneSearchScopeHint = computed(() => {
     const label = this.draftPositionLabel();
     return label === 'Gene scope'
@@ -798,7 +823,9 @@ export class GenomeInfoComponent {
       if (!source.seqids.length) {
         return;
       }
-      this.browseScope.set(this.defaultBrowseScope());
+      const defaultScope = this.defaultBrowseScope();
+      this.browseScope.set(defaultScope);
+      this.draftBrowseScope.set(defaultScope);
     });
 
     effect(() => {
@@ -910,6 +937,17 @@ export class GenomeInfoComponent {
     }
 
     this.geneInputError.set(null);
+    const submittedG4Type = this.draftG4Type();
+    const submittedScope = this.draftBrowseScope() || this.browseScope();
+    if (submittedG4Type !== this.g4Type()) {
+      this.g4Type.set(submittedG4Type);
+    }
+    if (submittedScope && submittedScope !== this.browseScope()) {
+      this.browseScope.set(submittedScope);
+      if (!selectedGene) {
+        this.applyScopeViewport(submittedScope, { navigateViewer: true });
+      }
+    }
     this.commitFilters(this.filterForm().value());
     this.submittedSelectedGene.set(selectedGene);
     this.submittedSelectedGeneAssemblyAccession.set(selectedGene ? this.assemblyAccession() : null);
@@ -926,6 +964,7 @@ export class GenomeInfoComponent {
     }
 
     this.accessionFilter.set('');
+    this.draftBrowseScope.set(scope);
     if (scope !== this.browseScope()) {
       this.browseScope.set(scope);
     }
@@ -933,6 +972,11 @@ export class GenomeInfoComponent {
       this.clearGeneSelection();
     }
     this.applyScopeViewport(scope, { navigateViewer: true });
+  }
+
+  selectDraftBrowseScope(scope: BrowseScope): void {
+    this.accessionFilter.set('');
+    this.draftBrowseScope.set(scope);
   }
 
   onAccessionFilterInput(event: Event): void {
@@ -956,6 +1000,7 @@ export class GenomeInfoComponent {
     }
 
     this.g4Type.set(type);
+    this.draftG4Type.set(type);
     const defaultPosition = this.defaultGenePosition();
     this.filterModel.update((current) => ({
       ...current,
@@ -967,6 +1012,27 @@ export class GenomeInfoComponent {
     }));
     this.lastDraftPosition = defaultPosition;
     this.clearGeneSelection();
+  }
+
+  selectDraftG4Type(type: unknown): void {
+    if (!isG4Type(type)) {
+      return;
+    }
+
+    if (type === this.draftG4Type()) {
+      return;
+    }
+
+    this.draftG4Type.set(type);
+    const defaultPosition = this.defaultDraftGenePosition();
+    this.filterModel.update((current) => ({
+      ...current,
+      selectedPosition: defaultPosition,
+    }));
+    this.lastDraftPosition = defaultPosition;
+    this.draftGeneInput.set('');
+    this.draftSelectedGene.set(null);
+    this.geneInputError.set(null);
   }
 
   changeSort(sort: Sort): void {
@@ -1000,6 +1066,10 @@ export class GenomeInfoComponent {
     this.positionDistributionFilterModel.set(model);
   }
 
+  setSelectedPositionDistributionCategoryKeys(keys: readonly string[]): void {
+    this.selectedPositionDistributionCategoryKeys.set(keys);
+  }
+
   submitPositionDistributionFilters(): void {
     this.submittedPositionDistributionFilters.set(
       normalizePositionDistributionFilterModel(this.positionDistributionFilterModel()),
@@ -1013,11 +1083,17 @@ export class GenomeInfoComponent {
   }
 
   resetFilters(): void {
-    const defaults = createInitialFilterModel(this.defaultGenePosition());
+    this.draftG4Type.set('g4');
+    this.g4Type.set('g4');
+    const defaults = createInitialFilterModel(G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value);
     this.filterModel.set(defaults);
     this.submittedFilters.set(defaults);
+    const defaultScope = this.defaultBrowseScope();
+    this.browseScope.set(defaultScope);
+    this.draftBrowseScope.set(defaultScope);
     this.lastDraftPosition = defaults.selectedPosition;
     this.clearGeneSelection();
+    this.applyScopeViewport(defaultScope, { navigateViewer: true });
   }
 
   resetScopeFilter(): void {
@@ -1045,6 +1121,49 @@ export class GenomeInfoComponent {
       minScore: '',
       maxScore: '',
     });
+  }
+
+  setTableDownloadColumns(columns: readonly G4DownloadColumn[]): void {
+    if (columns.length === 0) {
+      return;
+    }
+    this.tableDownloadColumns.set(columns);
+  }
+
+  downloadTable(columns: readonly G4DownloadColumn[]): void {
+    if (this.isTableDownloadPending()) {
+      return;
+    }
+
+    const selectedGene = this.activeSubmittedSelectedGene();
+    const browseScope = this.browseScope();
+    const filters = this.browseFilters();
+    const downloadColumns = columns.length ? columns : this.tableDownloadColumns();
+
+    this.isTableDownloadPending.set(true);
+    this.g4Service
+      .downloadG4Table({
+        assemblyAccession: this.assemblyAccession(),
+        g4Type: this.g4Type(),
+        seqid: selectedGene || browseScope === WHOLE_GENOME_SCOPE ? undefined : browseScope,
+        sort: this.sortState().active,
+        order: this.sortState().direction,
+        tetrads: filters.tetrads,
+        minScore: filters.minScore,
+        maxScore: filters.maxScore,
+        selectedFeatureId: selectedGene?.feature_id,
+        selectedPosition: selectedGene ? this.submittedFilters().selectedPosition : undefined,
+        columns: downloadColumns,
+      })
+      .pipe(finalize(() => this.isTableDownloadPending.set(false)))
+      .subscribe({
+        next: (blob) => this.saveDownloadBlob(blob),
+        error: () => {
+          this.snackBar.open('Table download failed. Check the filters and try again.', 'Dismiss', {
+            duration: 4000,
+          });
+        },
+      });
   }
 
   onGeneInput(event: Event): void {
@@ -1148,6 +1267,40 @@ export class GenomeInfoComponent {
           ? currentViewport.binSize
           : defaultBinSizeForLength(seqidLength),
     });
+  }
+
+  formatCount(value: number): string {
+    return formatCompactCount(value);
+  }
+
+  formatLength(value: number): string {
+    return value > 0 ? formatGenomeLength(value) : 'Unavailable';
+  }
+
+  private currentScoreRangeLabel(): string {
+    const min = this.submittedMinScore();
+    const max = this.submittedMaxScore();
+    if (min !== undefined && max !== undefined) {
+      return `${min} - ${max}`;
+    }
+    if (min !== undefined) {
+      return `>= ${min}`;
+    }
+    if (max !== undefined) {
+      return `<= ${max}`;
+    }
+    return 'All';
+  }
+
+  private saveDownloadBlob(blob: Blob): void {
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `${this.assemblyAccession()}_${this.g4Type()}_sites.tsv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
   }
 
   private commitFilters(model: G4FilterModel): void {

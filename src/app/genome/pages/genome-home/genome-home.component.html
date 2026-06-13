@@ -1,5 +1,123 @@
-<div class="main" data-help-target="genome-search">
-  <h1 class="title">Genome</h1>
-  <p class="p">Search by assembly name or assembly accession</p>
-  <app-search-bar class="search-bar"></app-search-bar>
-</div>
+<main class="g4v-page genome-search-page" data-help-target="genome-search">
+  <section class="page-heading">
+    <h1>Find a genome assembly</h1>
+    <p>Search by assembly name, organism, or assembly accession.</p>
+  </section>
+
+  <section class="assembly-search-card" aria-label="Assembly search">
+    <div class="assembly-search-main">
+      <h2>Assembly search</h2>
+      <app-search-bar class="assembly-search"></app-search-bar>
+    </div>
+
+    <a mat-flat-button class="open-selected" routerLink="/genome/GCF_000001735.4">
+      <mat-icon>open_in_new</mat-icon>
+      Open selected assembly
+    </a>
+  </section>
+
+  <div class="genome-content-grid">
+    <section class="recommended-panel" aria-label="Recommended assemblies">
+      <div class="panel-title-row">
+        <mat-icon>bookmark_border</mat-icon>
+        <h2>Recommended assemblies</h2>
+      </div>
+
+      @if (recommendedAssemblies().length > 0) {
+        <div class="recommended-table-wrap">
+          <table class="recommended-table">
+            <colgroup>
+              <col class="organism-column" />
+              <col class="accession-column" />
+              <col class="records-column" />
+              <col class="g4-column" />
+              <col class="imotif-column" />
+              <col class="action-column" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Organism</th>
+                <th>Assembly accession</th>
+                <th>Sequence records</th>
+                <th>Predicted G4 sites</th>
+                <th>Predicted i-motif sites</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (assembly of recommendedAssemblies(); track assembly.assembly_accession) {
+                <tr>
+                  <td>{{ assembly.species_name || assembly.organism_name }}</td>
+                  <td>{{ assembly.assembly_accession }}</td>
+                  <td>{{ assembly.seqid_count }}</td>
+                  <td>{{ formatCount(assembly.g4_count) }}</td>
+                  <td>{{ formatCount(assembly.i_motif_count) }}</td>
+                  <td>
+                    <a mat-stroked-button [routerLink]="['/genome', assembly.assembly_accession]">
+                      Open genome
+                      <mat-icon iconPositionEnd>chevron_right</mat-icon>
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="loading-copy">Loading recommended assemblies.</p>
+      }
+
+      <a mat-button routerLink="/genome" class="browse-link">
+        Browse all assemblies
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
+    </section>
+
+    <aside class="support-column" aria-label="Search guidance">
+      <section class="side-panel">
+        <div class="panel-title-row">
+          <mat-icon>lightbulb</mat-icon>
+          <h2>Search tips</h2>
+        </div>
+        <div class="tip-grid">
+          <span><mat-icon>tag</mat-icon>Assembly accession</span>
+          <small>e.g., GCF_000001735.4</small>
+          <span><mat-icon>article</mat-icon>Assembly name</span>
+          <small>e.g., TAIR10.1</small>
+          <span><mat-icon>person_search</mat-icon>Scientific name</span>
+          <small>e.g., Arabidopsis thaliana</small>
+          <span><mat-icon>groups</mat-icon>Organism alias</span>
+          <small>e.g., human, mouse, E. coli</small>
+        </div>
+      </section>
+
+      <section class="side-panel next-panel">
+        <div class="panel-title-row">
+          <mat-icon>explore</mat-icon>
+          <h2>What you can do next</h2>
+        </div>
+        <div class="next-step">
+          <mat-icon>description</mat-icon>
+          <div>
+            <strong>Review assembly metadata</strong>
+            <p>Check taxonomic classification, sequencing info, and assembly statistics.</p>
+          </div>
+        </div>
+        <div class="next-step">
+          <mat-icon>bar_chart</mat-icon>
+          <div>
+            <strong>Compare G4/i-motif overview</strong>
+            <p>View predicted motif counts across sequence records and regions.</p>
+          </div>
+        </div>
+        <div class="next-step">
+          <mat-icon>table_view</mat-icon>
+          <div>
+            <strong>Explore motif sites</strong>
+            <p>Inspect motif sites in the table, range chart, or genome browser.</p>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>

@@ -1,55 +1,140 @@
-<header class="header-background" aria-label="Get started" id="homepage-header">
-  <div class="header-section">
-    <div class="header-headline">
-      <h1 class="mat-h1 text-shadow">G4 Vista</h1>
-      <h2 class="text-shadow">query G4 and i-motif sites in nucleotide sequences</h2>
-    </div>
-  </div>
-  <app-logo class="homepage-logo" />
-</header>
-<main class="homepage-promo">
-  <div class="homepage-row introduction">
-    <div class="homepage-row-column">
-      <h2 class="text-shadow">
-        <mat-icon>account_tree</mat-icon>
-        Browse by taxonomy
-      </h2>
-      <p>
-        Search a taxonomic name or identifier, inspect the lineage tree, and open assembly counts
-        for the groups you care about.
+<main class="g4v-page home-page">
+  <section class="home-hero" aria-label="G4Vista search">
+    <div class="home-copy">
+      <h1>G4Vista</h1>
+      <p>Search predicted G-quadruplex (G4) and i-motif sites across genomes</p>
+
+      <div class="home-search-row" aria-label="Global search">
+        <mat-form-field appearance="outline" class="home-search">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            type="search"
+            aria-label="Search G4Vista"
+            placeholder="Example: Arabidopsis thaliana, GCF_000001735.4, TP53"
+          />
+        </mat-form-field>
+        <a mat-flat-button routerLink="/genome" class="search-action">Search</a>
+      </div>
+
+      <p class="search-helper">
+        Search by <a routerLink="/genome">assembly accession</a>,
+        <a routerLink="/taxonomy">taxonomic name</a>, or gene / feature ID
       </p>
-      <a mat-button routerLink="/taxonomy">
-        Open Taxonomy
-        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-      </a>
     </div>
-    <div class="homepage-row-column">
-      <h2 class="text-shadow">
-        <mat-icon>manage_search</mat-icon>
-        Explore genomes
-      </h2>
-      <p>
-        Find an assembly by name or accession, then filter G4 and i-motif sites with linked tables,
-        charts, and genome browser context.
-      </p>
-      <a mat-button routerLink="/genome">
-        Open Genome
-        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-      </a>
+
+    <aside class="database-status-card" aria-label="Database status">
+      <div class="status-heading">
+        <h2>Database status</h2>
+        <span class="status-ok">All systems operational</span>
+      </div>
+
+      @if (metrics(); as metric) {
+        <div class="status-grid">
+          <div class="status-cell">
+            <mat-icon>storage</mat-icon>
+            <strong>{{ formatExactCount(metric.assembly_count) }}</strong>
+            <span>Assemblies</span>
+            <small>RefSeq/GenBank</small>
+          </div>
+          <div class="status-cell status-cell-taxa">
+            <mat-icon>eco</mat-icon>
+            <strong>{{ formatExactCount(metric.taxon_count) }}</strong>
+            <span>Taxa</span>
+            <small>Species level</small>
+          </div>
+          <div class="status-cell status-cell-g4">
+            <mat-icon>view_in_ar</mat-icon>
+            <strong>{{ formatCount(metric.g4_count) }}</strong>
+            <span>G4 sites</span>
+            <small>Predicted</small>
+          </div>
+          <div class="status-cell status-cell-imotif">
+            <mat-icon>table_rows</mat-icon>
+            <strong>{{ formatCount(metric.i_motif_count) }}</strong>
+            <span>i-motif sites</span>
+            <small>Predicted</small>
+          </div>
+        </div>
+      } @else {
+        <div class="status-grid">
+          <div class="status-cell"><mat-icon>storage</mat-icon><strong>Loading</strong></div>
+          <div class="status-cell"><mat-icon>eco</mat-icon><strong>Loading</strong></div>
+          <div class="status-cell status-cell-g4">
+            <mat-icon>view_in_ar</mat-icon><strong>Loading</strong>
+          </div>
+          <div class="status-cell status-cell-imotif">
+            <mat-icon>table_rows</mat-icon><strong>Loading</strong>
+          </div>
+        </div>
+      }
+
+      <div class="status-updated">
+        <mat-icon>schedule</mat-icon>
+        <span>Last updated: {{ lastUpdated() }} (UTC)</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="workflow-section" aria-label="Start your exploration">
+    <h2>Start your exploration</h2>
+    <div class="workflow-grid">
+      @for (card of workflowCards; track card.route) {
+        <article
+          class="workflow-card"
+          [class.workflow-taxonomy]="card.tone === 'taxonomy'"
+          [class.workflow-genome]="card.tone === 'genome'"
+          [class.workflow-gene]="card.tone === 'gene'"
+          [class.workflow-research]="card.tone === 'research'"
+        >
+          <div class="workflow-icon">
+            <mat-icon>{{ card.icon }}</mat-icon>
+          </div>
+          <div class="workflow-copy">
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.body }}</p>
+          </div>
+          <a mat-stroked-button [routerLink]="card.route">
+            {{ card.action }}
+            <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </a>
+        </article>
+      }
     </div>
-    <div class="homepage-row-column">
-      <h2 class="text-shadow">
-        <mat-icon>query_stats</mat-icon>
-        Run research workflows
-      </h2>
-      <p>
-        Build microbial strain sets, compare environmental traits with G4 density metrics, and
-        export strain-level tables.
-      </p>
-      <a mat-button routerLink="/research/microbial-environment-g4">
-        Open Research
-        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-      </a>
+  </section>
+
+  <section class="starting-section" aria-label="Common starting points">
+    <h2>Common starting points</h2>
+    <div class="starting-table">
+      @for (point of startingPoints(); track point.title) {
+        <div
+          class="starting-row"
+          [class.starting-human]="point.tone === 'human'"
+          [class.starting-plant]="point.tone === 'plant'"
+          [class.starting-bacteria]="point.tone === 'bacteria'"
+          [class.starting-research]="point.tone === 'research'"
+        >
+          <div class="starting-icon">
+            <mat-icon>{{ point.icon }}</mat-icon>
+          </div>
+          <div class="starting-name">
+            <strong>{{ point.title }}</strong>
+            <span>{{ point.subtitle }}</span>
+          </div>
+          <div class="starting-meta">
+            <span>{{ point.category }}</span>
+            <small>{{ point.detail }}</small>
+          </div>
+          <div class="starting-actions">
+            @for (action of point.actions; track action.label) {
+              <a mat-button [routerLink]="action.route">
+                <mat-icon>{{ action.icon }}</mat-icon>
+                {{ action.label }}
+              </a>
+            }
+          </div>
+        </div>
+      }
     </div>
-  </div>
+  </section>
 </main>

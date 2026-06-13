@@ -53,29 +53,29 @@ function screenshotPath(fileName: string): string {
 export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'taxonomy',
-    title: 'Browse G4Vista by taxonomy',
+    title: 'Browse by taxonomy',
     summary:
-      'Search for a taxon, open its lineage, and drill into assemblies attached to each taxonomic node.',
+      'Search for a taxon, open its taxonomy record, and continue to genome assemblies linked to that group.',
     route: '/taxonomy',
     icon: 'account_tree',
     screenshotSrc: screenshotPath('taxonomy.png'),
-    screenshotAlt: 'Taxonomy search page with an autocomplete search field and taxonomic tree.',
+    screenshotAlt: 'Taxonomy page with a taxon search field and browse cards.',
     steps: [
       {
         icon: 'search',
         title: 'Search by name or taxonomy ID',
-        body: 'Enter a scientific name, common name, or taxonomy identifier to load the matching lineage.',
+        body: 'Enter a scientific name, common name, taxonomic group, or NCBI Taxon ID to find matching taxa.',
       },
       {
-        icon: 'schema',
-        title: 'Use the lineage tree',
-        body: 'Expand branches to compare related taxa and open assembly counts for downstream genome exploration.',
+        icon: 'open_in_new',
+        title: 'Open a taxon record',
+        body: 'Select a result to open the taxon page, where genome assemblies and taxon metadata are available.',
       },
     ],
   },
   {
     id: 'genome',
-    title: 'Find an assembly',
+    title: 'Find a genome assembly',
     summary:
       'Search by assembly name or accession, then open the genome workspace for G4 and i-motif exploration.',
     route: '/genome',
@@ -147,7 +147,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   },
   {
     id: 'microbial-environment',
-    title: 'Run microbial environment research',
+    title: 'Microbial G4 environment research',
     summary:
       'Build a strain set, choose environmental traits, submit the study, and inspect correlation results.',
     route: '/research/microbial-environment-g4',
@@ -182,24 +182,24 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
     steps: [
       {
         icon: 'account_tree',
-        title: 'Taxonomy workspace',
-        body: 'Search by taxonomic name or identifier to load a lineage with assembly counts.',
+        title: 'Taxonomy landing page',
+        body: 'Use taxonomy as the entry point for finding taxa, genome assemblies, and predicted motif data.',
         route: '/taxonomy',
         targetSelector: '[data-help-target="taxonomy-header"]',
       },
       {
         icon: 'search',
         title: 'Search a taxon',
-        body: 'Start typing to open matching taxonomy options, then select one to load the lineage tree.',
+        body: 'Start typing a name or Taxon ID, then select a matching taxon to open its record.',
         route: '/taxonomy',
         targetSelector: '[data-help-target="taxonomy-search"]',
       },
       {
-        icon: 'schema',
-        title: 'Read the lineage',
-        body: 'Expandable nodes show related taxa, while assembly counts link into genome lists for that group.',
+        icon: 'category',
+        title: 'Browse common taxa',
+        body: 'Use common starting taxa to open broad groups and review their available genome assemblies.',
         route: '/taxonomy',
-        targetSelector: '[data-help-target="taxonomy-tree"]',
+        targetSelector: '[data-help-target="taxonomy-browse"]',
       },
     ],
   },
@@ -230,7 +230,7 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'badge',
         title: 'Confirm assembly context',
-        body: 'The overview card identifies the selected assembly, organism, taxonomy link, and sequence count.',
+        body: 'The overview section identifies the selected assembly, organism, taxonomy link, and sequence count.',
         route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
         targetSelector: '[data-help-target="genome-overview"]',
       },

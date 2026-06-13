@@ -1,33 +1,63 @@
-<form data-help-target="genome-search-input">
-  <mat-form-field appearance="outline" class="search-bar">
-    <mat-label for="search-box">Search</mat-label>
+<form
+  class="search-form"
+  [class.autocomplete-open]="autocompleteOpen()"
+  data-help-target="genome-search-input"
+>
+  <mat-form-field appearance="outline" class="search-bar" subscriptSizing="dynamic">
+    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
     <input
       matInput
-      placeholder="Search"
+      placeholder="Example: TAIR10.1, Arabidopsis thaliana, GCF_000001735.4"
+      aria-label="Assembly name, organism, or accession"
+      autocomplete="off"
+      spellcheck="false"
       [formControl]="searchControl"
-      type="search"
+      type="text"
       [matAutocomplete]="auto"
     />
+    @if (autocompleteOpen() || searchControl.value) {
+      <button
+        mat-icon-button
+        matSuffix
+        class="search-clear-button"
+        type="button"
+        aria-label="Clear assembly search"
+        (click)="clearSearch($event)"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
     <mat-autocomplete
       #auto="matAutocomplete"
       autoActiveFirstOption
-      (optionSelected)="onClick($event)"
+      class="genome-search-autocomplete-panel"
+      hideSingleSelectionIndicator
+      (opened)="setAutocompleteOpen(true)"
+      (closed)="setAutocompleteOpen(false)"
+      (optionSelected)="onOptionSelected($event)"
     >
       @if (filter_result$ | async; as result) {
         @if (result.length > 0) {
-          @for (one of result; track one.asm_name) {
-            <mat-option [value]="one.asm_name" [routerLink]="one.assembly_accession">
-              <div mat-line>
-                {{ one.asm_name }} <span class="no-match">{{ one.assembly_accession }}</span>
-              </div>
-              <span mat-line class="no-match"> {{ one.organism_name }}</span>
+          @for (one of result; track one.assembly_accession) {
+            <mat-option class="genome-search-option" [value]="one.assembly_accession">
+              <span class="genome-search-option-content">
+                <mat-icon aria-hidden="true">search</mat-icon>
+                <span class="genome-search-option-label">
+                  <strong>{{ one.asm_name }}</strong>
+                  <span aria-hidden="true">·</span>
+                  <strong>{{ one.assembly_accession }}</strong>
+                  <span aria-hidden="true">·</span>
+                  <em>{{ one.organism_name }}</em>
+                </span>
+              </span>
             </mat-option>
           }
         } @else {
-          <mat-option>
-            <mat-icon>error</mat-icon>
-            <div mat-line>0 results</div>
-            <span mat-line class="no-match"> No matching genomes found.</span>
+          <mat-option disabled class="genome-search-option">
+            <span class="genome-search-option-content">
+              <mat-icon aria-hidden="true">error</mat-icon>
+              <span class="genome-search-option-label">No matching genome assemblies</span>
+            </span>
           </mat-option>
         }
       }

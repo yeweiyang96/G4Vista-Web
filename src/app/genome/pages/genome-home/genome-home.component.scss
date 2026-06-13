@@ -1,33 +1,266 @@
-.main {
-  width: 80%;
-  min-height: 70vh;
-  margin: 2rem auto;
-  @media screen and (width <= 669.98px) {
-    width: 95%;
-    margin: 10px auto;
+.genome-search-page {
+  display: grid;
+  gap: 18px;
+  padding-top: 34px;
+}
+
+.page-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font: var(--mat-sys-display-small);
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--mat-sys-on-surface);
+}
+
+.page-heading p {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.assembly-search-card,
+.recommended-panel,
+.side-panel {
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius-large);
+  box-shadow: var(--g4v-shadow);
+}
+
+.assembly-search-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 24px;
+  align-items: start;
+  padding: 26px;
+}
+
+.assembly-search-main {
+  display: grid;
+  gap: 10px;
+}
+
+.assembly-search-main h2,
+.panel-title-row h2 {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.assembly-search {
+  display: block;
+}
+
+.open-selected {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 56px;
+}
+
+.genome-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.55fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.recommended-panel,
+.side-panel {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.panel-title-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.panel-title-row mat-icon {
+  color: var(--mat-sys-primary);
+}
+
+.recommended-table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.recommended-table {
+  width: 100%;
+  min-width: 884px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.recommended-table th,
+.recommended-table td {
+  padding: 13px 8px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.organism-column {
+  width: 19%;
+}
+
+.accession-column {
+  width: 20%;
+}
+
+.records-column {
+  width: 12%;
+}
+
+.g4-column {
+  width: 13%;
+}
+
+.imotif-column,
+.action-column {
+  width: 18%;
+}
+
+.recommended-table th {
+  overflow: hidden;
+  font: var(--mat-sys-label-medium);
+  text-overflow: ellipsis;
+  color: var(--mat-sys-on-surface);
+}
+
+.recommended-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--mat-sys-on-surface);
+}
+
+.recommended-table a {
+  min-height: 34px;
+  width: 138px;
+  min-width: 138px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.recommended-table td:last-child {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+:host ::ng-deep .recommended-table .mdc-button__label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.browse-link {
+  justify-self: start;
+  color: var(--mat-sys-primary);
+}
+
+.support-column {
+  display: grid;
+  gap: 10px;
+}
+
+.tip-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, auto);
+  gap: 9px 16px;
+  align-items: center;
+}
+
+.tip-grid span {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 14px;
+  color: var(--mat-sys-on-primary-container);
+  background: var(--mat-sys-primary-container);
+  border-radius: 999px;
+}
+
+.tip-grid mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  color: var(--mat-sys-primary);
+}
+
+.tip-grid small {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.next-panel {
+  gap: 12px;
+}
+
+.next-step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 8px 0;
+}
+
+.next-step > mat-icon {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 6px;
+  margin-top: 1px;
+  font-size: 20px;
+  line-height: 20px;
+  color: var(--mat-sys-on-primary-container);
+  background: var(--mat-sys-primary-container);
+  border-radius: var(--g4v-radius);
+  overflow: hidden;
+}
+
+.next-step strong,
+.next-step p {
+  margin: 0;
+}
+
+.next-step strong {
+  color: var(--mat-sys-on-surface);
+}
+
+.next-step p,
+.loading-copy {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (width <= 1080px) {
+  .assembly-search-card,
+  .genome-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .open-selected {
+    margin-top: 0;
   }
 }
 
-a {
-  margin-left: 1em;
-  text-decoration: none;
-}
+@media (width <= 620px) {
+  .assembly-search-card,
+  .recommended-panel,
+  .side-panel {
+    padding: 16px;
+  }
 
-.search-bar {
-  width: 100%;
-}
-
-.title,
-.p {
-  margin-top: 0;
-  margin-bottom: 5px;
-}
-
-.statistic {
-  margin-top: 2rem;
-}
-
-.img {
-  width: 100%; /* 宽度充满父容器 */
-  object-fit: cover; /* 填充模式，裁剪多余部分 */
+  .tip-grid {
+    grid-template-columns: 1fr;
+  }
 }

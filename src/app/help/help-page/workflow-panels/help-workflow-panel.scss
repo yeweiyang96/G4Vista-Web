@@ -1,0 +1,168 @@
+:host {
+  display: block;
+}
+
+:where(h2, h3, p, ul, ol, dl, dd) {
+  margin: 0;
+}
+
+.guide-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.guide-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+}
+
+.guide-header > mat-icon {
+  box-sizing: border-box;
+  width: 42px;
+  height: 42px;
+  padding: 9px;
+  font-size: 24px;
+  color: var(--mat-sys-primary);
+  background: var(--mat-sys-primary-container);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 24%, transparent);
+  border-radius: var(--g4v-radius);
+}
+
+.guide-title {
+  display: grid;
+  gap: 6px;
+}
+
+.guide-title h2 {
+  font: var(--mat-sys-headline-small);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.guide-title p,
+.info-card li,
+.step-copy,
+.result-card p {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.info-card,
+.result-card,
+.process-step {
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.info-card,
+.result-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.info-card h3,
+.result-card h3,
+.process-step h3 {
+  font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.info-card ul,
+.result-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.info-card li,
+.result-list li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.info-card mat-icon,
+.result-list mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  color: var(--mat-sys-primary);
+}
+
+.process-list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+  counter-reset: workflow-step;
+}
+
+.process-step {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  counter-increment: workflow-step;
+}
+
+.process-step::before {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-primary);
+  content: counter(workflow-step);
+  background: var(--mat-sys-primary);
+  border-radius: var(--g4v-radius);
+}
+
+.step-body {
+  display: grid;
+  gap: 10px;
+}
+
+.step-copy {
+  font: var(--mat-sys-body-medium);
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.result-card mat-icon {
+  color: var(--mat-sys-primary);
+}
+
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (width <= 860px) {
+  .guide-header,
+  .guide-grid,
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-header {
+    justify-items: start;
+  }
+}

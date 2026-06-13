@@ -1,9 +1,33 @@
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .table-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  max-width: 100%;
   margin: 12px 0;
+}
+
+.table-meta mat-chip-set {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .filter-chip {
   cursor: pointer;
+}
+
+.download-button {
+  flex: 0 0 auto;
+  color: var(--mat-sys-primary);
 }
 
 .filter-chip-icon {
@@ -14,7 +38,11 @@
 }
 
 .g4-grid {
+  display: block;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .sequence-button {

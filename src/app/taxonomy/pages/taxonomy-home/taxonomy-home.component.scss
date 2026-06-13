@@ -1,77 +1,263 @@
-.taxonomy-page {
-  display: flex;
-  flex-direction: column;
-  width: 80%;
-  min-height: 70vh;
-  margin: 2rem auto;
-  @media (width <= 669.98px) {
-    width: 95%;
-    margin: 10px auto;
-  }
+.taxonomy-page,
+.hero-copy,
+.taxonomy-search-panel,
+.taxonomy-section,
+.section-heading,
+.browse-copy,
+.browse-meta {
+  display: grid;
 }
 
-.page-header {
-  h1 {
-    margin: 0 0 5px;
-  }
+.taxonomy-page {
+  gap: 28px;
+  padding-top: 28px;
+}
 
-  .subtitle {
-    margin: 0;
-    color: var(--mat-sys-on-surface-variant);
-  }
+.taxonomy-hero,
+.taxonomy-search-panel,
+.browse-card {
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius-large);
+}
+
+.taxonomy-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
+  gap: 36px;
+  align-items: end;
+  padding: 38px;
+  background: color-mix(in srgb, var(--mat-sys-primary-container) 18%, var(--mat-sys-surface-container-lowest));
+}
+
+.hero-copy,
+.section-heading {
+  gap: 10px;
+}
+
+.hero-copy {
+  max-width: 680px;
+}
+
+.eyebrow {
+  margin: 0;
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--mat-sys-primary);
+}
+
+.hero-copy h1,
+.section-heading h2,
+.browse-copy h3 {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--mat-sys-on-surface);
+}
+
+.hero-copy h1 {
+  font: var(--mat-sys-display-large);
+}
+
+.section-heading h2 {
+  font: var(--mat-sys-headline-medium);
+}
+
+.taxonomy-search-panel {
+  gap: 8px;
+  min-width: 0;
+  padding: 22px;
+}
+
+.field-label {
+  font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
 }
 
 .search-bar {
   width: 100%;
 }
 
-.no-match {
-  font-size: 0.8rem;
-  color: gray;
+.taxonomy-submit-button {
+  color: var(--mat-sys-primary);
 }
 
-.tax-scientific-name {
-  font: var(--mat-sys-title-medium);
+.hero-copy p:not(.eyebrow),
+.section-heading p:not(.eyebrow),
+.search-hint,
+.result-description,
+.result-id,
+.browse-copy p,
+.browse-meta dt,
+.count-warning {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--mat-sys-on-surface-variant);
 }
 
-.tax-name {
-  padding-left: 5px;
-  font: var(--mat-sys-title-small);
-  color: var(--mat-sys-on-secondary-container);
-}
-
-.tax-rank {
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-secondary-container);
-}
-
-.tree {
+.taxonomy-result-row {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(160px, 1.1fr) minmax(120px, 0.8fr) 96px 126px;
+  gap: 14px;
+  align-items: center;
   width: 100%;
-  background-color: var(--mat-sys-surface-bright);
-  border-radius: 5px;
-  box-shadow: var(--mat-sys-level1);
+  min-height: 54px;
+  padding: 0 14px;
 }
 
-.node {
+.taxonomy-empty-option,
+.browse-card-header,
+.browse-meta div {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-}
-
-.node-continer-left {
-  display: flex;
+  gap: 12px;
   align-items: center;
 }
 
-.genome-count {
-  margin-right: 10px;
+.result-name,
+.result-description,
+.result-id,
+.browse-meta dd {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.tree-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5em 1em;
+.result-name {
   font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  color: var(--mat-sys-primary);
+}
+
+.result-rank,
+.rank-chip {
+  display: inline-grid;
+  justify-self: start;
+  min-width: 0;
+  min-height: 28px;
+  padding: 3px 11px;
+  place-items: center;
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-secondary-container);
+  border-radius: 999px;
+}
+
+.result-id {
+  justify-self: end;
+  text-align: right;
+}
+
+.taxonomy-section {
+  gap: 18px;
+}
+
+.browse-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.browse-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.browse-card {
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+  min-height: 292px;
+  padding: 20px;
+}
+
+.browse-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: var(--card-accent, var(--mat-sys-primary));
+}
+
+.browse-copy {
+  gap: 8px;
+}
+
+.browse-copy h3 {
+  font: var(--mat-sys-title-large);
+  font-weight: 800;
+}
+
+.browse-card-eukaryota {
+  --card-accent: var(--g4v-workflow-taxonomy);
+}
+
+.browse-card-plant {
+  --card-accent: var(--g4v-workflow-genome);
+}
+
+.browse-card-bacteria {
+  --card-accent: var(--g4v-g4);
+}
+
+.browse-card-archaea {
+  --card-accent: var(--g4v-workflow-gene);
+}
+
+.browse-card-header,
+.browse-meta div {
+  justify-content: space-between;
+}
+
+.browse-meta {
+  gap: 8px;
+  margin: 0;
+}
+
+.browse-meta div {
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.browse-meta dt,
+.browse-meta dd {
+  margin: 0;
+}
+
+.browse-meta dd {
+  font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.browse-card a {
+  align-self: end;
+  justify-self: start;
+}
+
+@media (width <= 1180px) {
+  .taxonomy-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 820px) {
+  .taxonomy-hero {
+    padding: 24px;
+  }
+
+  .hero-copy h1 {
+    font: var(--mat-sys-display-medium);
+  }
+
+  .taxonomy-result-row,
+  .browse-grid {
+    grid-template-columns: 1fr;
+  }
 }

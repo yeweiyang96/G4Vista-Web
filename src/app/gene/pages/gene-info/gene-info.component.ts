@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { of } from 'rxjs';
 import { G4_GENE_POSITION_OPTIONS } from '../../../genome/services/g4.service';
@@ -45,7 +44,7 @@ const GENE_DETAIL_POSITION_FIELDS = [
 
 @Component({
   selector: 'app-gene-info',
-  imports: [MatCardModule, MatChipsModule, MatDividerModule, MatProgressSpinnerModule, RouterLink],
+  imports: [MatChipsModule, MatIconModule, MatProgressSpinnerModule, RouterLink],
   templateUrl: './gene-info.component.html',
   styleUrl: './gene-info.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

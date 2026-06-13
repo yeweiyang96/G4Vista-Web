@@ -18,6 +18,7 @@ import { Sort } from '@angular/material/sort';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import {
   EMPTY_G4_PAGE,
+  G4DownloadColumn,
   G4GenePosition,
   G4GenePositionOption,
   G4GeneRelationHit,
@@ -68,6 +69,10 @@ function isDefaultRelationPosition(position: G4GenePosition): boolean {
   return position.startsWith('insideOf_gene_');
 }
 
+function toDownloadColumn(field: string): G4DownloadColumn {
+  return field as G4DownloadColumn;
+}
+
 @Component({
   selector: 'app-g4-table',
   imports: [MatButtonModule, MatChipsModule, MatIconModule, MtxGridModule, RouterLink],
@@ -91,6 +96,7 @@ export class G4TableComponent {
   readonly pageIndex = input.required<number>();
   readonly pageSize = input.required<number>();
   readonly isLoading = input(false);
+  readonly isDownloading = input(false);
   readonly geneRelationsByRowKey =
     input.required<Map<string, Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>>();
   readonly genePositionOptions = input.required<readonly G4GenePositionOption[]>();
@@ -136,12 +142,12 @@ export class G4TableComponent {
     const visibility = this.columnVisibility();
     const baseColumns = [
       ...(this.showAccessionIdColumn()
-        ? ([{ header: 'Accession ID', field: 'seqid' }] satisfies MtxGridColumn<G4PageItem>[])
+        ? ([{ header: 'Sequence / region', field: 'seqid' }] satisfies MtxGridColumn<G4PageItem>[])
         : []),
-      { header: 'Start', field: 'start', sortable: true, type: 'number' },
-      { header: 'End', field: 'end', sortable: true, type: 'number' },
-      { header: 'Length', field: 'length', sortable: true, type: 'number' },
-      { header: 'Tetrads', field: 'tetrads', sortable: true, type: 'number' },
+      { header: 'Start (1-based)', field: 'start', sortable: true, type: 'number' },
+      { header: 'End (1-based)', field: 'end', sortable: true, type: 'number' },
+      { header: 'Length (bp)', field: 'length', sortable: true, type: 'number' },
+      { header: 'G-tetrads', field: 'tetrads', sortable: true, type: 'number' },
       { header: 'Score', field: 'score', sortable: true, type: 'number' },
       {
         header: 'Sequence',
@@ -176,6 +182,8 @@ export class G4TableComponent {
   readonly resetGene = output<void>();
   readonly resetTetrads = output<void>();
   readonly resetScore = output<void>();
+  readonly downloadRequested = output<readonly G4DownloadColumn[]>();
+  readonly visibleColumnKeysChange = output<readonly G4DownloadColumn[]>();
 
   constructor() {
     effect(() => {
@@ -186,6 +194,10 @@ export class G4TableComponent {
         this.cachedPage.set(page);
         this.cachedGeneRelationsByRowKey.set(relations);
       }
+    });
+
+    effect(() => {
+      this.visibleColumnKeysChange.emit(this.visibleDownloadColumnKeys());
     });
   }
 
@@ -225,6 +237,16 @@ export class G4TableComponent {
 
   onResetScore(): void {
     this.resetScore.emit();
+  }
+
+  onDownload(): void {
+    this.downloadRequested.emit(this.visibleDownloadColumnKeys());
+  }
+
+  visibleDownloadColumnKeys(): readonly G4DownloadColumn[] {
+    return this.columns()
+      .filter((column) => column.show !== false)
+      .map((column) => toDownloadColumn(column.field));
   }
 
   sequenceSegments(item: G4PageItem): SequenceSegment[] {

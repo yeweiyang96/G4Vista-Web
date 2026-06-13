@@ -51,13 +51,13 @@ describe('G4TableComponent', () => {
     expect(upstreamGeneColumn?.show).toBeFalse();
   });
 
-  it('shows the Accession ID column only when requested', () => {
+  it('shows the sequence region column only when requested', () => {
     fixture.componentRef.setInput('showAccessionIdColumn', true);
     fixture.detectChanges();
 
     const seqidColumn = component.columns().find((column) => column.field === 'seqid');
 
-    expect(seqidColumn?.header).toBe('Accession ID');
+    expect(seqidColumn?.header).toBe('Sequence / region');
     expect(seqidColumn?.show).toBeTrue();
   });
 
@@ -90,6 +90,29 @@ describe('G4TableComponent', () => {
       columns.find((column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_g4')
         ?.show,
     ).toBeTrue();
+  });
+
+  it('emits the current visible columns when downloading', () => {
+    const emittedColumns: string[][] = [];
+    component.downloadRequested.subscribe((columns) => emittedColumns.push([...columns]));
+
+    component.onColumnChange([
+      {
+        ...component.columns().find((column) => column.field === 'sequence')!,
+        show: false,
+      },
+      {
+        ...component
+          .columns()
+          .find((column) => column.field === 'gene_relation:insideOf_genes_upstream_100bp_g4')!,
+        show: true,
+      },
+    ]);
+    component.onDownload();
+
+    expect(emittedColumns.at(-1)).toContain('start');
+    expect(emittedColumns.at(-1)).not.toContain('sequence');
+    expect(emittedColumns.at(-1)).toContain('gene_relation:insideOf_genes_upstream_100bp_g4');
   });
 
   it('uses seqid:start composite keys for relation hits', () => {
@@ -155,7 +178,7 @@ describe('G4TableComponent', () => {
   });
 
   it('shows close icons only for non-default chips', () => {
-    const getCloseIconCount = () => fixture.nativeElement.querySelectorAll('mat-icon').length;
+    const getCloseIconCount = () => fixture.nativeElement.querySelectorAll('.filter-chip-icon').length;
 
     expect(getCloseIconCount()).toBe(0);
 

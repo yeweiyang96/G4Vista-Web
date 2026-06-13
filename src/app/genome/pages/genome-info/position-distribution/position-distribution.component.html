@@ -1,465 +1,181 @@
-<mat-card appearance="outlined" class="position-card">
-  <mat-card-header class="position-card-header">
-    <div class="position-card-heading">
-      <mat-card-title>Whole-Genome G4/i-motif Position Summary</mat-card-title>
-      <mat-card-subtitle>Whole-genome position counts and research statistics</mat-card-subtitle>
+<section class="position-card">
+  <header class="overview-header">
+    <div>
+      <h2>G-quadruplex (G4) and i-motif overview</h2>
     </div>
 
-    <div class="position-controls">
-      <div class="motif-type-control">
-        <span class="control-label">Motif type</span>
-        <mat-button-toggle-group
-          [value]="g4Type()"
-          (valueChange)="changeG4Type($event)"
-          aria-label="Motif type"
-        >
-          <mat-button-toggle value="g4">G4</mat-button-toggle>
-          <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
+    <div class="motif-type-control">
+      <span class="control-label">Motif type:</span>
+      <mat-button-toggle-group
+        [value]="g4Type()"
+        (valueChange)="changeG4Type($event)"
+        aria-label="Motif type"
+      >
+        <mat-button-toggle value="g4">G4</mat-button-toggle>
+        <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </header>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="gene-window-field">
-        <mat-label>Gene flank size</mat-label>
-        <mat-select [value]="flankWindow()" (valueChange)="changeFlankWindow($event)">
-          @for (option of flankWindowOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+  <form
+    class="position-settings"
+    aria-label="Gene-context overview filters"
+    (submit)="onApplyFilters($event)"
+  >
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="settings-field">
+      <mat-label>Gene flank size</mat-label>
+      <mat-select [value]="flankWindow()" (valueChange)="changeFlankWindow($event)">
+        @for (option of flankWindowOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
-      <form class="position-filter-form" (submit)="onApplyFilters($event)">
-        <h3 class="position-filter-title">G4/i-motif filters</h3>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="settings-field">
+      <mat-label>G-tetrads</mat-label>
+      <mat-select
+        [value]="filterSelectedTetrads()"
+        multiple
+        (valueChange)="changeSelectedTetrads($event)"
+      >
+        @for (option of tetradOptions(); track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
-        <mat-form-field
-          appearance="outline"
-          subscriptSizing="dynamic"
-          class="position-filter-field"
-        >
-          <mat-label>Tetrads</mat-label>
-          <mat-select
-            [value]="filterSelectedTetrads()"
-            multiple
-            (valueChange)="changeSelectedTetrads($event)"
-          >
-            @for (option of tetradOptions(); track option) {
-              <mat-option [value]="option">{{ option }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+    <mat-form-field
+      appearance="outline"
+      subscriptSizing="dynamic"
+      class="settings-field score-field"
+    >
+      <mat-label>Min score</mat-label>
+      <input
+        matInput
+        type="number"
+        inputmode="numeric"
+        step="1"
+        [value]="filterMinScore()"
+        (input)="onMinScoreInput($event)"
+      />
+    </mat-form-field>
 
-        <mat-form-field
-          appearance="outline"
-          subscriptSizing="dynamic"
-          class="position-filter-field"
-        >
-          <mat-label>Min score</mat-label>
-          <input
-            matInput
-            type="number"
-            inputmode="numeric"
-            step="1"
-            [value]="filterMinScore()"
-            (input)="onMinScoreInput($event)"
-          />
-        </mat-form-field>
+    <mat-form-field
+      appearance="outline"
+      subscriptSizing="dynamic"
+      class="settings-field score-field"
+    >
+      <mat-label>Max score</mat-label>
+      <input
+        matInput
+        type="number"
+        inputmode="numeric"
+        step="1"
+        [value]="filterMaxScore()"
+        (input)="onMaxScoreInput($event)"
+      />
+    </mat-form-field>
 
-        <mat-form-field
-          appearance="outline"
-          subscriptSizing="dynamic"
-          class="position-filter-field"
-        >
-          <mat-label>Max score</mat-label>
-          <input
-            matInput
-            type="number"
-            inputmode="numeric"
-            step="1"
-            [value]="filterMaxScore()"
-            (input)="onMaxScoreInput($event)"
-          />
-        </mat-form-field>
+    <div class="settings-actions">
+      <button mat-button type="button" (click)="onResetFilters()">Reset</button>
+      <button mat-flat-button type="submit">Apply</button>
+    </div>
+  </form>
 
-        <div class="position-filter-actions">
-          <button mat-button type="button" (click)="onResetFilters()">Reset</button>
-          <button mat-flat-button type="submit">Submit</button>
+  @if (isLoading()) {
+    <div class="state">
+      <mat-spinner diameter="28"></mat-spinner>
+      <span>Loading whole-genome {{ motifTypeShortLabel() }} summary...</span>
+    </div>
+  } @else if (errorMessage()) {
+    <p class="state" role="status">{{ errorMessage() }}</p>
+  } @else if (displayedPositionTotal() > 0) {
+    <div class="overview-grid">
+      <section class="context-panel" aria-label="Gene-context summary">
+        <div class="panel-heading">
+          <h3>By gene context</h3>
+          <p>Sites in annotated genes and selected gene flanks.</p>
         </div>
-      </form>
-    </div>
-  </mat-card-header>
 
-  <mat-card-content>
-    <mat-tab-group class="position-tabs" animationDuration="150ms">
-      <mat-tab label="Summary">
-        <section class="tab-panel">
-          @if (isLoading()) {
-            <div class="state">
-              <mat-spinner diameter="28"></mat-spinner>
-              <span>Loading whole-genome {{ motifTypeShortLabel() }} summary...</span>
-            </div>
-          } @else if (errorMessage()) {
-            <p class="state" role="status">{{ errorMessage() }}</p>
-          } @else if (displayedPositionTotal() > 0) {
-            <div class="summary-grid">
-              <div class="summary-chart-panel">
-                <div class="pie-wrap" aria-label="Whole-genome motif position summary chart">
-                  <div class="summary-doughnut">
-                    <canvas
-                      baseChart
-                      [type]="'doughnut'"
-                      [data]="summaryDoughnutData()"
-                      [options]="summaryDoughnutOptions"
-                      [plugins]="summaryDoughnutPlugins"
-                      [legend]="true"
-                      aria-label="Doughnut chart showing whole-genome position category share"
-                      role="img"
-                    ></canvas>
-                  </div>
-                </div>
+        <div class="context-layout">
+          <div class="summary-doughnut" aria-label="Gene-context motif position summary chart">
+            <canvas
+              baseChart
+              [type]="'doughnut'"
+              [data]="summaryDoughnutData()"
+              [options]="summaryDoughnutOptions"
+              [plugins]="summaryDoughnutPlugins"
+              [legend]="false"
+              aria-label="Doughnut chart showing motif sites by gene context"
+              role="img"
+            ></canvas>
+          </div>
 
-                <section class="summary-category-controls" aria-label="Summary chart categories">
-                  <h3 class="breakdown-title">Chart categories</h3>
-                  <div class="summary-category-checkboxes">
-                    @for (category of categoryRows(); track category.key) {
-                      <mat-checkbox
-                        [checked]="isSummaryCategoryVisible(category.key)"
-                        (change)="changeSummaryCategoryVisibility(category.key, $event.checked)"
-                      >
-                        <span class="stats-category">
-                          <span
-                            class="category-swatch"
-                            [style.background]="category.color"
-                            aria-hidden="true"
-                          ></span>
-                          {{ category.displayLabel }}
-                        </span>
-                      </mat-checkbox>
-                    }
-                  </div>
-                </section>
-              </div>
-
-              <div class="metrics">
-                @for (metric of summaryMetrics(); track metric.key) {
-                  <div class="metric">
-                    <span class="metric-label">{{ metric.label }}</span>
-                    <span class="metric-value">{{ metric.value }}</span>
-                    <span class="metric-detail">{{ metric.detail }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-
+          <section class="category-panel" aria-label="Chart categories">
+            <h4>Chart categories</h4>
             <div class="category-list">
               @for (category of categoryRows(); track category.key) {
-                <div class="category-row" [title]="category.displayDescription">
-                  <span
-                    class="category-swatch"
-                    [style.background]="category.color"
-                    aria-hidden="true"
-                  ></span>
-                  <span class="category-name">{{ category.displayLabel }}</span>
+                <div
+                  class="category-row"
+                  [class.category-row-hidden]="!isSummaryCategoryVisible(category.key)"
+                  [title]="category.displayDescription"
+                >
+                  <mat-checkbox
+                    [checked]="isSummaryCategoryVisible(category.key)"
+                    (change)="changeSummaryCategoryVisibility(category.key, $event.checked)"
+                  >
+                    <span class="category-checkbox-label">
+                      <span
+                        class="category-swatch"
+                        [style.background]="category.color"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="category-name">{{ category.displayLabel }}</span>
+                    </span>
+                  </mat-checkbox>
                   <span class="category-count">{{ formatCount(category.count) }}</span>
                   <span class="category-ratio">{{ formatRatio(category.ratio) }}</span>
                 </div>
               }
             </div>
+            <p class="rounding-note">
+              Percentages are calculated from the displayed gene-context categories.
+            </p>
+          </section>
+        </div>
+      </section>
 
-            @if (geneBiotypeBreakdown().length > 0) {
-              <section
-                class="feature-breakdown gene-biotype-breakdown"
-                aria-label="Gene biotype position relationship breakdown"
-              >
-                <h3 class="breakdown-title">
-                  <span
-                    class="header-help"
-                    [matTooltip]="statisticTooltips.geneBiotypeBreakdown"
-                    matTooltipPosition="above"
-                    >Gene biotype position relationships</span
-                  >
-                </h3>
-                <div class="gene-biotype-layout">
-                  <div
-                    class="pie-wrap gene-biotype-chart"
-                    [matTooltip]="statisticTooltips.geneBiotypeDonut"
-                    matTooltipPosition="above"
-                  >
-                    <canvas
-                      baseChart
-                      [type]="'doughnut'"
-                      [data]="geneBiotypeDoughnutData()"
-                      [options]="geneBiotypeDoughnutOptions"
-                      [legend]="true"
-                      aria-label="Nested doughnut chart showing gene biotype share and within-biotype position category share"
-                      role="img"
-                    ></canvas>
-                  </div>
-                  <div class="stats-wrap gene-biotype-table">
-                    <table class="stats-table">
-                      <thead>
-                        <tr>
-                          <th>Gene biotype</th>
-                          <th>Total</th>
-                          @for (column of geneBiotypeCategoryColumns; track column.key) {
-                            <th>
-                              <span class="stats-category">
-                                <span
-                                  class="category-swatch"
-                                  [style.background]="column.color"
-                                  aria-hidden="true"
-                                ></span>
-                                {{ column.label }}
-                              </span>
-                            </th>
-                          }
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (
-                          row of geneBiotypeBreakdown();
-                          track row.bio_type ?? row.display_label
-                        ) {
-                          <tr>
-                            <td class="feature-breakdown-name">
-                              <span class="stats-category">
-                                <span
-                                  class="category-swatch"
-                                  [style.background]="row.color"
-                                  aria-hidden="true"
-                                ></span>
-                                {{ row.display_label }}
-                              </span>
-                            </td>
-                            <td>{{ formatCount(row.total_count) }}</td>
-                            @for (category of row.categories; track category.key) {
-                              <td>
-                                <span class="stats-category">
-                                  <span
-                                    class="category-swatch"
-                                    [style.background]="category.color"
-                                    aria-hidden="true"
-                                  ></span>
-                                  {{ category.value }}
-                                </span>
-                              </td>
-                            }
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </section>
-            }
-
-            @if (distribution().quality.warnings.length > 0) {
-              <div class="warnings" role="status">
-                @for (warning of distribution().quality.warnings; track warning) {
-                  <p>{{ warning }}</p>
-                }
+      <section class="metrics-panel" aria-label="Key metrics">
+        <h3>Key metrics ({{ motifTypeShortLabel() }})</h3>
+        <div class="metrics">
+          @for (metric of summaryMetrics(); track metric.key) {
+            <div class="metric">
+              <mat-icon>{{ metricIcon(metric.key) }}</mat-icon>
+              <div>
+                <span class="metric-label">{{ metric.label }}</span>
+                <span class="metric-value">{{ metric.value }}</span>
+                <span class="metric-detail">{{ metric.detail }}</span>
               </div>
-            }
-          } @else {
-            <p class="state" role="status">
-              {{
-                distribution().total_count > 0
-                  ? 'No gene-context motif site counts are available.'
-                  : 'No whole-genome motif site counts are available.'
-              }}
-            </p>
+            </div>
           }
-        </section>
-      </mat-tab>
+        </div>
+      </section>
+    </div>
 
-      <mat-tab label="Density & Enrichment">
-        <section class="tab-panel">
-          @if (statisticsLoading()) {
-            <div class="state">
-              <mat-spinner diameter="28"></mat-spinner>
-              <span>Loading {{ motifTypeShortLabel() }} statistics...</span>
-            </div>
-          } @else if (statisticsErrorMessage()) {
-            <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
-          } @else if (hasStatistics()) {
-            <p class="table-note">
-              Density normalizes motif counts by region size. Genome enrichment is density divided
-              by the genome-wide density; 1x means genome average.
-            </p>
-            <div class="stats-wrap">
-              <table class="stats-table density-table">
-                <thead>
-                  <tr>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.category"
-                        matTooltipPosition="above"
-                        >Category</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.intervalLength"
-                        matTooltipPosition="above"
-                        >Region size (Mb)</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.densityPerMb"
-                        matTooltipPosition="above"
-                        >Density / Mb</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.genomeEnrichment"
-                        matTooltipPosition="above"
-                        >Genome enrichment</span
-                      >
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (category of statisticsRows(); track category.key) {
-                    <tr>
-                      <td>
-                        <span class="stats-category">
-                          <span
-                            class="category-swatch"
-                            [style.background]="category.color"
-                            aria-hidden="true"
-                          ></span>
-                          {{ category.displayLabel }}
-                        </span>
-                      </td>
-                      <td>{{ formatNullableNumber(category.length_mb) }}</td>
-                      <td>{{ formatNullableNumber(motifStats(category).density_per_mb) }}</td>
-                      <td>{{ formatFold(motifStats(category).fold_vs_genome) }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          } @else {
-            <p class="state" role="status">No research statistics are available.</p>
-          }
-        </section>
-      </mat-tab>
-
-      <mat-tab label="Strength">
-        <section class="tab-panel">
-          @if (statisticsLoading()) {
-            <div class="state">
-              <mat-spinner diameter="28"></mat-spinner>
-              <span>Loading {{ motifTypeShortLabel() }} strength statistics...</span>
-            </div>
-          } @else if (statisticsErrorMessage()) {
-            <p class="state" role="status">{{ statisticsErrorMessage() }}</p>
-          } @else if (hasStatistics()) {
-            <p class="table-note">{{ strengthIntroText() }}</p>
-            <div class="strength-plot-grid">
-              @for (plot of strengthBoxPlots(); track plot.key) {
-                <app-strength-box-plot-vega
-                  [title]="plot.title"
-                  [rows]="plot.rows"
-                  [tooltip]="statisticTooltips.boxPlot"
-                />
-              }
-            </div>
-
-            <div class="stats-wrap">
-              <table class="stats-table strength-table">
-                <thead>
-                  <tr>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.category"
-                        matTooltipPosition="above"
-                        >Category</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.count"
-                        matTooltipPosition="above"
-                        >Count</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.medianP75"
-                        matTooltipPosition="above"
-                        >Score median / p75</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.medianP75"
-                        matTooltipPosition="above"
-                        >Tetrads median / p75</span
-                      >
-                    </th>
-                    <th>
-                      <span
-                        class="header-help"
-                        [matTooltip]="statisticTooltips.medianP75"
-                        matTooltipPosition="above"
-                        >Length median / p75</span
-                      >
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of strengthRows(); track row.id) {
-                    <tr>
-                      <td>
-                        <span class="stats-category">
-                          <span
-                            class="category-swatch"
-                            [style.background]="row.category.color"
-                            aria-hidden="true"
-                          ></span>
-                          {{ row.category.displayLabel }}
-                        </span>
-                      </td>
-                      <td>{{ formatCount(row.stats.count) }}</td>
-                      <td>
-                        {{ formatNullableNumber(row.stats.median_score) }} /
-                        {{ formatNullableNumber(row.stats.p75_score) }}
-                      </td>
-                      <td>
-                        {{ formatNullableNumber(row.stats.median_tetrads) }} /
-                        {{ formatNullableNumber(row.stats.p75_tetrads) }}
-                      </td>
-                      <td>
-                        {{ formatNullableNumber(row.stats.median_length) }} /
-                        {{ formatNullableNumber(row.stats.p75_length) }}
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          } @else {
-            <p class="state" role="status">No strength statistics are available.</p>
-          }
-        </section>
-      </mat-tab>
-    </mat-tab-group>
-
-    @if (statistics().quality.warnings.length > 0) {
+    @if (distribution().quality.warnings.length > 0) {
       <div class="warnings" role="status">
-        @for (warning of statistics().quality.warnings; track warning) {
+        @for (warning of distribution().quality.warnings; track warning) {
           <p>{{ warning }}</p>
         }
       </div>
     }
-  </mat-card-content>
-</mat-card>
+  } @else {
+    <p class="state" role="status">
+      {{
+        distribution().total_count > 0
+          ? 'No gene-context motif site counts are available.'
+          : 'No whole-genome motif site counts are available.'
+      }}
+    </p>
+  }
+</section>

@@ -1,0 +1,68 @@
+<article class="guide-panel" aria-labelledby="taxonomy-help-title">
+  <header class="guide-header">
+    <mat-icon aria-hidden="true">account_tree</mat-icon>
+    <div class="guide-title">
+      <h2 id="taxonomy-help-title">Browse by taxonomy</h2>
+      <p>
+        Start with a taxonomic group, then find genome assemblies linked to that taxon.
+      </p>
+    </div>
+    <a mat-stroked-button routerLink="/taxonomy">
+      Open taxonomy
+      <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+    </a>
+  </header>
+
+  <div class="guide-grid" aria-label="Taxonomy inputs and outputs">
+    <section class="info-card">
+      <h3>What to enter</h3>
+      <ul>
+        <li>
+          <mat-icon aria-hidden="true">edit</mat-icon>
+          <span>Scientific name, common name, or a short taxon keyword.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">tag</mat-icon>
+          <span>NCBI Taxonomy ID, such as 3702 for Arabidopsis thaliana.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="info-card">
+      <h3>What you will see</h3>
+      <ul>
+        <li>
+          <mat-icon aria-hidden="true">format_list_bulleted</mat-icon>
+          <span>Matching taxa with scientific names, ranks, and NCBI Taxon IDs.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">storage</mat-icon>
+          <span>Taxon records with genome assemblies and links to G4/i-motif data.</span>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <ol class="process-list" aria-label="Taxonomy workflow steps">
+    <li class="process-step">
+      <div class="step-body">
+        <h3>Search a taxon</h3>
+        <p class="step-copy">Search by species, genus, family, taxonomic group, or Taxon ID.</p>
+      </div>
+    </li>
+
+    <li class="process-step">
+      <div class="step-body">
+        <h3>Open the taxon record</h3>
+        <p class="step-copy">Select the best match from the search suggestions.</p>
+      </div>
+    </li>
+
+    <li class="process-step">
+      <div class="step-body">
+        <h3>Move to genomes</h3>
+        <p class="step-copy">Use a taxon with assemblies as the starting point for genome review.</p>
+      </div>
+    </li>
+  </ol>
+</article>

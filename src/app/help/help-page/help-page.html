@@ -1,78 +1,60 @@
-<main class="help-page">
+<main class="g4v-page help-page">
   <section class="help-hero" aria-labelledby="help-title">
     <div class="hero-copy">
-      <h1 id="help-title">G4Vista Help</h1>
+      <p class="section-kicker">Help center</p>
+      <h1 id="help-title" class="g4v-page-title">How to use G4Vista</h1>
       <p>
-        Learn the main workflows with screenshot-backed guides, short action lists, and page-level
-        tours that are prompted from each feature page.
+        Choose a tool to see what to enter, which steps to follow, and how to read the results.
       </p>
-      <div class="hero-actions">
-        <a mat-flat-button routerLink="/">
-          <mat-icon>home</mat-icon>
-          Back to G4Vista
-        </a>
-      </div>
     </div>
-    <div class="hero-panel" aria-label="Help workflow summary">
-      <div class="hero-panel-stat">
-        <strong>{{ topics.length }}</strong>
-        <span>feature workflows</span>
-      </div>
-      <div class="hero-panel-stat">
-        <strong>Guide</strong>
-        <span>prompted on feature pages</span>
-      </div>
-      <div class="hero-panel-stat">
-        <strong>Esc</strong>
-        <span>closes any active guide</span>
-      </div>
+
+    <div class="hero-actions">
+      <a mat-stroked-button routerLink="/">
+        <mat-icon>home</mat-icon>
+        Back to G4Vista
+      </a>
     </div>
   </section>
 
-  <section class="workflow-index" aria-label="Workflow shortcuts">
+  <section class="workflow-tabs" role="tablist" aria-label="Help workflows">
     @for (topic of topics; track topic.id) {
-      <a class="workflow-link" [routerLink]="topic.route">
+      <button
+        type="button"
+        class="workflow-tab"
+        role="tab"
+        [class.workflow-tab-active]="selectedTopicId() === topic.id"
+        [attr.aria-selected]="selectedTopicId() === topic.id"
+        [attr.aria-controls]="'help-panel-' + topic.id"
+        (click)="selectTopic(topic.id)"
+      >
         <mat-icon aria-hidden="true">{{ topic.icon }}</mat-icon>
         <span>{{ topic.title }}</span>
-      </a>
+      </button>
     }
   </section>
 
-  <section class="topic-list" aria-label="Help topics">
-    @for (topic of topics; track topic.id) {
-      <article class="topic">
-        <div class="topic-media">
-          <img [src]="topic.screenshotSrc" [alt]="topic.screenshotAlt" loading="eager" />
-        </div>
-        <div class="topic-copy">
-          <div class="topic-heading">
-            <mat-icon aria-hidden="true">{{ topic.icon }}</mat-icon>
-            <div>
-              <h2>{{ topic.title }}</h2>
-              <p>{{ topic.summary }}</p>
-            </div>
-          </div>
-
-          <ol class="step-list">
-            @for (step of topic.steps; track step.title) {
-              <li>
-                <mat-icon aria-hidden="true">{{ step.icon }}</mat-icon>
-                <div>
-                  <strong>{{ step.title }}</strong>
-                  <span>{{ step.body }}</span>
-                </div>
-              </li>
-            }
-          </ol>
-
-          <div class="topic-actions">
-            <a mat-button [routerLink]="topic.route">
-              Open workflow
-              <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-            </a>
-          </div>
-        </div>
-      </article>
+  <section
+    class="help-content-shell"
+    role="tabpanel"
+    [attr.id]="'help-panel-' + selectedTopicId()"
+    aria-live="polite"
+  >
+    @switch (selectedTopicId()) {
+      @case ('taxonomy') {
+        <app-taxonomy-help-panel />
+      }
+      @case ('genome') {
+        <app-genome-help-panel />
+      }
+      @case ('genome-detail') {
+        <app-genome-detail-help-panel />
+      }
+      @case ('gene') {
+        <app-gene-help-panel />
+      }
+      @case ('microbial-environment') {
+        <app-microbial-environment-help-panel />
+      }
     }
   </section>
 </main>

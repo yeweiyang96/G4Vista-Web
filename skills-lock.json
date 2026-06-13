@@ -4,7 +4,8 @@
     "angular-developer": {
       "source": "angular/skills",
       "sourceType": "github",
-      "computedHash": "b7764c591c965d85f95f1d4f6d3620b6ab92a1b1fedbcdead7d59e946fc3fd2e"
+      "skillPath": "angular-developer/SKILL.md",
+      "computedHash": "a786c2637f1bece6324d6280b510aa8485b9ccda4a7ec62ca840c4fdab561ced"
     },
     "brandkit": {
       "source": "Leonxlnx/taste-skill",

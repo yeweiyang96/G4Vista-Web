@@ -29,7 +29,13 @@ body {
   font-family:
     Roboto, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
   color: var(--mat-sys-on-surface);
-  background: var(--mat-sys-surface);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mat-sys-primary) 5%, transparent),
+      transparent 260px
+    ),
+    var(--mat-sys-surface);
 }
 
 html,
@@ -57,9 +63,321 @@ a {
   text-decoration: none;
 }
 
+:root {
+  --g4v-page-max: 1440px;
+  --g4v-page-pad: 24px;
+  --g4v-radius: 8px;
+  --g4v-radius-large: 12px;
+  --g4v-border: 1px solid var(--mat-sys-outline-variant);
+  --g4v-shadow: none;
+  --g4v-g4: light-dark(#0f766e, #5bd7ca);
+  --g4v-imotif: light-dark(#b42358, #ff8ab4);
+  --g4v-success: light-dark(#1b8a46, #7fdc91);
+  --g4v-workflow-taxonomy: light-dark(#087b83, #5bd7df);
+  --g4v-workflow-genome: light-dark(#1559c7, #a8c7ff);
+  --g4v-workflow-gene: light-dark(#5a31b7, #d0bcff);
+  --g4v-workflow-research: light-dark(#b42358, #ff8ab4);
+  --g4v-starting-human: light-dark(#2863c7, #a8c7ff);
+  --g4v-starting-plant: light-dark(#16815f, #8bd8b5);
+  --g4v-starting-bacteria: light-dark(#5b32bd, #d0bcff);
+  --g4v-starting-research: light-dark(#b42358, #ff8ab4);
+  --g4v-accent-soft: color-mix(in srgb, var(--g4v-g4) 10%, var(--mat-sys-surface));
+  --g4v-page-bg: color-mix(in srgb, var(--mat-sys-surface) 94%, var(--mat-sys-primary) 6%);
+}
+
+.g4v-page {
+  box-sizing: border-box;
+  width: min(var(--g4v-page-max), calc(100% - 2 * var(--g4v-page-pad)));
+  padding: 28px 0 48px;
+  margin: 0 auto;
+}
+
+.g4v-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.g4v-focus-band,
+.g4v-panel,
+.g4v-stat,
+.g4v-workspace {
+  background: var(--mat-sys-surface-container-lowest);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius-large);
+}
+
+.g4v-focus-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: center;
+  padding: 28px;
+  box-shadow: var(--g4v-shadow);
+}
+
+.g4v-panel,
+.g4v-workspace {
+  padding: 20px;
+}
+
+.g4v-panel-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.g4v-page-title,
+.g4v-panel-title,
+.g4v-section-title,
+.g4v-subtitle {
+  margin: 0;
+}
+
+.g4v-page-title {
+  font: var(--mat-sys-display-small);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.g4v-panel-title {
+  font: var(--mat-sys-headline-small);
+  font-weight: 500;
+}
+
+.g4v-section-title {
+  font: var(--mat-sys-title-medium);
+  font-weight: 500;
+}
+
+.g4v-subtitle,
+.g4v-muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.g4v-subtitle {
+  max-width: 72ch;
+  margin-top: 8px;
+  font: var(--mat-sys-body-large);
+  line-height: 1.55;
+}
+
+.g4v-icon-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--g4v-g4);
+  background: var(--g4v-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--g4v-g4) 24%, transparent);
+  border-radius: var(--g4v-radius);
+}
+
+.g4v-icon-badge mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.g4v-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.g4v-stat {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.g4v-stat strong {
+  font: var(--mat-sys-title-large);
+  font-weight: 500;
+}
+
+.g4v-stat span {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.g4-stat {
+  border-color: color-mix(in srgb, var(--g4v-g4) 28%, var(--mat-sys-outline-variant));
+}
+
+.g4-stat strong {
+  color: var(--g4v-g4);
+}
+
+.imotif-stat {
+  border-color: color-mix(in srgb, var(--g4v-imotif) 28%, var(--mat-sys-outline-variant));
+}
+
+.imotif-stat strong {
+  color: var(--g4v-imotif);
+}
+
+.g4v-search-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  margin-top: 22px;
+}
+
+.g4v-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.g4v-action-panel {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 180px;
+  padding: 18px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius-large);
+}
+
+.g4v-action-panel p {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.g4v-toolbar-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--mat-sys-surface-container-low) 80%, var(--g4v-g4) 4%);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius-large);
+}
+
+.genome-search-autocomplete-panel.mat-mdc-autocomplete-panel {
+  max-height: none;
+  padding: 8px 10px;
+  margin-top: -1px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 2px solid var(--mat-sys-primary);
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  box-shadow: var(--g4v-shadow);
+}
+
+.genome-search-autocomplete-panel .mat-mdc-option {
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 3px;
+}
+
+.genome-search-autocomplete-panel .mat-mdc-option.mdc-list-item--selected,
+.genome-search-autocomplete-panel .mat-mdc-option.mdc-list-item--activated,
+.genome-search-autocomplete-panel .mat-mdc-option.mat-mdc-option-active,
+.genome-search-autocomplete-panel .mat-mdc-option:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--mat-sys-primary) 8%,
+    var(--mat-sys-surface-container-low)
+  ) !important;
+}
+
+.genome-search-autocomplete-panel .mat-mdc-option .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+.taxonomy-search-autocomplete-panel.mat-mdc-autocomplete-panel {
+  max-height: none;
+  padding: 0;
+  margin-top: -1px;
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 2px solid var(--mat-sys-primary);
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  box-shadow: var(--g4v-shadow);
+}
+
+.taxonomy-search-autocomplete-panel .taxonomy-result-option.mat-mdc-option {
+  min-height: 54px;
+  padding: 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.taxonomy-search-autocomplete-panel .taxonomy-result-option.mat-mdc-option:last-of-type {
+  border-bottom: 0;
+}
+
+.taxonomy-search-autocomplete-panel .taxonomy-result-option.mat-mdc-option.mat-mdc-option-active,
+.taxonomy-search-autocomplete-panel .taxonomy-result-option.mat-mdc-option:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--mat-sys-primary) 8%,
+    var(--mat-sys-surface-container-low)
+  ) !important;
+}
+
+.taxonomy-search-autocomplete-panel .mat-mdc-option .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+.g4v-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.g4v-table-panel {
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-lowest);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius-large);
+}
+
+.g4v-table-scroll {
+  overflow-x: auto;
+}
+
+@media (width <= 1100px) {
+  .g4v-focus-band,
+  .g4v-action-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media screen and (width <= 600px) {
+  :root {
+    --g4v-page-pad: 12px;
+  }
+
   body {
     font: var(--mat-sys-body-medium);
+  }
+
+  .g4v-page {
+    padding-top: 18px;
+  }
+
+  .g4v-focus-band,
+  .g4v-action-grid,
+  .g4v-stat-grid,
+  .g4v-search-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .g4v-focus-band,
+  .g4v-panel,
+  .g4v-workspace {
+    padding: 16px;
+  }
+
+  .g4v-panel-header {
+    display: grid;
   }
 
   h1 {
