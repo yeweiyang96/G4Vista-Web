@@ -1,0 +1,60 @@
+import Alignments from '@jbrowse/plugin-alignments';
+import Arc from '@jbrowse/plugin-arc';
+import Authentication from '@jbrowse/plugin-authentication';
+import BED from '@jbrowse/plugin-bed';
+import Canvas from '@jbrowse/plugin-canvas';
+import Config from '@jbrowse/plugin-config';
+import DataManagement from '@jbrowse/plugin-data-management';
+import GCContent from '@jbrowse/plugin-gccontent';
+import GFF3 from '@jbrowse/plugin-gff3';
+import LegacyJBrowse from '@jbrowse/plugin-legacy-jbrowse';
+import LinearGenomeView from '@jbrowse/plugin-linear-genome-view';
+import Sequence from '@jbrowse/plugin-sequence';
+import Trix from '@jbrowse/plugin-trix';
+import Variants from '@jbrowse/plugin-variants';
+import Wiggle from '@jbrowse/plugin-wiggle';
+import { initializeWorker } from '@jbrowse/product-core';
+import { enableStaticRendering } from 'mobx-react';
+import './jbrowse-worker-polyfill';
+
+const corePlugins = [
+  Canvas,
+  Alignments,
+  Authentication,
+  BED,
+  Config,
+  DataManagement,
+  GFF3,
+  LegacyJBrowse,
+  LinearGenomeView,
+  Sequence,
+  Variants,
+  Wiggle,
+  GCContent,
+  Trix,
+  Arc,
+];
+
+function normalizeWorkerModuleUrl(url: string): string {
+  return url.replace(
+    /\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i,
+    (
+      match: string,
+      tsx: string | undefined,
+      declaration: string,
+      extension: string,
+      moduleType: string,
+    ) =>
+      tsx
+        ? '.js'
+        : declaration && (!extension || !moduleType)
+          ? match
+          : `${declaration}${extension}.${moduleType.toLowerCase()}js`,
+  );
+}
+
+enableStaticRendering(true);
+
+initializeWorker(corePlugins, {
+  fetchESM: (url: string) => import(normalizeWorkerModuleUrl(url)),
+});

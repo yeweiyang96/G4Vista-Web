@@ -2,12 +2,17 @@ import {
   createViewState,
   JBrowseLinearGenomeView,
 } from '@jbrowse/react-linear-genome-view2';
-import makeWorkerInstance from '@jbrowse/react-linear-genome-view2/esm/makeWorkerInstance';
 import { useEffect, useRef, useState } from 'react';
 import { GenomeViewerConfig } from './genome-viewer-config.service';
 import { GenomeNavCommand } from './genome-viewer-state.service';
 
 type ViewState = ReturnType<typeof createViewState>;
+
+function makeJBrowseWorkerInstance(): Worker {
+  return new Worker(new URL('./jbrowse-rpc.worker.ts', import.meta.url), {
+    type: 'module',
+  });
+}
 
 export interface JBrowseReactViewProps {
   viewerConfig: GenomeViewerConfig;
@@ -54,7 +59,7 @@ export function JBrowseReactView({
 
     currentViewState = createViewState({
       ...viewerConfig,
-      makeWorkerInstance,
+      makeWorkerInstance: makeJBrowseWorkerInstance,
       onChange: () => {
         queueMicrotask(notifyRegionChange);
       },
