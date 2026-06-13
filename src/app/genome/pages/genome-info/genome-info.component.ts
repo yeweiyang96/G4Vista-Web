@@ -361,6 +361,7 @@ export class GenomeInfoComponent {
   readonly draftGeneInput = signal('');
   readonly draftSelectedGene = signal<G4GeneCandidate | null>(null);
   readonly submittedSelectedGene = signal<G4GeneCandidate | null>(null);
+  readonly submittedSelectedGeneAssemblyAccession = signal<string | null>(null);
   readonly positionDistributionG4Type = signal<G4Type>('g4');
   readonly positionDistributionFlankWindow = signal<G4FlankWindow>(DEFAULT_FLANK_WINDOW);
   readonly positionDistributionFilterModel = signal(createInitialPositionDistributionFilterModel());
@@ -494,9 +495,19 @@ export class GenomeInfoComponent {
     const gene = this.draftSelectedGene();
     return gene ? formatGeneCandidateLabel(gene) : '';
   });
-  readonly hasSubmittedSelectedGene = computed(() => this.submittedSelectedGene() !== null);
+  readonly activeSubmittedSelectedGene = computed<G4GeneCandidate | null>(() => {
+    const selectedGene = this.submittedSelectedGene();
+    if (!selectedGene) {
+      return null;
+    }
+
+    return this.submittedSelectedGeneAssemblyAccession() === this.assemblyAccession()
+      ? selectedGene
+      : null;
+  });
+  readonly hasSubmittedSelectedGene = computed(() => this.activeSubmittedSelectedGene() !== null);
   readonly submittedSelectedGeneLabel = computed(() => {
-    const gene = this.submittedSelectedGene();
+    const gene = this.activeSubmittedSelectedGene();
     return gene ? formatGeneCandidateLabel(gene) : 'Any';
   });
   readonly geneCandidatesResource = rxResource<
@@ -547,7 +558,7 @@ export class GenomeInfoComponent {
   );
   readonly isGeneSearchMode = computed(() => this.hasSubmittedSelectedGene());
   readonly displayedAccessionIdValue = computed(
-    () => this.submittedSelectedGene()?.seqid ?? this.browseScope(),
+    () => this.activeSubmittedSelectedGene()?.seqid ?? this.browseScope(),
   );
   readonly displayedAccessionIdLabel = computed(() =>
     this.accessionNameForSeqid(this.displayedAccessionIdValue()),
@@ -568,7 +579,7 @@ export class GenomeInfoComponent {
       g4Type: this.g4Type(),
       browseScope: this.browseScope(),
       mode: this.isGeneSearchMode() ? 'gene-search' : 'browse',
-      selectedFeatureId: this.submittedSelectedGene()?.feature_id ?? '',
+      selectedFeatureId: this.activeSubmittedSelectedGene()?.feature_id ?? '',
       selectedPosition: this.submittedFilters().selectedPosition,
       filters: this.browseFilters(),
       sort: this.sortState(),
@@ -848,7 +859,7 @@ export class GenomeInfoComponent {
     });
 
     effect(() => {
-      const selectedGene = this.submittedSelectedGene();
+      const selectedGene = this.activeSubmittedSelectedGene();
       if (!selectedGene) {
         this.lastEmptyGeneSearchNoticeKey = null;
         return;
@@ -901,6 +912,7 @@ export class GenomeInfoComponent {
     this.geneInputError.set(null);
     this.commitFilters(this.filterForm().value());
     this.submittedSelectedGene.set(selectedGene);
+    this.submittedSelectedGeneAssemblyAccession.set(selectedGene ? this.assemblyAccession() : null);
     this.selectedGeneAxisRange.set(null);
     if (selectedGene) {
       this.navigateToFirstResultForGeneSearch();
@@ -1174,7 +1186,7 @@ export class GenomeInfoComponent {
     pageIndex: number,
     pageSize: number,
   ): G4GeneSearchRequest | undefined {
-    const selectedGene = this.submittedSelectedGene();
+    const selectedGene = this.activeSubmittedSelectedGene();
     if (!selectedGene) {
       return undefined;
     }
@@ -1256,7 +1268,7 @@ export class GenomeInfoComponent {
   }
 
   private fetchGeneCoordinateForSelectedGene(): Observable<GenomeViewportTarget | null> {
-    const selectedGene = this.submittedSelectedGene();
+    const selectedGene = this.activeSubmittedSelectedGene();
     if (!selectedGene) {
       return of(null);
     }
@@ -1282,6 +1294,7 @@ export class GenomeInfoComponent {
     this.draftGeneInput.set('');
     this.draftSelectedGene.set(null);
     this.submittedSelectedGene.set(null);
+    this.submittedSelectedGeneAssemblyAccession.set(null);
     this.selectedGeneAxisRange.set(null);
     this.geneInputError.set(null);
   }
