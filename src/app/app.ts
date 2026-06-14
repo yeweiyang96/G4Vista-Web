@@ -11,8 +11,8 @@ import { LogoComponent } from './logo/logo.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+import { HelpGuidePrompt } from './help/help-guide-prompt/help-guide-prompt';
 import { HelpTourOverlay } from './help/help-tour-overlay/help-tour-overlay';
-import { HelpTourService } from './help/help-tour';
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -72,6 +72,7 @@ const GITHUB_ICON = `
     RouterLink,
     RouterLinkActive,
     MatIconModule,
+    HelpGuidePrompt,
     HelpTourOverlay,
   ],
   templateUrl: './app.html',
@@ -89,14 +90,10 @@ export class App {
     { name: 'Help', route: '/help', icon: 'help_outline' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');
-  readonly helpTour = inject(HelpTourService);
 
   private readonly router = inject(Router);
 
   readonly currentUrl = signal(this.router.url);
-  readonly showGuideHint = computed(() =>
-    this.helpTour.shouldShowGuideHintForUrl(this.currentUrl()),
-  );
   readonly showFooter = computed(() => shouldShowFooter(this.currentUrl()));
 
   private readonly iconRegistry = inject(MatIconRegistry);
@@ -138,14 +135,6 @@ export class App {
   toggleTheme(): void {
     this.theme.set(getNextTheme(this.theme()));
     this.hasThemePreference.set(true);
-  }
-
-  startGuideForCurrentPage(): void {
-    this.helpTour.startWorkflowForUrl(this.currentUrl());
-  }
-
-  dismissHelpHint(): void {
-    this.helpTour.dismissGuideHintForUrl(this.currentUrl());
   }
 
   private setTheme(theme: ThemeMode): void {

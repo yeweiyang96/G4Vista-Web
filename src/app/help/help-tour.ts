@@ -6,7 +6,6 @@ import {
   TourStep,
   getHelpTour,
   getHelpWorkflowIdForUrl,
-  getOptionalHelpWorkflowIdForUrl,
   normalizeHelpRoutePath,
 } from './help-content';
 
@@ -17,12 +16,12 @@ export interface HelpTourSession {
   readonly steps: readonly TourStep[];
 }
 
-function createTourSession(tour: HelpTourDefinition): HelpTourSession {
+function createTourSession(tour: HelpTourDefinition, routeOverride: string | null): HelpTourSession {
   return {
     workflowId: tour.id,
     label: tour.label,
     stepIndex: 0,
-    steps: tour.steps,
+    steps: routeOverride === null ? tour.steps : createTourStepsForRoute(tour.steps, routeOverride),
   };
 }
 
@@ -35,12 +34,18 @@ function createTourSessionWithStep(session: HelpTourSession, stepIndex: number):
   };
 }
 
+function createTourStepsForRoute(steps: readonly TourStep[], route: string): readonly TourStep[] {
+  return steps.map((step) => ({
+    ...step,
+    route,
+  }));
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class HelpTourService {
   private readonly activeSession = signal<HelpTourSession | null>(null);
-  private readonly dismissedHintRoutes = signal<readonly string[]>([]);
 
   readonly session = this.activeSession.asReadonly();
   readonly currentStep = computed<TourStep | null>(() => {
@@ -55,34 +60,15 @@ export class HelpTourService {
   readonly stepCount = computed(() => this.activeSession()?.steps.length ?? 0);
   readonly canGoBack = computed(() => this.currentStepIndex() > 0);
 
-  shouldShowGuideHintForUrl(url: string): boolean {
-    const routePath = normalizeHelpRoutePath(url);
-    return (
-      this.activeSession() === null &&
-      getOptionalHelpWorkflowIdForUrl(routePath) !== null &&
-      !this.dismissedHintRoutes().includes(routePath)
-    );
-  }
-
   startWorkflow(workflowId: HelpWorkflowId): void {
     const tour = getHelpTour(workflowId);
-    this.activeSession.set(createTourSession(tour));
+    this.activeSession.set(createTourSession(tour, null));
   }
 
   startWorkflowForUrl(url: string): void {
-    this.startWorkflow(getHelpWorkflowIdForUrl(url));
-  }
-
-  dismissGuideHintForUrl(url: string): void {
     const routePath = normalizeHelpRoutePath(url);
-    if (getOptionalHelpWorkflowIdForUrl(routePath) === null) {
-      return;
-    }
-    if (this.dismissedHintRoutes().includes(routePath)) {
-      return;
-    }
-
-    this.dismissedHintRoutes.set([...this.dismissedHintRoutes(), routePath]);
+    const tour = getHelpTour(getHelpWorkflowIdForUrl(routePath));
+    this.activeSession.set(createTourSession(tour, routePath));
   }
 
   nextStep(): void {

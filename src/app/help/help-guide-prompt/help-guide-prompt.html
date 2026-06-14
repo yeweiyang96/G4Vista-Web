@@ -1,0 +1,28 @@
+@if (guidePrompt(); as prompt) {
+  <aside class="help-guide-prompt" aria-label="Guided tour prompt">
+    <div class="prompt-icon" aria-hidden="true">
+      <mat-icon>{{ prompt.icon }}</mat-icon>
+    </div>
+
+    <div class="prompt-copy">
+      <span>Guided tour</span>
+      <strong>{{ prompt.label }}</strong>
+      <p>Walk through the main tools on this page.</p>
+    </div>
+
+    <div class="prompt-actions">
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Dismiss guided tour prompt"
+        (click)="dismissPrompt()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+      <button mat-flat-button type="button" (click)="startGuide()">
+        Start guide
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </button>
+    </div>
+  </aside>
+}

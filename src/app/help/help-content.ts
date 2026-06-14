@@ -51,6 +51,14 @@ function screenshotPath(fileName: string): string {
   return `/help/screenshots/${fileName}?v=${SCREENSHOT_VERSION}`;
 }
 
+function isGenomeDetailRoute(path: string): boolean {
+  return /^\/genome\/[^/]+$/.test(path);
+}
+
+function isGeneTaxonRoute(path: string): boolean {
+  return /^\/gene\/taxon\/[^/]+$/.test(path);
+}
+
 export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'taxonomy',
@@ -235,16 +243,23 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'manage_search',
         title: 'Genome search',
-        body: 'Search by assembly name or assembly accession to open a genome detail workspace.',
+        body: 'Use the assembly search page to find genomes by accession, assembly name, or organism.',
         route: '/genome',
         targetSelector: '[data-help-target="genome-search"]',
       },
       {
         icon: 'keyboard_arrow_down',
-        title: 'Choose an autocomplete result',
-        body: 'Selecting a result navigates to the genome page where G4 and i-motif tools are available.',
+        title: 'Search assembly records',
+        body: 'Type an assembly accession, assembly name, or organism name, then choose a matching result.',
         route: '/genome',
         targetSelector: '[data-help-target="genome-search-input"]',
+      },
+      {
+        icon: 'bookmark_border',
+        title: 'Review recommended assemblies',
+        body: 'Use the recommended assembly table as a fast route into commonly used genome workspaces.',
+        route: '/genome',
+        targetSelector: '[data-help-target="genome-recommended"]',
       },
     ],
   },
@@ -274,18 +289,11 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
         targetSelector: '[data-help-target="g4-explorer-filters"]',
       },
       {
-        icon: 'table_view',
-        title: 'Review motif rows',
-        body: 'The explorer table reflects submitted filters and links rows back into chart and browser context.',
+        icon: 'hub',
+        title: 'Use the explorer views',
+        body: 'The explorer area keeps table, range chart, genome browser, and current-selection views together.',
         route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
-        targetSelector: '[data-help-target="g4-explorer-table"]',
-      },
-      {
-        icon: 'open_in_browser',
-        title: 'Inspect the genome browser',
-        body: 'JBrowse shows motif tracks and genomic annotations for the current region.',
-        route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
-        targetSelector: '[data-help-target="genome-browser"]',
+        targetSelector: '[data-help-target="g4-explorer"]',
       },
     ],
   },
@@ -308,11 +316,11 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
         targetSelector: '[data-help-target="gene-search"]',
       },
       {
-        icon: 'table_view',
-        title: 'Open linked results',
-        body: 'Result rows link to assembly pages and feature detail pages when data is available.',
+        icon: 'ballot',
+        title: 'Open a linked record',
+        body: 'Use result links to review gene coordinates, linked G4 windows, and genome context.',
         route: '/gene',
-        targetSelector: '[data-help-target="gene-results"]',
+        targetSelector: '[data-help-target="gene-next-actions"]',
       },
     ],
   },
@@ -349,18 +357,11 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
         targetSelector: '[data-help-target="microbial-submit"]',
       },
       {
-        icon: 'show_chart',
-        title: 'Switch chart metrics',
-        body: 'After results load, compare phenotype values against different G4 density metrics.',
+        icon: 'view_quilt',
+        title: 'Review the workbench',
+        body: 'Results appear in the workbench area after a run, with charts, summary metrics, and strain rows.',
         route: '/research/microbial-environment-g4',
-        targetSelector: '[data-help-target="microbial-chart"]',
-      },
-      {
-        icon: 'download',
-        title: 'Review and download strains',
-        body: 'Use the result table for strain-level details and download the current result set when needed.',
-        route: '/research/microbial-environment-g4',
-        targetSelector: '[data-help-target="microbial-table"]',
+        targetSelector: '[data-help-target="microbial-workbench"]',
       },
     ],
   },
@@ -400,16 +401,16 @@ export function getOptionalHelpWorkflowIdForUrl(url: string): HelpWorkflowId | n
   if (path === '/' || path === '/help') {
     return null;
   }
-  if (path === '/taxonomy' || path.startsWith('/taxonomy/')) {
+  if (path === '/taxonomy') {
     return 'taxonomy';
   }
   if (path === '/genome') {
     return 'genome';
   }
-  if (path.startsWith('/genome/')) {
+  if (isGenomeDetailRoute(path)) {
     return 'genome-detail';
   }
-  if (path === '/gene' || path.startsWith('/gene/')) {
+  if (path === '/gene' || isGeneTaxonRoute(path)) {
     return 'gene';
   }
   if (path === '/research/microbial-environment-g4') {

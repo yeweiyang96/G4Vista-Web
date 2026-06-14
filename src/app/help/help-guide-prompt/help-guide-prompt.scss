@@ -1,0 +1,76 @@
+.help-guide-prompt {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 900;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  box-shadow: var(--mat-sys-level4);
+}
+
+.prompt-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: var(--mat-sys-on-primary-container);
+  background: var(--mat-sys-primary-container);
+  border-radius: 8px;
+
+  mat-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+  }
+}
+
+.prompt-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+
+  span {
+    font: var(--mat-sys-label-medium);
+    color: var(--mat-sys-primary);
+    text-transform: uppercase;
+  }
+
+  strong {
+    overflow-wrap: anywhere;
+    font: var(--mat-sys-title-small);
+  }
+
+  p {
+    margin: 0;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.prompt-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+
+  button[mat-flat-button] {
+    min-width: 0;
+  }
+}
+
+@media (width <= 599.98px) {
+  .help-guide-prompt {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+  }
+}
