@@ -358,9 +358,9 @@ describe('TaxonomyInfoComponent', () => {
     expect(text).toContain('Table values are G4 gene-context sequence counts by gene biotype.');
     expect(text).toContain('Other means unspecified or source-annotated other gene biotype.');
     expect(text).toContain('Intragenic G4 sequences');
-    expect(text).toContain('Upstream 1 kb sequences');
-    expect(text).toContain('Downstream 1 kb sequences');
-    expect(text).toContain('Total gene-context sequences');
+    expect(text).toContain('Upstream 1 kb G4 sequences');
+    expect(text).toContain('Downstream 1 kb G4 sequences');
+    expect(text).toContain('Total gene-context G4 sequences');
     expect(text).toContain('Other');
     expect(text).not.toContain('Gene biotype breakdown');
     expect(text).toContain('protein_coding');

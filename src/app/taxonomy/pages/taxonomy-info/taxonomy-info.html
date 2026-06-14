@@ -98,8 +98,7 @@
                       Pie slices are {{ selectedMotifLabel() }} sequence counts by genomic context.
                       Percentages use all loaded {{ selectedMotifLabel() }} sequences in this taxon
                       as the denominator. Other means sequences outside genes and selected gene
-                      flanks.
-                      Legend values are count · percentage.
+                      flanks. Legend values are count · percentage.
                     </p>
                     @for (category of positionCategoryRows(); track category.key) {
                       <div>
@@ -121,8 +120,7 @@
                         }}
                         gene-context sequence counts by gene biotype. Total sums intragenic,
                         upstream, and downstream sequences; Other means unspecified or
-                        source-annotated other gene
-                        biotype.
+                        source-annotated other gene biotype.
                       </caption>
                       <thead>
                         <tr>
@@ -134,7 +132,9 @@
                           <th scope="col">
                             Downstream {{ flankWindowLabel() }} {{ selectedMotifLabel() }} sequences
                           </th>
-                          <th scope="col">Total gene-context {{ selectedMotifLabel() }} sequences</th>
+                          <th scope="col">
+                            Total gene-context {{ selectedMotifLabel() }} sequences
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
