@@ -33,12 +33,12 @@
     </ng-container>
 
     <ng-container matColumnDef="g4_density_per_mb">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>G4 density</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>G4 density (sequences/Mb)</th>
       <td mat-cell *matCellDef="let row">{{ formatDensity(row.g4_density_per_mb) }}</td>
     </ng-container>
 
     <ng-container matColumnDef="i_motif_density_per_mb">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>i-motif density</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>i-motif density (sequences/Mb)</th>
       <td mat-cell *matCellDef="let row">{{ formatDensity(row.i_motif_density_per_mb) }}</td>
     </ng-container>
 

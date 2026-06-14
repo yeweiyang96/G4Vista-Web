@@ -123,12 +123,12 @@ describe('TaxonomyInfoComponent', () => {
         {
           bio_type: 'protein_coding',
           display_label: 'protein_coding',
-          total_count: 10,
+          total_count: 3_580_245,
           categories: [
             {
               key: 'gene_inside',
               label: 'In genes',
-              count: 5,
+              count: 1_234_567,
               ratio: 0.5,
               precedence_rank: 1,
               description: 'Inside genes',
@@ -136,7 +136,7 @@ describe('TaxonomyInfoComponent', () => {
             {
               key: 'gene_upstream',
               label: 'Upstream flank',
-              count: 3,
+              count: 2_000_000,
               ratio: 0.3,
               precedence_rank: 2,
               description: 'Upstream flank',
@@ -144,7 +144,7 @@ describe('TaxonomyInfoComponent', () => {
             {
               key: 'gene_downstream',
               label: 'Downstream flank',
-              count: 2,
+              count: 345_678,
               ratio: 0.2,
               precedence_rank: 3,
               description: 'Downstream flank',
@@ -355,6 +355,8 @@ describe('TaxonomyInfoComponent', () => {
     expect(text).toContain('Pie slices are G4 sequence counts by genomic context.');
     expect(text).toContain('Other means sequences outside genes and selected gene flanks.');
     expect(text).toContain('Legend values are count · percentage.');
+    expect(text).toContain('G4 density (sequences/Mb)');
+    expect(text).toContain('i-motif density (sequences/Mb)');
     expect(text).toContain('Table values are G4 gene-context sequence counts by gene biotype.');
     expect(text).toContain('Other means unspecified or source-annotated other gene biotype.');
     expect(text).toContain('Intragenic G4 sequences');
@@ -364,6 +366,15 @@ describe('TaxonomyInfoComponent', () => {
     expect(text).toContain('Other');
     expect(text).not.toContain('Gene biotype breakdown');
     expect(text).toContain('protein_coding');
+
+    const tableText =
+      (fixture.nativeElement as HTMLElement).querySelector('.gene-biotype-summary table')
+        ?.textContent ?? '';
+    expect(tableText).toContain('1,234,567');
+    expect(tableText).toContain('2,000,000');
+    expect(tableText).toContain('3,580,245');
+    expect(tableText).not.toContain('1.2M');
+
     expect(text).not.toContain('Unspecified gene biotype');
     expect(text).not.toContain('Non-gene annotation feature');
     expect(text).not.toContain('No assigned feature');

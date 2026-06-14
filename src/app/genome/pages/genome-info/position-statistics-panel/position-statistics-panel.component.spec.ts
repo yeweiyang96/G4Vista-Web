@@ -204,9 +204,9 @@ describe('PositionStatisticsPanelComponent', () => {
 
     expect(text).toContain('Position category statistics');
     expect(text).toContain('Density by position category');
-    expect(text).toContain('Other means sites outside genes and selected gene flanks.');
+    expect(text).toContain('Other means sequences outside genes and selected gene flanks.');
     expect(text).toContain('Category summary');
-    expect(text).toContain('sites/Mb');
+    expect(text).toContain('sequences/Mb');
     expect(text).toContain('G-score distribution');
     expect(text).toContain('Length distribution');
     expect(text).toContain('Other');

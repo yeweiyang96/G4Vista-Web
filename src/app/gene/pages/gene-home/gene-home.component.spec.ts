@@ -179,7 +179,7 @@ describe('GeneHomeComponent', () => {
         gene_id: 'YAL001C',
         gene_name: 'TFC3',
         gene_biotype: '',
-        insideOf_gene_g4_count: 4,
+        insideOf_gene_g4_count: 1_234_567,
         insideOf_genes_upstream_1k_g4_count: 5,
         insideOf_genes_downstream_1k_g4_count: 6,
       },
@@ -231,7 +231,7 @@ describe('GeneHomeComponent', () => {
         gene_id: 'YAL001C',
         gene_name: 'TFC3',
         gene_biotype: '',
-        insideOf_gene_g4_count: 4,
+        insideOf_gene_g4_count: 1_234_567,
         insideOf_genes_upstream_1k_g4_count: 5,
         insideOf_genes_downstream_1k_g4_count: 6,
       },
@@ -256,5 +256,7 @@ describe('GeneHomeComponent', () => {
     const csv = await exportState.blob?.text();
     expect(csv).toContain('TFC3,YAL001C');
     expect(csv).toContain(',Other,');
+    expect(csv).toContain(',1234567');
+    expect(csv).not.toContain('1.2M');
   });
 });

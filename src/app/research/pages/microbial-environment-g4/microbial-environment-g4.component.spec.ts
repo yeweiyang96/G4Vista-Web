@@ -247,6 +247,8 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text).toContain('Environment condition');
     expect(text).toContain('Strain set');
     expect(text).toContain('Growth temperature vs G4 density');
+    expect(text).toContain('G4 density (sequences/Mb)');
+    expect(text).toContain('Genome size (bp)');
     expect(text).not.toContain('分析结果');
     expect(fixture.nativeElement.querySelector('.axis-note')).toBeNull();
     expect(fixture.nativeElement.querySelector('.condition-count')).toBeNull();

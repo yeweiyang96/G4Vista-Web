@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { GenomeSearchService } from '../../services/genome-search.service';
-import { formatCompactCount } from '../../utils/overview-format';
+import { formatIntegerCount } from '../../utils/overview-format';
 
 @Component({
   selector: 'app-genome',
@@ -23,6 +23,6 @@ export class GenomeHomeComponent {
   readonly recommendedAssemblies = computed(() => this.recommendedAssembliesResource.value() ?? []);
 
   formatCount(value: number): string {
-    return formatCompactCount(value);
+    return formatIntegerCount(value);
   }
 }

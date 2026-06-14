@@ -104,7 +104,9 @@
                       <div>
                         <span [style.background]="category.color"></span>
                         <strong>{{ category.displayLabel }}</strong>
-                        <small>{{ formatCount(category.count) }} · {{ category.ratioLabel }}</small>
+                        <small>
+                          {{ formatChartCount(category.count) }} · {{ category.ratioLabel }}
+                        </small>
                       </div>
                     }
                   </div>
@@ -141,10 +143,10 @@
                         @for (row of geneBiotypeRows(); track row.bioType) {
                           <tr>
                             <th scope="row">{{ row.displayLabel }}</th>
-                            <td>{{ formatCount(row.insideCount) }}</td>
-                            <td>{{ formatCount(row.upstreamCount) }}</td>
-                            <td>{{ formatCount(row.downstreamCount) }}</td>
-                            <td>{{ formatCount(row.totalCount) }}</td>
+                            <td>{{ formatTableCount(row.insideCount) }}</td>
+                            <td>{{ formatTableCount(row.upstreamCount) }}</td>
+                            <td>{{ formatTableCount(row.downstreamCount) }}</td>
+                            <td>{{ formatTableCount(row.totalCount) }}</td>
                           </tr>
                         }
                       </tbody>

@@ -6,7 +6,7 @@
     </div>
     <p>
       Density, G-score, and length for selected position categories using the current
-      {{ motifTypeLabel() }} filters. Other means sites outside genes and selected gene flanks.
+      {{ motifTypeLabel() }} filters. Other means sequences outside genes and selected gene flanks.
     </p>
   </header>
 
@@ -38,7 +38,7 @@
                 ></span>
               </span>
               <strong>{{ formatNullableNumber(row.densityPerMb) }}</strong>
-              <span class="density-unit">sites/Mb</span>
+              <span class="density-unit">sequences/Mb</span>
             </div>
           }
         </div>
@@ -59,7 +59,7 @@
               </div>
               <dl>
                 <div>
-                  <dt>Sites</dt>
+                  <dt>Sequences</dt>
                   <dd>{{ formatCount(row.count) }}</dd>
                 </div>
                 <div>
@@ -68,7 +68,7 @@
                 </div>
                 <div>
                   <dt>Density</dt>
-                  <dd>{{ formatNullableNumber(row.densityPerMb) }} sites/Mb</dd>
+                  <dd>{{ formatNullableNumber(row.densityPerMb) }} sequences/Mb</dd>
                 </div>
               </dl>
             </article>

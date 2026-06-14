@@ -88,7 +88,7 @@ export class AssemblyListComponent implements AfterViewInit {
   }
 
   formatDensity(value: number | null | undefined): string {
-    return value === null || value === undefined ? 'N/A' : `${DENSITY_FORMATTER.format(value)}/Mb`;
+    return value === null || value === undefined ? 'N/A' : DENSITY_FORMATTER.format(value);
   }
 }
 

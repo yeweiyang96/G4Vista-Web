@@ -17,7 +17,7 @@ import {
   G4_FLANK_WINDOW_OPTIONS,
   G4Type,
 } from '../../../genome/services/g4.service';
-import { formatCompactCount } from '../../../genome/utils/overview-format';
+import { formatCompactCount, formatIntegerCount } from '../../../genome/utils/overview-format';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -205,7 +205,7 @@ export class TaxonomyInfoComponent {
           size: 11,
           weight: 'bold',
         },
-        formatter: (value) => this.formatCount(Number(value)),
+        formatter: (value) => this.formatChartCount(Number(value)),
         textStrokeColor: 'rgba(0, 0, 0, 0.42)',
         textStrokeWidth: 2,
       },
@@ -328,8 +328,12 @@ export class TaxonomyInfoComponent {
     this.positionContextTaxonId.set(this.taxonId());
   }
 
-  formatCount(value: number | undefined): string {
+  formatChartCount(value: number | undefined): string {
     return formatCompactCount(value ?? 0);
+  }
+
+  formatTableCount(value: number | undefined): string {
+    return formatIntegerCount(value ?? 0);
   }
 
   private positionPieTooltipLabel(context: TooltipItem<'pie'>): string {
@@ -337,6 +341,6 @@ export class TaxonomyInfoComponent {
     const value = Number(context.parsed);
     const total = this.positionContextTotal();
     const ratio = total ? value / total : 0;
-    return `${label}: ${this.formatCount(value)} (${PERCENT_FORMATTER.format(ratio)})`;
+    return `${label}: ${this.formatChartCount(value)} (${PERCENT_FORMATTER.format(ratio)})`;
   }
 }

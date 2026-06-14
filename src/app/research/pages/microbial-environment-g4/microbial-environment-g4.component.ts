@@ -532,7 +532,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       },
       {
         label: 'G4 density metric',
-        value: 'sites/Mb',
+        value: 'sequences/Mb',
         hint: this.densityMetricLabel(),
         icon: 'biotech',
       },
@@ -555,14 +555,14 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       formatter: (row) => this.formatValue(row.phenotype_value),
     },
     {
-      header: 'G4 density',
+      header: 'G4 density (sequences/Mb)',
       field: 'g4_density_per_mb',
       sortable: true,
       type: 'number',
       formatter: (row) => this.formatValue(row.g4_density_per_mb),
     },
     {
-      header: 'Genome size (Mb)',
+      header: 'Genome size (bp)',
       field: 'genome_size',
       sortable: true,
       type: 'number',
@@ -1144,7 +1144,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           title: `${this.phenotypeLabel()} (${this.phenotypeUnitLabel()})`,
           grid: true,
         },
-        { orient: 'left', scale: 'y', title: `${densityLabel} per Mb`, grid: true },
+        { orient: 'left', scale: 'y', title: `${densityLabel} (sequences/Mb)`, grid: true },
       ],
       marks: [
         {
