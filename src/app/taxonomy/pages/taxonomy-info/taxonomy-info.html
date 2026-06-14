@@ -95,9 +95,10 @@
 
                   <div class="position-pie-legend">
                     <p class="context-note">
-                      Pie slices are {{ selectedMotifLabel() }} site counts by genomic context.
-                      Percentages use all loaded {{ selectedMotifLabel() }} sites in this taxon as
-                      the denominator. Other means sites outside genes and selected gene flanks.
+                      Pie slices are {{ selectedMotifLabel() }} sequence counts by genomic context.
+                      Percentages use all loaded {{ selectedMotifLabel() }} sequences in this taxon
+                      as the denominator. Other means sequences outside genes and selected gene
+                      flanks.
                       Legend values are count · percentage.
                     </p>
                     @for (category of positionCategoryRows(); track category.key) {
@@ -118,17 +119,22 @@
                         {{
                           selectedMotifLabel()
                         }}
-                        gene-context site counts by gene biotype. Total sums in-gene, upstream, and
-                        downstream sites; Other means unspecified or source-annotated other gene
+                        gene-context sequence counts by gene biotype. Total sums intragenic,
+                        upstream, and downstream sequences; Other means unspecified or
+                        source-annotated other gene
                         biotype.
                       </caption>
                       <thead>
                         <tr>
                           <th scope="col">Gene biotype</th>
-                          <th scope="col">In genes sites</th>
-                          <th scope="col">Upstream {{ flankWindowLabel() }} sites</th>
-                          <th scope="col">Downstream {{ flankWindowLabel() }} sites</th>
-                          <th scope="col">Gene-context total</th>
+                          <th scope="col">Intragenic {{ selectedMotifLabel() }} sequences</th>
+                          <th scope="col">
+                            Upstream {{ flankWindowLabel() }} {{ selectedMotifLabel() }} sequences
+                          </th>
+                          <th scope="col">
+                            Downstream {{ flankWindowLabel() }} {{ selectedMotifLabel() }} sequences
+                          </th>
+                          <th scope="col">Total gene-context {{ selectedMotifLabel() }} sequences</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -147,7 +153,9 @@
                 }
               </div>
             } @else {
-              <p class="state-message">No position-context {{ selectedMotifLabel() }} sites found.</p>
+              <p class="state-message">
+                No position-context {{ selectedMotifLabel() }} sequences found.
+              </p>
             }
 
             @if (summary.quality.warnings.length > 0) {

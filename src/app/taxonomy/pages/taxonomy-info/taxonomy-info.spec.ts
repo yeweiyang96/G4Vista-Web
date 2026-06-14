@@ -352,15 +352,15 @@ describe('TaxonomyInfoComponent', () => {
       maxScore: null,
       overlap: false,
     });
-    expect(text).toContain('Pie slices are G4 site counts by genomic context.');
-    expect(text).toContain('Other means sites outside genes and selected gene flanks.');
+    expect(text).toContain('Pie slices are G4 sequence counts by genomic context.');
+    expect(text).toContain('Other means sequences outside genes and selected gene flanks.');
     expect(text).toContain('Legend values are count · percentage.');
-    expect(text).toContain('Table values are G4 gene-context site counts by gene biotype.');
+    expect(text).toContain('Table values are G4 gene-context sequence counts by gene biotype.');
     expect(text).toContain('Other means unspecified or source-annotated other gene biotype.');
-    expect(text).toContain('In genes');
-    expect(text).toContain('Upstream 1 kb sites');
-    expect(text).toContain('Downstream 1 kb sites');
-    expect(text).toContain('Gene-context total');
+    expect(text).toContain('Intragenic G4 sequences');
+    expect(text).toContain('Upstream 1 kb sequences');
+    expect(text).toContain('Downstream 1 kb sequences');
+    expect(text).toContain('Total gene-context sequences');
     expect(text).toContain('Other');
     expect(text).not.toContain('Gene biotype breakdown');
     expect(text).toContain('protein_coding');
