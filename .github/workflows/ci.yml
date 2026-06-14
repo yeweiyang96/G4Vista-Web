@@ -1,6 +1,3 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: G4Vista CI Workflow
 
 on:
@@ -13,26 +10,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v6
+
+      - name: Set up mise
+        uses: jdx/mise-action@v4.1.0
         with:
-          node-version: ${{ matrix.node-version }}
-      - uses: actions/cache@v2
+          version: 2026.6.3
+          install: true
+          cache: true
+          experimental: true
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "path=$(mise exec -- pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-node-
-      - uses: pnpm/action-setup@v3
-      - name: Install package
-        run: pnpm install
-      - name: Lint check
-        run: pnpm run lint
-      - name: Building check
-        run: pnpm run build
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Run CI
+        run: mise run ci

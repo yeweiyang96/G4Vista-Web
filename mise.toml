@@ -1,22 +1,43 @@
 [tools]
-node = '24' # 锁定项目所需的 Node.js 版本
+node = '24'
+pnpm = '11.6.0'
 
 [settings]
-experimental = true # 启用实验性功能以支持高级 Hook [11, 23]
-
-[hooks]
-# 核心迁移点：利用 Corepack 管理 pnpm [11, 23, 24]
-postinstall = 'npx corepack enable'
+experimental = true
 
 [env]
-# 将项目本地依赖的二进制目录注入 PATH
-_.path = ["{{config_root}}/node_modules/.bin"]
+MISE_DATA_DIR = "{{env.MISE_DATA_DIR | default(value=env.HOME ~ '/.local/share/mise')}}"
+_.path = ["{{config_root}}/node_modules/.bin", "{{env.MISE_DATA_DIR}}/installs/pnpm/11.6.0"]
 
 [tasks.pnpm-install]
 description = 'Installs dependencies with pnpm'
 run = 'pnpm install'
-sources = ['package.json', 'pnpm-lock.yaml', 'mise.toml']
+sources = ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'mise.toml']
 outputs = ['node_modules/.pnpm/lock.yaml']
+
+[tasks.pnpm-install-frozen]
+description = 'Installs dependencies with the committed pnpm lockfile'
+run = 'pnpm install --frozen-lockfile'
+sources = ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'mise.toml']
+outputs = ['node_modules/.pnpm/lock.yaml']
+
+[tasks.lint]
+description = 'Runs the Angular lint checks'
+run = 'pnpm run lint'
+depends = ['pnpm-install']
+
+[tasks.build]
+description = 'Builds the production application bundle'
+run = 'pnpm run build'
+depends = ['pnpm-install']
+
+[tasks.ci]
+description = 'Runs the CI validation sequence'
+run = [
+  'pnpm install --frozen-lockfile',
+  'pnpm run lint',
+  'pnpm run build',
+]
 
 [tasks.dev]
 description = 'Starts the development server'
