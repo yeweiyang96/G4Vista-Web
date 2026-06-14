@@ -40,8 +40,18 @@
 
       @if (showResultsPanel()) {
         <section class="gene-results-panel">
-          <div class="result-count">
-            Showing 1-{{ results().length }} of {{ results().length }} results
+          <div class="result-summary-row">
+            <div class="result-count">{{ resultCountLabel() }}</div>
+            <button
+              mat-stroked-button
+              class="export-button"
+              type="button"
+              [disabled]="isLoading() || results().length === 0"
+              (click)="exportResults()"
+            >
+              <mat-icon>download</mat-icon>
+              Export
+            </button>
           </div>
           <mtx-grid
             data-help-target="gene-results"
@@ -53,7 +63,7 @@
             [pageOnFront]="true"
             [pageSize]="10"
             [pageSizeOptions]="pageSizeOptions"
-            [showToolbar]="true"
+            [showToolbar]="false"
             [showColumnMenuButton]="false"
             [columnHideable]="false"
           ></mtx-grid>
@@ -112,15 +122,7 @@
 </ng-template>
 
 <ng-template #geneTpl let-row="rowData" let-col="colDef">
-  @if (row[col.field] && row.feature_id) {
-    <a
-      mat-button
-      class="gene-link"
-      [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
-    >
-      {{ row[col.field] }}
-    </a>
-  } @else if (row[col.field]) {
+  @if (row[col.field]) {
     <span>{{ row[col.field] }}</span>
   } @else {
     <span class="muted-text">Unavailable</span>
@@ -131,16 +133,21 @@
   <span>{{ formatRange(row) }}</span>
 </ng-template>
 
-<ng-template #linkedTpl let-row="rowData">
+<ng-template #internalG4Tpl let-row="rowData">
+  <span class="internal-count">{{ internalG4Count(row) }}</span>
+</ng-template>
+
+<ng-template #detailActionTpl let-row="rowData">
   @if (row.feature_id) {
     <a
-      mat-button
-      class="gene-link linked-count"
+      mat-icon-button
+      class="detail-action-link"
+      aria-label="Open gene detail"
       [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
     >
-      {{ linkedG4Count(row) }}
+      <mat-icon>chevron_right</mat-icon>
     </a>
   } @else {
-    <span>{{ linkedG4Count(row) }}</span>
+    <span class="muted-text detail-action-placeholder">-</span>
   }
 </ng-template>

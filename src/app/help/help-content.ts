@@ -3,7 +3,8 @@ export type HelpWorkflowId =
   | 'genome'
   | 'genome-detail'
   | 'gene'
-  | 'microbial-environment';
+  | 'microbial-environment'
+  | 'server-api';
 
 export interface HelpStep {
   readonly icon: string;
@@ -17,8 +18,8 @@ export interface HelpTopic {
   readonly summary: string;
   readonly route: string;
   readonly icon: string;
-  readonly screenshotSrc: string;
-  readonly screenshotAlt: string;
+  readonly screenshotSrc?: string;
+  readonly screenshotAlt?: string;
   readonly steps: readonly HelpStep[];
 }
 
@@ -170,6 +171,31 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
         icon: 'download',
         title: 'Inspect and export strains',
         body: 'Use the chart metric switch, sortable table, and download action to review the submitted strain set.',
+      },
+    ],
+  },
+  {
+    id: 'server-api',
+    title: 'Server API',
+    summary:
+      'Use the G4Vista-Server FastAPI endpoints directly for assembly, taxonomy, motif, gene, and research data.',
+    route: '/api/docs',
+    icon: 'terminal',
+    steps: [
+      {
+        icon: 'description',
+        title: 'Open interactive API docs',
+        body: 'Use the Swagger UI or ReDoc pages to inspect endpoint parameters and response schemas.',
+      },
+      {
+        icon: 'http',
+        title: 'Call same-origin endpoints',
+        body: 'Requests use the same /api/v1 paths that the G4Vista web application uses.',
+      },
+      {
+        icon: 'data_object',
+        title: 'Start from sample requests',
+        body: 'Use common genome, taxonomy, G4, and microbial-environment examples as templates.',
       },
     ],
   },
@@ -336,6 +362,19 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
         body: 'Use the result table for strain-level details and download the current result set when needed.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-table"]',
+      },
+    ],
+  },
+  'server-api': {
+    id: 'server-api',
+    label: 'Server API',
+    steps: [
+      {
+        icon: 'terminal',
+        title: 'G4Vista-Server API',
+        body: 'Open the Help Center Server API tab for documentation links and sample requests.',
+        route: '/help',
+        targetSelector: null,
       },
     ],
   },

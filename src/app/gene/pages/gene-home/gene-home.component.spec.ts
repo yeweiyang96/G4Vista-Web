@@ -33,7 +33,7 @@ describe('GeneHomeComponent', () => {
     expect(geneService.searchGenes).toHaveBeenCalledWith('ATP6');
   });
 
-  it('renders search results and key navigation links', async () => {
+  it('renders search results with species, export, and row navigation', async () => {
     const rows: GeneSearchItem[] = [
       {
         assembly_accession: 'GCF_000001405.39',
@@ -76,16 +76,26 @@ describe('GeneHomeComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Species');
+    expect(host.textContent).toContain('Homo sapiens');
+    expect(host.textContent).toContain('Gene');
+    expect(host.textContent).toContain('Feature ID');
+    expect(host.textContent).toContain('Internal G4 count');
+    expect(host.textContent).not.toContain('Gene / feature');
+    expect(host.textContent).not.toContain('Gene ID');
+    expect(host.querySelector('button.export-button')).not.toBeNull();
+
     const featureLinks = host.querySelectorAll('a.feature-link');
     expect(featureLinks.length).toBe(2);
 
     const assemblyHref = host.querySelector('a.assembly-link')?.getAttribute('href');
     expect(assemblyHref).toContain('/genome/GCF_000001405.39');
 
-    const geneNameHref = host.querySelector('a.gene-name-link')?.getAttribute('href');
-    expect(geneNameHref).toContain('/gene/GCF_000001405.39/NC_012920.1/gene-ATP6');
+    expect(host.querySelector('a.gene-link')).toBeNull();
+    expect(host.querySelector('a.internal-count')).toBeNull();
+    expect(host.querySelector('span.internal-count')?.textContent?.trim()).toBe('1');
 
-    const geneIdHref = host.querySelector('a.gene-id-link')?.getAttribute('href');
-    expect(geneIdHref).toContain('/gene/GCF_000001405.39/NC_012920.1/gene-ATP6');
+    const detailHref = host.querySelector('a.detail-action-link')?.getAttribute('href');
+    expect(detailHref).toContain('/gene/GCF_000001405.39/NC_012920.1/gene-ATP6');
   });
 });

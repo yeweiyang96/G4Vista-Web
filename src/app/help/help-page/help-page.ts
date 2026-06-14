@@ -6,6 +6,7 @@ import { GeneHelpPanel } from './workflow-panels/gene-help-panel';
 import { GenomeDetailHelpPanel } from './workflow-panels/genome-detail-help-panel';
 import { GenomeHelpPanel } from './workflow-panels/genome-help-panel';
 import { MicrobialEnvironmentHelpPanel } from './workflow-panels/microbial-environment-help-panel';
+import { ServerApiHelpPanel } from './workflow-panels/server-api-help-panel';
 import { TaxonomyHelpPanel } from './workflow-panels/taxonomy-help-panel';
 import { HELP_TOPICS, HelpWorkflowId } from '../help-content';
 
@@ -19,6 +20,7 @@ import { HELP_TOPICS, HelpWorkflowId } from '../help-content';
     MatIconModule,
     MicrobialEnvironmentHelpPanel,
     RouterLink,
+    ServerApiHelpPanel,
     TaxonomyHelpPanel,
   ],
   templateUrl: './help-page.html',

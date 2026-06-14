@@ -3,9 +3,7 @@
     <div class="hero-copy">
       <p class="section-kicker">Help center</p>
       <h1 id="help-title" class="g4v-page-title">How to use G4Vista</h1>
-      <p>
-        Choose a tool to see what to enter, which steps to follow, and how to read the results.
-      </p>
+      <p>Choose a tool to see what to enter, which steps to follow, and how to read the results.</p>
     </div>
 
     <div class="hero-actions">
@@ -54,6 +52,9 @@
       }
       @case ('microbial-environment') {
         <app-microbial-environment-help-panel />
+      }
+      @case ('server-api') {
+        <app-server-api-help-panel />
       }
     }
   </section>
