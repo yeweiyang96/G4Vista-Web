@@ -51,6 +51,12 @@ export const routes: Routes = [
       import('./gene/pages/gene-home/gene-home.component').then((m) => m.GeneHomeComponent),
   },
   {
+    path: 'gene/taxon/:taxonId',
+    title: 'Gene',
+    loadComponent: () =>
+      import('./gene/pages/gene-home/gene-home.component').then((m) => m.GeneHomeComponent),
+  },
+  {
     path: 'gene/:assemblyAccession/:seqid/:featureId',
     title: 'Gene',
     loadComponent: () =>

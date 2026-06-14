@@ -23,7 +23,7 @@ describe('GeneService', () => {
   it('uses search_term in gene search requests and returns the payload', () => {
     const responseSpy = jasmine.createSpy();
 
-    service.searchGenes('ATP6').subscribe(responseSpy);
+    service.searchGenes({ searchTerm: 'ATP6' }).subscribe(responseSpy);
 
     const request = httpMock.expectOne(
       (req) => req.url === '/api/v1/gene/' && req.params.get('search_term') === 'ATP6',
@@ -55,13 +55,27 @@ describe('GeneService', () => {
   });
 
   it('adds assembly_accession when provided in gene search', () => {
-    service.searchGenes('dnaK', 'GCF_1').subscribe();
+    service.searchGenes({ searchTerm: 'dnaK', assemblyAccession: 'GCF_1' }).subscribe();
 
     const request = httpMock.expectOne(
       (req) =>
         req.url === '/api/v1/gene/' &&
         req.params.get('search_term') === 'dnaK' &&
         req.params.get('assembly_accession') === 'GCF_1',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush([]);
+  });
+
+  it('adds taxon_id when provided in gene search', () => {
+    service.searchGenes({ searchTerm: 'TP53', taxonId: 9606 }).subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === '/api/v1/gene/' &&
+        req.params.get('search_term') === 'TP53' &&
+        req.params.get('taxon_id') === '9606',
     );
 
     expect(request.request.method).toBe('GET');

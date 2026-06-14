@@ -6,23 +6,84 @@
 
   <div class="gene-workspace">
     <section class="gene-main">
-      <form class="gene-search-row" data-help-target="gene-search" (submit)="onSubmit($event)">
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Gene or feature keyword</mat-label>
-          <input
-            id="search-box"
-            matInput
-            type="search"
-            [formControl]="searchControl"
-            placeholder="Example: ATCG0001, gene-ATP6, TP53"
-          />
-        </mat-form-field>
+      <form class="gene-search-form" data-help-target="gene-search" (submit)="onSubmit($event)">
+        <div class="gene-search-row">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Gene or feature keyword</mat-label>
+            <input
+              id="search-box"
+              matInput
+              type="search"
+              [formControl]="searchControl"
+              placeholder="Example: ATCG0001, gene-ATP6, TP53"
+            />
+          </mat-form-field>
 
-        <button mat-flat-button type="submit">
-          <mat-icon>search</mat-icon>
-          Search
-        </button>
+          <mat-form-field appearance="outline" class="taxon-field">
+            <mat-label>Taxon scope</mat-label>
+            <input
+              id="taxon-box"
+              matInput
+              type="text"
+              [formControl]="taxonControl"
+              [matAutocomplete]="taxonAuto"
+              placeholder="Optional: Homo sapiens or 9606"
+              autocomplete="off"
+              spellcheck="false"
+              (input)="onTaxonInput()"
+            />
+            <mat-autocomplete
+              #taxonAuto="matAutocomplete"
+              [displayWith]="taxonDisplayFn"
+              hideSingleSelectionIndicator
+              autoActiveFirstOption
+              (optionSelected)="selectTaxon($event)"
+            >
+              @if (filteredTaxonOptions$ | async; as taxonOptions) {
+                @for (option of taxonOptions; track option.taxon_id + option.name) {
+                  <mat-option [value]="option">
+                    <span class="taxon-option-row">
+                      <span class="taxon-option-name">{{ option.scientific_name || option.name }}</span>
+                      <span class="taxon-option-meta">{{ option.rank }} · Taxon ID {{ option.taxon_id }}</span>
+                    </span>
+                  </mat-option>
+                }
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <button mat-flat-button type="submit">
+            <mat-icon>search</mat-icon>
+            Search
+          </button>
+        </div>
       </form>
+
+      @if (selectedTaxon(); as taxon) {
+        <div class="taxon-scope-card" aria-label="Selected taxon scope">
+          <mat-icon aria-hidden="true">account_tree</mat-icon>
+          <div>
+            <span>Taxon scope</span>
+            <strong>{{ taxon.name }}</strong>
+            <small>{{ taxon.rank }} · Taxon ID {{ taxon.taxon_id }} · {{ selectedTaxonAssemblyCountLabel() }}</small>
+          </div>
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Clear taxon scope"
+            (click)="clearSelectedTaxon($event)"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
+
+      @if (showGlobalSearchWarning()) {
+        <div class="scope-warning" role="status">
+          <mat-icon aria-hidden="true">warning</mat-icon>
+          <span>Global gene search can be slow. Select a taxon to narrow the search.</span>
+        </div>
+      }
 
       @if (showPromptMessage()) {
         <div class="state-message">

@@ -127,8 +127,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'gene',
     title: 'Search genes and features',
-    summary:
-      'Find feature IDs, gene IDs, or gene names, then open linked gene and genome detail views.',
+    summary: 'Find feature IDs, gene IDs, or gene names globally or within a selected taxon.',
     route: '/gene',
     icon: 'abc',
     screenshotSrc: screenshotPath('gene.png'),
@@ -137,7 +136,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       {
         icon: 'search',
         title: 'Search feature metadata',
-        body: 'Submit a gene keyword such as a feature ID, gene ID, or gene symbol to load matching rows.',
+        body: 'Submit a gene keyword and optionally choose a taxon to narrow matching rows.',
       },
       {
         icon: 'table_view',

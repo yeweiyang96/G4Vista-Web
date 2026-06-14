@@ -75,6 +75,12 @@ export interface GeneSearchItem {
   insideOf_genes_downstream_1k_g4_count: number;
 }
 
+export interface GeneSearchRequest {
+  readonly searchTerm: string;
+  readonly assemblyAccession?: string;
+  readonly taxonId?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -82,10 +88,13 @@ export class GeneService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/gene';
 
-  searchGenes(searchTerm: string, assemblyAccession?: string): Observable<GeneSearchItem[]> {
-    let params = new HttpParams().set('search_term', searchTerm);
-    if (assemblyAccession) {
-      params = params.set('assembly_accession', assemblyAccession);
+  searchGenes(request: GeneSearchRequest): Observable<GeneSearchItem[]> {
+    let params = new HttpParams().set('search_term', request.searchTerm);
+    if (request.assemblyAccession) {
+      params = params.set('assembly_accession', request.assemblyAccession);
+    }
+    if (request.taxonId !== undefined) {
+      params = params.set('taxon_id', request.taxonId);
     }
     return this.http.get<GeneSearchItem[]>(`${this.apiUrl}/`, { params });
   }

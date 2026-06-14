@@ -13,8 +13,8 @@
   margin: 0;
   font: var(--mat-sys-display-small);
   font-weight: 800;
-  letter-spacing: 0;
   color: var(--mat-sys-on-surface);
+  letter-spacing: 0;
 }
 
 .page-heading p {
@@ -35,19 +35,90 @@
   min-width: 0;
 }
 
+.gene-search-form {
+  display: grid;
+  gap: 10px;
+}
+
 .gene-search-row {
   display: grid;
-  grid-template-columns: minmax(0, 560px) 96px;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.85fr) 96px;
   gap: 8px;
   align-items: start;
 }
 
-.search-field {
+.search-field,
+.taxon-field {
   width: 100%;
 }
 
 .gene-search-row button {
   min-height: 56px;
+}
+
+.taxon-option-row {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.taxon-option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+}
+
+.taxon-option-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+}
+
+.taxon-scope-card,
+.scope-warning {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 12px;
+  background: var(--mat-sys-surface-container-low);
+  border: var(--g4v-border);
+  border-radius: var(--g4v-radius);
+}
+
+.taxon-scope-card > mat-icon {
+  color: var(--mat-sys-primary);
+}
+
+.taxon-scope-card > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.taxon-scope-card span,
+.taxon-scope-card small {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.taxon-scope-card strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+}
+
+.scope-warning {
+  grid-template-columns: 32px minmax(0, 1fr);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.scope-warning mat-icon {
+  color: var(--mat-sys-tertiary);
 }
 
 .gene-results-panel,

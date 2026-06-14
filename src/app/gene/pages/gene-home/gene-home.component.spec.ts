@@ -1,25 +1,80 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import {
+  ActivatedRoute,
+  ParamMap,
+  Router,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { GeneSearchItem, GeneService } from '../../services/gene.service';
+import {
+  TaxonomyNode,
+  TaxonomySearch,
+  TaxonomyService,
+} from '../../../taxonomy/services/taxonomy.service';
 import { GeneHomeComponent } from './gene-home.component';
 
 describe('GeneHomeComponent', () => {
   let fixture: ComponentFixture<GeneHomeComponent>;
   let component: GeneHomeComponent;
   let geneService: jasmine.SpyObj<GeneService>;
+  let taxonomyService: jasmine.SpyObj<TaxonomyService>;
+  let paramMapSubject: BehaviorSubject<ParamMap>;
+  let queryParamMapSubject: BehaviorSubject<ParamMap>;
+
+  const homoSapiensTaxon: TaxonomySearch = {
+    name: 'Homo sapiens',
+    rank: 'species',
+    taxon_id: 9606,
+    name_class: 'scientific name',
+    scientific_name: 'Homo sapiens',
+  };
+  const homoSapiensNode: TaxonomyNode = {
+    name: 'Homo sapiens',
+    rank: 'species',
+    taxon_id: 9606,
+    assembly_count: 48,
+    children: [],
+  };
 
   beforeEach(async () => {
     geneService = jasmine.createSpyObj<GeneService>('GeneService', ['searchGenes']);
     geneService.searchGenes.and.returnValue(of([]));
+    taxonomyService = jasmine.createSpyObj<TaxonomyService>('TaxonomyService', [
+      'searchTaxonomy',
+      'getAssemblyCounts',
+      'getLineage',
+    ]);
+    taxonomyService.searchTaxonomy.and.returnValue(of([]));
+    taxonomyService.getAssemblyCounts.and.returnValue(of([{ taxon_id: 9606, assembly_count: 48 }]));
+    taxonomyService.getLineage.and.returnValue(of(homoSapiensNode));
+    paramMapSubject = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+    queryParamMapSubject = new BehaviorSubject<ParamMap>(convertToParamMap({}));
 
     await TestBed.configureTestingModule({
       imports: [GeneHomeComponent],
-      providers: [provideRouter([]), { provide: GeneService, useValue: geneService }],
+      providers: [
+        provideRouter([
+          { path: 'gene', component: GeneHomeComponent },
+          { path: 'gene/taxon/:taxonId', component: GeneHomeComponent },
+        ]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: paramMapSubject.asObservable(),
+            queryParamMap: queryParamMapSubject.asObservable(),
+          },
+        },
+        { provide: GeneService, useValue: geneService },
+        { provide: TaxonomyService, useValue: taxonomyService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(GeneHomeComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -30,7 +85,44 @@ describe('GeneHomeComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(geneService.searchGenes).toHaveBeenCalledWith('ATP6');
+    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'ATP6' });
+  });
+
+  it('keeps global search enabled and renders the slow-search warning', async () => {
+    component.searchControl.setValue('TP53');
+
+    component.onSubmit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53' });
+    expect(host.textContent).toContain('Global gene search can be slow');
+  });
+
+  it('submits scoped search after selecting a taxon', async () => {
+    const router = TestBed.inject(Router);
+    component.selectTaxon({ option: { value: homoSapiensTaxon } } as never);
+    component.searchControl.setValue('TP53');
+
+    component.onSubmit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53', taxonId: 9606 });
+    expect(router.url).toContain('/gene/taxon/9606?search=TP53');
+  });
+
+  it('preloads scoped search state from the route', async () => {
+    paramMapSubject.next(convertToParamMap({ taxonId: '9606' }));
+    queryParamMapSubject.next(convertToParamMap({ search: 'TP53' }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(taxonomyService.getLineage).toHaveBeenCalledWith(9606);
+    expect(component.searchControl.value).toBe('TP53');
+    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53', taxonId: 9606 });
   });
 
   it('renders search results with species, export, and row navigation', async () => {
