@@ -8,7 +8,7 @@
 
 .guide-panel {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .guide-header {
@@ -16,6 +16,8 @@
   grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: start;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .guide-header > mat-icon {
@@ -50,25 +52,21 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-.guide-grid {
+.guide-grid,
+.result-grid,
+.report-summary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 24px;
 }
 
-.info-card,
-.result-card,
-.process-step {
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
+.guide-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .info-card,
 .result-card {
   display: grid;
   gap: 10px;
-  padding: 16px;
 }
 
 .info-card h3,
@@ -105,9 +103,10 @@
 
 .process-list {
   display: grid;
-  gap: 12px;
+  gap: 0;
   padding: 0;
   list-style: none;
+  border-block: 1px solid var(--mat-sys-outline-variant);
   counter-reset: workflow-step;
 }
 
@@ -115,8 +114,13 @@
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);
   gap: 14px;
-  padding: 16px;
+  padding: 18px 0;
+  border-block-end: 1px solid var(--mat-sys-outline-variant);
   counter-increment: workflow-step;
+}
+
+.process-step:last-child {
+  border-block-end: 0;
 }
 
 .process-step::before {
@@ -142,9 +146,7 @@
 }
 
 .result-grid {
-  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
 }
 
 .result-card mat-icon {
@@ -174,9 +176,7 @@
 }
 
 .report-summary {
-  display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-  gap: 12px;
 }
 
 .finding-table-wrapper {
@@ -229,9 +229,7 @@
   gap: 8px;
   padding: 16px 16px 16px 36px;
   font: var(--mat-sys-body-medium);
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
+  border-block: 1px solid var(--mat-sys-outline-variant);
 }
 
 .guide-actions {

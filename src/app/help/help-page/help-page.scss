@@ -1,20 +1,18 @@
 .help-page {
   display: grid;
-  gap: 18px;
+  gap: 0;
   --g4v-page-max: 1280px;
-}
-
-:where(h1, p) {
-  margin: 0;
-}
-
-.help-hero,
-.workflow-tabs,
-.help-content-shell {
+  padding: 0;
+  margin: 28px auto 48px;
+  overflow: hidden;
   background: var(--mat-sys-surface-container-lowest);
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--g4v-radius-large);
   box-shadow: var(--g4v-shadow);
+}
+
+:where(h1, p) {
+  margin: 0;
 }
 
 .help-hero {
@@ -22,7 +20,13 @@
   gap: 20px;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 24px;
+  padding: 28px 30px 22px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mat-sys-primary) 7%, transparent),
+    transparent
+  );
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .hero-copy {
@@ -50,9 +54,10 @@
 .workflow-tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 1px;
+  gap: 0;
   overflow: hidden;
-  background: var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .workflow-tab {
@@ -67,8 +72,13 @@
   color: var(--mat-sys-on-surface);
   text-align: left;
   cursor: pointer;
-  background: var(--mat-sys-surface-container-lowest);
+  background: transparent;
   border: 0;
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.workflow-tab:last-child {
+  border-right: 0;
 }
 
 .workflow-tab:hover,
@@ -80,11 +90,7 @@
 
 .workflow-tab-active {
   color: var(--mat-sys-primary);
-  background: color-mix(
-    in srgb,
-    var(--mat-sys-primary-container) 54%,
-    var(--mat-sys-surface-container-lowest)
-  );
+  background: var(--mat-sys-surface-container-lowest);
   box-shadow: inset 0 -3px 0 var(--mat-sys-primary);
 }
 
@@ -102,7 +108,7 @@
 }
 
 .help-content-shell {
-  padding: 24px;
+  padding: 30px;
 }
 
 @media (width <= 1080px) {
@@ -114,7 +120,7 @@
 @media (width <= 720px) {
   .help-hero {
     display: grid;
-    padding: 18px;
+    padding: 20px;
   }
 
   .workflow-tabs {
@@ -130,6 +136,6 @@
   }
 
   .help-content-shell {
-    padding: 16px;
+    padding: 20px;
   }
 }
