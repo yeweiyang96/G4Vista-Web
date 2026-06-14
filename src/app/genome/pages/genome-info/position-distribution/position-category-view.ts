@@ -1,7 +1,4 @@
-import {
-  G4PositionCategory,
-  G4PositionStatisticsCategory,
-} from '../../../services/g4.service';
+import { G4PositionCategory, G4PositionStatisticsCategory } from '../../../services/g4.service';
 
 export interface PositionCategoryView extends G4PositionCategory {
   color: string;
@@ -27,14 +24,14 @@ export const DEFAULT_POSITION_CATEGORY_KEYS: readonly string[] = [
   'gene_inside',
   'gene_upstream',
   'gene_downstream',
+  'other',
 ];
 
 export const POSITION_CATEGORY_COLORS: Record<string, string> = {
   gene_inside: '#07879a',
   gene_upstream: '#8ec8ef',
   gene_downstream: '#8ab84e',
-  other_root_non_gene_feature: '#8a5dbb',
-  non_feature: '#a8adb7',
+  other: '#a8adb7',
 };
 
 const DEFAULT_POSITION_CATEGORY_KEY_SET: ReadonlySet<string> = new Set<string>(
@@ -75,12 +72,16 @@ export function categoryCount(categories: readonly G4PositionCategory[], key: st
 export function isDefaultPositionCategory(
   category: Pick<G4PositionCategory, 'key' | 'is_default_chart_category'>,
 ): boolean {
-  return category.is_default_chart_category ?? DEFAULT_POSITION_CATEGORY_KEY_SET.has(category.key);
+  if (!DEFAULT_POSITION_CATEGORY_KEY_SET.has(category.key)) {
+    return false;
+  }
+  return category.is_default_chart_category ?? true;
 }
 
-export function categoryDisplayText(
-  category: PositionCategoryTextSource,
-): { displayLabel: string; displayDescription: string } {
+export function categoryDisplayText(category: PositionCategoryTextSource): {
+  displayLabel: string;
+  displayDescription: string;
+} {
   const apiDisplayLabel = category.display_label?.trim();
   const apiDisplayDescription = category.display_description?.trim();
   if (apiDisplayLabel && apiDisplayDescription) {
@@ -106,6 +107,11 @@ export function categoryDisplayText(
         displayLabel: 'Downstream flank',
         displayDescription: 'Predicted motif sites in the selected downstream gene flank.',
       };
+    case 'other':
+      return {
+        displayLabel: 'Other',
+        displayDescription: 'Predicted motif sites outside genes and selected gene flanks.',
+      };
     default:
       return {
         displayLabel: apiDisplayLabel ?? category.label,
@@ -122,6 +128,8 @@ export function summaryChartLabel(category: Pick<G4PositionCategory, 'key' | 'la
       return 'Upstream flank';
     case 'gene_downstream':
       return 'Downstream flank';
+    case 'other':
+      return 'Other';
     default:
       return category.label;
   }

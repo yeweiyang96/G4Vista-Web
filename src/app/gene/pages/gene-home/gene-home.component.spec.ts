@@ -37,6 +37,13 @@ describe('GeneHomeComponent', () => {
     assembly_count: 48,
     children: [],
   };
+  const arabidopsisNode: TaxonomyNode = {
+    name: 'Arabidopsis thaliana',
+    rank: 'species',
+    taxon_id: 3702,
+    assembly_count: 1,
+    children: [],
+  };
 
   beforeEach(async () => {
     geneService = jasmine.createSpyObj<GeneService>('GeneService', ['searchGenes']);
@@ -125,6 +132,25 @@ describe('GeneHomeComponent', () => {
     expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53', taxonId: 9606 });
   });
 
+  it('preloads a taxon route without running gene search when no query is present', async () => {
+    taxonomyService.getLineage.and.returnValue(of(arabidopsisNode));
+
+    paramMapSubject.next(convertToParamMap({ taxonId: '3702' }));
+    queryParamMapSubject.next(convertToParamMap({}));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(taxonomyService.getLineage).toHaveBeenCalledWith(3702);
+    expect(component.searchControl.value).toBe('');
+    expect(component.taxonControl.value).toBe('Arabidopsis thaliana');
+    expect(component.selectedTaxon()).toEqual({
+      taxon_id: 3702,
+      name: 'Arabidopsis thaliana',
+      rank: 'species',
+    });
+    expect(geneService.searchGenes).not.toHaveBeenCalled();
+  });
+
   it('renders search results with species, export, and row navigation', async () => {
     const rows: GeneSearchItem[] = [
       {
@@ -152,7 +178,7 @@ describe('GeneHomeComponent', () => {
         strand: '-',
         gene_id: 'YAL001C',
         gene_name: 'TFC3',
-        gene_biotype: 'protein_coding',
+        gene_biotype: '',
         insideOf_gene_g4_count: 4,
         insideOf_genes_upstream_1k_g4_count: 5,
         insideOf_genes_downstream_1k_g4_count: 6,
@@ -172,6 +198,7 @@ describe('GeneHomeComponent', () => {
     expect(host.textContent).toContain('Homo sapiens');
     expect(host.textContent).toContain('Gene');
     expect(host.textContent).toContain('Feature ID');
+    expect(host.textContent).toContain('Other');
     expect(host.textContent).toContain('Internal G4 count');
     expect(host.textContent).not.toContain('Gene / feature');
     expect(host.textContent).not.toContain('Gene ID');
@@ -189,5 +216,45 @@ describe('GeneHomeComponent', () => {
 
     const detailHref = host.querySelector('a.detail-action-link')?.getAttribute('href');
     expect(detailHref).toContain('/gene/GCF_000001405.39/NC_012920.1/gene-ATP6');
+  });
+
+  it('exports empty gene biotypes as Other in CSV', async () => {
+    const rows: GeneSearchItem[] = [
+      {
+        assembly_accession: 'GCF_000146045.2',
+        organism_name: 'Saccharomyces cerevisiae',
+        seqid: 'NC_001133.9',
+        feature_id: 'gene-YAL001C',
+        feature_start: 300,
+        feature_end: 900,
+        strand: '-',
+        gene_id: 'YAL001C',
+        gene_name: 'TFC3',
+        gene_biotype: '',
+        insideOf_gene_g4_count: 4,
+        insideOf_genes_upstream_1k_g4_count: 5,
+        insideOf_genes_downstream_1k_g4_count: 6,
+      },
+    ];
+    const view = fixture.nativeElement.ownerDocument.defaultView as Window & typeof globalThis;
+    const exportState: { blob: Blob | null } = { blob: null };
+    spyOn(view.URL, 'createObjectURL').and.callFake((blob: Blob | MediaSource) => {
+      exportState.blob = blob as Blob;
+      return 'blob:g4vista-gene-results';
+    });
+    spyOn(view.URL, 'revokeObjectURL');
+    spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(() => undefined);
+    geneService.searchGenes.and.returnValue(of(rows));
+    component.searchControl.setValue('gene');
+
+    component.onSubmit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.exportResults();
+
+    expect(exportState.blob).not.toBeNull();
+    const csv = await exportState.blob?.text();
+    expect(csv).toContain('TFC3,YAL001C');
+    expect(csv).toContain(',Other,');
   });
 });

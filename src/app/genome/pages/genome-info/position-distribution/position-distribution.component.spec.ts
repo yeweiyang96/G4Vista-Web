@@ -13,6 +13,7 @@ describe('PositionDistributionComponent', () => {
     'gene_inside',
     'gene_upstream',
     'gene_downstream',
+    'other',
   ];
   const distribution: G4PositionDistributionResponse = {
     ...EMPTY_G4_POSITION_DISTRIBUTION,
@@ -60,30 +61,17 @@ describe('PositionDistributionComponent', () => {
         display_order: 3,
       },
       {
-        key: 'other_root_non_gene_feature',
-        label: 'Other root non-gene feature',
-        count: 1,
-        ratio: 1 / 6,
+        key: 'other',
+        label: 'Other',
+        count: 2,
+        ratio: 1 / 3,
         precedence_rank: 4,
-        description: 'Other annotation',
-        display_label: 'Non-gene annotation feature',
-        display_description: 'Background category.',
+        description: 'Outside genes and selected flanks',
+        display_label: 'Other',
+        display_description: 'Predicted motif sites outside genes and selected gene flanks.',
         category_group: 'background',
-        is_default_chart_category: false,
+        is_default_chart_category: true,
         display_order: 4,
-      },
-      {
-        key: 'non_feature',
-        label: 'Non-feature',
-        count: 1,
-        ratio: 1 / 6,
-        precedence_rank: 5,
-        description: 'No feature',
-        display_label: 'No assigned feature',
-        display_description: 'Background category.',
-        category_group: 'background',
-        is_default_chart_category: false,
-        display_order: 5,
       },
     ],
     feature_breakdown: [],
@@ -141,13 +129,14 @@ describe('PositionDistributionComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('app-strength-box-plot-vega').length).toBe(0);
   });
 
-  it('uses gene-context categories plus non-gene Other for the overview chart', () => {
+  it('uses four public categories for the overview chart', () => {
     const component = fixture.componentInstance;
 
     expect(component.categoryRows().map((category) => category.displayLabel)).toEqual([
       'In genes',
       'Upstream flank',
       'Downstream flank',
+      'Other',
     ]);
     expect(component.summaryDoughnutData().labels).toEqual([
       'In genes',
@@ -158,13 +147,66 @@ describe('PositionDistributionComponent', () => {
     expect(component.summaryDoughnutData().datasets[0].data).toEqual([2, 1, 1, 2]);
   });
 
+  it('folds legacy background categories into the fallback Other row', () => {
+    fixture.componentRef.setInput('distribution', {
+      ...distribution,
+      categories: [
+        ...distribution.categories.filter((category) => category.key !== 'other'),
+        {
+          key: 'other_root_non_gene_feature',
+          label: 'Other root non-gene feature',
+          count: 1,
+          ratio: 1 / 6,
+          precedence_rank: 4,
+          description: 'Other annotation',
+          display_label: 'Non-gene annotation feature',
+          display_description: 'Background category.',
+          category_group: 'background',
+          is_default_chart_category: true,
+          display_order: 4,
+        },
+        {
+          key: 'non_feature',
+          label: 'Non-feature',
+          count: 1,
+          ratio: 1 / 6,
+          precedence_rank: 5,
+          description: 'No feature',
+          display_label: 'No assigned feature',
+          display_description: 'Background category.',
+          category_group: 'background',
+          is_default_chart_category: true,
+          display_order: 5,
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    const text = renderedText();
+    expect(fixture.componentInstance.categoryRows().map((category) => category.key)).toEqual([
+      'gene_inside',
+      'gene_upstream',
+      'gene_downstream',
+    ]);
+    expect(fixture.componentInstance.summaryDoughnutData().labels).toEqual([
+      'In genes',
+      'Upstream flank',
+      'Downstream flank',
+      'Other',
+    ]);
+    expect(text).not.toContain('Other root non-gene feature');
+    expect(text).not.toContain('Non-feature');
+    expect(text).not.toContain('Non-gene annotation feature');
+    expect(text).not.toContain('No assigned feature');
+  });
+
   it('emits selected category changes for the parent component', () => {
     const component = fixture.componentInstance;
     const emitSpy = spyOn(component.categorySelectionChange, 'emit');
 
     component.changeSummaryCategoryVisibility('gene_upstream', false);
 
-    expect(emitSpy).toHaveBeenCalledOnceWith(['gene_inside', 'gene_downstream']);
+    expect(emitSpy).toHaveBeenCalledOnceWith(['gene_inside', 'gene_downstream', 'other']);
   });
 
   it('keeps at least one selected chart category', () => {

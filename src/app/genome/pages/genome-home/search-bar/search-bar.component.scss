@@ -80,12 +80,79 @@
   align-items: baseline;
   min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
   font: var(--mat-sys-title-medium);
   color: var(--mat-sys-on-surface);
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .genome-search-option-label em {
   color: var(--mat-sys-on-surface-variant);
+}
+
+.genome-search-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.genome-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: var(--mat-sys-title-small);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.genome-results-list {
+  display: grid;
+  gap: 8px;
+}
+
+.genome-result-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(180px, 1fr) 24px;
+  gap: 12px;
+  justify-content: stretch;
+  min-height: 54px;
+  padding: 8px 12px;
+  color: var(--mat-sys-on-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.genome-result-main,
+.genome-result-organism {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.genome-result-main {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.genome-result-main span,
+.genome-result-organism,
+.genome-results-state {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.genome-results-state {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+}
+
+@media (width <= 720px) {
+  .genome-result-row {
+    grid-template-columns: minmax(0, 1fr) 24px;
+  }
+
+  .genome-result-organism {
+    grid-column: 1 / -1;
+  }
 }

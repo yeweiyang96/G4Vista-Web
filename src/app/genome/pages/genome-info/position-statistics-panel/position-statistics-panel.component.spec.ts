@@ -27,6 +27,7 @@ describe('PositionStatisticsPanelComponent', () => {
     density_per_mb: 2000,
     expected_vs_genome: 1,
     fold_vs_genome: 2,
+    fold_vs_other: 3,
     fold_vs_non_feature: 3,
     min_score: 10,
     q1_score: 14,
@@ -143,15 +144,15 @@ describe('PositionStatisticsPanelComponent', () => {
             },
           },
           {
-            key: 'non_feature',
-            label: 'Non-feature',
-            description: 'No feature',
-            precedence_rank: 5,
-            display_label: 'No assigned feature',
-            display_description: 'Background category.',
+            key: 'other',
+            label: 'Other',
+            description: 'Outside genes and selected flanks',
+            precedence_rank: 4,
+            display_label: 'Other',
+            display_description: 'Predicted motif sites outside genes and selected gene flanks.',
             category_group: 'background',
-            is_default_chart_category: false,
-            display_order: 5,
+            is_default_chart_category: true,
+            display_order: 4,
             merged_interval_length_bp: 1000,
             length_mb: 0.001,
             motifs: { g4: geneStats },
@@ -189,6 +190,7 @@ describe('PositionStatisticsPanelComponent', () => {
       'gene_inside',
       'gene_upstream',
       'gene_downstream',
+      'other',
     ]);
     fixture.detectChanges();
   });
@@ -197,15 +199,17 @@ describe('PositionStatisticsPanelComponent', () => {
     return fixture.nativeElement.textContent as string;
   }
 
-  it('renders a dedicated statistics section without background or enrichment wording', () => {
+  it('renders public position statistics without legacy background or enrichment wording', () => {
     const text = renderedText();
 
-    expect(text).toContain('Gene-context position statistics');
-    expect(text).toContain('Density by gene context');
+    expect(text).toContain('Position category statistics');
+    expect(text).toContain('Density by position category');
+    expect(text).toContain('Other means sites outside genes and selected gene flanks.');
     expect(text).toContain('Category summary');
     expect(text).toContain('sites/Mb');
     expect(text).toContain('G-score distribution');
     expect(text).toContain('Length distribution');
+    expect(text).toContain('Other');
     expect(text.toLowerCase()).not.toContain('enrichment');
     expect(text).not.toContain('Other annotations');
     expect(text).not.toContain('Outside annotations');
@@ -213,7 +217,7 @@ describe('PositionStatisticsPanelComponent', () => {
     expect(text).not.toContain('No assigned feature');
   });
 
-  it('shows density rows only for selected gene-context categories', () => {
+  it('shows density rows only for selected public categories', () => {
     const component = fixture.componentInstance;
 
     fixture.componentRef.setInput('selectedCategoryKeys', ['gene_inside', 'gene_downstream']);

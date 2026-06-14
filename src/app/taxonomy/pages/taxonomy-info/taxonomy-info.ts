@@ -28,6 +28,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AssemblyListComponent } from './genome-list/genome-list.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { canonicalGeneBiotype, geneBiotypeLabel } from '../../../shared/gene-biotype';
 
 interface PositionCategoryView extends G4PositionCategory {
   displayLabel: string;
@@ -35,10 +36,11 @@ interface PositionCategoryView extends G4PositionCategory {
   color: string;
 }
 
-interface GeneContextCategoryConfig {
-  key: 'gene_inside' | 'gene_upstream' | 'gene_downstream';
+interface PublicPositionCategoryConfig {
+  key: 'gene_inside' | 'gene_upstream' | 'gene_downstream' | 'other';
   label: string;
   color: string;
+  description: string;
 }
 
 interface GeneBiotypeTableRow {
@@ -60,12 +62,32 @@ const MOTIF_LABELS: Record<G4Type, string> = {
   g4: 'G4',
   'i-motif': 'i-motif',
 };
-const GENE_CONTEXT_CATEGORIES: readonly GeneContextCategoryConfig[] = [
-  { key: 'gene_inside', label: 'In genes', color: '#07879a' },
-  { key: 'gene_upstream', label: 'Upstream flank', color: '#8ec8ef' },
-  { key: 'gene_downstream', label: 'Downstream flank', color: '#8ab84e' },
+const PUBLIC_POSITION_CATEGORIES: readonly PublicPositionCategoryConfig[] = [
+  {
+    key: 'gene_inside',
+    label: 'In genes',
+    color: '#07879a',
+    description: 'Predicted motif sites that fall within annotated gene intervals.',
+  },
+  {
+    key: 'gene_upstream',
+    label: 'Upstream flank',
+    color: '#8ec8ef',
+    description: 'Predicted motif sites in the selected upstream gene flank.',
+  },
+  {
+    key: 'gene_downstream',
+    label: 'Downstream flank',
+    color: '#8ab84e',
+    description: 'Predicted motif sites in the selected downstream gene flank.',
+  },
+  {
+    key: 'other',
+    label: 'Other',
+    color: '#a8adb7',
+    description: 'Predicted motif sites outside genes and selected gene flanks.',
+  },
 ];
-const OTHER_POSITION_CATEGORY_COLOR = '#a8adb7';
 
 function isG4Type(value: unknown): value is G4Type {
   return value === 'g4' || value === 'i-motif';
@@ -77,6 +99,19 @@ function isG4FlankWindow(value: unknown): value is G4FlankWindow {
 
 function categoryCount(categories: readonly G4PositionCategory[], key: string): number {
   return categories.find((category) => category.key === key)?.count ?? 0;
+}
+
+function publicPositionCategoryCount(
+  category: PublicPositionCategoryConfig,
+  categories: readonly G4PositionCategory[],
+  apiOtherCount: number,
+  legacyOtherCount: number,
+  hasApiOther: boolean,
+): number {
+  if (category.key !== 'other') {
+    return categoryCount(categories, category.key);
+  }
+  return hasApiOther ? apiOtherCount : legacyOtherCount;
 }
 
 @Component({
@@ -199,15 +234,24 @@ export class TaxonomyInfoComponent {
   readonly positionCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const distribution = this.summary()?.position_distribution;
     const categories = distribution?.categories ?? [];
-    const geneContextTotal = GENE_CONTEXT_CATEGORIES.reduce(
-      (sum, category) => sum + categoryCount(categories, category.key),
+    const geneContextTotal = PUBLIC_POSITION_CATEGORIES.reduce(
+      (sum, category) =>
+        category.key === 'other' ? sum : sum + categoryCount(categories, category.key),
       0,
     );
-    const total = Math.max(distribution?.total_count ?? 0, geneContextTotal);
-    const otherCount = Math.max(0, total - geneContextTotal);
+    const apiOtherCount = categoryCount(categories, 'other');
+    const hasApiOther = categories.some((category) => category.key === 'other');
+    const total = Math.max(distribution?.total_count ?? 0, geneContextTotal + apiOtherCount);
+    const legacyOtherCount = Math.max(0, total - geneContextTotal);
 
-    const rows = GENE_CONTEXT_CATEGORIES.map((category) => {
-      const count = categoryCount(categories, category.key);
+    return PUBLIC_POSITION_CATEGORIES.map((category) => {
+      const count = publicPositionCategoryCount(
+        category,
+        categories,
+        apiOtherCount,
+        legacyOtherCount,
+        hasApiOther,
+      );
       const ratio = total ? count / total : 0;
       return {
         key: category.key,
@@ -215,31 +259,12 @@ export class TaxonomyInfoComponent {
         count,
         ratio,
         precedence_rank: 0,
-        description: category.label,
+        description: category.description,
         displayLabel: category.label,
         ratioLabel: PERCENT_FORMATTER.format(ratio),
         color: category.color,
       };
     });
-
-    if (otherCount === 0) {
-      return rows;
-    }
-
-    return [
-      ...rows,
-      {
-        key: 'other',
-        label: 'Other',
-        count: otherCount,
-        ratio: total ? otherCount / total : 0,
-        precedence_rank: 0,
-        description: 'Predicted motif sites outside annotated genes and selected gene flanks.',
-        displayLabel: 'Other',
-        ratioLabel: PERCENT_FORMATTER.format(total ? otherCount / total : 0),
-        color: OTHER_POSITION_CATEGORY_COLOR,
-      },
-    ];
   });
   readonly positionContextTotal = computed(() =>
     this.positionCategoryRows().reduce((sum, category) => sum + category.count, 0),
@@ -266,8 +291,8 @@ export class TaxonomyInfoComponent {
         const upstreamCount = categoryCount(row.categories, 'gene_upstream');
         const downstreamCount = categoryCount(row.categories, 'gene_downstream');
         return {
-          bioType: row.bio_type ?? 'unspecified',
-          displayLabel: row.display_label,
+          bioType: canonicalGeneBiotype(row.bio_type),
+          displayLabel: geneBiotypeLabel(row.bio_type),
           insideCount,
           upstreamCount,
           downstreamCount,

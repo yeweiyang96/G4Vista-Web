@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {
@@ -10,6 +12,8 @@ import {
   GenomeSearchService,
 } from '../genome/services/genome-search.service';
 import { formatCompactCount, formatGenomeLength } from '../genome/utils/overview-format';
+
+type HomeSearchTarget = 'genome' | 'taxonomy' | 'gene';
 
 interface WorkflowCard {
   readonly tone: 'taxonomy' | 'genome' | 'gene' | 'research';
@@ -24,6 +28,7 @@ interface StartingAction {
   readonly icon: string;
   readonly label: string;
   readonly route: string;
+  readonly queryParams: Record<string, string> | null;
 }
 
 interface StartingPoint {
@@ -36,7 +41,13 @@ interface StartingPoint {
   readonly actions: readonly StartingAction[];
 }
 
+interface HomeSearchNavigation {
+  readonly commands: string[];
+  readonly queryParams: Record<string, string>;
+}
+
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
+const NUMERIC_TAXON_ID_PATTERN = /^\d+$/;
 const WORKFLOW_CARDS: readonly WorkflowCard[] = [
   {
     tone: 'taxonomy',
@@ -72,6 +83,28 @@ const WORKFLOW_CARDS: readonly WorkflowCard[] = [
   },
 ];
 
+function homeSearchNavigation(
+  target: HomeSearchTarget,
+  rawQuery: string,
+): HomeSearchNavigation | null {
+  const query = rawQuery.trim();
+  if (!query) {
+    return null;
+  }
+
+  if (target === 'genome') {
+    return { commands: ['/genome'], queryParams: { query } };
+  }
+
+  if (target === 'taxonomy') {
+    return NUMERIC_TAXON_ID_PATTERN.test(query)
+      ? { commands: ['/taxonomy', query], queryParams: {} }
+      : { commands: ['/taxonomy'], queryParams: { query } };
+  }
+
+  return { commands: ['/gene'], queryParams: { search: query } };
+}
+
 function findAssemblyByAccessions(
   assemblies: readonly GenomeRecommendedAssembly[],
   accessions: readonly string[],
@@ -90,23 +123,41 @@ function assemblySubtitle(
   return `${assembly.asm_name || assembly.organism_name} (${assembly.assembly_accession})`;
 }
 
-function assemblyDetail(assembly: GenomeRecommendedAssembly | null, fallbackDetail: string): string {
+function assemblyDetail(
+  assembly: GenomeRecommendedAssembly | null,
+  fallbackDetail: string,
+): string {
   if (!assembly) {
     return fallbackDetail;
   }
   return `${formatGenomeLength(assembly.genome_length_bp)} · ${assembly.seqid_count} sequence records`;
 }
 
+function startingActionQueryParams(queryParams: Record<string, string>): Record<string, string> {
+  return queryParams;
+}
+
 @Component({
   selector: 'app-home',
-  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, RouterLink],
+  imports: [
+    MatButtonModule,
+    MatButtonToggleModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    RouterLink,
+  ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent {
   private readonly genomeSearchService = inject(GenomeSearchService);
+  private readonly router = inject(Router);
 
+  readonly heroSearchControl = new FormControl('', { nonNullable: true });
+  readonly heroTargetControl = new FormControl<HomeSearchTarget>('genome', { nonNullable: true });
   readonly databaseStatusResource = rxResource({
     stream: () => this.genomeSearchService.getDatabaseStatus(),
   });
@@ -137,8 +188,9 @@ export class HomeComponent {
             icon: 'open_in_new',
             label: 'View genome',
             route: '/genome/GCF_000001405.40',
+            queryParams: null,
           },
-          { icon: 'search', label: 'Search genes', route: '/gene' },
+          { icon: 'search', label: 'Search genes', route: '/gene/taxon/9606', queryParams: null },
         ],
       },
       {
@@ -153,8 +205,9 @@ export class HomeComponent {
             icon: 'open_in_new',
             label: 'View genome',
             route: '/genome/GCF_000001735.4',
+            queryParams: null,
           },
-          { icon: 'search', label: 'Search genes', route: '/gene' },
+          { icon: 'search', label: 'Search genes', route: '/gene/taxon/3702', queryParams: null },
         ],
       },
       {
@@ -165,8 +218,18 @@ export class HomeComponent {
         category: 'Multiple phyla',
         detail: 'Complete and draft assemblies',
         actions: [
-          { icon: 'account_tree', label: 'Explore taxonomy', route: '/taxonomy' },
-          { icon: 'storage', label: 'View genomes', route: '/genome' },
+          {
+            icon: 'account_tree',
+            label: 'Explore taxonomy',
+            route: '/taxonomy/2',
+            queryParams: null,
+          },
+          {
+            icon: 'storage',
+            label: 'View Bacillus genomes',
+            route: '/genome',
+            queryParams: startingActionQueryParams({ query: 'Bacillus' }),
+          },
         ],
       },
       {
@@ -181,8 +244,20 @@ export class HomeComponent {
             icon: 'show_chart',
             label: 'Open research',
             route: '/research/microbial-environment-g4',
+            queryParams: startingActionQueryParams({
+              trait: 'temperature',
+              mode: 'growth',
+              rank: 'genus',
+              taxon: 'Bacillus',
+              run: 'true',
+            }),
           },
-          { icon: 'info', label: 'About this study', route: '/help' },
+          {
+            icon: 'info',
+            label: 'About this study',
+            route: '/help',
+            queryParams: startingActionQueryParams({ topic: 'microbial-environment' }),
+          },
         ],
       },
     ];
@@ -194,5 +269,23 @@ export class HomeComponent {
 
   formatExactCount(value: number): string {
     return COUNT_FORMATTER.format(value);
+  }
+
+  canSubmitHeroSearch(): boolean {
+    return this.heroSearchControl.value.trim().length > 0;
+  }
+
+  submitHeroSearch(event: Event): void {
+    event.preventDefault();
+
+    const navigation = homeSearchNavigation(
+      this.heroTargetControl.value,
+      this.heroSearchControl.value,
+    );
+    if (navigation === null) {
+      return;
+    }
+
+    void this.router.navigate(navigation.commands, { queryParams: navigation.queryParams });
   }
 }

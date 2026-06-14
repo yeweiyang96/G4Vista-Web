@@ -1,6 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
@@ -9,9 +16,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, map, Observable, of, startWith, switchMap, tap } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { AssemblyCount, TaxonomySearch, TaxonomyService } from '../../services/taxonomy.service';
 
 interface BrowseTaxon {
@@ -74,6 +90,10 @@ function normalizeSearchValue(value: string | TaxonomySearch | null): string {
   return value?.scientific_name.trim() ?? '';
 }
 
+function queryFromParamMap(params: ParamMap): string {
+  return (params.get('query') ?? '').trim();
+}
+
 function formatNameClass(nameClass: string): string {
   return nameClass.replaceAll('_', ' ');
 }
@@ -87,7 +107,9 @@ function getTaxonomyResultDescription(option: TaxonomySearch): string {
   return formatNameClass(option.name_class);
 }
 
-function assemblyCountMapFromResponse(counts: readonly AssemblyCount[]): ReadonlyMap<number, number> {
+function assemblyCountMapFromResponse(
+  counts: readonly AssemblyCount[],
+): ReadonlyMap<number, number> {
   const countByTaxonId = new Map<number, number>();
   counts.forEach((count) => countByTaxonId.set(count.taxon_id, count.assembly_count));
   return countByTaxonId;
@@ -110,15 +132,30 @@ function assemblyCountMapFromResponse(counts: readonly AssemblyCount[]): Readonl
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaxonomyHomeComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly taxonomyService = inject(TaxonomyService);
+
   readonly searchControl = new FormControl<string | TaxonomySearch>('');
   readonly searchText = signal('');
   readonly autocompleteOpen = signal(false);
   readonly searchResults = signal<readonly TaxonomySearch[]>([]);
+  readonly submittedQuery = signal('');
+  private readonly routeQuery = toSignal(
+    this.route.queryParamMap.pipe(map((params) => queryFromParamMap(params))),
+    { initialValue: '' },
+  );
   readonly browseCountsResource = rxResource<ReadonlyMap<number, number>, readonly number[]>({
     params: () => BROWSE_TAXON_IDS,
     stream: ({ params }) =>
       this.taxonomyService.getAssemblyCounts([...params]).pipe(map(assemblyCountMapFromResponse)),
     defaultValue: new Map<number, number>(),
+  });
+  readonly submittedSearchResource = rxResource<readonly TaxonomySearch[], string>({
+    params: () => this.submittedQuery(),
+    stream: ({ params }) =>
+      params.length > 0 ? this.taxonomyService.searchTaxonomy(params) : of([]),
+    defaultValue: [],
   });
   readonly browseTaxa = computed<readonly BrowseTaxonView[]>(() => {
     const countByTaxonId = this.browseCountsResource.value();
@@ -139,8 +176,19 @@ export class TaxonomyHomeComponent {
       tap((options) => this.searchResults.set(options)),
     );
 
-  private readonly router = inject(Router);
-  private readonly taxonomyService = inject(TaxonomyService);
+  constructor() {
+    effect(() => {
+      const query = this.routeQuery();
+      if (this.searchControl.value !== query) {
+        this.searchControl.setValue(query, { emitEvent: false });
+      }
+      this.searchText.set(query);
+      this.submittedQuery.set(query);
+      if (!query) {
+        this.searchResults.set([]);
+      }
+    });
+  }
 
   displayFn(taxon: string | TaxonomySearch | null): string {
     if (typeof taxon === 'string') {
@@ -164,7 +212,9 @@ export class TaxonomyHomeComponent {
     event.stopPropagation();
     this.searchText.set('');
     this.searchResults.set([]);
+    this.submittedQuery.set('');
     this.searchControl.setValue('');
+    void this.router.navigate(['/taxonomy']);
   }
 
   setAutocompleteOpen(isOpen: boolean): void {

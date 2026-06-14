@@ -97,8 +97,8 @@
 }
 
 .category-panel {
-  align-content: center;
   gap: 12px;
+  align-content: center;
 }
 
 .category-panel h4 {
@@ -152,10 +152,6 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-.category-row-static .category-checkbox-label {
-  padding-left: 40px;
-}
-
 .rounding-note {
   margin: 6px 0 0;
   font: var(--mat-sys-body-small);
@@ -202,11 +198,11 @@
 }
 
 .metric-value {
-  overflow-wrap: anywhere;
   font: var(--mat-sys-headline-medium);
   font-weight: 800;
   line-height: 1.05;
   color: var(--mat-sys-on-surface);
+  overflow-wrap: anywhere;
 }
 
 .metric-detail {

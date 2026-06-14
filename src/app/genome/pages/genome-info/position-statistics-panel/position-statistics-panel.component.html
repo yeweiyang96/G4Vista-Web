@@ -1,12 +1,12 @@
-<section class="position-statistics-panel" aria-label="Gene-context position statistics">
+<section class="position-statistics-panel" aria-label="Position category statistics">
   <header class="statistics-header">
     <div>
       <span class="eyebrow">Position statistics</span>
-      <h2>Gene-context position statistics</h2>
+      <h2>Position category statistics</h2>
     </div>
     <p>
-      Density, G-score, and length for selected gene-context categories using the current
-      {{ motifTypeLabel() }} filters.
+      Density, G-score, and length for selected position categories using the current
+      {{ motifTypeLabel() }} filters. Other means sites outside genes and selected gene flanks.
     </p>
   </header>
 
@@ -19,8 +19,8 @@
     <p class="state" role="status">{{ errorMessage() }}</p>
   } @else if (hasStatistics()) {
     <div class="density-summary-grid">
-      <section class="density-chart" aria-label="Motif density by gene context">
-        <h3>Density by gene context</h3>
+      <section class="density-chart" aria-label="Motif density by position category">
+        <h3>Density by position category</h3>
 
         <div class="density-list">
           @for (row of densityRows(); track row.key) {
@@ -44,7 +44,7 @@
         </div>
       </section>
 
-      <section class="category-summary" aria-label="Gene-context category summary">
+      <section class="category-summary" aria-label="Position category summary">
         <h3>Category summary</h3>
 
         <div class="summary-rows">

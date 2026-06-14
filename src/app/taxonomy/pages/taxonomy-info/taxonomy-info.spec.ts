@@ -107,26 +107,16 @@ describe('TaxonomyInfoComponent', () => {
           display_order: 3,
         },
         {
-          key: 'other_root_non_gene_feature',
-          label: 'Non-gene annotation feature',
-          count: 3,
-          ratio: 0.15,
+          key: 'other',
+          label: 'Other',
+          count: 8,
+          ratio: 0.4,
           precedence_rank: 4,
-          description: 'Other annotation feature',
+          description: 'Outside genes and selected flanks',
+          display_label: 'Other',
           category_group: 'background',
-          is_default_chart_category: false,
+          is_default_chart_category: true,
           display_order: 4,
-        },
-        {
-          key: 'non_feature',
-          label: 'No assigned feature',
-          count: 5,
-          ratio: 0.25,
-          precedence_rank: 5,
-          description: 'No assigned feature',
-          category_group: 'background',
-          is_default_chart_category: false,
-          display_order: 5,
         },
       ],
       gene_biotype_breakdown: [
@@ -189,14 +179,6 @@ describe('TaxonomyInfoComponent', () => {
               ratio: 0.08,
               precedence_rank: 3,
               description: 'Downstream flank',
-            },
-            {
-              key: 'non_feature',
-              label: 'No assigned feature',
-              count: 8,
-              ratio: 0.67,
-              precedence_rank: 5,
-              description: 'No assigned feature',
             },
           ],
         },
@@ -371,9 +353,10 @@ describe('TaxonomyInfoComponent', () => {
       overlap: false,
     });
     expect(text).toContain('Pie slices are G4 site counts by genomic context.');
+    expect(text).toContain('Other means sites outside genes and selected gene flanks.');
     expect(text).toContain('Legend values are count · percentage.');
-    expect(text).toContain('Table values are G4 site counts assigned to genes of each biotype.');
-    expect(text).toContain('Other is outside a specific gene-biotype context.');
+    expect(text).toContain('Table values are G4 gene-context site counts by gene biotype.');
+    expect(text).toContain('Other means unspecified or source-annotated other gene biotype.');
     expect(text).toContain('In genes');
     expect(text).toContain('Upstream 1 kb sites');
     expect(text).toContain('Downstream 1 kb sites');
@@ -381,7 +364,7 @@ describe('TaxonomyInfoComponent', () => {
     expect(text).toContain('Other');
     expect(text).not.toContain('Gene biotype breakdown');
     expect(text).toContain('protein_coding');
-    expect(text).toContain('Unspecified gene biotype');
+    expect(text).not.toContain('Unspecified gene biotype');
     expect(text).not.toContain('Non-gene annotation feature');
     expect(text).not.toContain('No assigned feature');
   });

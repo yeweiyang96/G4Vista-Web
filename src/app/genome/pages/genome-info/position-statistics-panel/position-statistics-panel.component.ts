@@ -49,6 +49,7 @@ const EMPTY_MOTIF_STATS: G4PositionMotifStats = {
   density_per_mb: null,
   expected_vs_genome: null,
   fold_vs_genome: null,
+  fold_vs_other: null,
   fold_vs_non_feature: null,
   min_score: null,
   q1_score: null,
@@ -140,10 +141,7 @@ export class PositionStatisticsPanelComponent {
         densityPerMb: stats.density_per_mb,
       };
     });
-    const maxDensity = rows.reduce(
-      (maxValue, row) => Math.max(maxValue, row.densityPerMb ?? 0),
-      0,
-    );
+    const maxDensity = rows.reduce((maxValue, row) => Math.max(maxValue, row.densityPerMb ?? 0), 0);
     return rows.map((row) => ({
       ...row,
       densityWidth: maxDensity > 0 ? ((row.densityPerMb ?? 0) / maxDensity) * 100 : 0,

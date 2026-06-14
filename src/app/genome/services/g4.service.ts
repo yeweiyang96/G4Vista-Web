@@ -237,6 +237,7 @@ export interface G4PositionMotifStats {
   density_per_mb: number | null;
   expected_vs_genome: number | null;
   fold_vs_genome: number | null;
+  fold_vs_other?: number | null;
   fold_vs_non_feature: number | null;
   min_score: number | null;
   q1_score: number | null;

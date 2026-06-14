@@ -88,6 +88,36 @@
       <p class="search-hint">
         Try a scientific name, common name, taxonomic group, or NCBI Taxon ID.
       </p>
+
+      @if (submittedQuery()) {
+        <section class="taxonomy-results-panel" aria-label="Taxonomy search results">
+          <div class="taxonomy-results-heading">
+            <span>Results for {{ submittedQuery() }}</span>
+          </div>
+
+          @if (submittedSearchResource.isLoading()) {
+            <p class="taxonomy-results-state">Loading taxonomy results.</p>
+          } @else if (submittedSearchResource.value().length > 0) {
+            <div class="taxonomy-results-list">
+              @for (option of submittedSearchResource.value(); track option.taxon_id + option.name) {
+                <a
+                  mat-button
+                  class="taxonomy-result-link"
+                  [routerLink]="['/taxonomy', option.taxon_id]"
+                >
+                  <span class="result-name">{{ option.scientific_name || option.name }}</span>
+                  <span class="result-description">{{ resultDescription(option) }}</span>
+                  <span class="result-rank">{{ option.rank }}</span>
+                  <span class="result-id">Taxon ID: {{ option.taxon_id }}</span>
+                  <mat-icon iconPositionEnd>chevron_right</mat-icon>
+                </a>
+              }
+            </div>
+          } @else {
+            <p class="taxonomy-results-state">No matching taxon found.</p>
+          }
+        </section>
+      }
     </form>
   </section>
 

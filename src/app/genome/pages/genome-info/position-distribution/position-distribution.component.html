@@ -26,14 +26,14 @@
     <p class="state" role="status">{{ errorMessage() }}</p>
   } @else if (displayedPositionTotal() > 0) {
     <div class="overview-grid">
-      <section class="context-panel" aria-label="Gene-context summary">
+      <section class="context-panel" aria-label="Position category summary">
         <div class="panel-heading">
-          <h3>By gene context</h3>
-          <p>Sites in annotated genes and selected gene flanks.</p>
+          <h3>By position category</h3>
+          <p>Sites in genes, selected gene flanks, and other genomic context.</p>
         </div>
 
         <div class="context-layout">
-          <div class="summary-doughnut" aria-label="Gene-context motif position summary chart">
+          <div class="summary-doughnut" aria-label="Motif position category summary chart">
             <canvas
               baseChart
               [type]="'doughnut'"
@@ -41,7 +41,7 @@
               [options]="summaryDoughnutOptions"
               [plugins]="summaryDoughnutPlugins"
               [legend]="false"
-              aria-label="Doughnut chart showing motif sites by gene context"
+              aria-label="Doughnut chart showing motif sites by position category"
               role="img"
             ></canvas>
           </div>
@@ -52,13 +52,13 @@
               @for (category of chartLegendRows(); track category.key) {
                 <div
                   class="category-row"
-                  [class.category-row-hidden]="
-                    category.key !== 'other' && !isSummaryCategoryVisible(category.key)
-                  "
-                  [class.category-row-static]="category.key === 'other'"
+                  [class.category-row-hidden]="!isSummaryCategoryVisible(category.key)"
                   [title]="chartLegendDescription(category.key)"
                 >
-                  @if (category.key === 'other') {
+                  <mat-checkbox
+                    [checked]="isSummaryCategoryVisible(category.key)"
+                    (change)="changeSummaryCategoryVisibility(category.key, $event.checked)"
+                  >
                     <span class="category-checkbox-label">
                       <span
                         class="category-swatch"
@@ -67,28 +67,15 @@
                       ></span>
                       <span class="category-name">{{ category.label }}</span>
                     </span>
-                  } @else {
-                    <mat-checkbox
-                      [checked]="isSummaryCategoryVisible(category.key)"
-                      (change)="changeSummaryCategoryVisibility(category.key, $event.checked)"
-                    >
-                      <span class="category-checkbox-label">
-                        <span
-                          class="category-swatch"
-                          [style.background]="category.color"
-                          aria-hidden="true"
-                        ></span>
-                        <span class="category-name">{{ category.label }}</span>
-                      </span>
-                    </mat-checkbox>
-                  }
+                  </mat-checkbox>
                   <span class="category-count">{{ formatCount(category.count) }}</span>
                   <span class="category-ratio">{{ formatRatio(category.ratio) }}</span>
                 </div>
               }
             </div>
             <p class="rounding-note">
-              Percentages are calculated from the displayed gene-context categories.
+              Percentages are calculated from the displayed position categories. Other means sites
+              outside genes and selected gene flanks.
             </p>
           </section>
         </div>
@@ -122,7 +109,7 @@
     <p class="state" role="status">
       {{
         distribution().total_count > 0
-          ? 'No gene-context motif site counts are available.'
+          ? 'No position-category motif site counts are available.'
           : 'No whole-genome motif site counts are available.'
       }}
     </p>

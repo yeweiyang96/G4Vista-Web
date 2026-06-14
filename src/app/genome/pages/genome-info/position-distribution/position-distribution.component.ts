@@ -48,7 +48,8 @@ interface SummaryDoughnutSegment {
 }
 
 const OTHER_SUMMARY_CATEGORY_COLOR = '#a8adb7';
-const OTHER_SUMMARY_CATEGORY_DESCRIPTION = 'Predicted motif sites outside annotated genes and selected gene flanks.';
+const OTHER_SUMMARY_CATEGORY_DESCRIPTION =
+  'Predicted motif sites outside genes and selected gene flanks.';
 
 function motifTypeShortLabel(g4Type: G4Type): string {
   return g4Type === 'i-motif' ? 'i-motif' : 'G4';
@@ -142,9 +143,13 @@ export class PositionDistributionComponent {
   readonly categoryRows = computed<readonly PositionCategoryView[]>(() =>
     defaultPositionCategoryViews(this.distribution().categories),
   );
-  readonly displayedPositionTotal = computed(() =>
-    this.categoryRows().reduce((sum, category) => sum + category.count, 0) +
-    this.otherPositionCount(),
+  readonly displayedPositionTotal = computed(
+    () =>
+      this.categoryRows().reduce((sum, category) => sum + category.count, 0) +
+      (this.hasDisplayedOtherCategory() ? 0 : this.otherPositionCount()),
+  );
+  readonly hasDisplayedOtherCategory = computed(() =>
+    this.categoryRows().some((category) => category.key === 'other'),
   );
   readonly selectedCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const selectedKeys = new Set(this.selectedCategoryKeys());
@@ -155,6 +160,11 @@ export class PositionDistributionComponent {
   );
   readonly otherPositionCount = computed(() => {
     const categories = this.distribution().categories;
+    const apiOtherCount = categoryCount(categories, 'other');
+    if (categories.some((category) => category.key === 'other')) {
+      return apiOtherCount;
+    }
+
     const total = this.distribution().total_count;
     const geneInside = categoryCount(categories, 'gene_inside');
     const upstream = categoryCount(categories, 'gene_upstream');
@@ -171,13 +181,7 @@ export class PositionDistributionComponent {
         ratio: total ? category.count / total : 0,
         color: category.color,
       })),
-      {
-        key: 'other',
-        label: 'Other',
-        count: this.otherPositionCount(),
-        ratio: total ? this.otherPositionCount() / total : 0,
-        color: OTHER_SUMMARY_CATEGORY_COLOR,
-      },
+      ...this.fallbackOtherSegments(total),
     ];
   });
   readonly summaryDoughnutSegments = computed<readonly SummaryDoughnutSegment[]>(() => {
@@ -197,15 +201,8 @@ export class PositionDistributionComponent {
       }
     }
 
-    const otherCount = this.otherPositionCount();
-    if (otherCount > 0) {
-      segments.push({
-        key: 'other',
-        label: 'Other',
-        count: otherCount,
-        ratio: total ? otherCount / total : 0,
-        color: OTHER_SUMMARY_CATEGORY_COLOR,
-      });
+    if (!this.hasDisplayedOtherCategory() && selectedKeys.has('other')) {
+      segments.push(...this.fallbackOtherSegments(total).filter((segment) => segment.count > 0));
     }
 
     return segments;
@@ -232,8 +229,6 @@ export class PositionDistributionComponent {
     const upstream = categoryCount(categories, 'gene_upstream');
     const downstream = categoryCount(categories, 'gene_downstream');
     const geneFlanks = upstream + downstream;
-    const geneRelatedTotal = geneInside + geneFlanks;
-    const geneUnrelatedTotal = Math.max(0, total - geneRelatedTotal);
 
     return [
       {
@@ -257,8 +252,8 @@ export class PositionDistributionComponent {
       {
         key: 'other',
         label: 'Other',
-        value: formatCount(geneUnrelatedTotal),
-        detail: 'sites not related to genes',
+        value: formatCount(this.otherPositionCount()),
+        detail: 'sites outside genes and selected flanks',
       },
     ];
   });
@@ -268,6 +263,23 @@ export class PositionDistributionComponent {
       return OTHER_SUMMARY_CATEGORY_DESCRIPTION;
     }
     return this.categoryRows().find((category) => category.key === key)?.displayDescription ?? '';
+  }
+
+  private fallbackOtherSegments(total: number): readonly SummaryDoughnutSegment[] {
+    if (this.hasDisplayedOtherCategory()) {
+      return [];
+    }
+
+    const count = this.otherPositionCount();
+    return [
+      {
+        key: 'other',
+        label: 'Other',
+        count,
+        ratio: total ? count / total : 0,
+        color: OTHER_SUMMARY_CATEGORY_COLOR,
+      },
+    ];
   }
 
   changeG4Type(value: G4Type): void {

@@ -67,6 +67,7 @@ import {
   JbrowseHostComponent,
 } from '../../viewer';
 import { UiThemeService } from '../../../theme/ui-theme.service';
+import { geneBiotypeLabel } from '../../../shared/gene-biotype';
 import { formatCompactCount, formatGenomeLength } from '../../utils/overview-format';
 import type { GenomeAssemblyOverview } from '../../services/genome-search.service';
 
@@ -159,8 +160,7 @@ function isG4Type(value: unknown): value is G4Type {
 
 function isG4GenePosition(value: unknown): value is G4GenePosition {
   return (
-    typeof value === 'string' &&
-    G4_GENE_POSITION_OPTIONS.some((option) => option.value === value)
+    typeof value === 'string' && G4_GENE_POSITION_OPTIONS.some((option) => option.value === value)
   );
 }
 const CHART_FOCUS_HALF_WINDOW_BP = 5000;
@@ -275,7 +275,8 @@ function preferredGeneDisplayName(candidate: G4GeneCandidate): string {
 
 function formatGeneCandidateLabel(candidate: G4GeneCandidate): string {
   const name = preferredGeneDisplayName(candidate);
-  return `${name} (${candidate.feature_id}) [${candidate.seqid}]`;
+  const biotype = geneBiotypeLabel(candidate.gene_biotype);
+  return `${name} (${candidate.feature_id}) [${candidate.seqid}] · ${biotype}`;
 }
 
 function formatBasePairCount(value: number): string {
@@ -386,10 +387,12 @@ export class GenomeInfoComponent {
       label: formatGeneRelationLabel(option.label),
     })),
   );
-  readonly draftGeneRelationOptions = computed<readonly {
-    value: GeneRelationFilterValue;
-    label: string;
-  }[]>(() => [
+  readonly draftGeneRelationOptions = computed<
+    readonly {
+      value: GeneRelationFilterValue;
+      label: string;
+    }[]
+  >(() => [
     { value: ANY_GENE_RELATION, label: 'Any gene relation' },
     ...this.draftGenePositionOptions(),
   ]);
@@ -1555,7 +1558,8 @@ export class GenomeInfoComponent {
 
   geneOptionLabel(candidate: G4GeneCandidate): string {
     const name = preferredGeneDisplayName(candidate);
-    return `${name} · ${candidate.feature_id} · ${candidate.seqid}`;
+    const biotype = geneBiotypeLabel(candidate.gene_biotype);
+    return `${name} · ${candidate.feature_id} · ${candidate.seqid} · ${biotype}`;
   }
 
   displayGeneCandidate(value: G4GeneCandidate | string | null): string {

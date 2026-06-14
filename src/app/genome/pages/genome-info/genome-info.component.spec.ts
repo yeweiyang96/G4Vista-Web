@@ -320,20 +320,12 @@ describe('GenomeInfoComponent', () => {
             description: 'Downstream hit',
           },
           {
-            key: 'other_root_non_gene_feature',
-            label: 'Other root non-gene feature',
+            key: 'other',
+            label: 'Other',
             count: 1,
             ratio: 0.2,
             precedence_rank: 4,
-            description: 'Other feature hit',
-          },
-          {
-            key: 'non_feature',
-            label: 'Non-feature',
-            count: 0,
-            ratio: 0,
-            precedence_rank: 5,
-            description: 'No feature hit',
+            description: 'Outside genes and selected flanks',
           },
         ],
         feature_breakdown: [
@@ -378,6 +370,7 @@ describe('GenomeInfoComponent', () => {
                     density_per_mb: 2000,
                     expected_vs_genome: 1,
                     fold_vs_genome: 2,
+                    fold_vs_other: 3,
                     fold_vs_non_feature: 3,
                     min_score: 10,
                     q1_score: 15,
@@ -481,6 +474,30 @@ describe('GenomeInfoComponent', () => {
     expect(component.genePositionOptions().map((option) => option.value)).toEqual(
       G4_GENE_POSITION_OPTIONS_BY_TYPE['i-motif'].map((option) => option.value),
     );
+  });
+
+  it('displays empty gene candidate biotypes as Other', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+
+    expect(
+      component.geneOptionLabel({
+        feature_id: 'geneA',
+        seqid: 'chr1',
+        gene_name: 'dnaA',
+        locus_tag: null,
+        gene_biotype: '',
+      }),
+    ).toBe('dnaA · geneA · chr1 · Other');
+    expect(
+      component.displayGeneCandidate({
+        feature_id: 'geneA',
+        seqid: 'chr1',
+        gene_name: 'dnaA',
+        locus_tag: null,
+        gene_biotype: 'other',
+      }),
+    ).toBe('dnaA (geneA) [chr1] · Other');
   });
 
   it('ignores invalid g4 type toggle values', () => {

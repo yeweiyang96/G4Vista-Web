@@ -97,7 +97,8 @@
                     <p class="context-note">
                       Pie slices are {{ selectedMotifLabel() }} site counts by genomic context.
                       Percentages use all loaded {{ selectedMotifLabel() }} sites in this taxon as
-                      the denominator. Legend values are count · percentage.
+                      the denominator. Other means sites outside genes and selected gene flanks.
+                      Legend values are count · percentage.
                     </p>
                     @for (category of positionCategoryRows(); track category.key) {
                       <div>
@@ -117,8 +118,9 @@
                         {{
                           selectedMotifLabel()
                         }}
-                        site counts assigned to genes of each biotype. Total sums in-gene, upstream,
-                        and downstream sites; Other is outside a specific gene-biotype context.
+                        gene-context site counts by gene biotype. Total sums in-gene, upstream, and
+                        downstream sites; Other means unspecified or source-annotated other gene
+                        biotype.
                       </caption>
                       <thead>
                         <tr>
@@ -145,7 +147,7 @@
                 }
               </div>
             } @else {
-              <p class="state-message">No gene-context {{ selectedMotifLabel() }} sites found.</p>
+              <p class="state-message">No position-context {{ selectedMotifLabel() }} sites found.</p>
             }
 
             @if (summary.quality.warnings.length > 0) {

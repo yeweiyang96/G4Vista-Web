@@ -4,18 +4,39 @@
       <h1>G4Vista</h1>
       <p>Search predicted G-quadruplex (G4) and i-motif sites across genomes</p>
 
-      <div class="home-search-row" aria-label="Global search">
-        <mat-form-field appearance="outline" class="home-search">
-          <mat-icon matPrefix>search</mat-icon>
-          <input
-            matInput
-            type="search"
-            aria-label="Search G4Vista"
-            placeholder="Example: Arabidopsis thaliana, GCF_000001735.4, TP53"
-          />
-        </mat-form-field>
-        <a mat-flat-button routerLink="/genome" class="search-action">Search</a>
-      </div>
+      <form class="home-search-panel" aria-label="Global search" (submit)="submitHeroSearch($event)">
+        <mat-button-toggle-group
+          class="home-search-targets"
+          [formControl]="heroTargetControl"
+          aria-label="Search target"
+          hideSingleSelectionIndicator
+        >
+          <mat-button-toggle value="genome">Genome</mat-button-toggle>
+          <mat-button-toggle value="taxonomy">Taxonomy</mat-button-toggle>
+          <mat-button-toggle value="gene">Gene</mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <div class="home-search-row">
+          <mat-form-field appearance="outline" class="home-search">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              type="search"
+              aria-label="Search G4Vista"
+              placeholder="Example: Arabidopsis thaliana, GCF_000001735.4, TP53"
+              [formControl]="heroSearchControl"
+            />
+          </mat-form-field>
+          <button
+            mat-flat-button
+            type="submit"
+            class="search-action"
+            [disabled]="!canSubmitHeroSearch()"
+          >
+            Search
+          </button>
+        </div>
+      </form>
 
       <p class="search-helper">
         Search by <a routerLink="/genome">assembly accession</a>,
@@ -127,7 +148,7 @@
           </div>
           <div class="starting-actions">
             @for (action of point.actions; track action.label) {
-              <a mat-button [routerLink]="action.route">
+              <a mat-button [routerLink]="action.route" [queryParams]="action.queryParams">
                 <mat-icon>{{ action.icon }}</mat-icon>
                 {{ action.label }}
               </a>

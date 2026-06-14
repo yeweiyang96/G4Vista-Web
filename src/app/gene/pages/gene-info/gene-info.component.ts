@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { of } from 'rxjs';
 import { G4_GENE_POSITION_OPTIONS } from '../../../genome/services/g4.service';
+import { geneBiotypeLabel } from '../../../shared/gene-biotype';
 import { GeneDetail, GeneService } from '../../services/gene.service';
 
 interface GeneRelationSummary {
@@ -53,6 +54,7 @@ export class GeneInfoComponent {
   readonly assemblyAccession = input.required<string>();
   readonly seqid = input.required<string>();
   readonly featureId = input.required<string>();
+  readonly geneBiotypeLabel = geneBiotypeLabel;
 
   private readonly geneService = inject(GeneService);
   readonly geneResource = rxResource<

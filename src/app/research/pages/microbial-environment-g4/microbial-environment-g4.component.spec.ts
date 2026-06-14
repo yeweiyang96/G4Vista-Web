@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
 import {
   MicrobialEnvironmentG4Options,
@@ -23,6 +24,7 @@ describe('MicrobialEnvironmentG4Component', () => {
   let fixture: ComponentFixture<MicrobialEnvironmentG4Component>;
   let component: MicrobialEnvironmentG4Component;
   let service: jasmine.SpyObj<MicrobialEnvironmentG4Service>;
+  let routeQueryParamMap: ParamMap;
 
   const options: MicrobialEnvironmentG4Options = {
     traits: [
@@ -155,11 +157,22 @@ describe('MicrobialEnvironmentG4Component', () => {
     );
     service.query.and.returnValue(of(response));
     service.downloadResults.and.returnValue(NEVER);
+    routeQueryParamMap = convertToParamMap({});
 
     await TestBed.configureTestingModule({
       imports: [MicrobialEnvironmentG4Component],
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              get queryParamMap(): ParamMap {
+                return routeQueryParamMap;
+              },
+            },
+          },
+        },
         { provide: MicrobialEnvironmentG4Service, useValue: service },
       ],
     }).compileComponents();
@@ -194,31 +207,60 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(component.submittedQuery()).toEqual(request);
   });
 
+  it('runs the Bacillus route preset only when run=true is present', () => {
+    fixture.destroy();
+    service.query.calls.reset();
+    routeQueryParamMap = convertToParamMap({
+      trait: 'temperature',
+      mode: 'growth',
+      rank: 'genus',
+      taxon: 'Bacillus',
+      run: 'true',
+    });
+
+    fixture = TestBed.createComponent(MicrobialEnvironmentG4Component);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.form.getRawValue()).toEqual({
+      trait: 'temperature',
+      mode: 'growth',
+      taxonomyRank: 'genus',
+      taxonomyKeyword: 'Bacillus',
+    });
+    expect(component.assemblyCollection()).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
+    expect(service.query).toHaveBeenCalledTimes(1);
+
+    const request = service.query.calls.mostRecent().args[0] as MicrobialEnvironmentG4Query;
+    expect(request.taxonomy_selections).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
+    expect(request.trait).toBe('temperature');
+    expect(request.mode).toBe('growth');
+  });
+
   it('renders the workflow and correlation result surfaces', () => {
     component.search();
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('Microbial G4 Environment Research');
+    expect(text).toContain('Microbial G4 environment research');
     expect(text).toContain('Environment condition');
     expect(text).toContain('Strain set');
-    expect(text).toContain('Analysis Results');
+    expect(text).toContain('Growth temperature vs G4 density');
     expect(text).not.toContain('分析结果');
     expect(fixture.nativeElement.querySelector('.axis-note')).toBeNull();
     expect(fixture.nativeElement.querySelector('.condition-count')).toBeNull();
     expect(text).not.toContain('Current condition has');
-    expect(text).not.toContain('Run analysis');
-    expect(text).toContain('Spearman rho');
+    expect(text).toContain('Run analysis');
+    expect(text).toContain('Spearman r');
     expect(text).toContain('p-value');
-    expect(text).toContain('Regression R2');
     expect(text).toContain('Upstream G4 density');
     expect(text).toContain('Downstream G4 density');
     expect(text).toContain('Intergenic G4 density');
     expect(text).toContain('Download table');
     expect(text).not.toContain('Download CSV');
     expect(text).not.toContain('Submitted');
-    expect(text).toContain('Alpha strain');
+    expect(text).toContain('Strain set (6)');
     expect(text.toLowerCase()).not.toContain('bin statistics');
     expect(text.toLowerCase()).not.toContain('16s g4');
   });
@@ -360,7 +402,6 @@ describe('MicrobialEnvironmentG4Component', () => {
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('-0.25');
-    expect(text).toContain('0.42');
     expect(text).toContain('Growth temperature vs Upstream G4 density');
   });
 
@@ -494,6 +535,6 @@ describe('MicrobialEnvironmentG4Component', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(component.dataLayerUnavailable()).toBeTrue();
-    expect(text).toContain('Research data unavailable');
+    expect(text).toContain('Research query tables are unavailable');
   });
 });

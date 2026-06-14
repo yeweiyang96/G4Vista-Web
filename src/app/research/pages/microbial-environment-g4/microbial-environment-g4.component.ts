@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
@@ -90,6 +91,14 @@ interface QueryExecutionBehavior {
   readonly refreshChart: boolean;
   readonly showTableLoading: boolean;
   readonly preserveTablePayload: boolean;
+}
+
+interface MicrobialEnvironmentRouteInitialization {
+  readonly trait: MicrobialEnvironmentTrait;
+  readonly mode: MicrobialEnvironmentMode;
+  readonly rank: MicrobialTaxonomyRank;
+  readonly taxon: string | null;
+  readonly run: boolean;
 }
 
 interface VegaChartPadding {
@@ -297,6 +306,90 @@ function selectionKey(selection: MicrobialTaxonomySelection): string {
   return `${selection.rank}:${selection.value}`;
 }
 
+function isMicrobialEnvironmentTrait(value: string): value is MicrobialEnvironmentTrait {
+  return value === 'temperature' || value === 'ph';
+}
+
+function isMicrobialEnvironmentMode(value: string): value is MicrobialEnvironmentMode {
+  return value === 'growth' || value === 'optimum';
+}
+
+function isMicrobialTaxonomyRank(value: string): value is MicrobialTaxonomyRank {
+  return (
+    value === 'domain' ||
+    value === 'phylum' ||
+    value === 'class' ||
+    value === 'order' ||
+    value === 'family' ||
+    value === 'genus' ||
+    value === 'species'
+  );
+}
+
+function queryParamValue(params: ParamMap, key: string): string | null {
+  const value = params.get(key)?.trim();
+  return value ? value : null;
+}
+
+function routeTraitFromParamMap(params: ParamMap): MicrobialEnvironmentTrait {
+  const value = queryParamValue(params, 'trait');
+  if (value === null) {
+    return INITIAL_AXIS_SELECTION.trait;
+  }
+  if (isMicrobialEnvironmentTrait(value)) {
+    return value;
+  }
+  throw new Error(`Invalid microbial environment trait query param: ${value}.`);
+}
+
+function routeModeFromParamMap(params: ParamMap): MicrobialEnvironmentMode {
+  const value = queryParamValue(params, 'mode');
+  if (value === null) {
+    return INITIAL_AXIS_SELECTION.mode;
+  }
+  if (isMicrobialEnvironmentMode(value)) {
+    return value;
+  }
+  throw new Error(`Invalid microbial environment mode query param: ${value}.`);
+}
+
+function routeRankFromParamMap(params: ParamMap): MicrobialTaxonomyRank {
+  const value = queryParamValue(params, 'rank');
+  if (value === null) {
+    return INITIAL_TAXONOMY_RANK;
+  }
+  if (isMicrobialTaxonomyRank(value)) {
+    return value;
+  }
+  throw new Error(`Invalid microbial taxonomy rank query param: ${value}.`);
+}
+
+function routeRunFromParamMap(params: ParamMap): boolean {
+  const value = queryParamValue(params, 'run');
+  if (value === null) {
+    return false;
+  }
+  if (value === 'true') {
+    return true;
+  }
+  if (value === 'false') {
+    return false;
+  }
+  throw new Error(`Invalid microbial run query param: ${value}.`);
+}
+
+function routeInitializationFromParamMap(
+  params: ParamMap,
+): MicrobialEnvironmentRouteInitialization {
+  return {
+    trait: routeTraitFromParamMap(params),
+    mode: routeModeFromParamMap(params),
+    rank: routeRankFromParamMap(params),
+    taxon: queryParamValue(params, 'taxon'),
+    run: routeRunFromParamMap(params),
+  };
+}
+
 @Component({
   selector: 'app-microbial-environment-g4',
   imports: [
@@ -322,9 +415,13 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   @ViewChild('scatterPlot') private scatterPlot?: ElementRef<HTMLDivElement>;
 
   private readonly service = inject(MicrobialEnvironmentG4Service);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly uiThemeService = inject(UiThemeService);
+  private readonly routeInitialization = routeInitializationFromParamMap(
+    this.route.snapshot.queryParamMap,
+  );
   private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
   private readonly taxonomySelectionCounts = signal<Record<string, number>>({});
   private readonly pageIndex = signal(INITIAL_PAGE_INDEX);
@@ -339,7 +436,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private taxonomyRequestVersion = 0;
   private queryRequestVersion = 0;
   private tableLoadingRequestVersion = 0;
-  private hasRunInitialQuery = false;
+  private hasAppliedRouteInitialization = false;
 
   readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
   readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
@@ -872,7 +969,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         next: (options) => {
           this.options.set(options);
           this.dataLayerUnavailable.set(false);
-          this.runInitialQuery();
+          this.applyInitialRouteState();
         },
         error: (error: unknown) => {
           const message = extractErrorMessage(error);
@@ -891,12 +988,34 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       });
   }
 
-  private runInitialQuery(): void {
-    if (this.hasRunInitialQuery) {
+  private applyInitialRouteState(): void {
+    if (this.hasAppliedRouteInitialization) {
       return;
     }
-    this.hasRunInitialQuery = true;
-    this.search();
+    this.hasAppliedRouteInitialization = true;
+
+    const initialization = this.routeInitialization;
+    this.form.setValue({
+      trait: initialization.trait,
+      mode: initialization.mode,
+      taxonomyRank: initialization.rank,
+      taxonomyKeyword: initialization.taxon ?? '',
+    });
+    this.axisSelection.set({
+      trait: initialization.trait,
+      mode: initialization.mode,
+    });
+    this.taxonomyCandidates.set([]);
+    this.taxonomySelectionCounts.set({});
+    this.assemblyCollection.set(
+      initialization.taxon === null
+        ? []
+        : [{ rank: initialization.rank, value: initialization.taxon }],
+    );
+
+    if (initialization.run) {
+      this.search();
+    }
   }
 
   private clearSubmittedResult(): void {

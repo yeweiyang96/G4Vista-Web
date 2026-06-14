@@ -32,6 +32,7 @@ import {
   switchMap,
 } from 'rxjs';
 import { GeneSearchItem, GeneService } from '../../services/gene.service';
+import { geneBiotypeLabel } from '../../../shared/gene-biotype';
 import {
   AssemblyCount,
   TaxonomyNode,
@@ -78,7 +79,7 @@ const GENE_SEARCH_CSV_COLUMNS: readonly GeneSearchCsvColumn[] = [
   { header: 'Feature ID', value: (row) => row.gene_id },
   { header: 'Assembly', value: (row) => row.assembly_accession },
   { header: 'Sequence record', value: (row) => row.seqid },
-  { header: 'Biotype', value: (row) => row.gene_biotype },
+  { header: 'Biotype', value: (row) => geneBiotypeLabel(row.gene_biotype) },
   { header: 'Start', value: (row) => row.feature_start },
   { header: 'End', value: (row) => row.feature_end },
   { header: 'Strand', value: (row) => row.strand },
@@ -326,6 +327,7 @@ export class GeneHomeComponent {
     {
       header: 'Biotype',
       field: 'gene_biotype',
+      formatter: (row) => geneBiotypeLabel(row.gene_biotype),
     },
     {
       header: 'Range',

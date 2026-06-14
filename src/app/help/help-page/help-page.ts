@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { GeneHelpPanel } from './workflow-panels/gene-help-panel';
@@ -9,6 +9,21 @@ import { MicrobialEnvironmentHelpPanel } from './workflow-panels/microbial-envir
 import { ServerApiHelpPanel } from './workflow-panels/server-api-help-panel';
 import { TaxonomyHelpPanel } from './workflow-panels/taxonomy-help-panel';
 import { HELP_TOPICS, HelpWorkflowId } from '../help-content';
+
+function isHelpWorkflowId(value: string): value is HelpWorkflowId {
+  return HELP_TOPICS.some((topic) => topic.id === value);
+}
+
+function selectedTopicFromParamMap(params: ParamMap): HelpWorkflowId {
+  const topic = params.get('topic')?.trim();
+  if (!topic) {
+    return 'taxonomy';
+  }
+  if (isHelpWorkflowId(topic)) {
+    return topic;
+  }
+  throw new Error(`Invalid help topic query param: ${topic}.`);
+}
 
 @Component({
   selector: 'app-help-page',
@@ -28,8 +43,12 @@ import { HELP_TOPICS, HelpWorkflowId } from '../help-content';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HelpPage {
+  private readonly route = inject(ActivatedRoute);
+
   readonly topics = HELP_TOPICS;
-  readonly selectedTopicId = signal<HelpWorkflowId>('taxonomy');
+  readonly selectedTopicId = signal<HelpWorkflowId>(
+    selectedTopicFromParamMap(this.route.snapshot.queryParamMap),
+  );
 
   selectTopic(topicId: HelpWorkflowId): void {
     this.selectedTopicId.set(topicId);
