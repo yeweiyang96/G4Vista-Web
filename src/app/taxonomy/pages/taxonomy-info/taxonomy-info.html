@@ -94,6 +94,11 @@
                   </div>
 
                   <div class="position-pie-legend">
+                    <p class="context-note">
+                      Pie slices are {{ selectedMotifLabel() }} site counts by genomic context.
+                      Percentages use all loaded {{ selectedMotifLabel() }} sites in this taxon as
+                      the denominator. Legend values are count · percentage.
+                    </p>
                     @for (category of positionCategoryRows(); track category.key) {
                       <div>
                         <span [style.background]="category.color"></span>
@@ -106,15 +111,22 @@
 
                 @if (geneBiotypeRows().length > 0) {
                   <div class="gene-biotype-summary">
-                    <h3>Gene biotype breakdown</h3>
                     <table>
+                      <caption>
+                        Table values are
+                        {{
+                          selectedMotifLabel()
+                        }}
+                        site counts assigned to genes of each biotype. Total sums in-gene, upstream,
+                        and downstream sites; Other is outside a specific gene-biotype context.
+                      </caption>
                       <thead>
                         <tr>
                           <th scope="col">Gene biotype</th>
-                          <th scope="col">In genes</th>
-                          <th scope="col">Upstream flank</th>
-                          <th scope="col">Downstream flank</th>
-                          <th scope="col">Total</th>
+                          <th scope="col">In genes sites</th>
+                          <th scope="col">Upstream {{ flankWindowLabel() }} sites</th>
+                          <th scope="col">Downstream {{ flankWindowLabel() }} sites</th>
+                          <th scope="col">Gene-context total</th>
                         </tr>
                       </thead>
                       <tbody>

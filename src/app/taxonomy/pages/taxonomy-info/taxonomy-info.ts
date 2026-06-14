@@ -65,6 +65,7 @@ const GENE_CONTEXT_CATEGORIES: readonly GeneContextCategoryConfig[] = [
   { key: 'gene_upstream', label: 'Upstream flank', color: '#8ec8ef' },
   { key: 'gene_downstream', label: 'Downstream flank', color: '#8ab84e' },
 ];
+const OTHER_POSITION_CATEGORY_COLOR = '#a8adb7';
 
 function isG4Type(value: unknown): value is G4Type {
   return value === 'g4' || value === 'i-motif';
@@ -187,17 +188,25 @@ export class TaxonomyInfoComponent {
     return summaryAssemblies.length ? summaryAssemblies : (this.taxonomy()?.assemblies ?? []);
   });
   readonly selectedMotifLabel = computed(() => MOTIF_LABELS[this.g4Type()]);
+  readonly flankWindowLabel = computed(
+    () =>
+      this.flankWindowOptions.find((option) => option.value === this.flankWindow())?.label ??
+      `${this.flankWindow()} bp`,
+  );
   readonly isPositionContextRequested = computed(
     () => this.positionContextTaxonId() === this.taxonId(),
   );
   readonly positionCategoryRows = computed<readonly PositionCategoryView[]>(() => {
-    const categories = this.summary()?.position_distribution.categories ?? [];
-    const total = GENE_CONTEXT_CATEGORIES.reduce(
+    const distribution = this.summary()?.position_distribution;
+    const categories = distribution?.categories ?? [];
+    const geneContextTotal = GENE_CONTEXT_CATEGORIES.reduce(
       (sum, category) => sum + categoryCount(categories, category.key),
       0,
     );
+    const total = Math.max(distribution?.total_count ?? 0, geneContextTotal);
+    const otherCount = Math.max(0, total - geneContextTotal);
 
-    return GENE_CONTEXT_CATEGORIES.map((category) => {
+    const rows = GENE_CONTEXT_CATEGORIES.map((category) => {
       const count = categoryCount(categories, category.key);
       const ratio = total ? count / total : 0;
       return {
@@ -212,6 +221,25 @@ export class TaxonomyInfoComponent {
         color: category.color,
       };
     });
+
+    if (otherCount === 0) {
+      return rows;
+    }
+
+    return [
+      ...rows,
+      {
+        key: 'other',
+        label: 'Other',
+        count: otherCount,
+        ratio: total ? otherCount / total : 0,
+        precedence_rank: 0,
+        description: 'Predicted motif sites outside annotated genes and selected gene flanks.',
+        displayLabel: 'Other',
+        ratioLabel: PERCENT_FORMATTER.format(total ? otherCount / total : 0),
+        color: OTHER_POSITION_CATEGORY_COLOR,
+      },
+    ];
   });
   readonly positionContextTotal = computed(() =>
     this.positionCategoryRows().reduce((sum, category) => sum + category.count, 0),

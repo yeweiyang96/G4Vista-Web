@@ -237,9 +237,7 @@
 
 .explore-filters {
   display: grid;
-  grid-template-columns:
-    minmax(170px, 180px) minmax(190px, 1fr) minmax(220px, 1fr)
-    minmax(128px, 0.62fr) minmax(230px, 1fr) minmax(126px, auto);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 14px;
   align-items: end;
   min-width: 0;
@@ -251,10 +249,7 @@
 }
 
 .explore-filters.has-gene-search {
-  grid-template-columns:
-    minmax(160px, 170px) minmax(174px, 0.95fr) minmax(210px, 1fr)
-    minmax(230px, 1.05fr) minmax(118px, 0.58fr) minmax(220px, 0.96fr)
-    minmax(126px, auto);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
 .motif-filter-control,
@@ -307,7 +302,7 @@
 
 .results-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(276px, 312px);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 248px);
   gap: 16px;
   align-items: start;
   min-width: 0;
@@ -337,6 +332,8 @@
 }
 
 .tab-body {
+  display: grid;
+  gap: 14px;
   min-width: 0;
   max-width: 100%;
   padding: 16px;
@@ -351,13 +348,20 @@ app-jbrowse-host {
   max-width: 100%;
 }
 
-.browser-actions {
+.browser-region-header {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  margin-bottom: 12px;
-  color: var(--mat-sys-on-surface-variant);
+}
+
+.browser-region-header .active-region-banner {
+  flex: 1 1 auto;
+}
+
+.browser-region-header button {
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .selection-panel {
@@ -479,6 +483,15 @@ app-jbrowse-host {
 
   .genome-hero {
     gap: 22px;
+  }
+
+  .browser-region-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .browser-region-header button {
+    align-self: flex-start;
   }
 
   .section-panel {

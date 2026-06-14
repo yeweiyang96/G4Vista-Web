@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {
-  GenomeOverviewAssembly,
+  GenomeRecommendedAssembly,
   GenomeSearchService,
 } from '../genome/services/genome-search.service';
 import { formatCompactCount, formatGenomeLength } from '../genome/utils/overview-format';
@@ -73,14 +73,14 @@ const WORKFLOW_CARDS: readonly WorkflowCard[] = [
 ];
 
 function findAssemblyByAccessions(
-  assemblies: readonly GenomeOverviewAssembly[],
+  assemblies: readonly GenomeRecommendedAssembly[],
   accessions: readonly string[],
-): GenomeOverviewAssembly | null {
+): GenomeRecommendedAssembly | null {
   return assemblies.find((assembly) => accessions.includes(assembly.assembly_accession)) ?? null;
 }
 
 function assemblySubtitle(
-  assembly: GenomeOverviewAssembly | null,
+  assembly: GenomeRecommendedAssembly | null,
   fallbackName: string,
   fallbackAccession: string,
 ): string {
@@ -90,7 +90,7 @@ function assemblySubtitle(
   return `${assembly.asm_name || assembly.organism_name} (${assembly.assembly_accession})`;
 }
 
-function assemblyDetail(assembly: GenomeOverviewAssembly | null, fallbackDetail: string): string {
+function assemblyDetail(assembly: GenomeRecommendedAssembly | null, fallbackDetail: string): string {
   if (!assembly) {
     return fallbackDetail;
   }
@@ -107,22 +107,18 @@ function assemblyDetail(assembly: GenomeOverviewAssembly | null, fallbackDetail:
 export class HomeComponent {
   private readonly genomeSearchService = inject(GenomeSearchService);
 
-  readonly overviewResource = rxResource({
-    stream: () => this.genomeSearchService.getOverview(),
+  readonly databaseStatusResource = rxResource({
+    stream: () => this.genomeSearchService.getDatabaseStatus(),
   });
-  readonly overview = computed(() => this.overviewResource.value());
-  readonly metrics = computed(() => this.overview()?.metrics ?? null);
-  readonly recommendedAssemblies = computed(() => this.overview()?.recommended_assemblies ?? []);
+  readonly recommendedAssembliesResource = rxResource({
+    stream: () => this.genomeSearchService.getRecommendedAssemblies(),
+  });
+  readonly databaseStatus = computed(() => this.databaseStatusResource.value());
+  readonly recommendedAssemblies = computed(() => this.recommendedAssembliesResource.value() ?? []);
   readonly workflowCards = WORKFLOW_CARDS;
-  readonly lastUpdated = computed(() => {
-    const dates = this.recommendedAssemblies()
-      .map((assembly) => assembly.seq_rel_date)
-      .filter((value): value is string => Boolean(value));
-    if (!dates.length) {
-      return 'Loading';
-    }
-    return dates.sort().at(-1) ?? 'Loading';
-  });
+  readonly assemblyDataLoadedAt = computed(
+    () => this.databaseStatus()?.assembly_data_loaded_at ?? 'Loading',
+  );
   readonly startingPoints = computed<readonly StartingPoint[]>(() => {
     const assemblies = this.recommendedAssemblies();
     const human = findAssemblyByAccessions(assemblies, ['GCF_000001405.40']);

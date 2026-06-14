@@ -7,9 +7,11 @@ import {
   computed,
   DestroyRef,
   ElementRef,
+  effect,
   inject,
   OnDestroy,
   signal,
+  untracked,
   ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -45,6 +47,7 @@ import {
   MicrobialTaxonomySearchResult,
   MicrobialTaxonomySelection,
 } from '../../services/microbial-environment-g4.service';
+import { UiThemeMode, UiThemeService } from '../../../theme/ui-theme.service';
 
 interface SummaryMetric {
   label: string;
@@ -94,6 +97,12 @@ interface VegaChartPadding {
   readonly right: number;
   readonly top: number;
   readonly bottom: number;
+}
+
+interface VegaThemeColors {
+  readonly axisText: string;
+  readonly axisLine: string;
+  readonly gridLine: string;
 }
 
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
@@ -196,6 +205,16 @@ const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
 
 function optionLabel(options: readonly MicrobialEnvironmentOption[], value: string): string {
   return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function resolveLightDarkColor(value: string, mode: UiThemeMode): string | null {
+  const match = /^light-dark\(([^,]+),\s*([^)]+)\)$/.exec(value);
+  const lightColor = match?.[1]?.trim();
+  const darkColor = match?.[2]?.trim();
+  if (!lightColor || !darkColor) {
+    return null;
+  }
+  return mode === 'dark' ? darkColor : lightColor;
 }
 
 function toFiniteNumber(value: unknown): number | null {
@@ -305,6 +324,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private readonly service = inject(MicrobialEnvironmentG4Service);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
+  private readonly uiThemeService = inject(UiThemeService);
   private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
   private readonly taxonomySelectionCounts = signal<Record<string, number>>({});
   private readonly pageIndex = signal(INITIAL_PAGE_INDEX);
@@ -459,6 +479,12 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   ]);
 
   constructor() {
+    effect(() => {
+      this.uiThemeService.resolvedMode();
+      if (untracked(() => Boolean(this.result()))) {
+        this.scheduleChartRender();
+      }
+    });
     this.loadOptions();
   }
 
@@ -954,11 +980,22 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     width: number,
   ): VisualizationSpec {
     const densityLabel = this.densityMetricLabel();
+    const themeColors = this.resolveVegaThemeColors(this.uiThemeService.resolvedMode());
     return {
       $schema: 'https://vega.github.io/schema/vega/v6.json',
       width,
       height: VEGA_CHART_HEIGHT,
       padding: VEGA_CHART_PADDING,
+      background: 'transparent',
+      config: {
+        axis: {
+          labelColor: themeColors.axisText,
+          titleColor: themeColors.axisText,
+          domainColor: themeColors.axisLine,
+          tickColor: themeColors.axisLine,
+          gridColor: themeColors.gridLine,
+        },
+      },
       data: [
         { name: 'points', values: points },
         { name: 'line', values: linePoints },
@@ -1028,6 +1065,37 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         },
       ],
     };
+  }
+
+  private resolveVegaThemeColors(mode: UiThemeMode): VegaThemeColors {
+    const defaultAxisText = mode === 'dark' ? '#e1e2e6' : '#1d1b20';
+    const defaultAxisLine = mode === 'dark' ? '#8f9099' : '#74777f';
+    const defaultGridLine = mode === 'dark' ? '#494a50' : '#c4c6d0';
+
+    return {
+      axisText: this.resolveCssColorVariable('--mat-sys-on-surface', defaultAxisText, mode),
+      axisLine: this.resolveCssColorVariable('--mat-sys-outline', defaultAxisLine, mode),
+      gridLine: this.resolveCssColorVariable('--mat-sys-outline-variant', defaultGridLine, mode),
+    };
+  }
+
+  private resolveCssColorVariable(
+    variableName: string,
+    fallbackColor: string,
+    mode: UiThemeMode,
+  ): string {
+    const rootElement = this.document.documentElement;
+    const windowRef = this.document.defaultView;
+    if (!windowRef) {
+      return fallbackColor;
+    }
+
+    const resolvedValue = windowRef.getComputedStyle(rootElement).getPropertyValue(variableName);
+    const colorValue = resolvedValue.trim();
+    if (!colorValue) {
+      return fallbackColor;
+    }
+    return resolveLightDarkColor(colorValue, mode) ?? colorValue;
   }
 
   private clearChart(): void {

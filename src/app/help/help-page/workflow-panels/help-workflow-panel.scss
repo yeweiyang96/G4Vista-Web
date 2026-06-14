@@ -43,6 +43,8 @@
 
 .guide-title p,
 .info-card li,
+.info-card p,
+.note-list,
 .step-copy,
 .result-card p {
   color: var(--mat-sys-on-surface-variant);
@@ -149,6 +151,89 @@
   color: var(--mat-sys-primary);
 }
 
+.help-document-section,
+.report-section {
+  display: grid;
+  gap: 12px;
+}
+
+.help-document-section + .report-section {
+  padding-top: 20px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.report-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.report-heading h3 {
+  font: var(--mat-sys-title-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 12px;
+}
+
+.finding-table-wrapper {
+  overflow-x: auto;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.finding-table {
+  width: 100%;
+  min-width: 900px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+  border-collapse: collapse;
+}
+
+.finding-table caption {
+  padding: 14px 16px 8px;
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: left;
+}
+
+.finding-table th,
+.finding-table td {
+  padding: 10px 12px;
+  vertical-align: top;
+  text-align: left;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.finding-table th {
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container);
+}
+
+.finding-table td:nth-child(3),
+.finding-table td:nth-child(4),
+.finding-table td:nth-child(5),
+.finding-table td:nth-child(6) {
+  white-space: nowrap;
+}
+
+.note-list {
+  display: grid;
+  gap: 8px;
+  padding: 16px 16px 16px 36px;
+  font: var(--mat-sys-body-medium);
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
 .guide-actions {
   display: flex;
   flex-wrap: wrap;
@@ -158,6 +243,7 @@
 @media (width <= 860px) {
   .guide-header,
   .guide-grid,
+  .report-summary,
   .result-grid {
     grid-template-columns: 1fr;
   }

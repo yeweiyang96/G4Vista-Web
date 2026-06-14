@@ -83,8 +83,7 @@
 
           <div class="section-panel-content">
             <form
-              class="explore-filters"
-              [class.has-gene-search]="showDraftGeneSearch()"
+              class="explore-filters has-gene-search"
               aria-label="G4/i-motif filters"
               data-help-target="g4-explorer-filters"
               (submit)="submitFilters($event)"
@@ -170,45 +169,43 @@
                 </mat-select>
               </mat-form-field>
 
-              @if (showDraftGeneSearch()) {
-                <mat-form-field
-                  appearance="outline"
-                  subscriptSizing="dynamic"
-                  class="filter-field filter-field-gene-search"
+              <mat-form-field
+                appearance="outline"
+                subscriptSizing="dynamic"
+                class="filter-field filter-field-gene-search"
+              >
+                <mat-label>Gene keyword</mat-label>
+                <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                <input
+                  matInput
+                  type="search"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Feature ID, gene name, or locus tag"
+                  [value]="draftGeneInput()"
+                  [matAutocomplete]="geneAuto"
+                  (input)="onGeneInput($event)"
+                />
+                <mat-autocomplete
+                  #geneAuto="matAutocomplete"
+                  [displayWith]="displayGeneCandidate"
+                  autoActiveFirstOption
+                  (optionSelected)="onGeneCandidateSelected($event)"
                 >
-                  <mat-label>Gene keyword</mat-label>
-                  <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-                  <input
-                    matInput
-                    type="search"
-                    autocomplete="off"
-                    spellcheck="false"
-                    placeholder="Feature ID, gene name, or locus tag"
-                    [value]="draftGeneInput()"
-                    [matAutocomplete]="geneAuto"
-                    (input)="onGeneInput($event)"
-                  />
-                  <mat-autocomplete
-                    #geneAuto="matAutocomplete"
-                    [displayWith]="displayGeneCandidate"
-                    autoActiveFirstOption
-                    (optionSelected)="onGeneCandidateSelected($event)"
-                  >
-                    @for (
-                      candidate of geneCandidates();
-                      track trackByGeneCandidate($index, candidate)
-                    ) {
-                      <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
-                    }
-                    @if (showGeneCandidateEmptyState()) {
-                      <mat-option disabled>No matching genes found.</mat-option>
-                    }
-                  </mat-autocomplete>
-                  @if (geneInputError(); as errorMessage) {
-                    <mat-error>{{ errorMessage }}</mat-error>
+                  @for (
+                    candidate of geneCandidates();
+                    track trackByGeneCandidate($index, candidate)
+                  ) {
+                    <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
                   }
-                </mat-form-field>
-              }
+                  @if (showGeneCandidateEmptyState()) {
+                    <mat-option disabled>No matching genes found.</mat-option>
+                  }
+                </mat-autocomplete>
+                @if (geneInputError(); as errorMessage) {
+                  <mat-error>{{ errorMessage }}</mat-error>
+                }
+              </mat-form-field>
 
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
                 <mat-label>G-tetrads</mat-label>
@@ -289,6 +286,20 @@
                   <mat-tab label="Range chart">
                     <section class="tab-body" aria-label="Genome range chart">
                       @if (canRenderChart()) {
+                        @let regionSummary = displayedRegionSummary();
+                        <div
+                          class="active-region-banner range-region-banner"
+                          aria-label="Displayed region"
+                        >
+                          <div class="active-region-main">
+                            <span class="active-region-kicker">Displayed region</span>
+                            <strong>{{ regionSummary.regionName }}</strong>
+                            <span>
+                              Shows G4/i-motif site distribution within genes and nearby flanking
+                              regions.
+                            </span>
+                          </div>
+                        </div>
                         <app-genome-range-chart
                           [assemblyAccession]="assemblyAccession()"
                           [seqid]="chartSeqid()"
@@ -310,8 +321,25 @@
 
                   <mat-tab label="Genome browser">
                     <section class="tab-body" data-help-target="genome-browser">
-                      <div class="browser-actions">
-                        <span>{{ viewerRegion() }}</span>
+                      @let regionSummary = displayedRegionSummary();
+                      <div class="browser-region-header">
+                        <div class="active-region-banner" aria-label="Displayed region">
+                          <div class="active-region-main">
+                            <span class="active-region-kicker">Displayed region</span>
+                            <strong>{{ regionSummary.title }}</strong>
+                            <span>{{ regionSummary.range }}</span>
+                          </div>
+                          <dl class="active-region-stats">
+                            <div>
+                              <dt>Range length</dt>
+                              <dd>{{ regionSummary.length }}</dd>
+                            </div>
+                            <div>
+                              <dt>Bin size</dt>
+                              <dd>{{ regionSummary.binSize }}</dd>
+                            </div>
+                          </dl>
+                        </div>
                         <button mat-button type="button" (click)="resetBrowser()">
                           Reset browser view
                         </button>

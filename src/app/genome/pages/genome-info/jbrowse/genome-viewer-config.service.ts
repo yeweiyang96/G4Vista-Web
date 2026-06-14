@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, of } from 'rxjs';
 import { UiThemeMode } from '../../../../theme/ui-theme.service';
+import type { G4Type } from '../../../services/g4.service';
 
 export interface JBrowseTrackConfig extends Record<string, unknown> {
   trackId: string;
@@ -69,13 +70,18 @@ export interface JBrowseConfig {
   tracks: JBrowseTrackConfig[];
   configuration: JBrowseRootConfiguration;
   defaultVisibleTrackIds: string[];
+  motifTrackIds: string[];
 }
 
 export type GenomeViewerConfig = JBrowseConfig;
 
-export interface GenomeViewerConfigParams {
+export interface GenomeViewerAssetParams {
   assemblyAccession: string;
   dataBaseUrl: string;
+}
+
+export interface GenomeViewerConfigParams extends GenomeViewerAssetParams {
+  g4Type: G4Type;
   themeMode?: UiThemeMode;
 }
 
@@ -152,7 +158,7 @@ function normalizeBaseUrl(dataBaseUrl: string): string {
   return dataBaseUrl.replace(/\/+$/, '');
 }
 
-function buildAssemblyAssetUrl(params: GenomeViewerConfigParams, fileName: string): string {
+function buildAssemblyAssetUrl(params: GenomeViewerAssetParams, fileName: string): string {
   const normalizedBaseUrl = normalizeBaseUrl(params.dataBaseUrl);
   return `${normalizedBaseUrl}/${params.assemblyAccession}/jbrowse/${fileName}`;
 }
@@ -400,6 +406,28 @@ function createG4TrackConfigs(params: GenomeViewerConfigParams): JBrowseTrackCon
   ];
 }
 
+function createDefaultVisibleTrackIds(assemblyAccession: string, g4Type: G4Type): string[] {
+  const motifTrackPrefix = g4Type === 'i-motif' ? 'i-motif' : 'g4';
+
+  return [
+    `${assemblyAccession}_annotation`,
+    `${assemblyAccession}_${motifTrackPrefix}`,
+    `${assemblyAccession}_${motifTrackPrefix}_density`,
+    `${assemblyAccession}_${motifTrackPrefix}_score`,
+  ];
+}
+
+function createMotifTrackIds(assemblyAccession: string): string[] {
+  return [
+    `${assemblyAccession}_g4`,
+    `${assemblyAccession}_g4_density`,
+    `${assemblyAccession}_g4_score`,
+    `${assemblyAccession}_i-motif`,
+    `${assemblyAccession}_i-motif_density`,
+    `${assemblyAccession}_i-motif_score`,
+  ];
+}
+
 function parseDefaultRegionFromFaiContent(faiContent: string): string {
   const firstNonEmptyLine = faiContent
     .split(/\r?\n/)
@@ -438,16 +466,12 @@ export class GenomeViewerConfigService {
         theme: resolveActiveTheme(themeMode),
         extraThemes: EXTRA_THEMES,
       },
-      defaultVisibleTrackIds: [
-        `${assemblyAccession}_annotation`,
-        `${assemblyAccession}_g4`,
-        `${assemblyAccession}_g4_density`,
-        `${assemblyAccession}_g4_score`,
-      ],
+      defaultVisibleTrackIds: createDefaultVisibleTrackIds(assemblyAccession, params.g4Type),
+      motifTrackIds: createMotifTrackIds(assemblyAccession),
     };
   }
 
-  resolveDefaultRegion(params: GenomeViewerConfigParams): Observable<string> {
+  resolveDefaultRegion(params: GenomeViewerAssetParams): Observable<string> {
     const assemblyAccession = params.assemblyAccession;
     const faiUrl = buildAssemblyAssetUrl(params, `${assemblyAccession}.fna.gz.fai`);
 

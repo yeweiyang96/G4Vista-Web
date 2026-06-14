@@ -152,6 +152,10 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+.category-row-static .category-checkbox-label {
+  padding-left: 40px;
+}
+
 .rounding-note {
   margin: 6px 0 0;
   font: var(--mat-sys-body-small);

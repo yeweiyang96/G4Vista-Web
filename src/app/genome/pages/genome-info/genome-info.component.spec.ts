@@ -436,6 +436,7 @@ describe('GenomeInfoComponent', () => {
         extraThemes: {},
       },
       defaultVisibleTrackIds: [],
+      motifTrackIds: [],
     });
     genomeViewerConfigService.resolveDefaultRegion.and.returnValue(of('chr1:1..1000'));
     snackBar = jasmine.createSpyObj<MatSnackBar>('MatSnackBar', ['open']);
@@ -493,7 +494,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.defaultGenePosition()).toBe(G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value);
   });
 
-  it('uses whole-genome browse by default and initializes chart/JBrowse to the default region', async () => {
+  it('uses whole-genome browse by default and initializes chart/JBrowse to the first sequence record', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
     await fixture.whenStable();
@@ -513,10 +514,10 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartSeqid()).toBe('chr1');
     expect(component.chartViewport()).toEqual({
       start: 1,
-      end: 1000,
-      binSize: 50,
+      end: 10_000,
+      binSize: 100,
     });
-    expect(viewerState.region()).toBe('chr1:1..1000');
+    expect(viewerState.region()).toBe('chr1:1..10000');
   });
 
   it('loads position distribution from independent whole-genome controls only', async () => {
@@ -712,12 +713,12 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartViewport()).toEqual({
       start: 1,
       end: 20_000,
-      binSize: 100,
+      binSize: 200,
     });
     expect(viewerState.region()).toBe('chr2:1..20000');
   });
 
-  it('switches to Whole genome browse and keeps JBrowse at default region', async () => {
+  it('switches to Whole genome browse and displays the first sequence record full range', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
     await fixture.whenStable();
@@ -744,16 +745,16 @@ describe('GenomeInfoComponent', () => {
         pageSize: 10,
       }),
     ]);
-    expect(viewerState.region()).toBe('chr1:1..1000');
+    expect(viewerState.region()).toBe('chr1:1..10000');
     expect(component.chartSeqid()).toBe('chr1');
     expect(component.chartViewport()).toEqual({
       start: 1,
-      end: 1000,
-      binSize: 50,
+      end: 10_000,
+      binSize: 100,
     });
   });
 
-  it('falls back to a valid seqid range when default region is invalid', async () => {
+  it('uses the first sequence record full range when default region is invalid', async () => {
     genomeViewerConfigService.resolveDefaultRegion.and.returnValue(of('1..1000'));
 
     const fixture = createComponent();
@@ -771,7 +772,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartViewport()).toEqual({
       start: 1,
       end: 10_000,
-      binSize: 50,
+      binSize: 100,
     });
   });
 
@@ -988,7 +989,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartViewport()).toEqual({
       start: 1,
       end: 10_000,
-      binSize: 50,
+      binSize: 100,
     });
     expect(viewerState.region()).toBe('chr1:1..10000');
   });
@@ -1147,6 +1148,30 @@ describe('GenomeInfoComponent', () => {
     expect(component.draftSelectedGene()).toBeNull();
   });
 
+  it('rebuilds the genome browser config with the committed motif type after apply', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    genomeViewerConfigService.createViewerConfig.calls.reset();
+
+    component.selectDraftG4Type('i-motif');
+    expect(component.g4Type()).toBe('g4');
+
+    component.submitFilters();
+    component.viewerConfig();
+
+    expect(component.g4Type()).toBe('i-motif');
+    expect(genomeViewerConfigService.createViewerConfig).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        dataBaseUrl: 'http://example.test/data',
+        g4Type: 'i-motif',
+      }),
+    );
+  });
+
   it('keeps selected gene and shows snackbar when selected gene returns no results', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
@@ -1214,6 +1239,7 @@ describe('GenomeInfoComponent', () => {
         extraThemes: {},
       },
       defaultVisibleTrackIds: [],
+      motifTrackIds: [],
     }));
     genomeViewerConfigService.resolveDefaultRegion.and.callFake(({ assemblyAccession }) =>
       of(assemblyAccession === 'GCF_2' ? 'chrA:1..1000' : 'chr1:1..1000'),
@@ -1282,7 +1308,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartViewport()).toEqual({
       start: 1,
       end: 20_000,
-      binSize: 100,
+      binSize: 200,
     });
     expect(viewerState.region()).toBe('chr2:1..20000');
   });
@@ -1320,7 +1346,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartViewport()).toEqual({
       start: 1,
       end: 20_000,
-      binSize: 100,
+      binSize: 200,
     });
     expect(viewerState.region()).toBe('chr2:1..20000');
   });

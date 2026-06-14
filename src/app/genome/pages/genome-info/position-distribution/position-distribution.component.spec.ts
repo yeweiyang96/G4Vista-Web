@@ -126,6 +126,7 @@ describe('PositionDistributionComponent', () => {
 
     expect(text).toContain('G-quadruplex (G4) and i-motif overview');
     expect(text).toContain('Chart categories');
+    expect(text).toContain('Other');
     expect(text).toContain('Key metrics');
     expect(text).not.toContain('Gene-context position statistics');
     expect(text).not.toContain('Density by gene context');
@@ -140,7 +141,7 @@ describe('PositionDistributionComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('app-strength-box-plot-vega').length).toBe(0);
   });
 
-  it('uses only default gene-context categories for the overview chart', () => {
+  it('uses gene-context categories plus non-gene Other for the overview chart', () => {
     const component = fixture.componentInstance;
 
     expect(component.categoryRows().map((category) => category.displayLabel)).toEqual([
@@ -152,8 +153,9 @@ describe('PositionDistributionComponent', () => {
       'In genes',
       'Upstream flank',
       'Downstream flank',
+      'Other',
     ]);
-    expect(component.summaryDoughnutData().datasets[0].data).toEqual([2, 1, 1]);
+    expect(component.summaryDoughnutData().datasets[0].data).toEqual([2, 1, 1, 2]);
   });
 
   it('emits selected category changes for the parent component', () => {

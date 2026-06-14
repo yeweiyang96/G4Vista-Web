@@ -49,25 +49,39 @@
           <section class="category-panel" aria-label="Chart categories">
             <h4>Chart categories</h4>
             <div class="category-list">
-              @for (category of categoryRows(); track category.key) {
+              @for (category of chartLegendRows(); track category.key) {
                 <div
                   class="category-row"
-                  [class.category-row-hidden]="!isSummaryCategoryVisible(category.key)"
-                  [title]="category.displayDescription"
+                  [class.category-row-hidden]="
+                    category.key !== 'other' && !isSummaryCategoryVisible(category.key)
+                  "
+                  [class.category-row-static]="category.key === 'other'"
+                  [title]="chartLegendDescription(category.key)"
                 >
-                  <mat-checkbox
-                    [checked]="isSummaryCategoryVisible(category.key)"
-                    (change)="changeSummaryCategoryVisibility(category.key, $event.checked)"
-                  >
+                  @if (category.key === 'other') {
                     <span class="category-checkbox-label">
                       <span
                         class="category-swatch"
                         [style.background]="category.color"
                         aria-hidden="true"
                       ></span>
-                      <span class="category-name">{{ category.displayLabel }}</span>
+                      <span class="category-name">{{ category.label }}</span>
                     </span>
-                  </mat-checkbox>
+                  } @else {
+                    <mat-checkbox
+                      [checked]="isSummaryCategoryVisible(category.key)"
+                      (change)="changeSummaryCategoryVisibility(category.key, $event.checked)"
+                    >
+                      <span class="category-checkbox-label">
+                        <span
+                          class="category-swatch"
+                          [style.background]="category.color"
+                          aria-hidden="true"
+                        ></span>
+                        <span class="category-name">{{ category.label }}</span>
+                      </span>
+                    </mat-checkbox>
+                  }
                   <span class="category-count">{{ formatCount(category.count) }}</span>
                   <span class="category-ratio">{{ formatRatio(category.ratio) }}</span>
                 </div>

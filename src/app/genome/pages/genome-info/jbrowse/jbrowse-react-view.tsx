@@ -8,6 +8,11 @@ import { GenomeNavCommand } from './genome-viewer-state.service';
 
 type ViewState = ReturnType<typeof createViewState>;
 
+interface TrackVisibilityView {
+  showTrack(trackId: string): void;
+  hideTrack(trackId: string): void;
+}
+
 function makeJBrowseWorkerInstance(): Worker {
   return new Worker(new URL('./jbrowse-rpc.worker.ts', import.meta.url), {
     type: 'module',
@@ -36,6 +41,21 @@ function primaryVisibleRegion(view: unknown): string | null {
     return null;
   } catch {
     return null;
+  }
+}
+
+function syncDefaultVisibleTracks(viewState: ViewState, viewerConfig: GenomeViewerConfig): void {
+  const view = viewState.session.view as unknown as TrackVisibilityView;
+  const defaultVisibleTrackIds = new Set(viewerConfig.defaultVisibleTrackIds);
+
+  for (const trackId of viewerConfig.motifTrackIds) {
+    if (!defaultVisibleTrackIds.has(trackId)) {
+      view.hideTrack(trackId);
+    }
+  }
+
+  for (const trackId of viewerConfig.defaultVisibleTrackIds) {
+    view.showTrack(trackId);
   }
 }
 
@@ -73,10 +93,8 @@ export function JBrowseReactView({
   }, [onRegionChange]);
 
   useEffect(() => {
-    for (const trackId of viewerConfig.defaultVisibleTrackIds) {
-      viewState.session.view.showTrack(trackId);
-    }
-  }, [viewerConfig.defaultVisibleTrackIds, viewState]);
+    syncDefaultVisibleTracks(viewState, viewerConfig);
+  }, [viewerConfig, viewState]);
 
   useEffect(() => {
     if (!navigationCommand) {

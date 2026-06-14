@@ -17,12 +17,10 @@ import { formatCompactCount } from '../../utils/overview-format';
 export class GenomeHomeComponent {
   private readonly genomeSearchService = inject(GenomeSearchService);
 
-  readonly overviewResource = rxResource({
-    stream: () => this.genomeSearchService.getOverview(),
+  readonly recommendedAssembliesResource = rxResource({
+    stream: () => this.genomeSearchService.getRecommendedAssemblies(),
   });
-  readonly recommendedAssemblies = computed(
-    () => this.overviewResource.value()?.recommended_assemblies ?? [],
-  );
+  readonly recommendedAssemblies = computed(() => this.recommendedAssembliesResource.value() ?? []);
 
   formatCount(value: number): string {
     return formatCompactCount(value);

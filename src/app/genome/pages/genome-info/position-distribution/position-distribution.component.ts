@@ -47,7 +47,8 @@ interface SummaryDoughnutSegment {
   color: string;
 }
 
-const MERGED_SUMMARY_CATEGORY_COLOR = '#b8bec9';
+const OTHER_SUMMARY_CATEGORY_COLOR = '#a8adb7';
+const OTHER_SUMMARY_CATEGORY_DESCRIPTION = 'Predicted motif sites outside annotated genes and selected gene flanks.';
 
 function motifTypeShortLabel(g4Type: G4Type): string {
   return g4Type === 'i-motif' ? 'i-motif' : 'G4';
@@ -142,7 +143,8 @@ export class PositionDistributionComponent {
     defaultPositionCategoryViews(this.distribution().categories),
   );
   readonly displayedPositionTotal = computed(() =>
-    this.categoryRows().reduce((sum, category) => sum + category.count, 0),
+    this.categoryRows().reduce((sum, category) => sum + category.count, 0) +
+    this.otherPositionCount(),
   );
   readonly selectedCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const selectedKeys = new Set(this.selectedCategoryKeys());
@@ -151,10 +153,36 @@ export class PositionDistributionComponent {
   readonly selectedPositionTotal = computed(() =>
     this.selectedCategoryRows().reduce((sum, category) => sum + category.count, 0),
   );
+  readonly otherPositionCount = computed(() => {
+    const categories = this.distribution().categories;
+    const total = this.distribution().total_count;
+    const geneInside = categoryCount(categories, 'gene_inside');
+    const upstream = categoryCount(categories, 'gene_upstream');
+    const downstream = categoryCount(categories, 'gene_downstream');
+    return Math.max(0, total - geneInside - upstream - downstream);
+  });
+  readonly chartLegendRows = computed<readonly SummaryDoughnutSegment[]>(() => {
+    const total = this.displayedPositionTotal();
+    return [
+      ...this.categoryRows().map((category) => ({
+        key: category.key,
+        label: category.displayLabel,
+        count: category.count,
+        ratio: total ? category.count / total : 0,
+        color: category.color,
+      })),
+      {
+        key: 'other',
+        label: 'Other',
+        count: this.otherPositionCount(),
+        ratio: total ? this.otherPositionCount() / total : 0,
+        color: OTHER_SUMMARY_CATEGORY_COLOR,
+      },
+    ];
+  });
   readonly summaryDoughnutSegments = computed<readonly SummaryDoughnutSegment[]>(() => {
     const selectedKeys = new Set(this.selectedCategoryKeys());
     const total = this.displayedPositionTotal();
-    let mergedCount = 0;
     const segments: SummaryDoughnutSegment[] = [];
 
     for (const category of this.categoryRows()) {
@@ -166,18 +194,17 @@ export class PositionDistributionComponent {
           ratio: total ? category.count / total : 0,
           color: category.color,
         });
-        continue;
       }
-      mergedCount += category.count;
     }
 
-    if (mergedCount > 0) {
+    const otherCount = this.otherPositionCount();
+    if (otherCount > 0) {
       segments.push({
-        key: 'other_categories',
-        label: 'Other categories',
-        count: mergedCount,
-        ratio: total ? mergedCount / total : 0,
-        color: MERGED_SUMMARY_CATEGORY_COLOR,
+        key: 'other',
+        label: 'Other',
+        count: otherCount,
+        ratio: total ? otherCount / total : 0,
+        color: OTHER_SUMMARY_CATEGORY_COLOR,
       });
     }
 
@@ -205,7 +232,8 @@ export class PositionDistributionComponent {
     const upstream = categoryCount(categories, 'gene_upstream');
     const downstream = categoryCount(categories, 'gene_downstream');
     const geneFlanks = upstream + downstream;
-    const selectedTotal = this.selectedPositionTotal();
+    const geneRelatedTotal = geneInside + geneFlanks;
+    const geneUnrelatedTotal = Math.max(0, total - geneRelatedTotal);
 
     return [
       {
@@ -227,13 +255,20 @@ export class PositionDistributionComponent {
         detail: 'sites in selected flanks',
       },
       {
-        key: 'selected',
-        label: 'Selected contexts',
-        value: formatCount(selectedTotal),
-        detail: 'sites in selected contexts',
+        key: 'other',
+        label: 'Other',
+        value: formatCount(geneUnrelatedTotal),
+        detail: 'sites not related to genes',
       },
     ];
   });
+
+  chartLegendDescription(key: string): string {
+    if (key === 'other') {
+      return OTHER_SUMMARY_CATEGORY_DESCRIPTION;
+    }
+    return this.categoryRows().find((category) => category.key === key)?.displayDescription ?? '';
+  }
 
   changeG4Type(value: G4Type): void {
     this.g4TypeChange.emit(value);
@@ -247,8 +282,8 @@ export class PositionDistributionComponent {
         return 'linear_scale';
       case 'regulatory':
         return 'sync_alt';
-      case 'selected':
-        return 'select_check_box';
+      case 'other':
+        return 'block';
       default:
         return 'block';
     }

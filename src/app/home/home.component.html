@@ -29,29 +29,29 @@
         <span class="status-ok">All systems operational</span>
       </div>
 
-      @if (metrics(); as metric) {
+      @if (databaseStatus(); as status) {
         <div class="status-grid">
           <div class="status-cell">
             <mat-icon>storage</mat-icon>
-            <strong>{{ formatExactCount(metric.assembly_count) }}</strong>
+            <strong>{{ formatExactCount(status.assembly_count) }}</strong>
             <span>Assemblies</span>
             <small>RefSeq/GenBank</small>
           </div>
           <div class="status-cell status-cell-taxa">
             <mat-icon>eco</mat-icon>
-            <strong>{{ formatExactCount(metric.taxon_count) }}</strong>
+            <strong>{{ formatExactCount(status.taxon_count) }}</strong>
             <span>Taxa</span>
             <small>Species level</small>
           </div>
           <div class="status-cell status-cell-g4">
             <mat-icon>view_in_ar</mat-icon>
-            <strong>{{ formatCount(metric.g4_count) }}</strong>
+            <strong>{{ formatCount(status.g4_count) }}</strong>
             <span>G4 sites</span>
             <small>Predicted</small>
           </div>
           <div class="status-cell status-cell-imotif">
             <mat-icon>table_rows</mat-icon>
-            <strong>{{ formatCount(metric.i_motif_count) }}</strong>
+            <strong>{{ formatCount(status.i_motif_count) }}</strong>
             <span>i-motif sites</span>
             <small>Predicted</small>
           </div>
@@ -71,7 +71,7 @@
 
       <div class="status-updated">
         <mat-icon>schedule</mat-icon>
-        <span>Last updated: {{ lastUpdated() }} (UTC)</span>
+        <span>Assembly data loaded: {{ assemblyDataLoadedAt() }} (UTC)</span>
       </div>
     </aside>
   </section>

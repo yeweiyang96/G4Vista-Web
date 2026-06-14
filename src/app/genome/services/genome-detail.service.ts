@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import type { GenomeOverviewAssembly } from './genome-search.service';
+import type { GenomeAssemblyOverview } from './genome-search.service';
 
 export interface GenomeAssemblyDetail {
   assembly_accession: string;
@@ -35,8 +35,8 @@ export class GenomeDetailService {
     );
   }
 
-  getAssemblyOverview(assemblyAccession: string): Observable<GenomeOverviewAssembly> {
-    return this.http.get<GenomeOverviewAssembly>(
+  getAssemblyOverview(assemblyAccession: string): Observable<GenomeAssemblyOverview> {
+    return this.http.get<GenomeAssemblyOverview>(
       `${this.apiUrl}/${encodeURIComponent(assemblyAccession)}/overview`,
     );
   }

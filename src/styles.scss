@@ -387,6 +387,72 @@ a {
   overflow-x: auto;
 }
 
+.genome-page .active-region-banner {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--mat-sys-primary-container) 42%, var(--mat-sys-surface));
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 38%, var(--genome-border));
+  border-radius: 8px;
+}
+
+.genome-page .active-region-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.genome-page .active-region-kicker {
+  font: var(--mat-sys-label-medium);
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+.genome-page .active-region-main strong {
+  overflow-wrap: anywhere;
+  font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.genome-page .active-region-main span:last-child {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.genome-page .active-region-stats {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 18px;
+  align-items: center;
+  margin: 0;
+}
+
+.genome-page .active-region-stats div {
+  display: grid;
+  gap: 2px;
+  min-width: 96px;
+}
+
+.genome-page .active-region-stats dt,
+.genome-page .active-region-stats dd {
+  margin: 0;
+}
+
+.genome-page .active-region-stats dt {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.genome-page .active-region-stats dd {
+  font: var(--mat-sys-title-small);
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+}
+
 @media (width <= 1100px) {
   .g4v-focus-band,
   .g4v-action-grid {
@@ -422,6 +488,12 @@ a {
 
   .g4v-panel-header {
     display: grid;
+  }
+
+  .genome-page .active-region-banner,
+  .genome-page .active-region-stats {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   h1 {

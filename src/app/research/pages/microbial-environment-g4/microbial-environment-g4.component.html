@@ -131,7 +131,12 @@
               </div>
 
               @if (taxonomyCandidates().length) {
-                <div class="candidate-list" role="list" aria-label="Taxonomy search results">
+                <div
+                  class="candidate-list"
+                  role="list"
+                  aria-label="Taxonomy search results"
+                  tabindex="0"
+                >
                   @for (candidate of taxonomyCandidates(); track candidate.rank + candidate.value) {
                     <div class="candidate-row" role="listitem">
                       <div>

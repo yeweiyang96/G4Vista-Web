@@ -8,29 +8,28 @@ export interface GenomeSearch {
   organism_name: string;
 }
 
-export interface GenomeDatabaseMetrics {
+export interface GenomeDatabaseStatus {
   assembly_count: number;
   taxon_count: number;
   g4_count: number;
   i_motif_count: number;
+  assembly_data_loaded_at: string;
 }
 
-export interface GenomeOverviewAssembly {
+export interface GenomeRecommendedAssembly {
   organism_name: string;
   assembly_accession: string;
   asm_name: string | null;
   species_name: string;
-  seq_rel_date: string | null;
-  taxon_id: number | null;
   seqid_count: number;
   genome_length_bp: number;
   g4_count: number;
   i_motif_count: number;
 }
 
-export interface GenomeOverview {
-  metrics: GenomeDatabaseMetrics;
-  recommended_assemblies: GenomeOverviewAssembly[];
+export interface GenomeAssemblyOverview extends GenomeRecommendedAssembly {
+  seq_rel_date: string | null;
+  taxon_id: number | null;
 }
 
 @Injectable({
@@ -44,7 +43,11 @@ export class GenomeSearchService {
     return this.http.get<GenomeSearch[]>(`${this.apiUrl}/?query=${encodeURIComponent(query)}`);
   }
 
-  getOverview(): Observable<GenomeOverview> {
-    return this.http.get<GenomeOverview>(`${this.apiUrl}/overview`);
+  getDatabaseStatus(): Observable<GenomeDatabaseStatus> {
+    return this.http.get<GenomeDatabaseStatus>(`${this.apiUrl}/status`);
+  }
+
+  getRecommendedAssemblies(): Observable<GenomeRecommendedAssembly[]> {
+    return this.http.get<GenomeRecommendedAssembly[]>(`${this.apiUrl}/recommended-assemblies`);
   }
 }

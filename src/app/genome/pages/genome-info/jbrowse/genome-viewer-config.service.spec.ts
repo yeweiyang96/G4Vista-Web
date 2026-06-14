@@ -13,6 +13,7 @@ describe('GenomeViewerConfigService', () => {
   const params: GenomeViewerConfigParams = {
     assemblyAccession: 'GCF_000021765.1',
     dataBaseUrl: 'http://localhost:8000/jbrowse/',
+    g4Type: 'g4',
   };
 
   beforeEach(() => {
@@ -169,6 +170,14 @@ describe('GenomeViewerConfigService', () => {
       'GCF_000021765.1_g4',
       'GCF_000021765.1_g4_density',
       'GCF_000021765.1_g4_score',
+    ]);
+    expect(config.motifTrackIds).toEqual([
+      'GCF_000021765.1_g4',
+      'GCF_000021765.1_g4_density',
+      'GCF_000021765.1_g4_score',
+      'GCF_000021765.1_i-motif',
+      'GCF_000021765.1_i-motif_density',
+      'GCF_000021765.1_i-motif_score',
     ]);
 
     const annotationTrack = config.tracks.find(
@@ -366,5 +375,19 @@ describe('GenomeViewerConfigService', () => {
       posColor: '#abc7ff',
       negColor: '#ffb4ab',
     });
+  });
+
+  it('uses i-motif tracks as the default visible motif tracks when requested', () => {
+    const config = service.createViewerConfig({
+      ...params,
+      g4Type: 'i-motif',
+    });
+
+    expect(config.defaultVisibleTrackIds).toEqual([
+      'GCF_000021765.1_annotation',
+      'GCF_000021765.1_i-motif',
+      'GCF_000021765.1_i-motif_density',
+      'GCF_000021765.1_i-motif_score',
+    ]);
   });
 });
