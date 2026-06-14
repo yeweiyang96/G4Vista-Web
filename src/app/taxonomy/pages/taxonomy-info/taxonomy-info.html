@@ -36,11 +36,11 @@
 
     <div class="taxonomy-detail-grid">
       <div class="taxonomy-main">
-        <section class="taxonomy-panel g4-summary-panel" aria-label="Taxonomy G4 summary">
+        <section class="taxonomy-panel position-panel" aria-label="G4 genomic position context">
           <header class="taxonomy-panel-header taxonomy-summary-header">
             <div>
-              <mat-icon>analytics</mat-icon>
-              <h2>Taxon-level G4 statistics</h2>
+              <mat-icon>schema</mat-icon>
+              <h2>Taxon-level {{ selectedMotifLabel() }} position context</h2>
             </div>
 
             <div class="summary-controls" aria-label="Taxonomy G4 statistics controls">
@@ -61,155 +61,79 @@
                   }
                 </mat-select>
               </mat-form-field>
+
+              @if (!isPositionContextRequested()) {
+                <button mat-flat-button type="button" (click)="loadPositionContext()">
+                  Load context
+                </button>
+              }
             </div>
           </header>
 
-          @if (summaryResource.isLoading()) {
+          @if (!isPositionContextRequested()) {
+            <p class="state-message">Context statistics are loaded on demand.</p>
+          } @else if (summaryResource.isLoading()) {
             <div class="inline-loading">
               <mat-spinner diameter="28"></mat-spinner>
-              <span>Loading taxon-level motif statistics...</span>
+              <span>Loading position context...</span>
             </div>
-          } @else if (summaryErrorMessage()) {
-            <p class="state-message">{{ summaryErrorMessage() }}</p>
+          } @else if (positionContextErrorMessage()) {
+            <p class="state-message">{{ positionContextErrorMessage() }}</p>
           } @else if (summary(); as summary) {
-            <div class="study-mode">
-              <strong>{{ comparisonModeLabel() }}</strong>
-              <span>{{ assemblyContextText() }}</span>
-            </div>
-
-            <dl class="summary-metrics">
-              <div>
-                <dt>Assemblies</dt>
-                <dd>{{ summary.assembly_count }}</dd>
-              </div>
-              <div>
-                <dt>Total genome length</dt>
-                <dd>{{ formatGenomeLength(summary.genome_length_bp) }}</dd>
-              </div>
-              <div>
-                <dt>{{ selectedMotifLabel() }} sites</dt>
-                <dd>{{ formatCount(selectedMotifSummary()?.count) }}</dd>
-              </div>
-              <div>
-                <dt>{{ selectedMotifLabel() }} density</dt>
-                <dd>{{ formatDensity(selectedMotifSummary()?.density_per_mb) }}</dd>
-              </div>
-              <div>
-                <dt>G4/i-motif density ratio</dt>
-                <dd>{{ formatRatio(summary.g4_i_motif_density_ratio) }}</dd>
-              </div>
-            </dl>
-
-            @if (primaryAssembly(); as assembly) {
-              <div class="single-assembly-callout">
-                <div>
-                  <strong>{{ assembly.asm_name || assembly.assembly_accession }}</strong>
-                  <span>{{ assembly.organism_name }}</span>
-                </div>
-                <a mat-flat-button [routerLink]="['/genome', assembly.assembly_accession]">
-                  Open genome
-                  <mat-icon iconPositionEnd>open_in_new</mat-icon>
-                </a>
-              </div>
-            }
-
-            @if (summary.comparison_mode === 'multi_assembly') {
-              <section class="density-panel" aria-label="Assembly density distribution">
-                <h3>Assembly density distribution</h3>
-                <div class="density-distribution-grid">
-                  @for (row of densityDistributionRows(); track row.motifType) {
-                    <div class="density-distribution-row">
-                      <strong>{{ row.label }}</strong>
-                      <dl>
-                        <div>
-                          <dt>Median</dt>
-                          <dd>{{ formatDensity(row.distribution.median_density_per_mb) }}</dd>
-                        </div>
-                        <div>
-                          <dt>IQR</dt>
-                          <dd>
-                            {{ formatDensity(row.distribution.q1_density_per_mb) }} -
-                            {{ formatDensity(row.distribution.q3_density_per_mb) }}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Range</dt>
-                          <dd>
-                            {{ formatDensity(row.distribution.min_density_per_mb) }} -
-                            {{ formatDensity(row.distribution.max_density_per_mb) }}
-                          </dd>
-                        </div>
-                      </dl>
-                    </div>
-                  }
-                </div>
-              </section>
-
-              <section class="density-extremes" aria-label="Assembly density ranking">
-                <div>
-                  <h3>Highest {{ selectedMotifLabel() }} density</h3>
-                  @for (assembly of topDensityAssemblies(); track assembly.assembly_accession) {
-                    <a [routerLink]="['/genome', assembly.assembly_accession]">
-                      <span>{{ assembly.asm_name || assembly.assembly_accession }}</span>
-                      <strong>{{ densityForAssembly(assembly) }}</strong>
-                    </a>
-                  }
-                </div>
-                <div>
-                  <h3>Lowest {{ selectedMotifLabel() }} density</h3>
-                  @for (assembly of lowDensityAssemblies(); track assembly.assembly_accession) {
-                    <a [routerLink]="['/genome', assembly.assembly_accession]">
-                      <span>{{ assembly.asm_name || assembly.assembly_accession }}</span>
-                      <strong>{{ densityForAssembly(assembly) }}</strong>
-                    </a>
-                  }
-                </div>
-              </section>
-            }
-          }
-        </section>
-
-        @if (summary(); as summary) {
-          <section class="taxonomy-panel position-panel" aria-label="G4 genomic position context">
-            <header class="taxonomy-panel-header">
-              <mat-icon>schema</mat-icon>
-              <h2>{{ selectedMotifLabel() }} position context</h2>
-            </header>
-
-            <div class="position-category-list">
-              @for (category of positionCategoryRows(); track category.key) {
-                <div class="position-category-row">
-                  <div class="position-category-main">
-                    <span>{{ category.displayLabel }}</span>
-                    <strong>{{ formatCount(category.count) }} · {{ category.ratioLabel }}</strong>
+            @if (positionContextTotal() > 0) {
+              <div class="position-context-layout">
+                <div class="position-pie-card">
+                  <div class="position-pie-chart">
+                    <canvas
+                      baseChart
+                      [data]="positionPieData()"
+                      [options]="positionPieOptions"
+                      [plugins]="positionPiePlugins"
+                      type="pie"
+                    ></canvas>
                   </div>
-                  <div class="position-bar" aria-hidden="true">
-                    <span [style.width]="category.width"></span>
+
+                  <div class="position-pie-legend">
+                    @for (category of positionCategoryRows(); track category.key) {
+                      <div>
+                        <span [style.background]="category.color"></span>
+                        <strong>{{ category.displayLabel }}</strong>
+                        <small>{{ formatCount(category.count) }} · {{ category.ratioLabel }}</small>
+                      </div>
+                    }
                   </div>
                 </div>
-              }
-            </div>
 
-            @if (geneBiotypeRows().length > 0) {
-              <div class="gene-biotype-summary">
-                <h3>Gene biotype breakdown</h3>
-                @for (row of geneBiotypeRows(); track row.bio_type) {
-                  <div class="gene-biotype-row">
-                    <strong>{{ row.display_label }}</strong>
-                    <span>{{ formatCount(row.total_count) }} sites</span>
-                    <div>
-                      @for (category of row.categories; track category.key) {
-                        @if (category.count > 0) {
-                          <small>
-                            {{ category.display_label || category.label }}:
-                            {{ formatCount(category.count) }}
-                          </small>
+                @if (geneBiotypeRows().length > 0) {
+                  <div class="gene-biotype-summary">
+                    <h3>Gene biotype breakdown</h3>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">Gene biotype</th>
+                          <th scope="col">In genes</th>
+                          <th scope="col">Upstream flank</th>
+                          <th scope="col">Downstream flank</th>
+                          <th scope="col">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of geneBiotypeRows(); track row.bioType) {
+                          <tr>
+                            <th scope="row">{{ row.displayLabel }}</th>
+                            <td>{{ formatCount(row.insideCount) }}</td>
+                            <td>{{ formatCount(row.upstreamCount) }}</td>
+                            <td>{{ formatCount(row.downstreamCount) }}</td>
+                            <td>{{ formatCount(row.totalCount) }}</td>
+                          </tr>
                         }
-                      }
-                    </div>
+                      </tbody>
+                    </table>
                   </div>
                 }
               </div>
+            } @else {
+              <p class="state-message">No gene-context {{ selectedMotifLabel() }} sites found.</p>
             }
 
             @if (summary.quality.warnings.length > 0) {
@@ -222,8 +146,8 @@
                 </div>
               </div>
             }
-          </section>
-        }
+          }
+        </section>
 
         <section class="taxonomy-panel">
           <header class="taxonomy-panel-header">
@@ -231,15 +155,6 @@
             <h2>Genome assemblies</h2>
           </header>
           <app-assembly-list [assemblies]="assemblyRows()"></app-assembly-list>
-        </section>
-
-        <section class="taxonomy-panel availability-panel">
-          <header class="taxonomy-panel-header">
-            <mat-icon>hub</mat-icon>
-          <h2>Available assemblies</h2>
-          </header>
-          <strong>{{ assemblyCount() }}</strong>
-          <p>Open an assembly to review predicted G4 and i-motif sites in genomic context.</p>
         </section>
       </div>
 

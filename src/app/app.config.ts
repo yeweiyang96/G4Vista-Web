@@ -10,7 +10,7 @@ import {
   withRouterConfig,
   withViewTransitions,
 } from '@angular/router';
-import { ArcElement, DoughnutController, Legend, Tooltip } from 'chart.js';
+import { ArcElement, DoughnutController, Legend, PieController, Tooltip } from 'chart.js';
 import { provideCharts } from 'ng2-charts';
 
 import { routes } from './app.routes';
@@ -32,7 +32,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(),
     provideCharts({
-      registerables: [DoughnutController, ArcElement, Tooltip, Legend],
+      registerables: [DoughnutController, PieController, ArcElement, Tooltip, Legend],
     }),
   ],
 };

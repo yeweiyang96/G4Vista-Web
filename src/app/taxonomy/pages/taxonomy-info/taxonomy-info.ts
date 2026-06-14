@@ -1,10 +1,12 @@
 import { computed, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ChangeDetectionStrategy, Component, inject, input, numberAttribute } from '@angular/core';
+import type { ChartData, ChartOptions, Plugin, TooltipItem } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { BaseChartDirective } from 'ng2-charts';
+import { of } from 'rxjs';
 import {
   Taxonomy,
-  TaxonomyG4AssemblySummary,
-  TaxonomyG4DensityDistribution,
   TaxonomyG4Summary,
   TaxonomyG4SummaryRequest,
   TaxonomyService,
@@ -15,7 +17,7 @@ import {
   G4_FLANK_WINDOW_OPTIONS,
   G4Type,
 } from '../../../genome/services/g4.service';
-import { formatCompactCount, formatGenomeLength } from '../../../genome/utils/overview-format';
+import { formatCompactCount } from '../../../genome/utils/overview-format';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -30,20 +32,25 @@ import { RouterLink } from '@angular/router';
 interface PositionCategoryView extends G4PositionCategory {
   displayLabel: string;
   ratioLabel: string;
-  width: string;
+  color: string;
 }
 
-interface DensityDistributionRow {
-  motifType: G4Type;
+interface GeneContextCategoryConfig {
+  key: 'gene_inside' | 'gene_upstream' | 'gene_downstream';
   label: string;
-  distribution: TaxonomyG4DensityDistribution;
+  color: string;
+}
+
+interface GeneBiotypeTableRow {
+  bioType: string;
+  displayLabel: string;
+  insideCount: number;
+  upstreamCount: number;
+  downstreamCount: number;
+  totalCount: number;
 }
 
 const DEFAULT_FLANK_WINDOW: G4FlankWindow = 1000;
-const DENSITY_FORMATTER = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 0,
-});
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
   minimumFractionDigits: 0,
@@ -53,6 +60,11 @@ const MOTIF_LABELS: Record<G4Type, string> = {
   g4: 'G4',
   'i-motif': 'i-motif',
 };
+const GENE_CONTEXT_CATEGORIES: readonly GeneContextCategoryConfig[] = [
+  { key: 'gene_inside', label: 'In genes', color: '#07879a' },
+  { key: 'gene_upstream', label: 'Upstream flank', color: '#8ec8ef' },
+  { key: 'gene_downstream', label: 'Downstream flank', color: '#8ab84e' },
+];
 
 function isG4Type(value: unknown): value is G4Type {
   return value === 'g4' || value === 'i-motif';
@@ -62,21 +74,14 @@ function isG4FlankWindow(value: unknown): value is G4FlankWindow {
   return G4_FLANK_WINDOW_OPTIONS.some((option) => option.value === value);
 }
 
-function densityForAssembly(assembly: TaxonomyG4AssemblySummary, g4Type: G4Type): number | null {
-  return g4Type === 'g4' ? assembly.g4_density_per_mb : assembly.i_motif_density_per_mb;
-}
-
-function descendingNullableDensity(
-  left: TaxonomyG4AssemblySummary,
-  right: TaxonomyG4AssemblySummary,
-  g4Type: G4Type,
-): number {
-  return (densityForAssembly(right, g4Type) ?? -1) - (densityForAssembly(left, g4Type) ?? -1);
+function categoryCount(categories: readonly G4PositionCategory[], key: string): number {
+  return categories.find((category) => category.key === key)?.count ?? 0;
 }
 
 @Component({
   selector: 'app-taxonomy-info',
   imports: [
+    BaseChartDirective,
     MatButtonModule,
     MatButtonToggleModule,
     MatFormFieldModule,
@@ -95,6 +100,7 @@ export class TaxonomyInfoComponent {
   readonly taxonId = input.required<number, string>({ transform: numberAttribute });
   readonly g4Type = signal<G4Type>('g4');
   readonly flankWindow = signal<G4FlankWindow>(DEFAULT_FLANK_WINDOW);
+  readonly positionContextTaxonId = signal<number | null>(null);
   readonly flankWindowOptions = G4_FLANK_WINDOW_OPTIONS;
   readonly taxonomyResource = rxResource<Taxonomy, number>({
     params: () => this.taxonId(),
@@ -104,18 +110,71 @@ export class TaxonomyInfoComponent {
     const current = this.taxonomyResource.value();
     return current?.taxon_id === this.taxonId() ? current : undefined;
   });
-  readonly summaryResource = rxResource<TaxonomyG4Summary, TaxonomyG4SummaryRequest>({
-    params: () => ({
-      taxonId: this.taxonId(),
-      g4Type: this.g4Type(),
-      flankWindow: this.flankWindow(),
-      tetrads: [],
-      minScore: null,
-      maxScore: null,
-      overlap: false,
-    }),
-    stream: ({ params }) => this.taxonomyService.getTaxonomyG4Summary(params),
+  readonly summaryResource = rxResource<TaxonomyG4Summary | null, TaxonomyG4SummaryRequest | null>({
+    params: () => {
+      if (this.positionContextTaxonId() !== this.taxonId()) {
+        return null;
+      }
+
+      return {
+        taxonId: this.taxonId(),
+        g4Type: this.g4Type(),
+        flankWindow: this.flankWindow(),
+        tetrads: [],
+        minScore: null,
+        maxScore: null,
+        overlap: false,
+      };
+    },
+    stream: ({ params }) => {
+      if (!params) {
+        return of(null);
+      }
+
+      return this.taxonomyService.getTaxonomyG4Summary(params);
+    },
+    defaultValue: null,
   });
+  readonly positionPiePlugins: Plugin<'pie'>[] = [ChartDataLabels as Plugin<'pie'>];
+  readonly positionPieOptions: ChartOptions<'pie'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    elements: {
+      arc: {
+        borderAlign: 'inner',
+        borderColor: 'rgba(255, 255, 255, 0.9)',
+        borderWidth: 1,
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        filter: (context) => Number(context.parsed) > 0,
+        callbacks: {
+          label: (context) => this.positionPieTooltipLabel(context),
+        },
+      },
+      datalabels: {
+        align: 'center',
+        anchor: 'center',
+        clamp: true,
+        color: '#ffffff',
+        display: (context) => {
+          const value = Number(context.dataset.data[context.dataIndex] ?? 0);
+          return value > 0 ? 'auto' : false;
+        },
+        font: {
+          size: 11,
+          weight: 'bold',
+        },
+        formatter: (value) => this.formatCount(Number(value)),
+        textStrokeColor: 'rgba(0, 0, 0, 0.42)',
+        textStrokeWidth: 2,
+      },
+    },
+  };
   readonly summary = computed<TaxonomyG4Summary | undefined>(() => {
     const current = this.summaryResource.value();
     return current?.taxon_id === this.taxonId() ? current : undefined;
@@ -127,85 +186,72 @@ export class TaxonomyInfoComponent {
     const summaryAssemblies = this.summary()?.assembly_summaries ?? [];
     return summaryAssemblies.length ? summaryAssemblies : (this.taxonomy()?.assemblies ?? []);
   });
-  readonly comparisonModeLabel = computed(() =>
-    this.summary()?.comparison_mode === 'multi_assembly'
-      ? 'Multi-assembly comparison'
-      : 'Single-assembly landscape',
-  );
-  readonly assemblyContextText = computed(() => {
-    const count = this.assemblyCount();
-    if (count === 0) {
-      return 'No assemblies are currently available for this taxon.';
-    }
-    if (count === 1) {
-      return '1 assembly available for this taxon. Values describe this assembly only; no within-species variation is inferred.';
-    }
-    return `${count} assemblies available for this taxon. Density per Mb is used for assembly-level comparison.`;
-  });
-  readonly primaryAssembly = computed<TaxonomyG4AssemblySummary | null>(() => {
-    const summary = this.summary();
-    return summary?.assembly_count === 1 ? (summary.assembly_summaries[0] ?? null) : null;
-  });
   readonly selectedMotifLabel = computed(() => MOTIF_LABELS[this.g4Type()]);
-  readonly selectedMotifSummary = computed(() => this.summary()?.motifs[this.g4Type()]);
-  readonly selectedDensityDistribution = computed(
-    () => this.summary()?.density_distributions[this.g4Type()],
+  readonly isPositionContextRequested = computed(
+    () => this.positionContextTaxonId() === this.taxonId(),
   );
-  readonly densityDistributionRows = computed<readonly DensityDistributionRow[]>(() => {
-    const summary = this.summary();
-    if (!summary || summary.comparison_mode !== 'multi_assembly') {
-      return [];
-    }
-    return [
-      { motifType: 'g4', label: 'G4 density', distribution: summary.density_distributions.g4 },
-      {
-        motifType: 'i-motif',
-        label: 'i-motif density',
-        distribution: summary.density_distributions['i-motif'],
-      },
-    ];
-  });
   readonly positionCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const categories = this.summary()?.position_distribution.categories ?? [];
-    return categories.map((category) => {
-      const ratio = Number.isFinite(category.ratio) ? category.ratio : 0;
+    const total = GENE_CONTEXT_CATEGORIES.reduce(
+      (sum, category) => sum + categoryCount(categories, category.key),
+      0,
+    );
+
+    return GENE_CONTEXT_CATEGORIES.map((category) => {
+      const count = categoryCount(categories, category.key);
+      const ratio = total ? count / total : 0;
       return {
-        ...category,
-        displayLabel: category.display_label ?? category.label,
+        key: category.key,
+        label: category.label,
+        count,
+        ratio,
+        precedence_rank: 0,
+        description: category.label,
+        displayLabel: category.label,
         ratioLabel: PERCENT_FORMATTER.format(ratio),
-        width: `${Math.max(ratio * 100, category.count > 0 ? 2 : 0)}%`,
+        color: category.color,
       };
     });
   });
-  readonly geneBiotypeRows = computed(
-    () =>
-      this.summary()?.position_distribution.gene_biotype_breakdown
-        .filter((row) => row.total_count > 0)
-        .slice(0, 8) ?? [],
+  readonly positionContextTotal = computed(() =>
+    this.positionCategoryRows().reduce((sum, category) => sum + category.count, 0),
   );
-  readonly topDensityAssemblies = computed<readonly TaxonomyG4AssemblySummary[]>(() => {
-    const summary = this.summary();
-    if (!summary || summary.comparison_mode !== 'multi_assembly') {
-      return [];
-    }
-    return summary.assembly_summaries
-      .slice()
-      .sort((left, right) => descendingNullableDensity(left, right, this.g4Type()))
-      .slice(0, 5);
+  readonly positionPieData = computed<ChartData<'pie', number[], string>>(() => {
+    const rows = this.positionCategoryRows().filter((category) => category.count > 0);
+    return {
+      labels: rows.map((category) => category.displayLabel),
+      datasets: [
+        {
+          label: this.selectedMotifLabel(),
+          data: rows.map((category) => category.count),
+          backgroundColor: rows.map((category) => category.color),
+          hoverBackgroundColor: rows.map((category) => category.color),
+          hoverOffset: 2,
+        },
+      ],
+    };
   });
-  readonly lowDensityAssemblies = computed<readonly TaxonomyG4AssemblySummary[]>(() => {
-    const summary = this.summary();
-    if (!summary || summary.comparison_mode !== 'multi_assembly') {
-      return [];
-    }
-    return summary.assembly_summaries
-      .slice()
-      .sort((left, right) => descendingNullableDensity(right, left, this.g4Type()))
-      .slice(0, 5);
-  });
-  readonly summaryErrorMessage = computed(() =>
+  readonly geneBiotypeRows = computed<readonly GeneBiotypeTableRow[]>(() =>
+    (this.summary()?.position_distribution.gene_biotype_breakdown ?? [])
+      .map((row) => {
+        const insideCount = categoryCount(row.categories, 'gene_inside');
+        const upstreamCount = categoryCount(row.categories, 'gene_upstream');
+        const downstreamCount = categoryCount(row.categories, 'gene_downstream');
+        return {
+          bioType: row.bio_type ?? 'unspecified',
+          displayLabel: row.display_label,
+          insideCount,
+          upstreamCount,
+          downstreamCount,
+          totalCount: insideCount + upstreamCount + downstreamCount,
+        };
+      })
+      .filter((row) => row.totalCount > 0)
+      .sort((left, right) => right.totalCount - left.totalCount),
+  );
+  readonly positionContextErrorMessage = computed(() =>
     this.summaryResource.snapshot().status === 'error'
-      ? 'Taxonomy-level G4 statistics are unavailable.'
+      ? 'Taxon-level position context is unavailable.'
       : '',
   );
 
@@ -225,23 +271,19 @@ export class TaxonomyInfoComponent {
     this.flankWindow.set(value);
   }
 
+  loadPositionContext(): void {
+    this.positionContextTaxonId.set(this.taxonId());
+  }
+
   formatCount(value: number | undefined): string {
     return formatCompactCount(value ?? 0);
   }
 
-  formatGenomeLength(value: number | undefined): string {
-    return value === undefined ? 'N/A' : formatGenomeLength(value);
-  }
-
-  formatDensity(value: number | null | undefined): string {
-    return value === null || value === undefined ? 'N/A' : `${DENSITY_FORMATTER.format(value)}/Mb`;
-  }
-
-  formatRatio(value: number | null | undefined): string {
-    return value === null || value === undefined ? 'N/A' : `${DENSITY_FORMATTER.format(value)}x`;
-  }
-
-  densityForAssembly(assembly: TaxonomyG4AssemblySummary): string {
-    return this.formatDensity(densityForAssembly(assembly, this.g4Type()));
+  private positionPieTooltipLabel(context: TooltipItem<'pie'>): string {
+    const label = context.label || 'Context';
+    const value = Number(context.parsed);
+    const total = this.positionContextTotal();
+    const ratio = total ? value / total : 0;
+    return `${label}: ${this.formatCount(value)} (${PERCENT_FORMATTER.format(ratio)})`;
   }
 }

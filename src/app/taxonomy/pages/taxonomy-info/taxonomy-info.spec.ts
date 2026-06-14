@@ -1,12 +1,10 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ArcElement, Legend, PieController, Tooltip } from 'chart.js';
+import { provideCharts } from 'ng2-charts';
 import { of } from 'rxjs';
-import {
-  Taxonomy,
-  TaxonomyG4Summary,
-  TaxonomyService,
-} from '../../services/taxonomy.service';
+import { Taxonomy, TaxonomyG4Summary, TaxonomyService } from '../../services/taxonomy.service';
 import { TaxonomyInfoComponent } from './taxonomy-info';
 
 describe('TaxonomyInfoComponent', () => {
@@ -70,9 +68,139 @@ describe('TaxonomyInfoComponent', () => {
     ],
     position_distribution: {
       g4_type: 'g4',
-      total_count: 12,
-      categories: [],
-      gene_biotype_breakdown: [],
+      total_count: 20,
+      categories: [
+        {
+          key: 'gene_inside',
+          label: 'In genes',
+          count: 6,
+          ratio: 0.3,
+          precedence_rank: 1,
+          description: 'Inside genes',
+          display_label: 'In genes',
+          category_group: 'gene_context',
+          is_default_chart_category: true,
+          display_order: 1,
+        },
+        {
+          key: 'gene_upstream',
+          label: 'Upstream flank',
+          count: 4,
+          ratio: 0.2,
+          precedence_rank: 2,
+          description: 'Upstream flank',
+          display_label: 'Upstream flank',
+          category_group: 'gene_context',
+          is_default_chart_category: true,
+          display_order: 2,
+        },
+        {
+          key: 'gene_downstream',
+          label: 'Downstream flank',
+          count: 2,
+          ratio: 0.1,
+          precedence_rank: 3,
+          description: 'Downstream flank',
+          display_label: 'Downstream flank',
+          category_group: 'gene_context',
+          is_default_chart_category: true,
+          display_order: 3,
+        },
+        {
+          key: 'other_root_non_gene_feature',
+          label: 'Non-gene annotation feature',
+          count: 3,
+          ratio: 0.15,
+          precedence_rank: 4,
+          description: 'Other annotation feature',
+          category_group: 'background',
+          is_default_chart_category: false,
+          display_order: 4,
+        },
+        {
+          key: 'non_feature',
+          label: 'No assigned feature',
+          count: 5,
+          ratio: 0.25,
+          precedence_rank: 5,
+          description: 'No assigned feature',
+          category_group: 'background',
+          is_default_chart_category: false,
+          display_order: 5,
+        },
+      ],
+      gene_biotype_breakdown: [
+        {
+          bio_type: 'protein_coding',
+          display_label: 'protein_coding',
+          total_count: 10,
+          categories: [
+            {
+              key: 'gene_inside',
+              label: 'In genes',
+              count: 5,
+              ratio: 0.5,
+              precedence_rank: 1,
+              description: 'Inside genes',
+            },
+            {
+              key: 'gene_upstream',
+              label: 'Upstream flank',
+              count: 3,
+              ratio: 0.3,
+              precedence_rank: 2,
+              description: 'Upstream flank',
+            },
+            {
+              key: 'gene_downstream',
+              label: 'Downstream flank',
+              count: 2,
+              ratio: 0.2,
+              precedence_rank: 3,
+              description: 'Downstream flank',
+            },
+          ],
+        },
+        {
+          bio_type: null,
+          display_label: 'Unspecified gene biotype',
+          total_count: 12,
+          categories: [
+            {
+              key: 'gene_inside',
+              label: 'In genes',
+              count: 1,
+              ratio: 0.08,
+              precedence_rank: 1,
+              description: 'Inside genes',
+            },
+            {
+              key: 'gene_upstream',
+              label: 'Upstream flank',
+              count: 2,
+              ratio: 0.17,
+              precedence_rank: 2,
+              description: 'Upstream flank',
+            },
+            {
+              key: 'gene_downstream',
+              label: 'Downstream flank',
+              count: 1,
+              ratio: 0.08,
+              precedence_rank: 3,
+              description: 'Downstream flank',
+            },
+            {
+              key: 'non_feature',
+              label: 'No assigned feature',
+              count: 8,
+              ratio: 0.67,
+              precedence_rank: 5,
+              description: 'No assigned feature',
+            },
+          ],
+        },
+      ],
     },
     filters: {
       tetrads: [],
@@ -159,12 +287,17 @@ describe('TaxonomyInfoComponent', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        provideCharts({
+          registerables: [PieController, ArcElement, Tooltip, Legend],
+        }),
         { provide: TaxonomyService, useValue: service },
       ],
     }).compileComponents();
   });
 
-  async function createComponent(summary: TaxonomyG4Summary): Promise<ComponentFixture<TaxonomyInfoComponent>> {
+  async function createComponent(
+    summary: TaxonomyG4Summary,
+  ): Promise<ComponentFixture<TaxonomyInfoComponent>> {
     service.getTaxonomyG4Summary.and.returnValue(of(summary));
     const fixture = TestBed.createComponent(TaxonomyInfoComponent);
     fixture.componentRef.setInput('taxonId', 3702);
@@ -174,25 +307,88 @@ describe('TaxonomyInfoComponent', () => {
     return fixture;
   }
 
-  it('renders single-assembly taxonomy as an assembly landscape without comparison text', async () => {
+  function findButton(
+    fixture: ComponentFixture<TaxonomyInfoComponent>,
+    text: string,
+  ): HTMLButtonElement {
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
+    const button = buttons.find((item) => item.textContent?.includes(text));
+    if (!button) {
+      throw new Error(`Button not found: ${text}`);
+    }
+    return button;
+  }
+
+  async function loadPositionContext(
+    fixture: ComponentFixture<TaxonomyInfoComponent>,
+  ): Promise<void> {
+    findButton(fixture, 'Load context').click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('does not load taxon-level summary statistics before explicit context request', async () => {
     const fixture = await createComponent(singleSummary);
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('Single-assembly landscape');
-    expect(text).toContain('1 assembly available for this taxon');
-    expect(text).toContain('Open genome');
+    expect(service.getTaxonomyG4Summary).not.toHaveBeenCalled();
+    expect(text).toContain('Taxon-level G4 position context');
+    expect(text).toContain('Load context');
+    expect(text).not.toContain('Available assemblies');
+    expect(text).not.toContain('Taxon-level G4 statistics');
     expect(text).not.toContain('IQR');
     expect(text).not.toContain('Highest G4 density');
   });
 
-  it('renders multi-assembly taxonomy comparison sections', async () => {
-    const fixture = await createComponent(multiSummary);
+  it('updates the position context title when switching motif type before loading', async () => {
+    const fixture = await createComponent(singleSummary);
+
+    fixture.componentInstance.setG4Type('i-motif');
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(service.getTaxonomyG4Summary).not.toHaveBeenCalled();
+    expect(text).toContain('Taxon-level i-motif position context');
+  });
+
+  it('loads gene-context pie categories and biotype table on demand', async () => {
+    const fixture = await createComponent(singleSummary);
+
+    await loadPositionContext(fixture);
+
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('Multi-assembly comparison');
-    expect(text).toContain('Assembly density distribution');
-    expect(text).toContain('IQR');
-    expect(text).toContain('Highest G4 density');
-    expect(text).toContain('Lowest G4 density');
+    expect(service.getTaxonomyG4Summary).toHaveBeenCalledWith({
+      taxonId: 3702,
+      g4Type: 'g4',
+      flankWindow: 1000,
+      tetrads: [],
+      minScore: null,
+      maxScore: null,
+      overlap: false,
+    });
+    expect(text).toContain('In genes');
+    expect(text).toContain('Upstream flank');
+    expect(text).toContain('Downstream flank');
+    expect(text).toContain('Gene biotype breakdown');
+    expect(text).toContain('protein_coding');
+    expect(text).toContain('Unspecified gene biotype');
+    expect(text).not.toContain('Non-gene annotation feature');
+    expect(text).not.toContain('No assigned feature');
+  });
+
+  it('does not render multi-assembly comparison data in the position context view', async () => {
+    const fixture = await createComponent(multiSummary);
+
+    await loadPositionContext(fixture);
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).not.toContain('Assembly density distribution');
+    expect(text).not.toContain('IQR');
+    expect(text).not.toContain('Highest G4 density');
+    expect(text).not.toContain('Lowest G4 density');
   });
 });

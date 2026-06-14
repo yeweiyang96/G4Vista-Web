@@ -46,6 +46,7 @@ import {
   G4GeneCandidate,
   G4GeneCandidatesRequest,
   G4HistogramFilters,
+  G4_GENE_POSITION_OPTIONS,
   G4_GENE_POSITION_OPTIONS_BY_TYPE,
   G4GenePosition,
   G4GeneRelationHit,
@@ -127,6 +128,7 @@ const SORTABLE_COLUMNS: Record<string, G4SortField> = {
 };
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const WHOLE_GENOME_SCOPE = 'whole-genome';
+const ANY_GENE_RELATION = 'any-gene-relation';
 const CHART_TARGET_BUCKETS = 200;
 const DEFAULT_TABLE_DOWNLOAD_COLUMNS: readonly G4DownloadColumn[] = [
   'start',
@@ -141,6 +143,13 @@ const DEFAULT_TABLE_DOWNLOAD_COLUMNS: readonly G4DownloadColumn[] = [
 function isG4Type(value: unknown): value is G4Type {
   return value === 'g4' || value === 'i-motif';
 }
+
+function isG4GenePosition(value: unknown): value is G4GenePosition {
+  return (
+    typeof value === 'string' &&
+    G4_GENE_POSITION_OPTIONS.some((option) => option.value === value)
+  );
+}
 const CHART_FOCUS_HALF_WINDOW_BP = 5000;
 const TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP = 100;
 const GENE_SEARCH_FOCUS_HALF_WINDOW_BP = 1000;
@@ -150,6 +159,7 @@ const GENE_CANDIDATE_LIMIT = 20;
 const GENE_CANDIDATE_DEBOUNCE_MS = 300;
 
 type BrowseScope = string;
+type GeneRelationFilterValue = typeof ANY_GENE_RELATION | G4GenePosition;
 
 function createInitialFilterModel(selectedPosition = DEFAULT_GENE_POSITION): G4FilterModel {
   return {
@@ -359,6 +369,13 @@ export class GenomeInfoComponent {
       label: formatGeneRelationLabel(option.label),
     })),
   );
+  readonly draftGeneRelationOptions = computed<readonly {
+    value: GeneRelationFilterValue;
+    label: string;
+  }[]>(() => [
+    { value: ANY_GENE_RELATION, label: 'Any gene relation' },
+    ...this.draftGenePositionOptions(),
+  ]);
   readonly defaultGenePosition = computed(
     () => G4_GENE_POSITION_OPTIONS_BY_TYPE[this.g4Type()][0]?.value ?? DEFAULT_GENE_POSITION,
   );
@@ -373,6 +390,10 @@ export class GenomeInfoComponent {
   readonly filterModel = signal(createInitialFilterModel());
   readonly submittedFilters = signal(createInitialFilterModel());
   readonly filterForm = form(this.filterModel);
+  readonly draftGeneRelationValue = signal<GeneRelationFilterValue>(ANY_GENE_RELATION);
+  readonly showDraftGeneSearch = computed(
+    () => this.draftGeneRelationValue() !== ANY_GENE_RELATION,
+  );
   readonly draftGeneInput = signal('');
   readonly draftSelectedGene = signal<G4GeneCandidate | null>(null);
   readonly submittedSelectedGene = signal<G4GeneCandidate | null>(null);
@@ -751,6 +772,9 @@ export class GenomeInfoComponent {
         (option) => option.value === this.submittedFilters().selectedPosition,
       )?.label ?? 'Gene scope',
   );
+  readonly submittedGeneRelationLabel = computed(() =>
+    this.hasSubmittedSelectedGene() ? this.selectedPositionLabel() : 'Any gene relation',
+  );
   readonly explorerSubtitle = computed(() => {
     const browseScope = this.browseScope();
     const gcType = this.g4Type() === 'i-motif' ? 'i-motif sites' : 'G4 sites';
@@ -771,7 +795,7 @@ export class GenomeInfoComponent {
     },
     {
       label: 'Gene relation',
-      value: this.selectedPositionLabel(),
+      value: this.submittedGeneRelationLabel(),
     },
     {
       label: 'Gene',
@@ -882,7 +906,7 @@ export class GenomeInfoComponent {
       }
 
       this.lastDraftPosition = currentPosition;
-      this.clearGeneSelection();
+      this.clearDraftGeneSelection();
     });
 
     effect(() => {
@@ -929,9 +953,9 @@ export class GenomeInfoComponent {
 
   submitFilters(event?: Event): void {
     event?.preventDefault();
-    const selectedGene = this.draftSelectedGene();
-    const searchTerm = this.draftGeneInput().trim();
-    if (searchTerm && !selectedGene) {
+    const shouldSearchGene = this.showDraftGeneSearch();
+    const selectedGene = shouldSearchGene ? this.draftSelectedGene() : null;
+    if (shouldSearchGene && !selectedGene) {
       this.geneInputError.set('Select a gene from the suggestions before searching.');
       return;
     }
@@ -977,6 +1001,26 @@ export class GenomeInfoComponent {
   selectDraftBrowseScope(scope: BrowseScope): void {
     this.accessionFilter.set('');
     this.draftBrowseScope.set(scope);
+  }
+
+  selectDraftGeneRelation(value: unknown): void {
+    if (value === ANY_GENE_RELATION) {
+      this.draftGeneRelationValue.set(ANY_GENE_RELATION);
+      this.clearDraftGeneSelection();
+      return;
+    }
+
+    if (!isG4GenePosition(value)) {
+      return;
+    }
+
+    this.draftGeneRelationValue.set(value);
+    this.filterModel.update((current) => ({
+      ...current,
+      selectedPosition: value,
+    }));
+    this.lastDraftPosition = value;
+    this.clearDraftGeneSelection();
   }
 
   onAccessionFilterInput(event: Event): void {
@@ -1030,9 +1074,8 @@ export class GenomeInfoComponent {
       selectedPosition: defaultPosition,
     }));
     this.lastDraftPosition = defaultPosition;
-    this.draftGeneInput.set('');
-    this.draftSelectedGene.set(null);
-    this.geneInputError.set(null);
+    this.draftGeneRelationValue.set(ANY_GENE_RELATION);
+    this.clearDraftGeneSelection();
   }
 
   changeSort(sort: Sort): void {
@@ -1088,6 +1131,7 @@ export class GenomeInfoComponent {
     const defaults = createInitialFilterModel(G4_GENE_POSITION_OPTIONS_BY_TYPE.g4[0].value);
     this.filterModel.set(defaults);
     this.submittedFilters.set(defaults);
+    this.draftGeneRelationValue.set(ANY_GENE_RELATION);
     const defaultScope = this.defaultBrowseScope();
     this.browseScope.set(defaultScope);
     this.draftBrowseScope.set(defaultScope);
@@ -1167,6 +1211,7 @@ export class GenomeInfoComponent {
   }
 
   onGeneInput(event: Event): void {
+    this.activateDefaultGeneRelationForGeneSearch();
     const value = (event.target as HTMLInputElement | null)?.value ?? '';
     this.draftGeneInput.set(value);
     this.geneInputError.set(null);
@@ -1181,6 +1226,7 @@ export class GenomeInfoComponent {
   }
 
   selectGeneCandidate(candidate: G4GeneCandidate): void {
+    this.activateDefaultGeneRelationForGeneSearch();
     this.draftSelectedGene.set(candidate);
     this.draftGeneInput.set(formatGeneCandidateLabel(candidate));
     this.geneInputError.set(null);
@@ -1444,12 +1490,30 @@ export class GenomeInfoComponent {
   }
 
   private clearGeneSelection(): void {
-    this.draftGeneInput.set('');
-    this.draftSelectedGene.set(null);
+    this.clearDraftGeneSelection();
     this.submittedSelectedGene.set(null);
     this.submittedSelectedGeneAssemblyAccession.set(null);
     this.selectedGeneAxisRange.set(null);
+  }
+
+  private clearDraftGeneSelection(): void {
+    this.draftGeneInput.set('');
+    this.draftSelectedGene.set(null);
     this.geneInputError.set(null);
+  }
+
+  private activateDefaultGeneRelationForGeneSearch(): void {
+    if (this.draftGeneRelationValue() !== ANY_GENE_RELATION) {
+      return;
+    }
+
+    const defaultPosition = this.defaultDraftGenePosition();
+    this.draftGeneRelationValue.set(defaultPosition);
+    this.filterModel.update((current) => ({
+      ...current,
+      selectedPosition: defaultPosition,
+    }));
+    this.lastDraftPosition = defaultPosition;
   }
 
   geneOptionLabel(candidate: G4GeneCandidate): string {

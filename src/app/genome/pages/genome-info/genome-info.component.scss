@@ -1,20 +1,30 @@
+:host {
+  display: block;
+}
+
 .genome-page {
-  --g4v-page-max: 1520px;
+  --g4v-page-max: 1512px;
+  --genome-border: color-mix(in srgb, var(--mat-sys-outline) 42%, transparent);
+  --genome-card-bg: var(--mat-sys-surface-container-lowest);
+  --genome-shadow: 0 1px 2px color-mix(in srgb, var(--mat-sys-shadow) 10%, transparent);
+
   padding-top: 0;
 }
 
-.genome-layout {
+.genome-layout,
+.main-column {
   display: grid;
-  grid-template-columns: minmax(0, 1520px);
-  gap: 16px;
+  min-width: 0;
+  width: 100%;
+}
+
+.genome-layout {
+  grid-template-columns: minmax(0, 1512px);
   justify-content: center;
 }
 
 .main-column {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-  width: 100%;
+  gap: 0;
 }
 
 .main-column > * {
@@ -23,23 +33,26 @@
 
 .genome-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(620px, auto);
-  gap: 34px;
+  grid-template-columns: minmax(0, 1fr) minmax(670px, 744px);
+  gap: 42px;
   align-items: center;
-  padding: 24px 0 18px;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  padding: 22px 4px 18px;
+  border-bottom: 1px solid var(--genome-border);
 }
 
 .assembly-copy {
   display: grid;
-  gap: 10px;
-  align-content: start;
+  gap: 12px;
+  align-content: center;
+  min-width: 0;
 }
 
 .assembly-copy .g4v-page-title {
-  font-size: clamp(3.3rem, 5vw, 5rem);
+  margin: 0;
+  font-size: clamp(3.6rem, 5.1vw, 5rem);
   font-weight: 800;
-  line-height: 0.98;
+  line-height: 0.95;
+  letter-spacing: 0;
   color: var(--mat-sys-on-surface);
 }
 
@@ -49,13 +62,20 @@
   gap: 8px;
   margin: 0;
   font: var(--mat-sys-title-large);
+  line-height: 1.3;
   color: var(--mat-sys-on-surface-variant);
 }
 
 .taxon-link {
   justify-self: start;
+  min-width: 0;
   padding: 0;
+  font-weight: 500;
   color: var(--mat-sys-primary);
+}
+
+.taxon-link mat-icon {
+  margin-left: 4px;
 }
 
 .assembly-stats {
@@ -63,28 +83,36 @@
   grid-template-columns: repeat(4, minmax(150px, 1fr));
   gap: 20px;
   align-content: start;
+  min-width: 0;
 }
 
 .assembly-stat-card {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  gap: 4px 12px;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 6px 14px;
   align-items: start;
-  min-height: 98px;
-  padding: 18px 20px;
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 34%, var(--mat-sys-outline-variant));
-  border-radius: var(--g4v-radius-large);
+  min-height: 100px;
+  padding: 18px;
+  background: var(--genome-card-bg);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 34%, var(--genome-border));
+  border-radius: 8px;
+  box-shadow: var(--genome-shadow);
 }
 
 .assembly-stat-card mat-icon {
   grid-row: span 2;
+  align-self: start;
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
   color: var(--mat-sys-primary);
 }
 
 .assembly-stat-card strong {
+  overflow-wrap: anywhere;
   font: var(--mat-sys-headline-small);
   font-weight: 800;
+  line-height: 1.1;
   color: var(--mat-sys-on-surface);
 }
 
@@ -92,8 +120,16 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+.assembly-stat-card.g4-stat {
+  border-color: color-mix(in srgb, var(--g4v-g4) 42%, var(--genome-border));
+}
+
+.assembly-stat-card.g4-stat mat-icon {
+  color: var(--g4v-g4);
+}
+
 .assembly-stat-card.imotif-stat {
-  border-color: color-mix(in srgb, var(--g4v-imotif) 46%, var(--mat-sys-outline-variant));
+  border-color: color-mix(in srgb, var(--g4v-imotif) 46%, var(--genome-border));
 }
 
 .assembly-stat-card.imotif-stat mat-icon,
@@ -102,11 +138,12 @@
 }
 
 .release-stat {
-  border-color: var(--mat-sys-outline-variant);
+  border-color: var(--genome-border);
 }
 
 .release-stat strong {
   font: var(--mat-sys-title-large);
+  line-height: 1.2;
   color: var(--mat-sys-on-surface);
 }
 
@@ -116,7 +153,7 @@
   z-index: 1;
   padding: 8px 12px;
   background: var(--mat-sys-surface-container);
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--genome-border);
 }
 
 .accession-filter-input {
@@ -147,18 +184,77 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-.explore-filters {
+.explorer-card {
+  margin-top: 24px;
+}
+
+.section-panel {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 12px;
-  align-items: start;
   min-width: 0;
   max-width: 100%;
-  padding: 16px 18px;
-  overflow: hidden;
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius-large);
+  padding: 18px 24px 22px;
+  overflow: visible;
+  background: var(--genome-card-bg);
+  border: 1px solid var(--genome-border);
+  border-radius: 8px;
+  box-shadow: var(--genome-shadow);
+}
+
+.position-card {
+  border-radius: 0;
+}
+
+.section-panel-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.section-panel-header h2,
+.section-panel-header p {
+  margin: 0;
+}
+
+.section-panel-header h2 {
+  font: var(--mat-sys-headline-small);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.section-panel-header p {
+  margin-top: 4px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.section-panel-content {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.explore-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(170px, 180px) minmax(190px, 1fr) minmax(220px, 1fr)
+    minmax(128px, 0.62fr) minmax(230px, 1fr) minmax(126px, auto);
+  gap: 14px;
+  align-items: end;
+  min-width: 0;
+  max-width: 100%;
+  padding: 12px 16px;
+  background: var(--genome-card-bg);
+  border: 1px solid var(--genome-border);
+  border-radius: 8px;
+}
+
+.explore-filters.has-gene-search {
+  grid-template-columns:
+    minmax(160px, 170px) minmax(174px, 0.95fr) minmax(210px, 1fr)
+    minmax(230px, 1.05fr) minmax(118px, 0.58fr) minmax(220px, 0.96fr)
+    minmax(126px, auto);
 }
 
 .motif-filter-control,
@@ -166,6 +262,10 @@
   display: grid;
   gap: 6px;
   min-width: 0;
+}
+
+.motif-filter-control {
+  align-self: end;
 }
 
 .filter-label {
@@ -178,44 +278,55 @@
 }
 
 .filter-field-gene-search mat-icon {
-  margin-right: 8px;
+  margin-right: 6px;
   color: var(--mat-sys-on-surface-variant);
 }
 
 .score-range-fields {
   display: grid;
-  grid-template-columns: minmax(82px, 1fr) auto minmax(82px, 1fr);
+  grid-template-columns: minmax(78px, 1fr) auto minmax(78px, 1fr);
   gap: 8px;
   align-items: center;
 }
 
+.score-range-fields > span {
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .filter-actions {
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
-  align-items: center;
+  align-items: end;
   justify-content: flex-end;
   min-width: 0;
-  min-height: 56px;
+}
+
+.filter-actions button {
+  min-width: 126px;
 }
 
 .results-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  grid-template-columns: minmax(0, 1fr) minmax(276px, 312px);
   gap: 16px;
   align-items: start;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .results-panel,
 .selection-panel {
   min-width: 0;
   max-width: 100%;
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius-large);
+  background: var(--genome-card-bg);
+  border: 1px solid var(--genome-border);
+  border-radius: 8px;
+  box-shadow: var(--genome-shadow);
+}
+
+.results-panel {
+  overflow: hidden;
 }
 
 .results-tabs {
@@ -228,8 +339,8 @@
 .tab-body {
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
   padding: 16px;
+  overflow: hidden;
 }
 
 app-g4-table,
@@ -269,64 +380,23 @@ app-jbrowse-host {
 
 .selection-panel dl {
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 
 .selection-panel dt {
-  font: var(--mat-sys-label-medium);
+  font: var(--mat-sys-label-small);
   color: var(--mat-sys-on-surface-variant);
 }
 
 .selection-panel dd {
+  overflow-wrap: anywhere;
   font: var(--mat-sys-body-large);
   color: var(--mat-sys-on-surface);
-  overflow-wrap: anywhere;
 }
 
-.section-panel {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  padding: 20px 24px;
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius-large);
-}
-
-.position-card {
-  border-radius: var(--g4v-radius-large);
-}
-
-.section-panel-header {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.section-panel-header h2,
-.section-panel-header p {
-  margin: 0;
-}
-
-.section-panel-header h2 {
-  font: var(--mat-sys-headline-small);
-  font-weight: 800;
-  color: var(--mat-sys-on-surface);
-}
-
-.section-panel-header p {
-  margin-top: 4px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.section-panel-content {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-  max-width: 100%;
+.selection-panel button {
+  justify-self: stretch;
+  margin-top: 8px;
 }
 
 .muted-text {
@@ -341,13 +411,40 @@ app-jbrowse-host {
   color: var(--mat-sys-on-surface-variant);
 }
 
-@media (width <= 1279.98px) {
-  .genome-hero,
-  .assembly-stats {
-    grid-template-columns: 1fr 1fr;
+:host ::ng-deep .genome-page .mat-mdc-text-field-wrapper {
+  min-height: 40px;
+}
+
+:host ::ng-deep .genome-page .mat-mdc-form-field-infix {
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+:host ::ng-deep .genome-page .mat-mdc-select-arrow-wrapper {
+  height: 20px;
+}
+
+:host ::ng-deep .genome-page .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+  padding: 0 22px;
+  line-height: 36px;
+}
+
+:host ::ng-deep .genome-page .mat-mdc-tab-header {
+  border-bottom: 1px solid var(--genome-border);
+}
+
+@media (width <= 1320px) {
+  .genome-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(520px, 1fr);
   }
 
-  .explore-filters {
+  .assembly-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .explore-filters,
+  .explore-filters.has-gene-search {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -357,27 +454,38 @@ app-jbrowse-host {
 }
 
 @media (width <= 959.98px) {
-  .genome-layout {
+  .genome-hero,
+  .results-layout {
     grid-template-columns: 1fr;
   }
 
+  .assembly-copy .g4v-page-title {
+    font-size: clamp(3rem, 14vw, 4rem);
+  }
+
   .explore-filters,
-  .results-layout {
-    grid-template-columns: 1fr;
+  .explore-filters.has-gene-search {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (width <= 599.98px) {
   .genome-hero,
-  .assembly-stats {
+  .assembly-stats,
+  .explore-filters,
+  .explore-filters.has-gene-search {
     grid-template-columns: 1fr;
   }
 
-  .explore-filters {
-    grid-template-columns: 1fr;
+  .genome-hero {
+    gap: 22px;
   }
 
-  .filter-actions {
-    justify-content: flex-start;
+  .section-panel {
+    padding: 16px;
+  }
+
+  .filter-actions button {
+    width: 100%;
   }
 }

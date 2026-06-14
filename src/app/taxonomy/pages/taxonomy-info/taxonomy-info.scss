@@ -24,14 +24,7 @@
 .taxonomy-summary dt,
 .taxonomy-summary dd,
 .taxonomy-panel h2,
-.taxonomy-panel h3,
-.summary-metrics,
-.summary-metrics dt,
-.summary-metrics dd,
-.density-distribution-row dl,
-.density-distribution-row dt,
-.density-distribution-row dd,
-.availability-panel p {
+.taxonomy-panel h3 {
   margin: 0;
 }
 
@@ -134,16 +127,6 @@
   color: var(--mat-sys-on-surface);
 }
 
-.availability-panel p {
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.availability-panel strong {
-  font: var(--mat-sys-display-small);
-  font-weight: 800;
-  color: var(--mat-sys-primary);
-}
-
 .summary-controls {
   display: flex;
   flex-wrap: wrap;
@@ -161,8 +144,6 @@
 
 .inline-loading,
 .state-message,
-.study-mode,
-.single-assembly-callout,
 .quality-warning {
   color: var(--mat-sys-on-surface-variant);
 }
@@ -174,171 +155,54 @@
   min-height: 48px;
 }
 
-.study-mode {
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  background: color-mix(
-    in srgb,
-    var(--mat-sys-primary-container) 30%,
-    var(--mat-sys-surface-container-lowest)
-  );
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
-}
-
-.study-mode strong {
-  color: var(--mat-sys-on-surface);
-}
-
-.summary-metrics {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 10px;
-}
-
-.summary-metrics div {
-  min-width: 0;
-  padding: 12px;
-  background: var(--mat-sys-surface-container);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
-}
-
-.summary-metrics dt,
-.density-distribution-row dt {
-  font: var(--mat-sys-label-medium);
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.summary-metrics dd {
-  margin-top: 6px;
-  overflow-wrap: anywhere;
-  font: var(--mat-sys-title-large);
-  font-weight: 800;
-  color: var(--mat-sys-on-surface);
-}
-
-.single-assembly-callout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
-}
-
-.single-assembly-callout div {
-  display: grid;
-  gap: 3px;
-}
-
-.single-assembly-callout strong {
-  color: var(--mat-sys-on-surface);
-}
-
-.density-panel,
-.density-extremes,
-.position-category-list,
+.position-context-layout,
 .gene-biotype-summary {
   display: grid;
   gap: 12px;
 }
 
-.density-distribution-grid,
-.density-extremes {
+.position-pie-card {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.density-distribution-row,
-.density-extremes > div,
-.gene-biotype-row {
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
   min-width: 0;
-  padding: 12px;
-  background: var(--mat-sys-surface-container);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
 }
 
-.density-distribution-row {
+.position-pie-chart {
+  height: 260px;
+  min-width: 0;
+}
+
+.position-pie-legend {
   display: grid;
   gap: 10px;
 }
 
-.density-distribution-row dl {
+.position-pie-legend div {
   display: grid;
-  gap: 8px;
-}
-
-.density-distribution-row dl div {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-}
-
-.density-distribution-row dd,
-.density-extremes strong {
-  color: var(--mat-sys-on-surface);
-  font-weight: 700;
-}
-
-.density-extremes > div {
-  display: grid;
-  gap: 8px;
-}
-
-.density-extremes a {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
-  color: var(--mat-sys-on-surface);
+  min-width: 0;
 }
 
-.density-extremes a span {
+.position-pie-legend span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.position-pie-legend strong {
   overflow: hidden;
+  color: var(--mat-sys-on-surface);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.position-category-row {
-  display: grid;
-  gap: 7px;
-}
-
-.position-category-main {
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.position-category-main span {
-  font-weight: 700;
-  color: var(--mat-sys-on-surface);
-}
-
-.position-category-main strong {
-  white-space: nowrap;
+.position-pie-legend small {
   color: var(--mat-sys-on-surface-variant);
-}
-
-.position-bar {
-  height: 8px;
-  overflow: hidden;
-  background: var(--mat-sys-surface-container-high);
-  border-radius: 999px;
-}
-
-.position-bar span {
-  display: block;
-  height: 100%;
-  background: var(--mat-sys-primary);
-  border-radius: inherit;
+  white-space: nowrap;
 }
 
 .gene-biotype-summary h3 {
@@ -346,20 +210,43 @@
   font-weight: 800;
 }
 
-.gene-biotype-row {
-  display: grid;
-  gap: 6px;
+.gene-biotype-summary {
+  overflow-x: auto;
 }
 
-.gene-biotype-row > span,
-.gene-biotype-row small {
+.gene-biotype-summary table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font: var(--mat-sys-body-medium);
+}
+
+.gene-biotype-summary th,
+.gene-biotype-summary td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.gene-biotype-summary thead th {
+  font: var(--mat-sys-label-large);
   color: var(--mat-sys-on-surface-variant);
 }
 
-.gene-biotype-row div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
+.gene-biotype-summary tbody th {
+  max-width: 260px;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+  text-align: left;
+}
+
+.gene-biotype-summary td,
+.gene-biotype-summary thead th:not(:first-child) {
+  text-align: right;
+}
+
+.gene-biotype-summary tbody td {
+  color: var(--mat-sys-on-surface);
 }
 
 .quality-warning {
@@ -430,9 +317,7 @@
 @media (width <= 900px) {
   .taxonomy-hero,
   .taxonomy-detail-grid,
-  .summary-metrics,
-  .density-distribution-grid,
-  .density-extremes {
+  .position-pie-card {
     grid-template-columns: 1fr;
   }
 
@@ -449,8 +334,7 @@
     width: 100%;
   }
 
-  .position-category-main {
-    display: grid;
-    gap: 4px;
+  .position-pie-chart {
+    max-width: 320px;
   }
 }

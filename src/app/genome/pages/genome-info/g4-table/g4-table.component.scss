@@ -1,19 +1,40 @@
+@use '@angular/material' as mat;
+
 :host {
   display: block;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
+
+  @include mat.table-overrides(
+    (
+      header-container-height: 42px,
+      row-item-container-height: 40px,
+      row-item-outline-color: color-mix(in srgb, var(--mat-sys-outline) 32%, transparent),
+      row-item-label-text-size: 14px,
+    )
+  );
+  @include mat.button-overrides(
+    (
+      outlined-container-height: 34px,
+      outlined-container-shape: 4px,
+      text-container-height: 34px,
+      text-container-shape: 4px,
+    )
+  );
 }
 
 .table-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
   min-width: 0;
   max-width: 100%;
-  margin: 12px 0;
+  padding: 10px 14px;
+  margin: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--mat-sys-outline) 30%, transparent);
 }
 
 .table-meta mat-chip-set {
@@ -22,6 +43,7 @@
 }
 
 .filter-chip {
+  min-height: 30px;
   cursor: pointer;
 }
 
@@ -30,11 +52,17 @@
   color: var(--mat-sys-primary);
 }
 
-.filter-chip-icon {
+.download-button mat-icon {
   width: 18px;
   height: 18px;
-  margin-left: 4px;
   font-size: 18px;
+}
+
+.filter-chip-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  font-size: 16px;
 }
 
 .g4-grid {
@@ -47,8 +75,11 @@
 
 .sequence-button {
   justify-content: flex-start;
+  min-width: 0;
   padding: 0;
   font-family: 'IBM Plex Mono', SFMono-Regular, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.35;
   text-align: left;
 }
 
@@ -58,21 +89,47 @@
 
 .sequence-highlight {
   font-weight: 700;
-  color: var(--mat-sys-primary);
+  color: var(--g4v-g4);
 }
 
 .relation-links {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 10px 0;
+  padding: 6px 0;
 }
 
 .gene-link {
   min-width: 0;
+  padding: 0;
 }
 
 .muted-text {
   font: var(--mat-sys-body-small);
   color: var(--mat-sys-on-surface-variant);
+}
+
+:host ::ng-deep .g4-grid .mtx-grid-toolbar {
+  min-height: 44px;
+  padding: 6px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--mat-sys-outline) 30%, transparent);
+}
+
+:host ::ng-deep .g4-grid .mtx-grid-toolbar-content {
+  justify-content: flex-end;
+}
+
+:host ::ng-deep .g4-grid .mat-mdc-header-cell,
+:host ::ng-deep .g4-grid .mat-mdc-cell {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+:host ::ng-deep .g4-grid .mat-mdc-header-cell {
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+}
+
+:host ::ng-deep .g4-grid .mat-mdc-paginator {
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline) 30%, transparent);
 }

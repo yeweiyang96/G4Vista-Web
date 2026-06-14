@@ -1099,7 +1099,7 @@ describe('GenomeInfoComponent', () => {
     expect(g4Service.getGeneSearchPage).not.toHaveBeenCalled();
   });
 
-  it('clears selected gene when selectedPosition or g4Type changes', async () => {
+  it('keeps submitted gene until apply and clears it when committed g4Type changes', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
     await fixture.whenStable();
@@ -1125,7 +1125,7 @@ describe('GenomeInfoComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(component.submittedSelectedGene()).toBeNull();
+    expect(component.submittedSelectedGene()?.feature_id).toBe('dnaK');
     expect(component.draftSelectedGene()).toBeNull();
     expect(component.draftGeneInput()).toBe('');
 

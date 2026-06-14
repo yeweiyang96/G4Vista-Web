@@ -84,6 +84,7 @@
           <div class="section-panel-content">
             <form
               class="explore-filters"
+              [class.has-gene-search]="showDraftGeneSearch()"
               aria-label="G4/i-motif filters"
               data-help-target="g4-explorer-filters"
               (submit)="submitFilters($event)"
@@ -159,50 +160,55 @@
 
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
                 <mat-label>Gene relation</mat-label>
-                <mat-select [formField]="filterForm.selectedPosition">
-                  @for (option of draftGenePositionOptions(); track option.value) {
+                <mat-select
+                  [value]="draftGeneRelationValue()"
+                  (valueChange)="selectDraftGeneRelation($event)"
+                >
+                  @for (option of draftGeneRelationOptions(); track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field
-                appearance="outline"
-                subscriptSizing="dynamic"
-                class="filter-field filter-field-gene-search"
-              >
-                <mat-label>Gene keyword</mat-label>
-                <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-                <input
-                  matInput
-                  type="search"
-                  autocomplete="off"
-                  spellcheck="false"
-                  placeholder="Feature ID, gene name, or locus tag"
-                  [value]="draftGeneInput()"
-                  [matAutocomplete]="geneAuto"
-                  (input)="onGeneInput($event)"
-                />
-                <mat-autocomplete
-                  #geneAuto="matAutocomplete"
-                  [displayWith]="displayGeneCandidate"
-                  autoActiveFirstOption
-                  (optionSelected)="onGeneCandidateSelected($event)"
+              @if (showDraftGeneSearch()) {
+                <mat-form-field
+                  appearance="outline"
+                  subscriptSizing="dynamic"
+                  class="filter-field filter-field-gene-search"
                 >
-                  @for (
-                    candidate of geneCandidates();
-                    track trackByGeneCandidate($index, candidate)
-                  ) {
-                    <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
+                  <mat-label>Gene keyword</mat-label>
+                  <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                  <input
+                    matInput
+                    type="search"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="Feature ID, gene name, or locus tag"
+                    [value]="draftGeneInput()"
+                    [matAutocomplete]="geneAuto"
+                    (input)="onGeneInput($event)"
+                  />
+                  <mat-autocomplete
+                    #geneAuto="matAutocomplete"
+                    [displayWith]="displayGeneCandidate"
+                    autoActiveFirstOption
+                    (optionSelected)="onGeneCandidateSelected($event)"
+                  >
+                    @for (
+                      candidate of geneCandidates();
+                      track trackByGeneCandidate($index, candidate)
+                    ) {
+                      <mat-option [value]="candidate">{{ geneOptionLabel(candidate) }}</mat-option>
+                    }
+                    @if (showGeneCandidateEmptyState()) {
+                      <mat-option disabled>No matching genes found.</mat-option>
+                    }
+                  </mat-autocomplete>
+                  @if (geneInputError(); as errorMessage) {
+                    <mat-error>{{ errorMessage }}</mat-error>
                   }
-                  @if (showGeneCandidateEmptyState()) {
-                    <mat-option disabled>No matching genes found.</mat-option>
-                  }
-                </mat-autocomplete>
-                @if (geneInputError(); as errorMessage) {
-                  <mat-error>{{ errorMessage }}</mat-error>
-                }
-              </mat-form-field>
+                </mat-form-field>
+              }
 
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
                 <mat-label>G-tetrads</mat-label>
@@ -243,7 +249,6 @@
               </div>
 
               <div class="filter-actions">
-                <button mat-button type="button" (click)="resetFilters()">Reset filters</button>
                 <button mat-flat-button type="submit">Apply filters</button>
               </div>
             </form>

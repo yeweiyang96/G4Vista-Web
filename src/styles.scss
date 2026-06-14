@@ -92,6 +92,50 @@ a {
   margin: 0 auto;
 }
 
+.genome-page {
+  @include mat.form-field-overrides(
+    (
+      container-height: 40px,
+      container-text-size: 14px,
+      outlined-container-shape: 4px,
+      outlined-label-text-size: 12px,
+      outlined-label-text-weight: 500,
+    )
+  );
+  @include mat.button-toggle-overrides(
+    (
+      height: 36px,
+      shape: 4px,
+      divider-color: var(--mat-sys-outline-variant),
+      selected-state-background-color: var(--g4v-g4),
+      selected-state-text-color: light-dark(#ffffff, #00201c),
+      label-text-size: 14px,
+      label-text-weight: 500,
+    )
+  );
+  @include mat.button-overrides(
+    (
+      filled-container-height: 40px,
+      filled-container-shape: 4px,
+      outlined-container-height: 36px,
+      outlined-container-shape: 4px,
+      text-container-height: 36px,
+      text-container-shape: 4px,
+    )
+  );
+  @include mat.tabs-overrides(
+    (
+      container-height: 44px,
+      active-indicator-height: 2px,
+      active-indicator-color: var(--g4v-g4),
+      active-label-text-color: var(--g4v-g4),
+      divider-color: var(--mat-sys-outline-variant),
+      label-text-size: 16px,
+      label-text-weight: 500,
+    )
+  );
+}
+
 .g4v-stack {
   display: grid;
   gap: 18px;
