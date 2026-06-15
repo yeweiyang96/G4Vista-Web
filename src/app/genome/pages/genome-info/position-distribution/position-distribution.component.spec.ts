@@ -18,7 +18,7 @@ describe('PositionDistributionComponent', () => {
   const distribution: G4PositionDistributionResponse = {
     ...EMPTY_G4_POSITION_DISTRIBUTION,
     assembly_accession: 'GCF_1',
-    g4_type: 'g4',
+    quadruplex_type: 'g4',
     total_count: 6,
     categories: [
       {

@@ -166,9 +166,6 @@ export interface G4HistogramRequest {
 }
 
 export interface G4PositionDistributionFilters {
-  tetrads: number[];
-  min_score: number | null;
-  max_score: number | null;
   flank_window: G4FlankWindow;
   counting_mode: 'exclusive';
 }
@@ -211,7 +208,7 @@ export interface G4PositionDistributionQuality {
 
 export interface G4PositionDistributionResponse {
   assembly_accession: string;
-  g4_type: G4Type;
+  quadruplex_type: G4Type;
   filters: G4PositionDistributionFilters;
   total_count: number;
   categories: G4PositionCategory[];
@@ -317,12 +314,7 @@ export interface G4PositionStatisticsResponse {
 export interface G4PositionDistributionRequest {
   assemblyAccession: string;
   g4Type: G4Type;
-  tetrads: number[];
-  minScore?: number;
-  maxScore?: number;
   flankWindow: G4FlankWindow;
-  includeFeatureBreakdown?: boolean;
-  includeGeneBiotypeBreakdown?: boolean;
 }
 
 export interface G4PositionStatisticsRequest {
@@ -415,11 +407,8 @@ export const EMPTY_G4_HISTOGRAM: G4HistogramResponse = {
 
 export const EMPTY_G4_POSITION_DISTRIBUTION: G4PositionDistributionResponse = {
   assembly_accession: '',
-  g4_type: 'g4',
+  quadruplex_type: 'g4',
   filters: {
-    tetrads: [],
-    min_score: null,
-    max_score: null,
     flank_window: 1000,
     counting_mode: 'exclusive',
   },
@@ -563,6 +552,7 @@ function parseContentDispositionFilename(contentDisposition: string | null): str
 export class G4Service {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/g4';
+  private readonly quadruplexSequenceApiUrl = '/api/v1/quadruplex-sequences';
 
   private appendCommonFilterParams(
     params: HttpParams,
@@ -729,16 +719,12 @@ export class G4Service {
   getPositionDistribution(
     request: G4PositionDistributionRequest,
   ): Observable<G4PositionDistributionResponse> {
-    const params = this.appendCommonFilterParams(
-      new HttpParams()
-        .set('flank_window', request.flankWindow)
-        .set('include_feature_breakdown', request.includeFeatureBreakdown ?? true)
-        .set('include_gene_biotype_breakdown', request.includeGeneBiotypeBreakdown ?? true),
-      request,
-    );
+    const params = new HttpParams()
+      .set('quadruplex_type', request.g4Type)
+      .set('flank_window', request.flankWindow);
 
     return this.http.get<G4PositionDistributionResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/position-distribution`,
+      `${this.quadruplexSequenceApiUrl}/${encodeURIComponent(request.assemblyAccession)}/position-distribution`,
       { params },
     );
   }

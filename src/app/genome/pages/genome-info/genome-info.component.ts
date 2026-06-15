@@ -772,11 +772,7 @@ export class GenomeInfoComponent {
       return {
         assemblyAccession: this.assemblyAccession(),
         g4Type: this.positionDistributionG4Type(),
-        tetrads: this.positionDistributionFilters().tetrads,
-        minScore: this.positionDistributionFilters().minScore,
-        maxScore: this.positionDistributionFilters().maxScore,
         flankWindow: this.positionDistributionFlankWindow(),
-        includeFeatureBreakdown: false,
       };
     },
     stream: ({ params }) => {

@@ -84,14 +84,20 @@
     </div>
 
     <div class="reference-list">
-      @for (reference of references; track reference.url) {
+      @for (reference of references; track reference.title) {
         <article class="reference-item">
           <h3>{{ reference.title }}</h3>
           <p>{{ reference.citation }}</p>
-          <a [href]="reference.url" target="_blank" rel="noopener noreferrer">
-            <mat-icon aria-hidden="true">open_in_new</mat-icon>
-            Source
-          </a>
+          <div class="reference-actions">
+            <a [href]="reference.websiteUrl" target="_blank" rel="noopener noreferrer">
+              <mat-icon aria-hidden="true">language</mat-icon>
+              Website
+            </a>
+            <a [href]="reference.citationUrl" target="_blank" rel="noopener noreferrer">
+              <mat-icon aria-hidden="true">format_quote</mat-icon>
+              Citation
+            </a>
+          </div>
         </article>
       }
     </div>

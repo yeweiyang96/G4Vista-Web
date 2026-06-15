@@ -337,32 +337,24 @@ describe('G4Service', () => {
     });
   });
 
-  it('builds position distribution requests with submitted filters', () => {
+  it('builds position distribution requests with motif type and flank window', () => {
     service
       .getPositionDistribution({
         assemblyAccession: 'GCF_000021765.1',
         g4Type: 'g4',
-        tetrads: [2, 4],
-        minScore: 12,
-        maxScore: 40,
         flankWindow: 500,
-        includeFeatureBreakdown: false,
-        includeGeneBiotypeBreakdown: false,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/g4/position-distribution?flank_window=500&include_feature_breakdown=false&include_gene_biotype_breakdown=false&tetrads=2&tetrads=4&min_score=12&max_score=40',
+      '/api/v1/quadruplex-sequences/GCF_000021765.1/position-distribution?quadruplex_type=g4&flank_window=500',
     );
 
     expect(request.request.method).toBe('GET');
     request.flush({
       assembly_accession: 'GCF_000021765.1',
-      g4_type: 'g4',
+      quadruplex_type: 'g4',
       filters: {
-        tetrads: [2, 4],
-        min_score: 12,
-        max_score: 40,
         flank_window: 500,
         counting_mode: 'exclusive',
       },
@@ -379,28 +371,24 @@ describe('G4Service', () => {
     });
   });
 
-  it('requests gene biotype breakdown by default for position distribution', () => {
+  it('does not send score or tetrad filters for position distribution', () => {
     service
       .getPositionDistribution({
         assemblyAccession: 'GCF_000021765.1',
         g4Type: 'g4',
-        tetrads: [],
         flankWindow: 1000,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/g4/position-distribution?flank_window=1000&include_feature_breakdown=true&include_gene_biotype_breakdown=true',
+      '/api/v1/quadruplex-sequences/GCF_000021765.1/position-distribution?quadruplex_type=g4&flank_window=1000',
     );
 
     expect(request.request.method).toBe('GET');
     request.flush({
       assembly_accession: 'GCF_000021765.1',
-      g4_type: 'g4',
+      quadruplex_type: 'g4',
       filters: {
-        tetrads: [],
-        min_score: null,
-        max_score: null,
         flank_window: 1000,
         counting_mode: 'exclusive',
       },

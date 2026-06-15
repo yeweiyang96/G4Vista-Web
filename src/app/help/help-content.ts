@@ -31,7 +31,8 @@ export interface HelpQuestionAnswer {
 export interface HelpReference {
   readonly title: string;
   readonly citation: string;
-  readonly url: string;
+  readonly websiteUrl: string;
+  readonly citationUrl: string;
 }
 
 export interface TourStep {
@@ -249,28 +250,25 @@ export const HELP_QUESTIONS: readonly HelpQuestionAnswer[] = [
 
 export const HELP_REFERENCES: readonly HelpReference[] = [
   {
-    title: 'G4Hunter',
+    title: 'NCBI Datasets',
     citation:
-      'Bedrat A, Lacroix L, Mergny JL. Re-evaluation of G-quadruplex propensity with G4Hunter. Nucleic Acids Research. 2016.',
-    url: 'https://academic.oup.com/nar/article/44/4/1746/1854664',
+      'O’Leary NA, Cox E, Holmes JB, et al. Exploring and retrieving sequence and metadata for species across the tree of life with NCBI Datasets. Sci Data 11, 732 (2024). https://doi.org/10.1038/s41597-024-03571-y',
+    websiteUrl: 'https://www.ncbi.nlm.nih.gov/datasets/',
+    citationUrl: 'https://www.ncbi.nlm.nih.gov/datasets/docs/v2/citing-datasets/',
   },
   {
-    title: 'Genome-wide quadruplex prevalence',
+    title: 'BacDive',
     citation:
-      'Huppert JL, Balasubramanian S. Prevalence of quadruplexes in the human genome. Nucleic Acids Research. 2005.',
-    url: 'https://academic.oup.com/nar/article/33/9/2908/1021176',
+      'Schober I, Koblitz J, Sardà Carbasse J, et al. Bac Dive in 2025: the core database for prokaryotic strain data. Nucleic Acids Research 53(D1):D748-D756. https://doi.org/10.1093/nar/gkae959',
+    websiteUrl: 'https://bacdive.dsmz.de/',
+    citationUrl: 'https://bacdive.dsmz.de/about',
   },
   {
-    title: 'i-motif DNA structure',
+    title: 'QGRS Mapper',
     citation:
-      'Gehring K, Leroy JL, Guéron M. A tetrameric DNA structure with protonated cytosine-cytosine base pairs. Nature. 1993.',
-    url: 'https://pubmed.ncbi.nlm.nih.gov/8388095/',
-  },
-  {
-    title: 'NCBI Assembly',
-    citation:
-      'NCBI Assembly provides genome assembly metadata, accession identifiers, and organism context used by G4Vista assembly pages.',
-    url: 'https://www.ncbi.nlm.nih.gov/assembly/',
+      "Kikin O, D'Antonio L, Bagga PS. QGRS Mapper: a web-based server for predicting G-quadruplexes in nucleotide sequences. Nucleic Acids Research 34(Web Server issue):W676-W682 (2006).",
+    websiteUrl: 'https://bioinformatics.ramapo.edu/QGRS/index.php',
+    citationUrl: 'https://bioinformatics.ramapo.edu/QGRS/index.php',
   },
 ];
 

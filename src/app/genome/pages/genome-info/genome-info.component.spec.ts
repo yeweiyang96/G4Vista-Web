@@ -296,7 +296,7 @@ describe('GenomeInfoComponent', () => {
       of({
         ...EMPTY_G4_POSITION_DISTRIBUTION,
         assembly_accession: 'GCF_1',
-        g4_type: 'g4',
+        quadruplex_type: 'g4',
         total_count: 5,
         categories: [
           {
@@ -581,10 +581,6 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         g4Type: 'g4',
         flankWindow: 1000,
-        tetrads: [],
-        minScore: undefined,
-        maxScore: undefined,
-        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
@@ -639,17 +635,7 @@ describe('GenomeInfoComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        g4Type: 'g4',
-        flankWindow: 1000,
-        tetrads: [3],
-        minScore: 12,
-        maxScore: 40,
-        includeFeatureBreakdown: false,
-      }),
-    );
+    expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
@@ -669,17 +655,7 @@ describe('GenomeInfoComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(g4Service.getPositionDistribution).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        g4Type: 'g4',
-        flankWindow: 1000,
-        tetrads: [],
-        minScore: undefined,
-        maxScore: undefined,
-        includeFeatureBreakdown: false,
-      }),
-    );
+    expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
@@ -713,8 +689,6 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         g4Type: 'g4',
         flankWindow: 500,
-        tetrads: [],
-        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
@@ -740,8 +714,6 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         g4Type: 'i-motif',
         flankWindow: 500,
-        tetrads: [],
-        includeFeatureBreakdown: false,
       }),
     );
     expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(

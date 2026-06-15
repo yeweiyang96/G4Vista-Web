@@ -240,9 +240,6 @@ describe('TaxonomyInfoComponent', () => {
       ],
     },
     filters: {
-      tetrads: [],
-      min_score: null,
-      max_score: null,
       flank_window: 1000,
       counting_mode: 'exclusive',
     },

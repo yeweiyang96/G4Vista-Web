@@ -1,7 +1,9 @@
 .help-page {
   display: grid;
   gap: 0;
+
   --g4v-page-max: 1280px;
+
   padding: 0;
   margin: 28px auto 48px;
   overflow: hidden;
@@ -145,8 +147,8 @@
 }
 
 .qa-accordion p {
-  color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .reference-list {
@@ -173,8 +175,14 @@
 }
 
 .reference-item p {
-  color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.reference-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .reference-item a {
@@ -182,9 +190,9 @@
   gap: 6px;
   align-items: center;
   justify-self: start;
-  color: var(--mat-sys-primary);
   font: var(--mat-sys-label-large);
   font-weight: 800;
+  color: var(--mat-sys-primary);
   text-decoration: none;
 }
 
