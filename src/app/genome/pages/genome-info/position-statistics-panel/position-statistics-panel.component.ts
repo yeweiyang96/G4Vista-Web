@@ -38,7 +38,6 @@ interface GeneBiotypeDensityRow {
   key: string;
   label: string;
   totalCount: number;
-  isOther: boolean;
   cells: readonly GeneBiotypeDensityCell[];
 }
 
@@ -58,7 +57,7 @@ interface StrengthBoxPlotView {
 
 const BOX_PLOT_TOOLTIP =
   'Whiskers show minimum and maximum. The box spans q1 to p75, with the median line inside.';
-const MAX_VISIBLE_NON_OTHER_BIOTYPE_ROWS = 11;
+const MAX_VISIBLE_BIOTYPE_ROWS = 12;
 const LENGTH_MB_FORMATTER = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 3,
   minimumFractionDigits: 0,
@@ -179,11 +178,24 @@ function biotypeDensityRow(
     key,
     label: biotypeRowLabel(row),
     totalCount: row.total_count,
-    isOther: key === 'other',
     cells: GENE_CONTEXT_CATEGORY_KEYS.map((categoryKey) =>
       biotypeDensityCell(row.categories, categoryKey, g4Type),
     ),
   };
+}
+
+function compareBiotypeDensityRows(
+  left: GeneBiotypeDensityRow,
+  right: GeneBiotypeDensityRow,
+): number {
+  const countDifference = right.totalCount - left.totalCount;
+  if (countDifference !== 0) {
+    return countDifference;
+  }
+  return left.label.localeCompare(right.label, 'en', {
+    numeric: true,
+    sensitivity: 'base',
+  });
 }
 
 function completeBoxPlotValues(
@@ -250,20 +262,17 @@ export class PositionStatisticsPanelComponent {
     ),
   );
   readonly biotypeDensityRows = computed<readonly GeneBiotypeDensityRow[]>(() =>
-    this.statistics().windows.flatMap((window) =>
-      (window.gene_biotype_breakdown ?? []).map((row) => biotypeDensityRow(row, this.g4Type())),
-    ),
+    this.statistics()
+      .windows.flatMap((window) =>
+        (window.gene_biotype_breakdown ?? []).map((row) => biotypeDensityRow(row, this.g4Type())),
+      )
+      .sort(compareBiotypeDensityRows),
   );
-  readonly visibleBiotypeDensityRows = computed<readonly GeneBiotypeDensityRow[]>(() => [
-    ...this.biotypeDensityRows().filter((row) => row.isOther),
-    ...this.biotypeDensityRows()
-      .filter((row) => !row.isOther)
-      .slice(0, MAX_VISIBLE_NON_OTHER_BIOTYPE_ROWS),
-  ]);
+  readonly visibleBiotypeDensityRows = computed<readonly GeneBiotypeDensityRow[]>(() =>
+    this.biotypeDensityRows().slice(0, MAX_VISIBLE_BIOTYPE_ROWS),
+  );
   readonly additionalBiotypeDensityRows = computed<readonly GeneBiotypeDensityRow[]>(() =>
-    this.biotypeDensityRows()
-      .filter((row) => !row.isOther)
-      .slice(MAX_VISIBLE_NON_OTHER_BIOTYPE_ROWS),
+    this.biotypeDensityRows().slice(MAX_VISIBLE_BIOTYPE_ROWS),
   );
   readonly strengthRows = computed<readonly PositionStrengthRow[]>(() =>
     this.statisticsRows().map((category) => ({

@@ -6,8 +6,29 @@
   max-width: 100%;
 }
 
+.assembly-list-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+
 .mat-mdc-form-field {
   width: 100%;
+}
+
+.assembly-set-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.assembly-set-actions span {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .assembly-table-shell {
@@ -54,4 +75,31 @@ table.metrics-table {
 .mat-column-asm_name {
   max-width: 220px;
   overflow-wrap: anywhere;
+}
+
+.mat-column-select {
+  width: 56px;
+}
+
+.set-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  margin-left: 8px;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-primary);
+  vertical-align: middle;
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+  border-radius: 999px;
+}
+
+@media (width <= 900px) {
+  .assembly-list-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .assembly-set-actions {
+    justify-content: flex-start;
+  }
 }

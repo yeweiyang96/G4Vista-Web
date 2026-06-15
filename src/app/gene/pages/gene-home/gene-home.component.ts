@@ -21,17 +21,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { PageEvent } from '@angular/material/paginator';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import {
   debounceTime,
   distinctUntilChanged,
+  finalize,
   map,
   Observable,
   of,
   startWith,
   switchMap,
 } from 'rxjs';
-import { GeneSearchItem, GeneService } from '../../services/gene.service';
+import { GeneSearchItem, GeneSearchPage, GeneService } from '../../services/gene.service';
 import { geneBiotypeLabel } from '../../../shared/gene-biotype';
 import {
   AssemblyCount,
@@ -43,14 +45,14 @@ import {
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const TAXON_SEARCH_DEBOUNCE_MS = 250;
 
-interface GeneSearchCsvColumn {
-  readonly header: string;
-  readonly value: (row: GeneSearchItem) => string | number | null;
-}
-
 interface GeneSearchParams {
   readonly searchTerm: string;
   readonly taxonId: number | null;
+}
+
+interface GeneSearchPageParams extends GeneSearchParams {
+  readonly pageIndex: number;
+  readonly pageSize: number;
 }
 
 interface GeneTaxonScope {
@@ -61,43 +63,6 @@ interface GeneTaxonScope {
 
 function internalG4SiteCount(row: GeneSearchItem): number {
   return row.insideOf_gene_g4_count;
-}
-
-function geneFeatureLabel(row: GeneSearchItem): string | null {
-  return row.gene_name || row.feature_id;
-}
-
-function csvCell(value: string | number | null): string {
-  const text = value === null ? '' : String(value);
-  const escapedText = text.replace(/"/g, '""');
-  return /[",\n\r]/.test(escapedText) ? `"${escapedText}"` : escapedText;
-}
-
-const GENE_SEARCH_CSV_COLUMNS: readonly GeneSearchCsvColumn[] = [
-  { header: 'Species', value: (row) => row.organism_name },
-  { header: 'Gene', value: (row) => geneFeatureLabel(row) },
-  { header: 'Feature ID', value: (row) => row.gene_id },
-  { header: 'Assembly', value: (row) => row.assembly_accession },
-  { header: 'Sequence record', value: (row) => row.seqid },
-  { header: 'Biotype', value: (row) => geneBiotypeLabel(row.gene_biotype) },
-  { header: 'Start', value: (row) => row.feature_start },
-  { header: 'End', value: (row) => row.feature_end },
-  { header: 'Strand', value: (row) => row.strand },
-  { header: 'Internal G4 count', value: (row) => internalG4SiteCount(row) },
-];
-
-function geneSearchCsv(rows: readonly GeneSearchItem[]): string {
-  const headerRow = GENE_SEARCH_CSV_COLUMNS.map((column) => csvCell(column.header)).join(',');
-  const bodyRows = rows.map((row) =>
-    GENE_SEARCH_CSV_COLUMNS.map((column) => csvCell(column.value(row))).join(','),
-  );
-  return [headerRow, ...bodyRows].join('\n');
-}
-
-function exportFileName(searchTerm: string, taxonId: number | null): string {
-  const queryToken = searchTerm.trim().replace(/[<>:"/\\|?*\s]+/g, '_');
-  const taxonToken = taxonId === null ? '' : `taxon-${taxonId}-`;
-  return `g4vista-gene-results-${taxonToken}${queryToken}.csv`;
 }
 
 function normalizeTaxonSearchValue(value: string | TaxonomySearch | null): string {
@@ -179,6 +144,25 @@ function geneSearchRequestFromParams(params: GeneSearchParams): {
   return { searchTerm: params.searchTerm, taxonId: params.taxonId };
 }
 
+function geneSearchPageRequestFromParams(params: GeneSearchPageParams): {
+  readonly searchTerm: string;
+  readonly taxonId?: number;
+  readonly pageIndex: number;
+  readonly pageSize: number;
+} {
+  const baseRequest = geneSearchRequestFromParams(params);
+  return {
+    ...baseRequest,
+    pageIndex: params.pageIndex,
+    pageSize: params.pageSize,
+  };
+}
+
+const EMPTY_GENE_SEARCH_PAGE: GeneSearchPage = {
+  genes: [],
+  count: 0,
+};
+
 @Component({
   selector: 'app-gene-home',
   imports: [
@@ -208,6 +192,9 @@ export class GeneHomeComponent {
   readonly taxonControl = new FormControl<string | TaxonomySearch>('');
   readonly pageSizeOptions = [10, 20, 50];
   readonly selectedTaxon = signal<GeneTaxonScope | null>(null);
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(10);
+  readonly isExporting = signal(false);
 
   private readonly document = inject(DOCUMENT);
   private readonly geneService = inject(GeneService);
@@ -253,16 +240,30 @@ export class GeneHomeComponent {
         searchTerm.length > 0 ? this.taxonomyService.searchTaxonomy(searchTerm) : of([]),
       ),
     );
-  readonly searchResultResource = rxResource<GeneSearchItem[], GeneSearchParams | null>({
-    params: () => this.submittedSearch(),
+  readonly searchResultResource = rxResource<GeneSearchPage, GeneSearchPageParams | null>({
+    params: () => {
+      const search = this.submittedSearch();
+      if (search === null) {
+        return null;
+      }
+      return {
+        ...search,
+        pageIndex: this.pageIndex(),
+        pageSize: this.pageSize(),
+      };
+    },
     stream: ({ params }) =>
-      params ? this.geneService.searchGenes(geneSearchRequestFromParams(params)) : of([]),
-    defaultValue: [],
+      params
+        ? this.geneService.searchGenesPage(geneSearchPageRequestFromParams(params))
+        : of(EMPTY_GENE_SEARCH_PAGE),
+    defaultValue: EMPTY_GENE_SEARCH_PAGE,
   });
 
   readonly submittedQuery = computed(() => this.submittedSearch()?.searchTerm ?? null);
   readonly submittedTaxonId = computed(() => this.submittedSearch()?.taxonId ?? null);
-  readonly results = computed(() => this.searchResultResource.value());
+  readonly resultsPage = computed(() => this.searchResultResource.value());
+  readonly results = computed(() => this.resultsPage().genes);
+  readonly resultCount = computed(() => this.resultsPage().count);
   readonly isLoading = this.searchResultResource.isLoading;
 
   readonly showPromptMessage = computed(() => !this.hasSubmitted() || !this.submittedQuery());
@@ -271,13 +272,13 @@ export class GeneHomeComponent {
       this.hasSubmitted() &&
       !!this.submittedQuery() &&
       !this.isLoading() &&
-      this.results().length === 0,
+      this.resultCount() === 0,
   );
   readonly showResultsPanel = computed(
     () =>
       this.hasSubmitted() &&
       !!this.submittedQuery() &&
-      (this.isLoading() || this.results().length > 0),
+      (this.isLoading() || this.resultCount() > 0),
   );
   readonly showGlobalSearchWarning = computed(
     () => this.hasSubmitted() && !!this.submittedQuery() && this.submittedTaxonId() === null,
@@ -293,11 +294,16 @@ export class GeneHomeComponent {
       : `${COUNT_FORMATTER.format(assemblyCount)} assemblies`;
   });
   readonly resultCountLabel = computed(() => {
-    const resultCount = this.results().length;
-    if (this.isLoading() && resultCount === 0) {
+    const resultCount = this.resultCount();
+    if (this.isLoading() && this.results().length === 0) {
       return 'Loading results...';
     }
-    return `Showing 1-${resultCount} of ${resultCount} results`;
+    if (resultCount === 0) {
+      return 'Showing 0 results';
+    }
+    const start = this.pageIndex() * this.pageSize() + 1;
+    const end = Math.min(start + this.results().length - 1, resultCount);
+    return `Showing ${COUNT_FORMATTER.format(start)}-${COUNT_FORMATTER.format(end)} of ${COUNT_FORMATTER.format(resultCount)} results`;
   });
 
   readonly columns = computed<MtxGridColumn<GeneSearchItem>[]>(() => [
@@ -428,10 +434,19 @@ export class GeneHomeComponent {
     return COUNT_FORMATTER.format(internalG4SiteCount(row));
   }
 
+  changePage(event: PageEvent): void {
+    if (event.pageSize !== this.pageSize()) {
+      this.pageSize.set(event.pageSize);
+    }
+    this.pageIndex.set(event.pageIndex);
+  }
+
   exportResults(): void {
-    const rows = this.results();
-    if (rows.length === 0) {
-      throw new Error('Cannot export gene search results because the current result set is empty.');
+    if (this.isExporting()) {
+      return;
+    }
+    if (this.resultCount() === 0) {
+      throw new Error('Cannot export gene search results because no matching results are loaded.');
     }
 
     const submittedSearch = this.submittedSearch();
@@ -453,19 +468,24 @@ export class GeneHomeComponent {
       );
     }
 
-    const blob = new Blob([geneSearchCsv(rows)], { type: 'text/csv;charset=utf-8' });
-    const objectUrl = view.URL.createObjectURL(blob);
-    const link = this.document.createElement('a');
-    link.href = objectUrl;
-    link.download = exportFileName(submittedSearch.searchTerm, submittedSearch.taxonId);
+    this.isExporting.set(true);
+    this.geneService
+      .downloadGeneSearch(geneSearchRequestFromParams(submittedSearch))
+      .pipe(finalize(() => this.isExporting.set(false)))
+      .subscribe((download) => {
+        const objectUrl = view.URL.createObjectURL(download.blob);
+        const link = this.document.createElement('a');
+        link.href = objectUrl;
+        link.download = download.filename;
 
-    try {
-      body.appendChild(link);
-      link.click();
-    } finally {
-      link.remove();
-      view.URL.revokeObjectURL(objectUrl);
-    }
+        try {
+          body.appendChild(link);
+          link.click();
+        } finally {
+          link.remove();
+          view.URL.revokeObjectURL(objectUrl);
+        }
+      });
   }
 
   private setSubmittedSearch(searchTerm: string, taxonId: number | null): void {
@@ -483,6 +503,7 @@ export class GeneHomeComponent {
       return;
     }
 
+    this.pageIndex.set(0);
     this.submittedSearch.set(nextSearch);
   }
 

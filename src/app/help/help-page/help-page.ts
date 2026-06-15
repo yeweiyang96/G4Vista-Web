@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { GeneHelpPanel } from './workflow-panels/gene-help-panel';
 import { GenomeDetailHelpPanel } from './workflow-panels/genome-detail-help-panel';
@@ -8,7 +9,7 @@ import { GenomeHelpPanel } from './workflow-panels/genome-help-panel';
 import { MicrobialEnvironmentHelpPanel } from './workflow-panels/microbial-environment-help-panel';
 import { ServerApiHelpPanel } from './workflow-panels/server-api-help-panel';
 import { TaxonomyHelpPanel } from './workflow-panels/taxonomy-help-panel';
-import { HELP_TOPICS, HelpWorkflowId } from '../help-content';
+import { HELP_QUESTIONS, HELP_REFERENCES, HELP_TOPICS, HelpWorkflowId } from '../help-content';
 
 function isHelpWorkflowId(value: string): value is HelpWorkflowId {
   return HELP_TOPICS.some((topic) => topic.id === value);
@@ -32,6 +33,7 @@ function selectedTopicFromParamMap(params: ParamMap): HelpWorkflowId {
     GenomeDetailHelpPanel,
     GenomeHelpPanel,
     MatButtonModule,
+    MatExpansionModule,
     MatIconModule,
     MicrobialEnvironmentHelpPanel,
     RouterLink,
@@ -46,6 +48,8 @@ export class HelpPage {
   private readonly route = inject(ActivatedRoute);
 
   readonly topics = HELP_TOPICS;
+  readonly questions = HELP_QUESTIONS;
+  readonly references = HELP_REFERENCES;
   readonly selectedTopicId = signal<HelpWorkflowId>(
     selectedTopicFromParamMap(this.route.snapshot.queryParamMap),
   );

@@ -1,14 +1,14 @@
-import { computed, signal } from '@angular/core';
+import { computed, effect, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ChangeDetectionStrategy, Component, inject, input, numberAttribute } from '@angular/core';
 import type { ChartData, ChartOptions, Plugin, TooltipItem } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { BaseChartDirective } from 'ng2-charts';
-import { of } from 'rxjs';
 import {
   Taxonomy,
   TaxonomyG4Summary,
   TaxonomyG4SummaryRequest,
+  TaxonomyNode,
   TaxonomyService,
 } from '../../services/taxonomy.service';
 import {
@@ -19,10 +19,10 @@ import {
 } from '../../../genome/services/g4.service';
 import { formatCompactCount, formatIntegerCount } from '../../../genome/utils/overview-format';
 
-import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AssemblyListComponent } from './genome-list/genome-list.component';
@@ -52,7 +52,15 @@ interface GeneBiotypeTableRow {
   totalCount: number;
 }
 
+interface GeneBiotypeTablePage {
+  pageIndex: number;
+  pageSize: number;
+  rows: readonly GeneBiotypeTableRow[];
+}
+
 const DEFAULT_FLANK_WINDOW: G4FlankWindow = 1000;
+const DEFAULT_GENE_BIOTYPE_PAGE_SIZE = 10;
+const GENE_BIOTYPE_PAGE_SIZE_OPTIONS: readonly number[] = [10, 25, 50];
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
   minimumFractionDigits: 0,
@@ -97,6 +105,16 @@ function isG4FlankWindow(value: unknown): value is G4FlankWindow {
   return G4_FLANK_WINDOW_OPTIONS.some((option) => option.value === value);
 }
 
+function defaultGeneFlankWindowFromLineage(
+  lineage: readonly TaxonomyNode[] | undefined,
+): G4FlankWindow | null {
+  const superkingdom = lineage?.find((node) => node.rank === 'superkingdom');
+  if (!superkingdom) {
+    return null;
+  }
+  return superkingdom.name === 'Bacteria' || superkingdom.name === 'Archaea' ? 100 : 1000;
+}
+
 function categoryCount(categories: readonly G4PositionCategory[], key: string): number {
   return categories.find((category) => category.key === key)?.count ?? 0;
 }
@@ -114,15 +132,38 @@ function publicPositionCategoryCount(
   return hasApiOther ? apiOtherCount : legacyOtherCount;
 }
 
+function boundedGeneBiotypePageIndex(
+  rowCount: number,
+  pageSize: number,
+  pageIndex: number,
+): number {
+  const lastPageIndex = Math.max(0, Math.ceil(rowCount / pageSize) - 1);
+  return Math.min(pageIndex, lastPageIndex);
+}
+
+function geneBiotypeTablePage(
+  rows: readonly GeneBiotypeTableRow[],
+  pageSize: number,
+  pageIndex: number,
+): GeneBiotypeTablePage {
+  const boundedPageIndex = boundedGeneBiotypePageIndex(rows.length, pageSize, pageIndex);
+  const start = boundedPageIndex * pageSize;
+  return {
+    pageIndex: boundedPageIndex,
+    pageSize,
+    rows: rows.slice(start, start + pageSize),
+  };
+}
+
 @Component({
   selector: 'app-taxonomy-info',
   imports: [
     BaseChartDirective,
-    MatButtonModule,
     MatButtonToggleModule,
     MatFormFieldModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    MatPaginatorModule,
     MatSelectModule,
     MatTooltipModule,
     AssemblyListComponent,
@@ -136,7 +177,9 @@ export class TaxonomyInfoComponent {
   readonly taxonId = input.required<number, string>({ transform: numberAttribute });
   readonly g4Type = signal<G4Type>('g4');
   readonly flankWindow = signal<G4FlankWindow>(DEFAULT_FLANK_WINDOW);
-  readonly positionContextTaxonId = signal<number | null>(null);
+  readonly geneBiotypePageIndex = signal(0);
+  readonly geneBiotypePageSize = signal(DEFAULT_GENE_BIOTYPE_PAGE_SIZE);
+  readonly geneBiotypePageSizeOptions = GENE_BIOTYPE_PAGE_SIZE_OPTIONS;
   readonly flankWindowOptions = G4_FLANK_WINDOW_OPTIONS;
   readonly taxonomyResource = rxResource<Taxonomy, number>({
     params: () => this.taxonId(),
@@ -146,30 +189,17 @@ export class TaxonomyInfoComponent {
     const current = this.taxonomyResource.value();
     return current?.taxon_id === this.taxonId() ? current : undefined;
   });
-  readonly summaryResource = rxResource<TaxonomyG4Summary | null, TaxonomyG4SummaryRequest | null>({
-    params: () => {
-      if (this.positionContextTaxonId() !== this.taxonId()) {
-        return null;
-      }
-
-      return {
-        taxonId: this.taxonId(),
-        g4Type: this.g4Type(),
-        flankWindow: this.flankWindow(),
-        tetrads: [],
-        minScore: null,
-        maxScore: null,
-        overlap: false,
-      };
-    },
-    stream: ({ params }) => {
-      if (!params) {
-        return of(null);
-      }
-
-      return this.taxonomyService.getTaxonomyG4Summary(params);
-    },
-    defaultValue: null,
+  readonly summaryResource = rxResource<TaxonomyG4Summary, TaxonomyG4SummaryRequest>({
+    params: () => ({
+      taxonId: this.taxonId(),
+      g4Type: this.g4Type(),
+      flankWindow: this.flankWindow(),
+      tetrads: [],
+      minScore: null,
+      maxScore: null,
+      overlap: false,
+    }),
+    stream: ({ params }) => this.taxonomyService.getTaxonomyG4Summary(params),
   });
   readonly positionPiePlugins: Plugin<'pie'>[] = [ChartDataLabels as Plugin<'pie'>];
   readonly positionPieOptions: ChartOptions<'pie'> = {
@@ -227,9 +257,6 @@ export class TaxonomyInfoComponent {
     () =>
       this.flankWindowOptions.find((option) => option.value === this.flankWindow())?.label ??
       `${this.flankWindow()} bp`,
-  );
-  readonly isPositionContextRequested = computed(
-    () => this.positionContextTaxonId() === this.taxonId(),
   );
   readonly positionCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const distribution = this.summary()?.position_distribution;
@@ -300,7 +327,17 @@ export class TaxonomyInfoComponent {
         };
       })
       .filter((row) => row.totalCount > 0)
-      .sort((left, right) => right.totalCount - left.totalCount),
+      .sort(
+        (left, right) =>
+          right.totalCount - left.totalCount || left.displayLabel.localeCompare(right.displayLabel),
+      ),
+  );
+  readonly geneBiotypePage = computed<GeneBiotypeTablePage>(() =>
+    geneBiotypeTablePage(
+      this.geneBiotypeRows(),
+      this.geneBiotypePageSize(),
+      this.geneBiotypePageIndex(),
+    ),
   );
   readonly positionContextErrorMessage = computed(() =>
     this.summaryResource.snapshot().status === 'error'
@@ -309,12 +346,34 @@ export class TaxonomyInfoComponent {
   );
 
   private readonly taxonomyService = inject(TaxonomyService);
+  private lastDefaultGeneFlankTaxonId: number | null = null;
+
+  constructor() {
+    effect(() => {
+      const taxonomy = this.taxonomy();
+      if (!taxonomy) {
+        return;
+      }
+      if (this.lastDefaultGeneFlankTaxonId === taxonomy.taxon_id) {
+        return;
+      }
+
+      const defaultFlankWindow = defaultGeneFlankWindowFromLineage(taxonomy.lineage);
+      if (defaultFlankWindow === null) {
+        return;
+      }
+
+      this.lastDefaultGeneFlankTaxonId = taxonomy.taxon_id;
+      this.flankWindow.set(defaultFlankWindow);
+    });
+  }
 
   setG4Type(value: unknown): void {
     if (!isG4Type(value)) {
       return;
     }
     this.g4Type.set(value);
+    this.geneBiotypePageIndex.set(0);
   }
 
   setFlankWindow(value: unknown): void {
@@ -322,10 +381,12 @@ export class TaxonomyInfoComponent {
       return;
     }
     this.flankWindow.set(value);
+    this.geneBiotypePageIndex.set(0);
   }
 
-  loadPositionContext(): void {
-    this.positionContextTaxonId.set(this.taxonId());
+  changeGeneBiotypePage(event: PageEvent): void {
+    this.geneBiotypePageIndex.set(event.pageIndex);
+    this.geneBiotypePageSize.set(event.pageSize);
   }
 
   formatChartCount(value: number | undefined): string {

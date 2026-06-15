@@ -7,6 +7,7 @@
 }
 
 .overview-header,
+.overview-controls,
 .motif-type-control,
 .state {
   display: flex;
@@ -17,6 +18,15 @@
 .overview-header {
   justify-content: space-between;
   padding: 0;
+}
+
+.overview-controls {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.flank-window-field {
+  width: 148px;
 }
 
 .overview-header h2,
@@ -256,6 +266,7 @@
   }
 
   .overview-header,
+  .overview-controls,
   .motif-type-control {
     display: grid;
     justify-items: start;

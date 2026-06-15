@@ -111,8 +111,8 @@ describe('PositionStatisticsPanelComponent', () => {
   const extraBiotypeRows: readonly G4PositionStatisticsGeneBiotypeBreakdown[] = Array.from(
     { length: 12 },
     (_value, index) =>
-      biotypeRow(`extra_${index + 1}`, `extra_${index + 1}`, 1, [
-        biotypeCategory('gene_inside', 1, 0.001, geneStats),
+      biotypeRow(`extra_${index + 1}`, `extra_${index + 1}`, 2, [
+        biotypeCategory('gene_inside', 2, 0.001, geneStats),
         biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
         biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
       ]),
@@ -290,11 +290,47 @@ describe('PositionStatisticsPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.density-bar')).toBeNull();
   });
 
-  it('keeps Other visible and moves lower-ranked non-Other biotypes into a collapsed table', () => {
+  it('sorts gene biotype density rows by site count descending', () => {
+    const component = fixture.componentInstance;
+
+    fixture.componentRef.setInput('statistics', {
+      ...statistics,
+      windows: [
+        {
+          ...statistics.windows[0],
+          gene_biotype_breakdown: [
+            biotypeRow('low_count', 'low_count', 1, [
+              biotypeCategory('gene_inside', 1, 0.001, geneStats),
+              biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
+              biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+            ]),
+            biotypeRow('high_count', 'high_count', 9, [
+              biotypeCategory('gene_inside', 9, 0.001, geneStats),
+              biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
+              biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+            ]),
+            biotypeRow('mid_count', 'mid_count', 5, [
+              biotypeCategory('gene_inside', 5, 0.001, geneStats),
+              biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
+              biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+            ]),
+          ],
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(component.biotypeDensityRows().map((row) => row.key)).toEqual([
+      'high_count',
+      'mid_count',
+      'low_count',
+    ]);
+  });
+
+  it('moves rows after the sorted density table limit into a collapsed table', () => {
     const component = fixture.componentInstance;
 
     expect(component.visibleBiotypeDensityRows().map((row) => row.key)).toEqual([
-      'other',
       'protein_coding',
       'extra_1',
       'extra_2',
@@ -306,10 +342,11 @@ describe('PositionStatisticsPanelComponent', () => {
       'extra_8',
       'extra_9',
       'extra_10',
+      'extra_11',
     ]);
     expect(component.additionalBiotypeDensityRows().map((row) => row.key)).toEqual([
-      'extra_11',
       'extra_12',
+      'other',
     ]);
   });
 

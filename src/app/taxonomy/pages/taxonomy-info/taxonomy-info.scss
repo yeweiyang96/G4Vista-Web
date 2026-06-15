@@ -256,6 +256,18 @@
   color: var(--mat-sys-on-surface);
 }
 
+.gene-biotype-paginator {
+  margin-top: 8px;
+  background: transparent;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+:host ::ng-deep .gene-biotype-paginator .mat-mdc-paginator-container {
+  justify-content: flex-end;
+  min-height: 48px;
+  padding: 4px 0 0;
+}
+
 .quality-warning {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

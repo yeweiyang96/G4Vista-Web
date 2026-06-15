@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 export const G4_GENE_POSITION_OPTIONS = [
   { value: 'insideOf_gene_g4', label: 'Inside gene (G4)' },
@@ -373,6 +373,11 @@ export interface G4DownloadRequest {
   columns: readonly G4DownloadColumn[];
 }
 
+export interface G4DownloadResponse {
+  blob: Blob;
+  filename: string;
+}
+
 export interface G4GeneRelationsRequest {
   assemblyAccession: string;
   g4Type: G4Type;
@@ -393,7 +398,7 @@ export interface G4GeneCandidatesRequest {
   g4Type: G4Type;
   selectedPosition: G4GenePosition;
   searchTerm: string;
-  limit?: number;
+  limit: number;
 }
 
 export const EMPTY_G4_PAGE: G4PageResponse = {
@@ -470,6 +475,97 @@ const SORT_FIELD_PARAM_MAP: Record<G4SortField, string> = {
   y2: 'y2',
   y3: 'y3',
 };
+
+const DOWNLOAD_FILENAME_TOKEN_MAX_LENGTH = 80;
+const DOWNLOAD_FILENAME_EMPTY_TOKEN = 'filter';
+
+function sanitizeDownloadFilenameToken(value: string, lowercase: boolean): string {
+  const rawToken = value.trim();
+  const token = lowercase ? rawToken.toLowerCase() : rawToken;
+  const safeToken = token
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^[-._]+|[-._]+$/g, '');
+  const cappedToken = safeToken
+    .slice(0, DOWNLOAD_FILENAME_TOKEN_MAX_LENGTH)
+    .replace(/^[-._]+|[-._]+$/g, '');
+  return cappedToken || DOWNLOAD_FILENAME_EMPTY_TOKEN;
+}
+
+function relationPositionFilenameLabel(position: G4GenePosition, g4Type: G4Type): string {
+  const option = G4_GENE_POSITION_OPTIONS.find((candidate) => candidate.value === position);
+  const motifLabel = g4Type === 'i-motif' ? '(i-motif)' : '(G4)';
+  return (option?.label ?? position).replace(motifLabel, '').trim();
+}
+
+function scoreDownloadFilenameToken(
+  minScore: number | undefined,
+  maxScore: number | undefined,
+): string | null {
+  if (minScore === undefined && maxScore === undefined) {
+    return null;
+  }
+  if (minScore !== undefined && maxScore !== undefined) {
+    return `score-${minScore}-${maxScore}`;
+  }
+  if (minScore !== undefined) {
+    return `score-ge${minScore}`;
+  }
+  if (maxScore !== undefined) {
+    return `score-le${maxScore}`;
+  }
+  return null;
+}
+
+function fallbackG4DownloadFilename(request: G4DownloadRequest): string {
+  const scope = request.seqid ?? 'whole-genome';
+  const tokens: string[] = [
+    sanitizeDownloadFilenameToken(request.assemblyAccession, false),
+    sanitizeDownloadFilenameToken(scope, false),
+    sanitizeDownloadFilenameToken(request.g4Type, true),
+  ];
+  const hasGeneFilter = request.selectedFeatureId !== undefined || request.searchTerm !== undefined;
+  if (request.selectedFeatureId) {
+    tokens.push(`gene-${sanitizeDownloadFilenameToken(request.selectedFeatureId, true)}`);
+  } else if (request.searchTerm) {
+    tokens.push(`gene-search-${sanitizeDownloadFilenameToken(request.searchTerm, true)}`);
+  }
+  if (hasGeneFilter && request.selectedPosition) {
+    const relationLabel = relationPositionFilenameLabel(request.selectedPosition, request.g4Type);
+    tokens.push(`rel-${sanitizeDownloadFilenameToken(relationLabel, true)}`);
+  }
+  if (request.tetrads.length > 0) {
+    tokens.push(`tetrads-${sanitizeDownloadFilenameToken(request.tetrads.join('-'), true)}`);
+  }
+
+  const scoreToken = scoreDownloadFilenameToken(request.minScore, request.maxScore);
+  if (scoreToken !== null) {
+    tokens.push(sanitizeDownloadFilenameToken(scoreToken, true));
+  }
+  return `${tokens.join('_')}_sites.tsv`;
+}
+
+function parseContentDispositionFilename(contentDisposition: string | null): string | null {
+  if (!contentDisposition) {
+    return null;
+  }
+
+  const encodedFilenameMatch = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  if (encodedFilenameMatch?.[1]) {
+    return decodeURIComponent(encodedFilenameMatch[1].trim().replace(/^"|"$/g, ''));
+  }
+
+  const quotedFilenameMatch = contentDisposition.match(/filename\s*=\s*"([^"]+)"/i);
+  if (quotedFilenameMatch?.[1]) {
+    return quotedFilenameMatch[1].trim();
+  }
+
+  const plainFilenameMatch = contentDisposition.match(/filename\s*=\s*([^;]+)/i);
+  if (plainFilenameMatch?.[1]) {
+    return plainFilenameMatch[1].trim();
+  }
+  return null;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -558,7 +654,7 @@ export class G4Service {
     );
   }
 
-  downloadG4Table(request: G4DownloadRequest): Observable<Blob> {
+  downloadG4Table(request: G4DownloadRequest): Observable<G4DownloadResponse> {
     const params = this.appendDownloadColumnParams(
       this.appendCommonFilterParams(
         new HttpParams()
@@ -579,17 +675,36 @@ export class G4Service {
       ? geneParams.set('search_term', request.searchTerm)
       : geneParams;
 
-    return this.http.get(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/download`,
-      { params: searchParams, responseType: 'blob' },
-    );
+    return this.http
+      .get(
+        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/download`,
+        {
+          params: searchParams,
+          responseType: 'blob',
+          observe: 'response',
+        },
+      )
+      .pipe(
+        map((response: HttpResponse<Blob>) => {
+          if (response.body === null) {
+            throw new Error('G4 download response did not include a Blob body');
+          }
+          const headerFilename = parseContentDispositionFilename(
+            response.headers.get('Content-Disposition'),
+          );
+          return {
+            blob: response.body,
+            filename: headerFilename ?? fallbackG4DownloadFilename(request),
+          };
+        }),
+      );
   }
 
   getGeneCandidates(request: G4GeneCandidatesRequest): Observable<G4GeneCandidate[]> {
     const params = new HttpParams()
       .set('search_term', request.searchTerm)
       .set('selected_position', request.selectedPosition)
-      .set('limit', request.limit ?? 20);
+      .set('limit', request.limit);
 
     return this.http.get<G4GeneCandidate[]>(
       `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-candidates`,

@@ -43,8 +43,12 @@
                 @for (option of taxonOptions; track option.taxon_id + option.name) {
                   <mat-option [value]="option">
                     <span class="taxon-option-row">
-                      <span class="taxon-option-name">{{ option.scientific_name || option.name }}</span>
-                      <span class="taxon-option-meta">{{ option.rank }} · Taxon ID {{ option.taxon_id }}</span>
+                      <span class="taxon-option-name">{{
+                        option.scientific_name || option.name
+                      }}</span>
+                      <span class="taxon-option-meta"
+                        >{{ option.rank }} · Taxon ID {{ option.taxon_id }}</span
+                      >
                     </span>
                   </mat-option>
                 }
@@ -65,7 +69,10 @@
           <div>
             <span>Taxon scope</span>
             <strong>{{ taxon.name }}</strong>
-            <small>{{ taxon.rank }} · Taxon ID {{ taxon.taxon_id }} · {{ selectedTaxonAssemblyCountLabel() }}</small>
+            <small
+              >{{ taxon.rank }} · Taxon ID {{ taxon.taxon_id }} ·
+              {{ selectedTaxonAssemblyCountLabel() }}</small
+            >
           </div>
           <button
             mat-icon-button
@@ -107,11 +114,11 @@
               mat-stroked-button
               class="export-button"
               type="button"
-              [disabled]="isLoading() || results().length === 0"
+              [disabled]="isLoading() || isExporting() || resultCount() === 0"
               (click)="exportResults()"
             >
               <mat-icon>download</mat-icon>
-              Export
+              {{ isExporting() ? 'Exporting' : 'Export' }}
             </button>
           </div>
           <mtx-grid
@@ -119,14 +126,16 @@
             class="gene-grid"
             [data]="results()"
             [columns]="columns()"
-            [length]="results().length"
+            [length]="resultCount()"
             [loading]="isLoading()"
-            [pageOnFront]="true"
-            [pageSize]="10"
+            [pageOnFront]="false"
+            [pageIndex]="pageIndex()"
+            [pageSize]="pageSize()"
             [pageSizeOptions]="pageSizeOptions"
             [showToolbar]="false"
             [showColumnMenuButton]="false"
             [columnHideable]="false"
+            (page)="changePage($event)"
           ></mtx-grid>
         </section>
       }

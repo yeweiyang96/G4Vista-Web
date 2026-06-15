@@ -93,6 +93,11 @@ interface G4PageResourceRequest {
   request: G4PageRequest | (G4PageRequest & { seqid: string }) | G4GeneSearchRequest;
 }
 
+interface G4FilterOptionsResourceRequest {
+  mode: 'browse-single' | 'browse-whole';
+  request: G4PageRequest | (G4PageRequest & { seqid: string });
+}
+
 interface GeneRelationBatchRequest {
   assemblyAccession: string;
   g4Type: G4Type;
@@ -551,6 +556,11 @@ export class GenomeInfoComponent {
       .tetrads_list.slice()
       .sort((left, right) => left - right),
   );
+  readonly g4FilterTetradOptions = computed(() =>
+    this.g4FilterOptions()
+      .tetrads_list.slice()
+      .sort((left, right) => left - right),
+  );
   readonly draftPositionLabel = computed(
     () =>
       this.draftGenePositionOptions().find(
@@ -702,6 +712,57 @@ export class GenomeInfoComponent {
     defaultValue: EMPTY_G4_PAGE,
   });
   readonly g4Page = computed<G4PageResponse>(() => this.g4PageResource.value());
+  readonly g4FilterOptionsResource = rxResource<
+    G4PageResponse,
+    G4FilterOptionsResourceRequest | undefined
+  >({
+    params: () => {
+      if (!this.assemblyDetail()) {
+        return undefined;
+      }
+
+      const browseScope = this.draftBrowseScope() || this.browseScope();
+      if (!browseScope) {
+        return undefined;
+      }
+
+      const request: G4PageRequest = {
+        assemblyAccession: this.assemblyAccession(),
+        g4Type: this.draftG4Type(),
+        pageIndex: 0,
+        pageSize: 1,
+        sort: 'start',
+        order: 'asc',
+        tetrads: [],
+      };
+
+      if (browseScope === WHOLE_GENOME_SCOPE) {
+        return { mode: 'browse-whole', request };
+      }
+
+      return {
+        mode: 'browse-single',
+        request: {
+          ...request,
+          seqid: browseScope,
+        },
+      };
+    },
+    stream: ({ params }) => {
+      if (!params) {
+        return of(EMPTY_G4_PAGE);
+      }
+
+      switch (params.mode) {
+        case 'browse-single':
+          return this.g4Service.getG4Page(params.request as G4PageRequest & { seqid: string });
+        case 'browse-whole':
+          return this.g4Service.getAssemblyG4Page(params.request as G4PageRequest);
+      }
+    },
+    defaultValue: EMPTY_G4_PAGE,
+  });
+  readonly g4FilterOptions = computed<G4PageResponse>(() => this.g4FilterOptionsResource.value());
   readonly positionDistributionResource = rxResource<
     G4PositionDistributionResponse,
     G4PositionDistributionRequest | undefined
@@ -911,6 +972,7 @@ export class GenomeInfoComponent {
   private lastBrowseScopeSourceKey: string | null = null;
   private lastViewerSessionKey: string | null = null;
   private lastAssemblyAccessionForGeneSelection: string | null = null;
+  private lastDefaultGeneFlankAssemblyAccession: string | null = null;
   private lastDraftPosition: G4GenePosition | null = null;
   private lastEmptyGeneSearchNoticeKey: string | null = null;
   private navigationRequestId = 0;
@@ -958,6 +1020,21 @@ export class GenomeInfoComponent {
     });
 
     effect(() => {
+      const assembly = this.assemblyDetail();
+      if (!assembly) {
+        return;
+      }
+      if (this.lastDefaultGeneFlankAssemblyAccession === assembly.assembly_accession) {
+        return;
+      }
+
+      this.lastDefaultGeneFlankAssemblyAccession = assembly.assembly_accession;
+      this.positionDistributionFlankWindow.set(
+        normalizeFlankWindow(assembly.default_gene_flank_window),
+      );
+    });
+
+    effect(() => {
       const assemblyAccession = this.assemblyAccession();
       if (this.lastAssemblyAccessionForGeneSelection === null) {
         this.lastAssemblyAccessionForGeneSelection = assemblyAccession;
@@ -987,6 +1064,25 @@ export class GenomeInfoComponent {
 
       this.lastDraftPosition = currentPosition;
       this.clearDraftGeneSelection();
+    });
+
+    effect(() => {
+      const status = this.g4FilterOptionsResource.snapshot().status;
+      if (status === 'loading' || status === 'reloading') {
+        return;
+      }
+
+      const options = new Set(this.g4FilterTetradOptions());
+      const current = this.filterForm().value().selectedTetrads;
+      const pruned = current.filter((tetrad) => options.has(tetrad));
+      if (current.length === pruned.length) {
+        return;
+      }
+
+      this.filterModel.update((model) => ({
+        ...model,
+        selectedTetrads: pruned,
+      }));
     });
 
     effect(() => {
@@ -1281,7 +1377,7 @@ export class GenomeInfoComponent {
       })
       .pipe(finalize(() => this.isTableDownloadPending.set(false)))
       .subscribe({
-        next: (blob) => this.saveDownloadBlob(blob),
+        next: (download) => this.saveDownloadBlob(download.blob, download.filename),
         error: () => {
           this.snackBar.open('Table download failed. Check the filters and try again.', 'Dismiss', {
             duration: 4000,
@@ -1420,11 +1516,11 @@ export class GenomeInfoComponent {
     return 'All';
   }
 
-  private saveDownloadBlob(blob: Blob): void {
+  private saveDownloadBlob(blob: Blob, filename: string): void {
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = objectUrl;
-    link.download = `${this.assemblyAccession()}_${this.g4Type()}_sites.tsv`;
+    link.download = filename;
     document.body.append(link);
     link.click();
     link.remove();

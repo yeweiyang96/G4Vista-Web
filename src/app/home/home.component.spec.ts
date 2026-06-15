@@ -52,7 +52,7 @@ describe('HomeComponent', () => {
     component.submitHeroSearch(new Event('submit'));
 
     expect(navigateSpy).toHaveBeenCalledWith(['/genome'], {
-      queryParams: { query: 'GCF_000001735.4' },
+      queryParams: {},
     });
 
     navigateSpy.calls.reset();
@@ -86,8 +86,8 @@ describe('HomeComponent', () => {
     expect(bacteria?.actions.find((action) => action.label === 'Explore taxonomy')).toEqual(
       jasmine.objectContaining({ route: '/taxonomy/2', queryParams: null }),
     );
-    expect(bacteria?.actions.find((action) => action.label === 'View Bacillus genomes')).toEqual(
-      jasmine.objectContaining({ route: '/genome', queryParams: { query: 'Bacillus' } }),
+    expect(bacteria?.actions.find((action) => action.label === 'Search genes')).toEqual(
+      jasmine.objectContaining({ route: '/gene/taxon/2', queryParams: null }),
     );
     expect(research?.actions.find((action) => action.label === 'Open research')).toEqual(
       jasmine.objectContaining({

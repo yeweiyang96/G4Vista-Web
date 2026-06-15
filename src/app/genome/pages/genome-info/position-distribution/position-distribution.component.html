@@ -4,16 +4,27 @@
       <h2>G-quadruplex (G4) and i-motif overview</h2>
     </div>
 
-    <div class="motif-type-control">
-      <span class="control-label">Motif type:</span>
-      <mat-button-toggle-group
-        [value]="g4Type()"
-        (valueChange)="changeG4Type($event)"
-        aria-label="Motif type"
-      >
-        <mat-button-toggle value="g4">G4</mat-button-toggle>
-        <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
-      </mat-button-toggle-group>
+    <div class="overview-controls">
+      <div class="motif-type-control">
+        <span class="control-label">Motif type:</span>
+        <mat-button-toggle-group
+          [value]="g4Type()"
+          (valueChange)="changeG4Type($event)"
+          aria-label="Motif type"
+        >
+          <mat-button-toggle value="g4">G4</mat-button-toggle>
+          <mat-button-toggle value="i-motif">i-motif</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flank-window-field">
+        <mat-label>Gene flank</mat-label>
+        <mat-select [value]="flankWindow()" (valueChange)="changeFlankWindow($event)">
+          @for (option of flankWindowOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
   </header>
 

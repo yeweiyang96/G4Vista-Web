@@ -1,0 +1,188 @@
+<main class="g4v-page download-page">
+  <section class="download-header" aria-labelledby="download-title">
+    <div class="header-copy">
+      <p class="section-kicker">Download package</p>
+      <h1 id="download-title" class="g4v-page-title">G4 and i-motif package</h1>
+      <p>
+        Create a ZIP package from the assembly set collected on taxonomy pages. The package includes
+        a manifest and one TSV per assembly and motif type.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <a mat-stroked-button routerLink="/taxonomy">
+        <mat-icon>account_tree</mat-icon>
+        Add assemblies
+      </a>
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        [disabled]="!canCreatePackage()"
+        (click)="createPackage()"
+      >
+        <mat-icon>{{ isDownloading() ? 'hourglass_top' : 'archive' }}</mat-icon>
+        {{ isDownloading() ? 'Preparing package' : 'Create ZIP' }}
+      </button>
+    </div>
+  </section>
+
+  @if (errorMessage()) {
+    <section class="download-error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon>
+      <span>{{ errorMessage() }}</span>
+    </section>
+  }
+
+  <section class="download-layout" aria-label="Package builder">
+    <article class="assembly-panel" aria-labelledby="assembly-set-title">
+      <div class="panel-heading">
+        <div>
+          <p class="panel-kicker">Source</p>
+          <h2 id="assembly-set-title">Assembly set</h2>
+        </div>
+        <button
+          type="button"
+          mat-stroked-button
+          [disabled]="assemblySet.count() === 0"
+          (click)="clearSet()"
+        >
+          <mat-icon>delete_sweep</mat-icon>
+          Clear
+        </button>
+      </div>
+
+      @if (assemblySet.count() === 0) {
+        <div class="empty-state">
+          <mat-icon aria-hidden="true">inventory_2</mat-icon>
+          <p>No assemblies have been added yet.</p>
+          <a mat-flat-button color="primary" routerLink="/taxonomy">
+            <mat-icon>add</mat-icon>
+            Open taxonomy
+          </a>
+        </div>
+      } @else {
+        <div class="source-summary">
+          <span>{{ assemblySet.count() }} assemblies</span>
+          <span>{{ selectedMotifTypes().length }} motif types</span>
+          <span>{{ selectedColumns().length }} columns</span>
+        </div>
+
+        <div class="assembly-list" role="list" aria-label="Selected assemblies">
+          @for (item of assemblySet.items(); track item.assembly_accession) {
+            <div class="assembly-row" role="listitem">
+              <div class="assembly-row-copy">
+                <span class="assembly-accession">{{ item.assembly_accession }}</span>
+                <span>{{ item.organism_name || item.asm_name || 'Unnamed assembly' }}</span>
+              </div>
+              <button
+                type="button"
+                mat-icon-button
+                [attr.aria-label]="'Remove ' + item.assembly_accession"
+                (click)="removeAssembly(item)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </article>
+
+    <article class="options-panel" aria-labelledby="package-options-title">
+      <div class="panel-heading">
+        <div>
+          <p class="panel-kicker">Package options</p>
+          <h2 id="package-options-title">Filters and columns</h2>
+        </div>
+      </div>
+
+      <section class="option-group" aria-labelledby="motif-options-title">
+        <h3 id="motif-options-title">Motif types</h3>
+        <div class="check-grid">
+          @for (option of motifTypeOptions; track option.value) {
+            <mat-checkbox
+              [checked]="isMotifTypeSelected(option.value)"
+              (change)="toggleMotifType(option.value, $event)"
+            >
+              {{ option.label }}
+            </mat-checkbox>
+          }
+        </div>
+      </section>
+
+      <section class="option-group" aria-labelledby="filter-options-title">
+        <h3 id="filter-options-title">Motif filters</h3>
+        <div class="field-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>G-tetrads</mat-label>
+            <input
+              matInput
+              [ngModel]="tetradsInput()"
+              (ngModelChange)="tetradsInput.set($event)"
+              placeholder="2,3,4"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Minimum score</mat-label>
+            <input
+              matInput
+              inputmode="numeric"
+              [ngModel]="minScoreInput()"
+              (ngModelChange)="minScoreInput.set($event)"
+              placeholder="optional"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Maximum score</mat-label>
+            <input
+              matInput
+              inputmode="numeric"
+              [ngModel]="maxScoreInput()"
+              (ngModelChange)="maxScoreInput.set($event)"
+              placeholder="optional"
+            />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="option-group" aria-labelledby="sort-options-title">
+        <h3 id="sort-options-title">Sort order</h3>
+        <div class="field-grid two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Sort field</mat-label>
+            <mat-select [ngModel]="sortField()" (ngModelChange)="sortField.set($event)">
+              @for (option of sortOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Direction</mat-label>
+            <mat-select [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event)">
+              <mat-option value="asc">Ascending</mat-option>
+              <mat-option value="desc">Descending</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="option-group" aria-labelledby="column-options-title">
+        <h3 id="column-options-title">TSV columns</h3>
+        <div class="column-grid">
+          @for (option of columnOptions; track option.value) {
+            <mat-checkbox
+              [checked]="isColumnSelected(option.value)"
+              (change)="toggleColumn(option.value, $event)"
+            >
+              {{ option.label }}
+            </mat-checkbox>
+          }
+        </div>
+      </section>
+    </article>
+  </section>
+</main>

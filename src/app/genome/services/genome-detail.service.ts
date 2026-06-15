@@ -13,6 +13,7 @@ export interface GenomeAssemblyDetail {
   seqid_lengths: Record<string, number>;
   regions?: GenomeAssemblyRegion[];
   taxon_id: number | null;
+  default_gene_flank_window: number;
 }
 
 export interface GenomeAssemblyRegion {

@@ -168,7 +168,7 @@ describe('G4Service', () => {
     );
   });
 
-  it('uses gene candidate endpoint with selected position and default limit', () => {
+  it('uses gene candidate endpoint with selected position and explicit limit', () => {
     const responseSpy = jasmine.createSpy();
 
     service
@@ -177,6 +177,7 @@ describe('G4Service', () => {
         g4Type: 'g4',
         selectedPosition: 'insideOf_gene_g4',
         searchTerm: 'dna',
+        limit: 20,
       })
       .subscribe(responseSpy);
 
@@ -220,6 +221,87 @@ describe('G4Service', () => {
 
     expect(request.request.method).toBe('GET');
     request.flush({ relations: [] });
+  });
+
+  it('returns the server-provided download filename from content-disposition', () => {
+    const responseSpy = jasmine.createSpy();
+    const blob = new Blob(['test']);
+
+    service
+      .downloadG4Table({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'g4',
+        seqid: 'NC_000001.1',
+        sort: 'start',
+        order: 'asc',
+        tetrads: [2, 3],
+        minScore: 10,
+        maxScore: 55,
+        selectedFeatureId: 'Gene A',
+        selectedPosition: 'insideOf_gene_g4',
+        columns: ['seqid', 'start'],
+      })
+      .subscribe(responseSpy);
+
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === '/api/v1/g4/GCF_000021765.1/g4/download',
+    );
+
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    expect(request.request.params.get('seqid')).toBe('NC_000001.1');
+    expect(request.request.params.getAll('tetrads')).toEqual(['2', '3']);
+    expect(request.request.params.get('min_score')).toBe('10');
+    expect(request.request.params.get('max_score')).toBe('55');
+    expect(request.request.params.get('selected_feature_id')).toBe('Gene A');
+    expect(request.request.params.get('selected_position')).toBe('insideOf_gene_g4');
+    expect(request.request.params.getAll('columns')).toEqual(['seqid', 'start']);
+
+    request.flush(blob, {
+      headers: {
+        'Content-Disposition':
+          'attachment; filename="GCF_000021765.1_NC_000001.1_g4_gene-gene-a_rel-inside-gene_tetrads-2-3_score-10-55_sites.tsv"',
+      },
+    });
+
+    const download = responseSpy.calls.mostRecent().args[0];
+    expect(download.blob).toBe(blob);
+    expect(download.filename).toBe(
+      'GCF_000021765.1_NC_000001.1_g4_gene-gene-a_rel-inside-gene_tetrads-2-3_score-10-55_sites.tsv',
+    );
+  });
+
+  it('builds a filter-aware fallback download filename when content-disposition is missing', () => {
+    const responseSpy = jasmine.createSpy();
+    const blob = new Blob(['test']);
+
+    service
+      .downloadG4Table({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'g4',
+        seqid: 'NC_000001.1',
+        sort: 'start',
+        order: 'asc',
+        tetrads: [2, 3],
+        minScore: 10,
+        maxScore: 55,
+        selectedFeatureId: 'Gene A',
+        selectedPosition: 'insideOf_gene_g4',
+        columns: ['seqid'],
+      })
+      .subscribe(responseSpy);
+
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === '/api/v1/g4/GCF_000021765.1/g4/download',
+    );
+
+    request.flush(blob);
+
+    const download = responseSpy.calls.mostRecent().args[0];
+    expect(download.blob).toBe(blob);
+    expect(download.filename).toBe(
+      'GCF_000021765.1_NC_000001.1_g4_gene-gene-a_rel-inside-gene_tetrads-2-3_score-10-55_sites.tsv',
+    );
   });
 
   it('builds histogram requests with range and filter params', () => {

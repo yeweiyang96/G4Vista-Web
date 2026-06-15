@@ -7,7 +7,7 @@ import {
   provideRouter,
 } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
-import { GeneSearchItem, GeneService } from '../../services/gene.service';
+import { GeneSearchItem, GeneSearchPage, GeneService } from '../../services/gene.service';
 import {
   TaxonomyNode,
   TaxonomySearch,
@@ -44,10 +44,27 @@ describe('GeneHomeComponent', () => {
     assembly_count: 1,
     children: [],
   };
+  const emptyGeneSearchPage: GeneSearchPage = {
+    genes: [],
+    count: 0,
+  };
+
+  function geneSearchPage(genes: readonly GeneSearchItem[]): GeneSearchPage {
+    return {
+      genes: [...genes],
+      count: genes.length,
+    };
+  }
 
   beforeEach(async () => {
-    geneService = jasmine.createSpyObj<GeneService>('GeneService', ['searchGenes']);
-    geneService.searchGenes.and.returnValue(of([]));
+    geneService = jasmine.createSpyObj<GeneService>('GeneService', [
+      'searchGenesPage',
+      'downloadGeneSearch',
+    ]);
+    geneService.searchGenesPage.and.returnValue(of(emptyGeneSearchPage));
+    geneService.downloadGeneSearch.and.returnValue(
+      of({ blob: new Blob(['']), filename: 'gene-search.csv' }),
+    );
     taxonomyService = jasmine.createSpyObj<TaxonomyService>('TaxonomyService', [
       'searchTaxonomy',
       'getAssemblyCounts',
@@ -92,7 +109,11 @@ describe('GeneHomeComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'ATP6' });
+    expect(geneService.searchGenesPage).toHaveBeenCalledWith({
+      searchTerm: 'ATP6',
+      pageIndex: 0,
+      pageSize: 10,
+    });
   });
 
   it('keeps global search enabled and renders the slow-search warning', async () => {
@@ -104,7 +125,11 @@ describe('GeneHomeComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
-    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53' });
+    expect(geneService.searchGenesPage).toHaveBeenCalledWith({
+      searchTerm: 'TP53',
+      pageIndex: 0,
+      pageSize: 10,
+    });
     expect(host.textContent).toContain('Global gene search can be slow');
   });
 
@@ -117,7 +142,12 @@ describe('GeneHomeComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53', taxonId: 9606 });
+    expect(geneService.searchGenesPage).toHaveBeenCalledWith({
+      searchTerm: 'TP53',
+      taxonId: 9606,
+      pageIndex: 0,
+      pageSize: 10,
+    });
     expect(router.url).toContain('/gene/taxon/9606?search=TP53');
   });
 
@@ -129,7 +159,12 @@ describe('GeneHomeComponent', () => {
 
     expect(taxonomyService.getLineage).toHaveBeenCalledWith(9606);
     expect(component.searchControl.value).toBe('TP53');
-    expect(geneService.searchGenes).toHaveBeenCalledWith({ searchTerm: 'TP53', taxonId: 9606 });
+    expect(geneService.searchGenesPage).toHaveBeenCalledWith({
+      searchTerm: 'TP53',
+      taxonId: 9606,
+      pageIndex: 0,
+      pageSize: 10,
+    });
   });
 
   it('preloads a taxon route without running gene search when no query is present', async () => {
@@ -148,7 +183,7 @@ describe('GeneHomeComponent', () => {
       name: 'Arabidopsis thaliana',
       rank: 'species',
     });
-    expect(geneService.searchGenes).not.toHaveBeenCalled();
+    expect(geneService.searchGenesPage).not.toHaveBeenCalled();
   });
 
   it('renders search results with species, export, and row navigation', async () => {
@@ -185,7 +220,7 @@ describe('GeneHomeComponent', () => {
       },
     ];
 
-    geneService.searchGenes.and.returnValue(of(rows));
+    geneService.searchGenesPage.and.returnValue(of(geneSearchPage(rows)));
     component.searchControl.setValue('gene');
 
     component.onSubmit();
@@ -218,7 +253,7 @@ describe('GeneHomeComponent', () => {
     expect(detailHref).toContain('/gene/GCF_000001405.39/NC_012920.1/gene-ATP6');
   });
 
-  it('exports empty gene biotypes as Other in CSV', async () => {
+  it('exports the full matching gene search result set from the server', async () => {
     const rows: GeneSearchItem[] = [
       {
         assembly_accession: 'GCF_000146045.2',
@@ -244,7 +279,9 @@ describe('GeneHomeComponent', () => {
     });
     spyOn(view.URL, 'revokeObjectURL');
     spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(() => undefined);
-    geneService.searchGenes.and.returnValue(of(rows));
+    const blob = new Blob(['server,csv']);
+    geneService.searchGenesPage.and.returnValue(of(geneSearchPage(rows)));
+    geneService.downloadGeneSearch.and.returnValue(of({ blob, filename: 'gene-results.csv' }));
     component.searchControl.setValue('gene');
 
     component.onSubmit();
@@ -252,11 +289,7 @@ describe('GeneHomeComponent', () => {
     await fixture.whenStable();
     component.exportResults();
 
-    expect(exportState.blob).not.toBeNull();
-    const csv = await exportState.blob?.text();
-    expect(csv).toContain('TFC3,YAL001C');
-    expect(csv).toContain(',Other,');
-    expect(csv).toContain(',1234567');
-    expect(csv).not.toContain('1.2M');
+    expect(geneService.downloadGeneSearch).toHaveBeenCalledOnceWith({ searchTerm: 'gene' });
+    expect(exportState.blob).toBe(blob);
   });
 });

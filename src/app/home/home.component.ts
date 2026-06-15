@@ -93,7 +93,7 @@ function homeSearchNavigation(
   }
 
   if (target === 'genome') {
-    return { commands: ['/genome'], queryParams: { query } };
+    return { commands: ['/genome'], queryParams: {} };
   }
 
   if (target === 'taxonomy') {
@@ -225,10 +225,10 @@ export class HomeComponent {
             queryParams: null,
           },
           {
-            icon: 'storage',
-            label: 'View Bacillus genomes',
-            route: '/genome',
-            queryParams: startingActionQueryParams({ query: 'Bacillus' }),
+            icon: 'search',
+            label: 'Search genes',
+            route: '/gene/taxon/2',
+            queryParams: null,
           },
         ],
       },

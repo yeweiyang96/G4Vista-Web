@@ -42,6 +42,7 @@ describe('GenomeInfoComponent', () => {
       },
     ],
     taxon_id: 1,
+    default_gene_flank_window: 1000,
   };
   const secondAssemblyDetail: GenomeAssemblyDetail = {
     assembly_accession: 'GCF_2',
@@ -69,6 +70,7 @@ describe('GenomeInfoComponent', () => {
       },
     ],
     taxon_id: 2,
+    default_gene_flank_window: 1000,
   };
   const chr1BrowsePage: G4PageResponse = {
     ...EMPTY_G4_PAGE,
@@ -271,7 +273,9 @@ describe('GenomeInfoComponent', () => {
       }),
     );
     g4Service.getGeneCandidates.and.returnValue(of([]));
-    g4Service.downloadG4Table.and.returnValue(of(new Blob(['test'])));
+    g4Service.downloadG4Table.and.returnValue(
+      of({ blob: new Blob(['test']), filename: 'GCF_1_whole-genome_g4_sites.tsv' }),
+    );
     g4Service.getGeneRelations.and.callFake(({ seqid, starts }) =>
       of<G4GeneRelationsResponse>({
         relations: starts.map((start) => ({
@@ -536,6 +540,35 @@ describe('GenomeInfoComponent', () => {
       binSize: 100,
     });
     expect(viewerState.region()).toBe('chr1:1..10000');
+  });
+
+  it('uses the server-provided filename for table downloads', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const filename = 'GCF_1_whole-genome_g4_score-ge10_sites.tsv';
+    const blob = new Blob(['test']);
+    const anchor = document.createElement('a');
+    const clickSpy = spyOn(anchor, 'click');
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:g4-download');
+    spyOn(URL, 'revokeObjectURL');
+    spyOn(document, 'createElement').and.returnValue(anchor);
+    g4Service.downloadG4Table.and.returnValue(of({ blob, filename }));
+
+    component.downloadTable(['seqid']);
+
+    expect(g4Service.downloadG4Table).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        g4Type: 'g4',
+        columns: ['seqid'],
+      }),
+    );
+    expect(anchor.download).toBe(filename);
+    expect(clickSpy).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:g4-download');
   });
 
   it('loads position distribution and statistics from independent whole-genome controls only', async () => {

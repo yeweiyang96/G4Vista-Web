@@ -58,4 +58,42 @@
       }
     }
   </section>
+
+  <section class="help-qa" aria-labelledby="help-qa-title">
+    <div class="section-heading">
+      <p class="section-kicker">Q&A</p>
+      <h2 id="help-qa-title">Common workflow questions</h2>
+    </div>
+
+    <mat-accordion class="qa-accordion" multi>
+      @for (item of questions; track item.question) {
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ item.question }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <p>{{ item.answer }}</p>
+        </mat-expansion-panel>
+      }
+    </mat-accordion>
+  </section>
+
+  <section class="help-references" aria-labelledby="help-references-title">
+    <div class="section-heading">
+      <p class="section-kicker">References</p>
+      <h2 id="help-references-title">Methods and data sources</h2>
+    </div>
+
+    <div class="reference-list">
+      @for (reference of references; track reference.url) {
+        <article class="reference-item">
+          <h3>{{ reference.title }}</h3>
+          <p>{{ reference.citation }}</p>
+          <a [href]="reference.url" target="_blank" rel="noopener noreferrer">
+            <mat-icon aria-hidden="true">open_in_new</mat-icon>
+            Source
+          </a>
+        </article>
+      }
+    </div>
+  </section>
 </main>

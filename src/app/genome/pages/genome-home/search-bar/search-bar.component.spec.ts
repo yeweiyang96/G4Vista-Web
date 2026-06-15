@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { GenomeSearch, GenomeSearchService } from '../../../services/genome-search.service';
 
 import { SearchBarComponent } from './search-bar.component';
@@ -10,7 +10,6 @@ describe('SearchBarComponent', () => {
   let component: SearchBarComponent;
   let fixture: ComponentFixture<SearchBarComponent>;
   let genomeSearchService: jasmine.SpyObj<GenomeSearchService>;
-  let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
   const bacillusAssembly: GenomeSearch = {
     asm_name: 'ASM188410v1',
@@ -23,19 +22,12 @@ describe('SearchBarComponent', () => {
       'searchGenome',
     ]);
     genomeSearchService.searchGenome.and.returnValue(of([bacillusAssembly]));
-    queryParamMapSubject = new BehaviorSubject<ParamMap>(convertToParamMap({}));
 
     await TestBed.configureTestingModule({
       imports: [SearchBarComponent],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            queryParamMap: queryParamMapSubject.asObservable(),
-          },
-        },
         { provide: GenomeSearchService, useValue: genomeSearchService },
       ],
     }).compileComponents();
@@ -49,17 +41,49 @@ describe('SearchBarComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('preloads and renders genome results from the query param', async () => {
-    queryParamMapSubject.next(convertToParamMap({ query: 'Bacillus' }));
-    fixture.detectChanges();
-    await fixture.whenStable();
+  it('does not submit typed text as genome query results', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+
+    component.searchControl.setValue('Bacillus');
+    component.submitSearch(new Event('submit'));
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
-    expect(component.searchControl.value).toBe('Bacillus');
-    expect(genomeSearchService.searchGenome).toHaveBeenCalledWith('Bacillus');
-    expect(host.textContent).toContain('Results for Bacillus');
-    expect(host.textContent).toContain('GCA_001884105.1');
-    expect(host.textContent).toContain('Bacillus luti');
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain('Results for Bacillus');
+  });
+
+  it('searches autocomplete options from typed text', async () => {
+    component.searchControl.setValue('Bacillus');
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 350);
+    });
+    fixture.detectChanges();
+
+    expect(genomeSearchService.searchGenome).toHaveBeenCalledWith('bacillus');
+  });
+
+  it('opens the selected autocomplete assembly directly', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+
+    component.onOptionSelected({ option: { value: bacillusAssembly.assembly_accession } } as never);
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/genome', 'GCA_001884105.1']);
+  });
+
+  it('clears the input and stays on the genome search page', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+
+    component.searchControl.setValue('Bacillus');
+    component.clearSearch(new MouseEvent('click'));
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(component.searchControl.value).toBe('');
+    expect(navigateSpy).toHaveBeenCalledWith(['/genome']);
+    expect(host.textContent).not.toContain('Results for Bacillus');
   });
 });

@@ -61,18 +61,10 @@
                   }
                 </mat-select>
               </mat-form-field>
-
-              @if (!isPositionContextRequested()) {
-                <button mat-flat-button type="button" (click)="loadPositionContext()">
-                  Load context
-                </button>
-              }
             </div>
           </header>
 
-          @if (!isPositionContextRequested()) {
-            <p class="state-message">Context statistics are loaded on demand.</p>
-          } @else if (summaryResource.isLoading()) {
+          @if (summaryResource.isLoading()) {
             <div class="inline-loading">
               <mat-spinner diameter="28"></mat-spinner>
               <span>Loading position context...</span>
@@ -140,7 +132,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (row of geneBiotypeRows(); track row.bioType) {
+                        @for (row of geneBiotypePage().rows; track row.bioType) {
                           <tr>
                             <th scope="row">{{ row.displayLabel }}</th>
                             <td>{{ formatTableCount(row.insideCount) }}</td>
@@ -151,6 +143,18 @@
                         }
                       </tbody>
                     </table>
+                    @if (geneBiotypeRows().length > geneBiotypePageSizeOptions[0]) {
+                      <mat-paginator
+                        class="gene-biotype-paginator"
+                        aria-label="Gene biotype table pagination"
+                        [length]="geneBiotypeRows().length"
+                        [pageIndex]="geneBiotypePage().pageIndex"
+                        [pageSize]="geneBiotypePage().pageSize"
+                        [pageSizeOptions]="geneBiotypePageSizeOptions"
+                        [showFirstLastButtons]="true"
+                        (page)="changeGeneBiotypePage($event)"
+                      />
+                    }
                   </div>
                 }
               </div>
@@ -178,7 +182,11 @@
             <mat-icon>folder_open</mat-icon>
             <h2>Genome assemblies</h2>
           </header>
-          <app-assembly-list [assemblies]="assemblyRows()"></app-assembly-list>
+          <app-assembly-list
+            [assemblies]="assemblyRows()"
+            [taxonId]="taxonomy.taxon_id"
+            [taxonName]="taxonomy.name"
+          ></app-assembly-list>
         </section>
       </div>
 

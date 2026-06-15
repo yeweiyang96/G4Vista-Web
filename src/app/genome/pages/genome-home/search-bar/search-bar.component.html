@@ -64,35 +64,4 @@
       }
     </mat-autocomplete>
   </mat-form-field>
-
-  @if (submittedQuery()) {
-    <section class="genome-search-results" aria-label="Assembly search results">
-      <div class="genome-results-heading">
-        <span>Results for {{ submittedQuery() }}</span>
-      </div>
-
-      @if (searchResultsResource.isLoading()) {
-        <p class="genome-results-state">Loading assembly results.</p>
-      } @else if (searchResultsResource.value().length > 0) {
-        <div class="genome-results-list">
-          @for (assembly of searchResultsResource.value(); track assembly.assembly_accession) {
-            <a
-              mat-button
-              class="genome-result-row"
-              [routerLink]="['/genome', assembly.assembly_accession]"
-            >
-              <span class="genome-result-main">
-                <strong>{{ assembly.asm_name }}</strong>
-                <span>{{ assembly.assembly_accession }}</span>
-              </span>
-              <span class="genome-result-organism">{{ assembly.organism_name }}</span>
-              <mat-icon iconPositionEnd>chevron_right</mat-icon>
-            </a>
-          }
-        </div>
-      } @else {
-        <p class="genome-results-state">No matching genome assemblies.</p>
-      }
-    </section>
-  }
 </form>

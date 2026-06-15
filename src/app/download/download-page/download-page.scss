@@ -1,0 +1,249 @@
+.download-page {
+  display: grid;
+  gap: 18px;
+  padding-block: 28px 44px;
+}
+
+:where(h1, h2, h3, p) {
+  margin: 0;
+}
+
+.download-header,
+.assembly-panel,
+.options-panel,
+.download-error {
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius-large);
+  box-shadow: var(--g4v-shadow);
+}
+
+.download-header {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 28px;
+}
+
+.header-copy {
+  display: grid;
+  gap: 8px;
+  max-width: 780px;
+}
+
+.header-copy p:last-child {
+  max-width: 760px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-title-medium);
+}
+
+.section-kicker,
+.panel-kicker {
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.header-actions :where(a, button) {
+  white-space: nowrap;
+}
+
+.download-error {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 16px;
+  color: var(--mat-sys-error);
+  background: color-mix(in srgb, var(--mat-sys-error-container) 50%, transparent);
+}
+
+.download-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.assembly-panel,
+.options-panel {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: 22px;
+}
+
+.panel-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.panel-heading h2 {
+  font: var(--mat-sys-headline-small);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.empty-state {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  padding: 28px;
+  color: var(--mat-sys-on-surface-variant);
+  background: var(--mat-sys-surface-container-low);
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.empty-state mat-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 34px;
+  color: var(--mat-sys-primary);
+}
+
+.source-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.source-summary span {
+  padding: 4px 10px;
+  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-secondary-container);
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 700;
+}
+
+.assembly-list {
+  display: grid;
+  gap: 8px;
+  max-height: 520px;
+  overflow: auto;
+}
+
+.assembly-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 10px 10px 12px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.assembly-row-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.assembly-row-copy span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assembly-accession {
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+}
+
+.option-group {
+  display: grid;
+  gap: 12px;
+}
+
+.option-group h3 {
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-title-medium);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.check-grid,
+.column-grid,
+.field-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.check-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.column-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 10px;
+  background: var(--mat-sys-surface-container-low);
+  border-radius: var(--g4v-radius);
+}
+
+.field-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.field-grid.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (width <= 1040px) {
+  .download-header {
+    display: grid;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+
+  .download-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 720px) {
+  .download-page {
+    padding-block: 18px 32px;
+  }
+
+  .download-header,
+  .assembly-panel,
+  .options-panel {
+    padding: 18px;
+  }
+
+  .field-grid,
+  .field-grid.two-columns,
+  .column-grid,
+  .check-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions :where(a, button) {
+    width: 100%;
+  }
+}

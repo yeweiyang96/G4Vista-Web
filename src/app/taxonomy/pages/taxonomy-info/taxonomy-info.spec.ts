@@ -5,6 +5,7 @@ import { ArcElement, Legend, PieController, Tooltip } from 'chart.js';
 import { provideCharts } from 'ng2-charts';
 import { of } from 'rxjs';
 import { Taxonomy, TaxonomyG4Summary, TaxonomyService } from '../../services/taxonomy.service';
+import type { G4GeneBiotypePositionBreakdown } from '../../../genome/services/g4.service';
 import { TaxonomyInfoComponent } from './taxonomy-info';
 
 describe('TaxonomyInfoComponent', () => {
@@ -23,6 +24,60 @@ describe('TaxonomyInfoComponent', () => {
       },
     ],
   };
+
+  function geneBiotypeBreakdownRow(
+    bioType: string | null,
+    insideCount: number,
+    upstreamCount: number,
+    downstreamCount: number,
+  ): G4GeneBiotypePositionBreakdown {
+    const totalCount = insideCount + upstreamCount + downstreamCount;
+    return {
+      bio_type: bioType,
+      display_label: bioType ?? 'Unspecified gene biotype',
+      total_count: totalCount,
+      categories: [
+        {
+          key: 'gene_inside',
+          label: 'In genes',
+          count: insideCount,
+          ratio: 0,
+          precedence_rank: 1,
+          description: 'Inside genes',
+        },
+        {
+          key: 'gene_upstream',
+          label: 'Upstream flank',
+          count: upstreamCount,
+          ratio: 0,
+          precedence_rank: 2,
+          description: 'Upstream flank',
+        },
+        {
+          key: 'gene_downstream',
+          label: 'Downstream flank',
+          count: downstreamCount,
+          ratio: 0,
+          precedence_rank: 3,
+          description: 'Downstream flank',
+        },
+      ],
+    };
+  }
+
+  function pagedGeneBiotypeRows(): G4GeneBiotypePositionBreakdown[] {
+    return Array.from({ length: 15 }, (_, index) => {
+      const rank = index + 1;
+      const bioType = `rank_${String(rank).padStart(2, '0')}`;
+      return geneBiotypeBreakdownRow(bioType, rank * 10, 0, 0);
+    });
+  }
+
+  function renderedGeneBiotypeLabels(root: HTMLElement): string[] {
+    return Array.from(root.querySelectorAll('.gene-biotype-summary tbody th')).map(
+      (element) => element.textContent?.trim() ?? '',
+    );
+  }
 
   const singleSummary: TaxonomyG4Summary = {
     taxon_id: 3702,
@@ -289,57 +344,51 @@ describe('TaxonomyInfoComponent', () => {
     return fixture;
   }
 
-  function findButton(
-    fixture: ComponentFixture<TaxonomyInfoComponent>,
-    text: string,
-  ): HTMLButtonElement {
-    const buttons = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    ) as HTMLButtonElement[];
-    const button = buttons.find((item) => item.textContent?.includes(text));
-    if (!button) {
-      throw new Error(`Button not found: ${text}`);
-    }
-    return button;
-  }
-
-  async function loadPositionContext(
-    fixture: ComponentFixture<TaxonomyInfoComponent>,
-  ): Promise<void> {
-    findButton(fixture, 'Load context').click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
-
-  it('does not load taxon-level summary statistics before explicit context request', async () => {
+  it('loads taxon-level summary statistics by default', async () => {
     const fixture = await createComponent(singleSummary);
     const text = fixture.nativeElement.textContent as string;
 
-    expect(service.getTaxonomyG4Summary).not.toHaveBeenCalled();
+    expect(service.getTaxonomyG4Summary).toHaveBeenCalledWith({
+      taxonId: 3702,
+      g4Type: 'g4',
+      flankWindow: 1000,
+      tetrads: [],
+      minScore: null,
+      maxScore: null,
+      overlap: false,
+    });
     expect(text).toContain('Taxon-level G4 position context');
-    expect(text).toContain('Load context');
+    expect(text).not.toContain('Load context');
+    expect(text).not.toContain('Context statistics are loaded on demand.');
     expect(text).not.toContain('Available assemblies');
     expect(text).not.toContain('Taxon-level G4 statistics');
     expect(text).not.toContain('IQR');
     expect(text).not.toContain('Highest G4 density');
   });
 
-  it('updates the position context title when switching motif type before loading', async () => {
+  it('reloads the position context when switching motif type', async () => {
     const fixture = await createComponent(singleSummary);
 
     fixture.componentInstance.setG4Type('i-motif');
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
-    expect(service.getTaxonomyG4Summary).not.toHaveBeenCalled();
+    expect(service.getTaxonomyG4Summary).toHaveBeenCalledWith({
+      taxonId: 3702,
+      g4Type: 'i-motif',
+      flankWindow: 1000,
+      tetrads: [],
+      minScore: null,
+      maxScore: null,
+      overlap: false,
+    });
     expect(text).toContain('Taxon-level i-motif position context');
   });
 
-  it('loads gene-context pie categories and biotype table on demand', async () => {
+  it('renders gene-context pie categories and biotype table by default', async () => {
     const fixture = await createComponent(singleSummary);
-
-    await loadPositionContext(fixture);
 
     const text = fixture.nativeElement.textContent as string;
 
@@ -380,10 +429,52 @@ describe('TaxonomyInfoComponent', () => {
     expect(text).not.toContain('No assigned feature');
   });
 
+  it('paginates gene biotype rows sorted by total gene-context counts', async () => {
+    const pagedSummary: TaxonomyG4Summary = {
+      ...singleSummary,
+      position_distribution: {
+        ...singleSummary.position_distribution,
+        gene_biotype_breakdown: pagedGeneBiotypeRows(),
+      },
+    };
+    const fixture = await createComponent(pagedSummary);
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(renderedGeneBiotypeLabels(root)).toEqual([
+      'rank_15',
+      'rank_14',
+      'rank_13',
+      'rank_12',
+      'rank_11',
+      'rank_10',
+      'rank_09',
+      'rank_08',
+      'rank_07',
+      'rank_06',
+    ]);
+    expect(root.textContent).not.toContain('rank_05');
+
+    const nextPageButton = root.querySelector(
+      '.gene-biotype-paginator button[aria-label="Next page"]',
+    ) as HTMLButtonElement | null;
+    expect(nextPageButton).not.toBeNull();
+    nextPageButton?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(renderedGeneBiotypeLabels(root)).toEqual([
+      'rank_05',
+      'rank_04',
+      'rank_03',
+      'rank_02',
+      'rank_01',
+    ]);
+    expect(root.textContent).not.toContain('rank_06');
+  });
+
   it('does not render multi-assembly comparison data in the position context view', async () => {
     const fixture = await createComponent(multiSummary);
-
-    await loadPositionContext(fixture);
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).not.toContain('Assembly density distribution');

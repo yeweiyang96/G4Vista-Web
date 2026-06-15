@@ -47,6 +47,11 @@ export interface AssemblyCount {
   assembly_count: number;
 }
 
+export interface AssemblyAccessions {
+  taxon_id: number;
+  assembly_accessions: string[];
+}
+
 export type TaxonomyG4ComparisonMode = 'single_assembly' | 'multi_assembly';
 
 export interface TaxonomyG4MotifSummary {
@@ -126,6 +131,11 @@ export class TaxonomyService {
   getAssemblyCounts(taxon_ids: number[]): Observable<AssemblyCount[]> {
     const params = taxon_ids.map((id) => `taxon_ids=${id}`).join('&');
     return this.http.get<AssemblyCount[]>(`${this.apiUrl}/genomes/counts?${params}`);
+  }
+
+  getAssemblyAccessions(taxon_ids: number[]): Observable<AssemblyAccessions[]> {
+    const params = taxon_ids.map((id) => `taxon_ids=${id}`).join('&');
+    return this.http.get<AssemblyAccessions[]>(`${this.apiUrl}/genomes/accessions?${params}`);
   }
 
   getTaxonomyG4Summary(request: TaxonomyG4SummaryRequest): Observable<TaxonomyG4Summary> {

@@ -81,4 +81,52 @@ describe('GeneService', () => {
     expect(request.request.method).toBe('GET');
     request.flush([]);
   });
+
+  it('uses paginated gene search endpoint with offset and limit', () => {
+    const responseSpy = jasmine.createSpy();
+
+    service
+      .searchGenesPage({ searchTerm: 'dnaK', pageIndex: 2, pageSize: 25 })
+      .subscribe(responseSpy);
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === '/api/v1/gene/page' &&
+        req.params.get('search_term') === 'dnaK' &&
+        req.params.get('offset') === '2' &&
+        req.params.get('limit') === '25',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({ genes: [], count: 123 });
+
+    expect(responseSpy).toHaveBeenCalledWith({ genes: [], count: 123 });
+  });
+
+  it('downloads the full gene search result set as a blob', () => {
+    const responseSpy = jasmine.createSpy();
+    const blob = new Blob(['gene,csv']);
+
+    service.downloadGeneSearch({ searchTerm: 'TP53', taxonId: 9606 }).subscribe(responseSpy);
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === '/api/v1/gene/download' &&
+        req.params.get('search_term') === 'TP53' &&
+        req.params.get('taxon_id') === '9606',
+    );
+
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(blob, {
+      headers: {
+        'Content-Disposition': 'attachment; filename="tp53-genes.csv"',
+      },
+    });
+
+    expect(responseSpy).toHaveBeenCalledWith({
+      blob,
+      filename: 'tp53-genes.csv',
+    });
+  });
 });
