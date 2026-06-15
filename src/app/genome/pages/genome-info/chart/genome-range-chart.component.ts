@@ -479,7 +479,6 @@ export class GenomeRangeChartComponent {
           title: 'Genomic position (bp)',
           values: xAxisValues,
           format: 'd',
-          labelOverlap: 'greedy',
           labelPadding: hasFeatureAxisLabels ? 8 : 4,
           titlePadding: hasFeatureAxisLabels ? 18 : 4,
           encode: {

@@ -128,7 +128,6 @@ describe('PositionStatisticsPanelComponent', () => {
       tetrads: [],
       min_score: null,
       max_score: null,
-      overlap: false,
     },
     windows: [
       {
@@ -266,11 +265,40 @@ describe('PositionStatisticsPanelComponent', () => {
     return fixture.nativeElement.textContent as string;
   }
 
-  it('renders the gene biotype density table without repeated overview summary content', () => {
+  async function expandDensityTable(): Promise<void> {
+    const header = fixture.nativeElement.querySelector(
+      '.biotype-density mat-expansion-panel-header',
+    ) as HTMLElement | null;
+    if (!header) {
+      throw new Error('Density table expansion header was not rendered.');
+    }
+
+    header.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('keeps the gene biotype density table collapsed by default', () => {
     const text = renderedText();
 
     expect(text).toContain('Gene biotype density');
     expect(text).toContain('Density table');
+    expect(text).toContain('Sites per megabase for gene bodies and selected gene flanks.');
+    expect(text).toContain('Score and length distributions');
+    expect(text).not.toContain('protein_coding');
+    expect(text).not.toContain('sites/Mb');
+    expect(fixture.nativeElement.querySelector('.biotype-density .density-table')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.biotype-density .mat-expansion-panel.mat-expanded'),
+    ).toBeNull();
+  });
+
+  it('renders the gene biotype density table after expansion without repeated overview summary content', async () => {
+    await expandDensityTable();
+
+    const text = renderedText();
+
     expect(text).toContain('protein_coding');
     expect(text).toContain('Other');
     expect(text).toContain('sites/Mb');

@@ -107,7 +107,6 @@ export interface TaxonomyG4SummaryRequest {
   tetrads: readonly number[];
   minScore: number | null;
   maxScore: number | null;
-  overlap: boolean;
 }
 
 @Injectable({
@@ -141,8 +140,7 @@ export class TaxonomyService {
   getTaxonomyG4Summary(request: TaxonomyG4SummaryRequest): Observable<TaxonomyG4Summary> {
     let params = new HttpParams()
       .set('g4_type', request.g4Type)
-      .set('flank_window', request.flankWindow)
-      .set('overlap', request.overlap);
+      .set('flank_window', request.flankWindow);
 
     for (const tetrad of request.tetrads) {
       params = params.append('tetrads', tetrad);

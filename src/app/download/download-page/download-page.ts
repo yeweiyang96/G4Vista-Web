@@ -192,7 +192,6 @@ export class DownloadPage {
         tetrads,
         min_score: minScore,
         max_score: maxScore,
-        overlap: false,
         sort: this.sortField(),
         order: this.sortOrder(),
         columns: this.selectedColumns(),

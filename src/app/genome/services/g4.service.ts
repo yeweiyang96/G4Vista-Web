@@ -127,7 +127,6 @@ export interface G4PageRequest {
   tetrads: number[];
   minScore?: number;
   maxScore?: number;
-  overlap?: boolean;
 }
 
 export interface G4HistogramBin {
@@ -150,7 +149,6 @@ export interface G4HistogramFilters {
   tetrads: number[];
   minScore?: number;
   maxScore?: number;
-  overlap?: boolean;
 }
 
 export interface G4ChartViewport {
@@ -171,7 +169,6 @@ export interface G4PositionDistributionFilters {
   tetrads: number[];
   min_score: number | null;
   max_score: number | null;
-  overlap: boolean;
   flank_window: G4FlankWindow;
   counting_mode: 'exclusive';
 }
@@ -229,7 +226,6 @@ export interface G4PositionStatisticsFilters {
   tetrads: number[];
   min_score: number | null;
   max_score: number | null;
-  overlap: boolean;
 }
 
 export interface G4PositionMotifStats {
@@ -324,7 +320,6 @@ export interface G4PositionDistributionRequest {
   tetrads: number[];
   minScore?: number;
   maxScore?: number;
-  overlap?: boolean;
   flankWindow: G4FlankWindow;
   includeFeatureBreakdown?: boolean;
   includeGeneBiotypeBreakdown?: boolean;
@@ -337,7 +332,6 @@ export interface G4PositionStatisticsRequest {
   tetrads: number[];
   minScore?: number;
   maxScore?: number;
-  overlap?: boolean;
   includeGeneBiotypeBreakdown?: boolean;
 }
 
@@ -354,7 +348,6 @@ export interface G4GeneSearchRequest {
   selectedFeatureId: string;
   selectedPosition: G4GenePosition;
   searchTerm?: string;
-  overlap?: boolean;
 }
 
 export interface G4DownloadRequest {
@@ -369,7 +362,6 @@ export interface G4DownloadRequest {
   selectedFeatureId?: string;
   selectedPosition?: G4GenePosition;
   searchTerm?: string;
-  overlap?: boolean;
   columns: readonly G4DownloadColumn[];
 }
 
@@ -428,7 +420,6 @@ export const EMPTY_G4_POSITION_DISTRIBUTION: G4PositionDistributionResponse = {
     tetrads: [],
     min_score: null,
     max_score: null,
-    overlap: false,
     flank_window: 1000,
     counting_mode: 'exclusive',
   },
@@ -452,7 +443,6 @@ export const EMPTY_G4_POSITION_STATISTICS: G4PositionStatisticsResponse = {
     tetrads: [],
     min_score: null,
     max_score: null,
-    overlap: false,
   },
   genome_length_bp: 0,
   genome_length_mb: 0,
@@ -578,7 +568,7 @@ export class G4Service {
     params: HttpParams,
     filters: Pick<
       G4PageRequest | G4GeneSearchRequest | G4HistogramFilters,
-      'tetrads' | 'minScore' | 'maxScore' | 'overlap'
+      'tetrads' | 'minScore' | 'maxScore'
     >,
   ): HttpParams {
     let nextParams = params;
@@ -591,16 +581,13 @@ export class G4Service {
     if (filters.maxScore !== undefined) {
       nextParams = nextParams.set('max_score', filters.maxScore);
     }
-    if (filters.overlap) {
-      nextParams = nextParams.set('overlap', true);
-    }
     return nextParams;
   }
 
   private buildCommonPageParams(
     request: Pick<
       G4PageRequest | G4GeneSearchRequest,
-      'pageIndex' | 'pageSize' | 'sort' | 'order' | 'tetrads' | 'minScore' | 'maxScore' | 'overlap'
+      'pageIndex' | 'pageSize' | 'sort' | 'order' | 'tetrads' | 'minScore' | 'maxScore'
     >,
   ): HttpParams {
     const params = new HttpParams()

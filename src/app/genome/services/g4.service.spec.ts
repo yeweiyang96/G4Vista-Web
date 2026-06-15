@@ -319,13 +319,12 @@ describe('G4Service', () => {
           tetrads: [2, 4],
           minScore: 12,
           maxScore: 40,
-          overlap: true,
         },
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/NC_000001.1/g4/histogram?range_start=1000&range_end=5000&bin_size=200&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/NC_000001.1/g4/histogram?range_start=1000&range_end=5000&bin_size=200&tetrads=2&tetrads=4&min_score=12&max_score=40',
     );
 
     expect(request.request.method).toBe('GET');
@@ -346,7 +345,6 @@ describe('G4Service', () => {
         tetrads: [2, 4],
         minScore: 12,
         maxScore: 40,
-        overlap: true,
         flankWindow: 500,
         includeFeatureBreakdown: false,
         includeGeneBiotypeBreakdown: false,
@@ -354,7 +352,7 @@ describe('G4Service', () => {
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/g4/position-distribution?flank_window=500&include_feature_breakdown=false&include_gene_biotype_breakdown=false&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/g4/position-distribution?flank_window=500&include_feature_breakdown=false&include_gene_biotype_breakdown=false&tetrads=2&tetrads=4&min_score=12&max_score=40',
     );
 
     expect(request.request.method).toBe('GET');
@@ -365,7 +363,6 @@ describe('G4Service', () => {
         tetrads: [2, 4],
         min_score: 12,
         max_score: 40,
-        overlap: true,
         flank_window: 500,
         counting_mode: 'exclusive',
       },
@@ -404,7 +401,6 @@ describe('G4Service', () => {
         tetrads: [],
         min_score: null,
         max_score: null,
-        overlap: false,
         flank_window: 1000,
         counting_mode: 'exclusive',
       },
@@ -430,13 +426,12 @@ describe('G4Service', () => {
         tetrads: [2, 4],
         minScore: 12,
         maxScore: 40,
-        overlap: true,
         includeGeneBiotypeBreakdown: true,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=1000&g4_type=g4&include_gene_biotype_breakdown=true&tetrads=2&tetrads=4&min_score=12&max_score=40&overlap=true',
+      '/api/v1/g4/GCF_000021765.1/position-statistics?windows=1000&g4_type=g4&include_gene_biotype_breakdown=true&tetrads=2&tetrads=4&min_score=12&max_score=40',
     );
 
     expect(request.request.method).toBe('GET');
@@ -448,7 +443,6 @@ describe('G4Service', () => {
         tetrads: [2, 4],
         min_score: 12,
         max_score: 40,
-        overlap: true,
       },
       genome_length_bp: 0,
       genome_length_mb: 0,

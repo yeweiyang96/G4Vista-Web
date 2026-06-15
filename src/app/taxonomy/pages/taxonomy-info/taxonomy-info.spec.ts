@@ -243,7 +243,6 @@ describe('TaxonomyInfoComponent', () => {
       tetrads: [],
       min_score: null,
       max_score: null,
-      overlap: false,
       flank_window: 1000,
       counting_mode: 'exclusive',
     },
@@ -355,7 +354,6 @@ describe('TaxonomyInfoComponent', () => {
       tetrads: [],
       minScore: null,
       maxScore: null,
-      overlap: false,
     });
     expect(text).toContain('Taxon-level G4 position context');
     expect(text).not.toContain('Load context');
@@ -382,7 +380,6 @@ describe('TaxonomyInfoComponent', () => {
       tetrads: [],
       minScore: null,
       maxScore: null,
-      overlap: false,
     });
     expect(text).toContain('Taxon-level i-motif position context');
   });
@@ -399,7 +396,6 @@ describe('TaxonomyInfoComponent', () => {
       tetrads: [],
       minScore: null,
       maxScore: null,
-      overlap: false,
     });
     expect(text).toContain('Pie slices are G4 sequence counts by genomic context.');
     expect(text).toContain('Other means sequences outside genes and selected gene flanks.');

@@ -20,105 +20,114 @@
   } @else if (hasStatistics()) {
     @if (hasBiotypeDensity()) {
       <section class="biotype-density" aria-label="Gene biotype density by gene context">
-        <div class="section-heading">
-          <h3>Density table</h3>
-          <p>Sites per megabase for gene bodies and selected gene flanks.</p>
-        </div>
+        <mat-accordion class="density-table-accordion" displayMode="flat">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Density table</mat-panel-title>
+              <mat-panel-description>
+                Sites per megabase for gene bodies and selected gene flanks.
+              </mat-panel-description>
+            </mat-expansion-panel-header>
 
-        <div class="density-table-wrap">
-          <table class="density-table">
-            <thead>
-              <tr>
-                <th>Gene biotype</th>
-                @for (column of geneContextColumns; track column.key) {
-                  <th>
-                    <span class="category-heading">
-                      <span
-                        class="category-swatch"
-                        [style.background]="column.color"
-                        aria-hidden="true"
-                      ></span>
-                      {{ column.label }}
-                    </span>
-                  </th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of visibleBiotypeDensityRows(); track row.key) {
-                <tr>
-                  <th scope="row">
-                    <span class="biotype-name">{{ row.label }}</span>
-                    <span class="biotype-total">{{ formatCount(row.totalCount) }} sites</span>
-                  </th>
-                  @for (cell of row.cells; track cell.key) {
-                    <td>
-                      <span class="density-value">
-                        {{ formatNullableNumber(cell.densityPerMb) }}
-                        <span>sites/Mb</span>
-                      </span>
-                      <span class="density-detail">
-                        {{ formatCount(cell.count) }} sites / {{ formatLengthMb(cell.lengthMb) }} Mb
-                      </span>
-                    </td>
-                  }
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        @if (additionalBiotypeDensityRows().length > 0) {
-          <mat-accordion class="additional-biotypes" displayMode="flat">
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>Additional gene biotypes</mat-panel-title>
-                <mat-panel-description>
-                  {{ additionalBiotypeDensityRows().length }} more
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-
-              <ng-template matExpansionPanelContent>
-                <div class="density-table-wrap">
-                  <table class="density-table density-table-secondary">
-                    <thead>
+            <ng-template matExpansionPanelContent>
+              <div class="density-table-wrap">
+                <table class="density-table">
+                  <thead>
+                    <tr>
+                      <th>Gene biotype</th>
+                      @for (column of geneContextColumns; track column.key) {
+                        <th>
+                          <span class="category-heading">
+                            <span
+                              class="category-swatch"
+                              [style.background]="column.color"
+                              aria-hidden="true"
+                            ></span>
+                            {{ column.label }}
+                          </span>
+                        </th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of visibleBiotypeDensityRows(); track row.key) {
                       <tr>
-                        <th>Gene biotype</th>
-                        @for (column of geneContextColumns; track column.key) {
-                          <th>{{ column.label }}</th>
+                        <th scope="row">
+                          <span class="biotype-name">{{ row.label }}</span>
+                          <span class="biotype-total">{{ formatCount(row.totalCount) }} sites</span>
+                        </th>
+                        @for (cell of row.cells; track cell.key) {
+                          <td>
+                            <span class="density-value">
+                              {{ formatNullableNumber(cell.densityPerMb) }}
+                              <span>sites/Mb</span>
+                            </span>
+                            <span class="density-detail">
+                              {{ formatCount(cell.count) }} sites /
+                              {{ formatLengthMb(cell.lengthMb) }} Mb
+                            </span>
+                          </td>
                         }
                       </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of additionalBiotypeDensityRows(); track row.key) {
-                        <tr>
-                          <th scope="row">
-                            <span class="biotype-name">{{ row.label }}</span>
-                            <span class="biotype-total"
-                              >{{ formatCount(row.totalCount) }} sites</span
-                            >
-                          </th>
-                          @for (cell of row.cells; track cell.key) {
-                            <td>
-                              <span class="density-value">
-                                {{ formatNullableNumber(cell.densityPerMb) }}
-                                <span>sites/Mb</span>
-                              </span>
-                              <span class="density-detail">
-                                {{ formatCount(cell.count) }} sites /
-                                {{ formatLengthMb(cell.lengthMb) }} Mb
-                              </span>
-                            </td>
-                          }
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </ng-template>
-            </mat-expansion-panel>
-          </mat-accordion>
-        }
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              @if (additionalBiotypeDensityRows().length > 0) {
+                <mat-accordion class="additional-biotypes" displayMode="flat">
+                  <mat-expansion-panel>
+                    <mat-expansion-panel-header>
+                      <mat-panel-title>Additional gene biotypes</mat-panel-title>
+                      <mat-panel-description>
+                        {{ additionalBiotypeDensityRows().length }} more
+                      </mat-panel-description>
+                    </mat-expansion-panel-header>
+
+                    <ng-template matExpansionPanelContent>
+                      <div class="density-table-wrap">
+                        <table class="density-table density-table-secondary">
+                          <thead>
+                            <tr>
+                              <th>Gene biotype</th>
+                              @for (column of geneContextColumns; track column.key) {
+                                <th>{{ column.label }}</th>
+                              }
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of additionalBiotypeDensityRows(); track row.key) {
+                              <tr>
+                                <th scope="row">
+                                  <span class="biotype-name">{{ row.label }}</span>
+                                  <span class="biotype-total"
+                                    >{{ formatCount(row.totalCount) }} sites</span
+                                  >
+                                </th>
+                                @for (cell of row.cells; track cell.key) {
+                                  <td>
+                                    <span class="density-value">
+                                      {{ formatNullableNumber(cell.densityPerMb) }}
+                                      <span>sites/Mb</span>
+                                    </span>
+                                    <span class="density-detail">
+                                      {{ formatCount(cell.count) }} sites /
+                                      {{ formatLengthMb(cell.lengthMb) }} Mb
+                                    </span>
+                                  </td>
+                                }
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </ng-template>
+                  </mat-expansion-panel>
+                </mat-accordion>
+              }
+            </ng-template>
+          </mat-expansion-panel>
+        </mat-accordion>
       </section>
     } @else {
       <p class="state" role="status">No gene biotype density data are available.</p>

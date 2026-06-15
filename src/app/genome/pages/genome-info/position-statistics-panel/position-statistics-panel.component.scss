@@ -16,7 +16,6 @@
 
 .statistics-header,
 .biotype-density,
-.section-heading,
 .strength-stack,
 .warnings {
   display: grid;
@@ -51,7 +50,6 @@
 
 .position-statistics-panel header p,
 .state,
-.section-heading p,
 .density-detail,
 .biotype-total,
 .warnings {
@@ -67,14 +65,15 @@
 .biotype-density,
 .statistics-details {
   gap: 14px;
-  padding: 18px;
   background: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
 }
 
-.section-heading {
-  gap: 4px;
+.biotype-density {
+  padding: 0;
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-lowest);
 }
 
 .category-swatch {
@@ -176,6 +175,7 @@
   background: var(--mat-sys-surface-container-lowest);
 }
 
+.density-table-accordion,
 .additional-biotypes {
   display: block;
 }
@@ -185,6 +185,7 @@
 }
 
 :host ::ng-deep .statistics-details .mat-expansion-panel,
+:host ::ng-deep .density-table-accordion .mat-expansion-panel,
 :host ::ng-deep .additional-biotypes .mat-expansion-panel {
   background: transparent;
   border-radius: 8px;
@@ -192,17 +193,20 @@
 }
 
 :host ::ng-deep .statistics-details .mat-expansion-panel-header,
+:host ::ng-deep .density-table-accordion .mat-expansion-panel-header,
 :host ::ng-deep .additional-biotypes .mat-expansion-panel-header {
   min-height: 60px;
   padding: 0 18px;
 }
 
 :host ::ng-deep .statistics-details .mat-expansion-panel-body,
+:host ::ng-deep .density-table-accordion .mat-expansion-panel-body,
 :host ::ng-deep .additional-biotypes .mat-expansion-panel-body {
   padding: 0 18px 18px;
 }
 
 :host ::ng-deep .statistics-details .mat-expansion-panel-header-description,
+:host ::ng-deep .density-table-accordion .mat-expansion-panel-header-description,
 :host ::ng-deep .additional-biotypes .mat-expansion-panel-header-description {
   justify-content: flex-end;
   color: var(--mat-sys-on-surface-variant);
@@ -224,12 +228,14 @@
   }
 
   :host ::ng-deep .statistics-details .mat-expansion-panel-header,
+  :host ::ng-deep .density-table-accordion .mat-expansion-panel-header,
   :host ::ng-deep .additional-biotypes .mat-expansion-panel-header {
     height: auto;
     min-height: 68px;
   }
 
   :host ::ng-deep .statistics-details .mat-expansion-panel-header-description,
+  :host ::ng-deep .density-table-accordion .mat-expansion-panel-header-description,
   :host ::ng-deep .additional-biotypes .mat-expansion-panel-header-description {
     display: none;
   }

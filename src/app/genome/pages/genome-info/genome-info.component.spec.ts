@@ -355,7 +355,6 @@ describe('GenomeInfoComponent', () => {
           tetrads: [],
           min_score: null,
           max_score: null,
-          overlap: false,
         },
         windows: [
           {
@@ -596,7 +595,6 @@ describe('GenomeInfoComponent', () => {
         tetrads: [],
         minScore: undefined,
         maxScore: undefined,
-        overlap: false,
         includeGeneBiotypeBreakdown: true,
       }),
     );
@@ -660,7 +658,6 @@ describe('GenomeInfoComponent', () => {
         tetrads: [3],
         minScore: 12,
         maxScore: 40,
-        overlap: false,
         includeGeneBiotypeBreakdown: true,
       }),
     );
@@ -691,7 +688,6 @@ describe('GenomeInfoComponent', () => {
         tetrads: [],
         minScore: undefined,
         maxScore: undefined,
-        overlap: false,
         includeGeneBiotypeBreakdown: true,
       }),
     );
@@ -727,7 +723,6 @@ describe('GenomeInfoComponent', () => {
         windows: [500],
         g4Type: 'g4',
         tetrads: [],
-        overlap: false,
         includeGeneBiotypeBreakdown: true,
       }),
     );
@@ -755,7 +750,6 @@ describe('GenomeInfoComponent', () => {
         windows: [500],
         g4Type: 'i-motif',
         tetrads: [],
-        overlap: false,
         includeGeneBiotypeBreakdown: true,
       }),
     );

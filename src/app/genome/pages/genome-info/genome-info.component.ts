@@ -533,10 +533,7 @@ export class GenomeInfoComponent {
       maxScore: parseOptionalInteger(filters.maxScore),
     };
   });
-  readonly chartFilters = computed<G4HistogramFilters>(() => ({
-    ...this.browseFilters(),
-    overlap: false,
-  }));
+  readonly chartFilters = computed<G4HistogramFilters>(() => this.browseFilters());
   readonly positionDistributionFlankWindowLabel = computed(
     () =>
       G4_FLANK_WINDOW_OPTIONS.find(
@@ -778,7 +775,6 @@ export class GenomeInfoComponent {
         tetrads: this.positionDistributionFilters().tetrads,
         minScore: this.positionDistributionFilters().minScore,
         maxScore: this.positionDistributionFilters().maxScore,
-        overlap: false,
         flankWindow: this.positionDistributionFlankWindow(),
         includeFeatureBreakdown: false,
       };
@@ -810,7 +806,6 @@ export class GenomeInfoComponent {
         tetrads: this.positionDistributionFilters().tetrads,
         minScore: this.positionDistributionFilters().minScore,
         maxScore: this.positionDistributionFilters().maxScore,
-        overlap: false,
         includeGeneBiotypeBreakdown: true,
       };
     },

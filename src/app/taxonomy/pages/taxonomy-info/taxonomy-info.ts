@@ -197,7 +197,6 @@ export class TaxonomyInfoComponent {
       tetrads: [],
       minScore: null,
       maxScore: null,
-      overlap: false,
     }),
     stream: ({ params }) => this.taxonomyService.getTaxonomyG4Summary(params),
   });

@@ -10,7 +10,6 @@ export interface G4PackageRequest {
   readonly tetrads: readonly number[];
   readonly min_score: number | null;
   readonly max_score: number | null;
-  readonly overlap: boolean;
   readonly sort: G4SortField;
   readonly order: 'asc' | 'desc';
   readonly columns: readonly G4DownloadColumn[];
