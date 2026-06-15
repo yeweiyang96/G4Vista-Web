@@ -10,15 +10,13 @@
 .position-statistics-panel h2,
 .position-statistics-panel h3,
 .position-statistics-panel p,
-.summary-row dl,
-.summary-row dd {
+.density-table {
   margin: 0;
 }
 
 .statistics-header,
-.density-chart,
-.category-summary,
-.summary-rows,
+.biotype-density,
+.section-heading,
 .strength-stack,
 .warnings {
   display: grid;
@@ -53,8 +51,9 @@
 
 .position-statistics-panel header p,
 .state,
-.density-unit,
-.summary-row dt,
+.section-heading p,
+.density-detail,
+.biotype-total,
 .warnings {
   color: var(--mat-sys-on-surface-variant);
 }
@@ -65,49 +64,17 @@
   align-items: center;
 }
 
-.density-summary-grid {
-  display: grid;
-  grid-template-columns: minmax(420px, 1fr) minmax(360px, 0.74fr);
-  gap: 22px;
-  align-items: start;
-  min-width: 0;
-}
-
-.density-chart,
-.category-summary {
+.biotype-density,
+.statistics-details {
   gap: 14px;
   padding: 18px;
   background: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--g4v-radius);
+  border-radius: 8px;
 }
 
-.density-list {
-  display: grid;
-  gap: 16px;
-}
-
-.density-row {
-  display: grid;
-  grid-template-columns: minmax(124px, 0.36fr) minmax(180px, 1fr) minmax(72px, auto) auto;
-  gap: 12px;
-  align-items: center;
-  min-width: 0;
-}
-
-.density-label,
-.category-name {
-  display: inline-flex;
-  gap: 9px;
-  align-items: center;
-  min-width: 0;
-  color: var(--mat-sys-on-surface);
-}
-
-.density-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.section-heading {
+  gap: 4px;
 }
 
 .category-swatch {
@@ -117,75 +84,153 @@
   border-radius: 3px;
 }
 
-.density-row strong,
-.summary-row dd {
+.density-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.density-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+.density-table th,
+.density-table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.density-table thead th {
+  font: var(--mat-sys-label-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.density-table tbody tr:last-child th,
+.density-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.density-table tbody th {
+  width: 190px;
   font-weight: 800;
   color: var(--mat-sys-on-surface);
 }
 
-.density-track {
-  height: 14px;
-  overflow: hidden;
-  background: var(--mat-sys-surface-container-high);
-  border-radius: 999px;
+.category-heading,
+.biotype-name,
+.density-value {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.density-bar {
+.biotype-name,
+.biotype-total,
+.density-value,
+.density-detail {
+  min-width: 0;
+}
+
+.biotype-name {
+  max-width: 220px;
+  overflow-wrap: anywhere;
+}
+
+.biotype-total,
+.density-detail {
   display: block;
-  height: 100%;
-  border-radius: inherit;
+  margin-top: 3px;
+  font: var(--mat-sys-body-small);
 }
 
-.summary-rows,
+.density-value {
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.density-value span {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .strength-stack,
 .warnings {
   gap: 12px;
 }
 
-.summary-row {
-  display: grid;
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+.strength-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.summary-row:first-child {
-  padding-top: 0;
-  border-top: 0;
+.statistics-details {
+  padding: 0;
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-lowest);
 }
 
-.summary-row dl {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.summary-row dt {
-  font: var(--mat-sys-label-medium);
-}
-
-.summary-row dd {
-  margin-top: 3px;
+.additional-biotypes {
+  display: block;
 }
 
 .warnings p {
   margin: 0;
 }
 
+:host ::ng-deep .statistics-details .mat-expansion-panel,
+:host ::ng-deep .additional-biotypes .mat-expansion-panel {
+  background: transparent;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .statistics-details .mat-expansion-panel-header,
+:host ::ng-deep .additional-biotypes .mat-expansion-panel-header {
+  min-height: 60px;
+  padding: 0 18px;
+}
+
+:host ::ng-deep .statistics-details .mat-expansion-panel-body,
+:host ::ng-deep .additional-biotypes .mat-expansion-panel-body {
+  padding: 0 18px 18px;
+}
+
+:host ::ng-deep .statistics-details .mat-expansion-panel-header-description,
+:host ::ng-deep .additional-biotypes .mat-expansion-panel-header-description {
+  justify-content: flex-end;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 @media (width <= 1120px) {
-  .statistics-header,
-  .density-summary-grid {
+  .statistics-header {
     grid-template-columns: 1fr;
   }
 }
 
 @media (width <= 900px) {
-  .density-row,
-  .summary-row dl {
+  .strength-stack {
     grid-template-columns: 1fr;
   }
 
   .position-statistics-panel {
     padding: 18px;
+  }
+
+  :host ::ng-deep .statistics-details .mat-expansion-panel-header,
+  :host ::ng-deep .additional-biotypes .mat-expansion-panel-header {
+    height: auto;
+    min-height: 68px;
+  }
+
+  :host ::ng-deep .statistics-details .mat-expansion-panel-header-description,
+  :host ::ng-deep .additional-biotypes .mat-expansion-panel-header-description {
+    display: none;
   }
 }

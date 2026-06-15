@@ -8,6 +8,7 @@ describe('gene biotype helpers', () => {
     expect(canonicalGeneBiotype('   ')).toBe('other');
     expect(canonicalGeneBiotype('other')).toBe('other');
     expect(canonicalGeneBiotype('Other')).toBe('other');
+    expect(canonicalGeneBiotype('Unspecified gene biotype')).toBe('other');
     expect(canonicalGeneBiotype(' protein_coding ')).toBe('protein_coding');
   });
 
@@ -15,6 +16,7 @@ describe('gene biotype helpers', () => {
     expect(geneBiotypeLabel(null)).toBe('Other');
     expect(geneBiotypeLabel('')).toBe('Other');
     expect(geneBiotypeLabel('other')).toBe('Other');
+    expect(geneBiotypeLabel('Unspecified gene biotype')).toBe('Other');
     expect(geneBiotypeLabel('protein_coding')).toBe('protein_coding');
   });
 });

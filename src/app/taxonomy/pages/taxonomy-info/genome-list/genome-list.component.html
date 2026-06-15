@@ -4,7 +4,12 @@
 </mat-form-field>
 
 <div class="assembly-table-shell">
-  <table mat-table [dataSource]="dataSource" matSort>
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    [class.metrics-table]="displayedColumns.length > 3"
+    matSort
+  >
     <!-- Name Column -->
     <ng-container matColumnDef="asm_name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Assembly</th>

@@ -280,9 +280,33 @@ export interface G4PositionStatisticsCategory {
   asymmetry: G4PositionAsymmetry;
 }
 
+export interface G4PositionStatisticsGeneBiotypeCategory {
+  key: string;
+  label: string;
+  description: string;
+  precedence_rank: number;
+  display_label?: string;
+  display_description?: string;
+  category_group?: 'gene_context' | 'background';
+  is_default_chart_category?: boolean;
+  display_order?: number;
+  count: number;
+  merged_interval_length_bp: number;
+  length_mb: number;
+  motifs: Partial<Record<G4Type, G4PositionMotifStats>>;
+}
+
+export interface G4PositionStatisticsGeneBiotypeBreakdown {
+  bio_type: string;
+  display_label: string;
+  total_count: number;
+  categories: G4PositionStatisticsGeneBiotypeCategory[];
+}
+
 export interface G4PositionStatisticsWindow {
   window_bp: number;
   categories: G4PositionStatisticsCategory[];
+  gene_biotype_breakdown: G4PositionStatisticsGeneBiotypeBreakdown[];
 }
 
 export interface G4PositionStatisticsResponse {
@@ -314,6 +338,7 @@ export interface G4PositionStatisticsRequest {
   minScore?: number;
   maxScore?: number;
   overlap?: boolean;
+  includeGeneBiotypeBreakdown?: boolean;
 }
 
 export interface G4GeneSearchRequest {
@@ -625,6 +650,9 @@ export class G4Service {
     }
     if (request.g4Type !== undefined) {
       params = params.set('g4_type', request.g4Type);
+    }
+    if (request.includeGeneBiotypeBreakdown !== undefined) {
+      params = params.set('include_gene_biotype_breakdown', request.includeGeneBiotypeBreakdown);
     }
     params = this.appendCommonFilterParams(params, request);
 

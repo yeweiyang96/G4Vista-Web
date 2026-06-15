@@ -27,13 +27,13 @@ interface VegaBoxPlotSize {
   height: number;
 }
 
-const CHART_PADDING = { left: 118, right: 18, top: 14, bottom: 42 } as const;
-const MINIMUM_PLOT_WIDTH = 260;
-const ROW_HEIGHT = 52;
-const MINIMUM_PLOT_HEIGHT = 240;
-const WHISKER_CAP_HALF_HEIGHT = 12;
-const BOX_HALF_HEIGHT = 12;
-const MEDIAN_HALF_HEIGHT = 15;
+const CHART_PADDING = { left: 96, right: 12, top: 8, bottom: 32 } as const;
+const MINIMUM_PLOT_WIDTH = 220;
+const ROW_HEIGHT = 38;
+const MINIMUM_PLOT_HEIGHT = 168;
+const WHISKER_CAP_HALF_HEIGHT = 9;
+const BOX_HALF_HEIGHT = 9;
+const MEDIAN_HALF_HEIGHT = 12;
 
 @Component({
   selector: 'app-strength-box-plot-vega',
@@ -66,9 +66,9 @@ const MEDIAN_HALF_HEIGHT = 15;
 
     .strength-plot {
       display: grid;
-      gap: 10px;
+      gap: 8px;
       min-width: 0;
-      padding: 12px;
+      padding: 10px;
       background: var(--mat-sys-surface-container-low);
       border: 1px solid var(--mat-sys-outline-variant);
       border-radius: 8px;
@@ -85,7 +85,7 @@ const MEDIAN_HALF_HEIGHT = 15;
     }
 
     .strength-vega-host {
-      min-height: 210px;
+      min-height: 150px;
       overflow: hidden;
     }
 

@@ -1,11 +1,20 @@
 @use '@angular/material' as mat;
 
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .mat-mdc-form-field {
   width: 100%;
 }
 
 .assembly-table-shell {
-  overflow: hidden;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--g4v-radius);
 }
@@ -27,6 +36,7 @@
 
 table {
   width: 100%;
+  min-width: 520px;
   @include mat.table-overrides(
     (
       header-headline-weight: var(--mat-sys-title-medium-weight),
@@ -34,4 +44,14 @@ table {
       footer-supporting-text-weight: var(--mat-sys-title-medium-weight),
     )
   );
+}
+
+table.metrics-table {
+  min-width: 760px;
+}
+
+.mat-column-organism_name,
+.mat-column-asm_name {
+  max-width: 220px;
+  overflow-wrap: anywhere;
 }

@@ -35,10 +35,12 @@ import {
 import { G4TableComponent } from './g4-table/g4-table.component';
 import { PositionDistributionComponent } from './position-distribution/position-distribution.component';
 import { DEFAULT_POSITION_CATEGORY_KEYS } from './position-distribution/position-category-view';
+import { PositionStatisticsPanelComponent } from './position-statistics-panel/position-statistics-panel.component';
 import { GenomeAssemblyDetail, GenomeDetailService } from '../../services/genome-detail.service';
 import {
   EMPTY_G4_PAGE,
   EMPTY_G4_POSITION_DISTRIBUTION,
+  EMPTY_G4_POSITION_STATISTICS,
   G4DownloadColumn,
   G4FlankWindow,
   G4_FLANK_WINDOW_OPTIONS,
@@ -57,6 +59,8 @@ import {
   G4PageResponse,
   G4PositionDistributionRequest,
   G4PositionDistributionResponse,
+  G4PositionStatisticsRequest,
+  G4PositionStatisticsResponse,
   G4Service,
   G4SortField,
   G4Type,
@@ -344,6 +348,7 @@ function focusWindowAroundCenter(
     GenomeRangeChartComponent,
     JbrowseHostComponent,
     PositionDistributionComponent,
+    PositionStatisticsPanelComponent,
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -728,13 +733,50 @@ export class GenomeInfoComponent {
   readonly positionDistribution = computed<G4PositionDistributionResponse>(() =>
     this.positionDistributionResource.value(),
   );
+  readonly positionStatisticsResource = rxResource<
+    G4PositionStatisticsResponse,
+    G4PositionStatisticsRequest | undefined
+  >({
+    params: () => {
+      if (!this.assemblyDetail()) {
+        return undefined;
+      }
+
+      return {
+        assemblyAccession: this.assemblyAccession(),
+        windows: [this.positionDistributionFlankWindow()],
+        g4Type: this.positionDistributionG4Type(),
+        tetrads: this.positionDistributionFilters().tetrads,
+        minScore: this.positionDistributionFilters().minScore,
+        maxScore: this.positionDistributionFilters().maxScore,
+        overlap: false,
+        includeGeneBiotypeBreakdown: true,
+      };
+    },
+    stream: ({ params }) => {
+      if (!params) {
+        return of(EMPTY_G4_POSITION_STATISTICS);
+      }
+      return this.g4Service.getPositionStatistics(params);
+    },
+    defaultValue: EMPTY_G4_POSITION_STATISTICS,
+  });
+  readonly positionStatistics = computed<G4PositionStatisticsResponse>(() =>
+    this.positionStatisticsResource.value(),
+  );
   readonly positionDistributionStatus = computed(
     () => this.positionDistributionResource.snapshot().status,
+  );
+  readonly positionStatisticsStatus = computed(
+    () => this.positionStatisticsResource.snapshot().status,
   );
   readonly positionDistributionErrorMessage = computed(() =>
     this.positionDistributionStatus() === 'error'
       ? 'Whole-genome G4/i-motif position summary unavailable.'
       : '',
+  );
+  readonly positionStatisticsErrorMessage = computed(() =>
+    this.positionStatisticsStatus() === 'error' ? 'Position category statistics unavailable.' : '',
   );
   readonly geneRelationsResource = rxResource<
     GeneRelationBatchResponse[],

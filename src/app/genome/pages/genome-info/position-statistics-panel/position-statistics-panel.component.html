@@ -2,11 +2,11 @@
   <header class="statistics-header">
     <div>
       <span class="eyebrow">Position statistics</span>
-      <h2>Position category statistics</h2>
+      <h2>Gene biotype density</h2>
     </div>
     <p>
-      Density, G-score, and length for selected position categories using the current
-      {{ motifTypeLabel() }} filters. Other means sequences outside genes and selected gene flanks.
+      {{ motifTypeLabel() }} site density within annotated gene biotypes. Other groups missing,
+      source-annotated other, and unspecified gene biotypes.
     </p>
   </header>
 
@@ -18,74 +18,132 @@
   } @else if (errorMessage()) {
     <p class="state" role="status">{{ errorMessage() }}</p>
   } @else if (hasStatistics()) {
-    <div class="density-summary-grid">
-      <section class="density-chart" aria-label="Motif density by position category">
-        <h3>Density by position category</h3>
-
-        <div class="density-list">
-          @for (row of densityRows(); track row.key) {
-            <div class="density-row">
-              <span class="density-label">
-                <span class="category-swatch" [style.background]="row.color" aria-hidden="true">
-                </span>
-                {{ row.label }}
-              </span>
-              <span class="density-track" aria-hidden="true">
-                <span
-                  class="density-bar"
-                  [style.width.%]="row.densityWidth"
-                  [style.background]="row.color"
-                ></span>
-              </span>
-              <strong>{{ formatNullableNumber(row.densityPerMb) }}</strong>
-              <span class="density-unit">sequences/Mb</span>
-            </div>
-          }
+    @if (hasBiotypeDensity()) {
+      <section class="biotype-density" aria-label="Gene biotype density by gene context">
+        <div class="section-heading">
+          <h3>Density table</h3>
+          <p>Sites per megabase for gene bodies and selected gene flanks.</p>
         </div>
-      </section>
 
-      <section class="category-summary" aria-label="Position category summary">
-        <h3>Category summary</h3>
-
-        <div class="summary-rows">
-          @for (row of densityRows(); track row.key) {
-            <article class="summary-row">
-              <div>
-                <span class="category-name">
-                  <span class="category-swatch" [style.background]="row.color" aria-hidden="true">
-                  </span>
-                  {{ row.label }}
-                </span>
-              </div>
-              <dl>
-                <div>
-                  <dt>Sequences</dt>
-                  <dd>{{ formatCount(row.count) }}</dd>
-                </div>
-                <div>
-                  <dt>Region size</dt>
-                  <dd>{{ formatNullableNumber(row.lengthMb) }} Mb</dd>
-                </div>
-                <div>
-                  <dt>Density</dt>
-                  <dd>{{ formatNullableNumber(row.densityPerMb) }} sequences/Mb</dd>
-                </div>
-              </dl>
-            </article>
-          }
+        <div class="density-table-wrap">
+          <table class="density-table">
+            <thead>
+              <tr>
+                <th>Gene biotype</th>
+                @for (column of geneContextColumns; track column.key) {
+                  <th>
+                    <span class="category-heading">
+                      <span
+                        class="category-swatch"
+                        [style.background]="column.color"
+                        aria-hidden="true"
+                      ></span>
+                      {{ column.label }}
+                    </span>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of visibleBiotypeDensityRows(); track row.key) {
+                <tr>
+                  <th scope="row">
+                    <span class="biotype-name">{{ row.label }}</span>
+                    <span class="biotype-total">{{ formatCount(row.totalCount) }} sites</span>
+                  </th>
+                  @for (cell of row.cells; track cell.key) {
+                    <td>
+                      <span class="density-value">
+                        {{ formatNullableNumber(cell.densityPerMb) }}
+                        <span>sites/Mb</span>
+                      </span>
+                      <span class="density-detail">
+                        {{ formatCount(cell.count) }} sites / {{ formatLengthMb(cell.lengthMb) }} Mb
+                      </span>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
-      </section>
-    </div>
 
-    <div class="strength-stack" aria-label="Motif score and length distributions">
-      @for (plot of strengthBoxPlots(); track plot.key) {
-        <app-strength-box-plot-vega
-          [title]="plot.title"
-          [rows]="plot.rows"
-          [tooltip]="boxPlotTooltip"
-        />
-      }
-    </div>
+        @if (additionalBiotypeDensityRows().length > 0) {
+          <mat-accordion class="additional-biotypes" displayMode="flat">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>Additional gene biotypes</mat-panel-title>
+                <mat-panel-description>
+                  {{ additionalBiotypeDensityRows().length }} more
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <ng-template matExpansionPanelContent>
+                <div class="density-table-wrap">
+                  <table class="density-table density-table-secondary">
+                    <thead>
+                      <tr>
+                        <th>Gene biotype</th>
+                        @for (column of geneContextColumns; track column.key) {
+                          <th>{{ column.label }}</th>
+                        }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of additionalBiotypeDensityRows(); track row.key) {
+                        <tr>
+                          <th scope="row">
+                            <span class="biotype-name">{{ row.label }}</span>
+                            <span class="biotype-total"
+                              >{{ formatCount(row.totalCount) }} sites</span
+                            >
+                          </th>
+                          @for (cell of row.cells; track cell.key) {
+                            <td>
+                              <span class="density-value">
+                                {{ formatNullableNumber(cell.densityPerMb) }}
+                                <span>sites/Mb</span>
+                              </span>
+                              <span class="density-detail">
+                                {{ formatCount(cell.count) }} sites /
+                                {{ formatLengthMb(cell.lengthMb) }} Mb
+                              </span>
+                            </td>
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </ng-template>
+            </mat-expansion-panel>
+          </mat-accordion>
+        }
+      </section>
+    } @else {
+      <p class="state" role="status">No gene biotype density data are available.</p>
+    }
+
+    <mat-accordion class="statistics-details" displayMode="flat">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>Score and length distributions</mat-panel-title>
+          <mat-panel-description>G-score and motif length by category</mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <ng-template matExpansionPanelContent>
+          <div class="strength-stack" aria-label="Motif score and length distributions">
+            @for (plot of strengthBoxPlots(); track plot.key) {
+              <app-strength-box-plot-vega
+                [title]="plot.title"
+                [rows]="plot.rows"
+                [tooltip]="boxPlotTooltip"
+              />
+            }
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </mat-accordion>
 
     @if (statistics().quality.warnings.length > 0) {
       <div class="warnings" role="status">

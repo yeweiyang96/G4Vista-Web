@@ -398,6 +398,7 @@ describe('GenomeInfoComponent', () => {
                 },
               },
             ],
+            gene_biotype_breakdown: [],
           },
         ],
       }),
@@ -537,7 +538,7 @@ describe('GenomeInfoComponent', () => {
     expect(viewerState.region()).toBe('chr1:1..10000');
   });
 
-  it('loads position distribution from independent whole-genome controls only', async () => {
+  it('loads position distribution and statistics from independent whole-genome controls only', async () => {
     const fixture = createComponent();
     const component = fixture.componentInstance;
     await fixture.whenStable();
@@ -554,8 +555,21 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [1000],
+        g4Type: 'g4',
+        tetrads: [],
+        minScore: undefined,
+        maxScore: undefined,
+        overlap: false,
+        includeGeneBiotypeBreakdown: true,
+      }),
+    );
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
     component.filterModel.update((current) => ({
       ...current,
       selectedTetrads: [3],
@@ -567,6 +581,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.submitFilters();
     fixture.detectChanges();
@@ -574,6 +589,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.setPositionDistributionFilterModel({
       selectedTetrads: [3],
@@ -585,6 +601,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.submitPositionDistributionFilters();
     fixture.detectChanges();
@@ -602,8 +619,21 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [1000],
+        g4Type: 'g4',
+        tetrads: [3],
+        minScore: 12,
+        maxScore: 40,
+        overlap: false,
+        includeGeneBiotypeBreakdown: true,
+      }),
+    );
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
     component.resetPositionDistributionFilters();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -620,8 +650,21 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [1000],
+        g4Type: 'g4',
+        tetrads: [],
+        minScore: undefined,
+        maxScore: undefined,
+        overlap: false,
+        includeGeneBiotypeBreakdown: true,
+      }),
+    );
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
 
     component.selectG4Type('i-motif');
     fixture.detectChanges();
@@ -629,6 +672,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     component.setPositionDistributionFlankWindow(500);
     fixture.detectChanges();
@@ -644,9 +688,20 @@ describe('GenomeInfoComponent', () => {
         includeFeatureBreakdown: false,
       }),
     );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [500],
+        g4Type: 'g4',
+        tetrads: [],
+        overlap: false,
+        includeGeneBiotypeBreakdown: true,
+      }),
+    );
     expect(component.positionDistributionFlankWindowLabel()).toBe('500 bp');
 
     g4Service.getPositionDistribution.calls.reset();
+    g4Service.getPositionStatistics.calls.reset();
     component.setPositionDistributionG4Type('i-motif');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -659,6 +714,16 @@ describe('GenomeInfoComponent', () => {
         flankWindow: 500,
         tetrads: [],
         includeFeatureBreakdown: false,
+      }),
+    );
+    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        assemblyAccession: 'GCF_1',
+        windows: [500],
+        g4Type: 'i-motif',
+        tetrads: [],
+        overlap: false,
+        includeGeneBiotypeBreakdown: true,
       }),
     );
   });

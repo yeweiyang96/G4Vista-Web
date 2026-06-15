@@ -3,6 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   EMPTY_G4_POSITION_STATISTICS,
   G4PositionMotifStats,
+  G4PositionStatisticsGeneBiotypeBreakdown,
+  G4PositionStatisticsGeneBiotypeCategory,
   G4PositionStatisticsResponse,
 } from '../../../services/g4.service';
 import {
@@ -63,6 +65,58 @@ describe('PositionStatisticsPanelComponent', () => {
     median_length: 22,
     p75_length: 24,
   };
+
+  function biotypeCategory(
+    key: 'gene_inside' | 'gene_upstream' | 'gene_downstream',
+    count: number,
+    lengthMb: number,
+    stats: G4PositionMotifStats,
+  ): G4PositionStatisticsGeneBiotypeCategory {
+    const displayLabels = {
+      gene_inside: 'In genes',
+      gene_upstream: 'Upstream flank',
+      gene_downstream: 'Downstream flank',
+    } as const;
+    return {
+      key,
+      label: key,
+      description: key,
+      precedence_rank: key === 'gene_inside' ? 1 : key === 'gene_upstream' ? 2 : 3,
+      display_label: displayLabels[key],
+      display_description: displayLabels[key],
+      category_group: 'gene_context',
+      is_default_chart_category: true,
+      display_order: key === 'gene_inside' ? 1 : key === 'gene_upstream' ? 2 : 3,
+      count,
+      merged_interval_length_bp: lengthMb * 1_000_000,
+      length_mb: lengthMb,
+      motifs: { g4: { ...stats, count } },
+    };
+  }
+
+  function biotypeRow(
+    bioType: string,
+    displayLabel: string,
+    totalCount: number,
+    categories: readonly G4PositionStatisticsGeneBiotypeCategory[],
+  ): G4PositionStatisticsGeneBiotypeBreakdown {
+    return {
+      bio_type: bioType,
+      display_label: displayLabel,
+      total_count: totalCount,
+      categories: [...categories],
+    };
+  }
+
+  const extraBiotypeRows: readonly G4PositionStatisticsGeneBiotypeBreakdown[] = Array.from(
+    { length: 12 },
+    (_value, index) =>
+      biotypeRow(`extra_${index + 1}`, `extra_${index + 1}`, 1, [
+        biotypeCategory('gene_inside', 1, 0.001, geneStats),
+        biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
+        biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+      ]),
+  );
   const statistics: G4PositionStatisticsResponse = {
     ...EMPTY_G4_POSITION_STATISTICS,
     assembly_accession: 'GCF_1',
@@ -165,6 +219,19 @@ describe('PositionStatisticsPanelComponent', () => {
             },
           },
         ],
+        gene_biotype_breakdown: [
+          biotypeRow('protein_coding', 'protein_coding', 4, [
+            biotypeCategory('gene_inside', 2, 0.001, geneStats),
+            biotypeCategory('gene_upstream', 1, 0.001, upstreamStats),
+            biotypeCategory('gene_downstream', 1, 0.002, downstreamStats),
+          ]),
+          biotypeRow('other', 'Unspecified gene biotype', 1, [
+            biotypeCategory('gene_inside', 1, 0.001, geneStats),
+            biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
+            biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+          ]),
+          ...extraBiotypeRows,
+        ],
       },
     ],
   };
@@ -199,41 +266,81 @@ describe('PositionStatisticsPanelComponent', () => {
     return fixture.nativeElement.textContent as string;
   }
 
-  it('renders public position statistics without legacy background or enrichment wording', () => {
+  it('renders the gene biotype density table without repeated overview summary content', () => {
     const text = renderedText();
 
-    expect(text).toContain('Position category statistics');
-    expect(text).toContain('Density by position category');
-    expect(text).toContain('Other means sequences outside genes and selected gene flanks.');
-    expect(text).toContain('Category summary');
-    expect(text).toContain('sequences/Mb');
-    expect(text).toContain('G-score distribution');
-    expect(text).toContain('Length distribution');
+    expect(text).toContain('Gene biotype density');
+    expect(text).toContain('Density table');
+    expect(text).toContain('protein_coding');
     expect(text).toContain('Other');
+    expect(text).toContain('sites/Mb');
+    expect(text).toContain('2 sites / 0.001 Mb');
+    expect(text).toContain('Score and length distributions');
+    expect(text).toContain('Additional gene biotypes');
+    expect(text).not.toContain('Density by position category');
+    expect(text).not.toContain('Counts, denominator size, and normalized density');
+    expect(text).not.toContain('sequences/Mb');
     expect(text.toLowerCase()).not.toContain('enrichment');
     expect(text).not.toContain('Other annotations');
     expect(text).not.toContain('Outside annotations');
     expect(text).not.toContain('Non-feature');
     expect(text).not.toContain('No assigned feature');
+    expect(text).not.toContain('Unspecified gene biotype');
+    expect(fixture.nativeElement.querySelector('.density-track')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.density-bar')).toBeNull();
   });
 
-  it('shows density rows only for selected public categories', () => {
+  it('keeps Other visible and moves lower-ranked non-Other biotypes into a collapsed table', () => {
     const component = fixture.componentInstance;
 
-    fixture.componentRef.setInput('selectedCategoryKeys', ['gene_inside', 'gene_downstream']);
+    expect(component.visibleBiotypeDensityRows().map((row) => row.key)).toEqual([
+      'other',
+      'protein_coding',
+      'extra_1',
+      'extra_2',
+      'extra_3',
+      'extra_4',
+      'extra_5',
+      'extra_6',
+      'extra_7',
+      'extra_8',
+      'extra_9',
+      'extra_10',
+    ]);
+    expect(component.additionalBiotypeDensityRows().map((row) => row.key)).toEqual([
+      'extra_11',
+      'extra_12',
+    ]);
+  });
+
+  it('keeps score and length plots collapsed until requested', async () => {
+    expect(fixture.nativeElement.querySelector('.boxplot-stub')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.mat-expansion-panel.mat-expanded')).toBeNull();
+
+    const header = fixture.nativeElement.querySelector(
+      '.statistics-details mat-expansion-panel-header',
+    ) as HTMLElement;
+    header.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = renderedText();
+    expect(text).toContain('G-score distribution');
+    expect(text).toContain('Length distribution');
+  });
+
+  it('keeps the density table independent from selected overview categories', () => {
+    const component = fixture.componentInstance;
+
+    fixture.componentRef.setInput('selectedCategoryKeys', ['gene_inside']);
     fixture.detectChanges();
 
-    expect(component.densityRows().map((row) => row.key)).toEqual([
+    expect(component.visibleBiotypeDensityRows()[0].cells.map((cell) => cell.key)).toEqual([
       'gene_inside',
+      'gene_upstream',
       'gene_downstream',
     ]);
-    expect(component.strengthBoxPlots()[0].rows.map((row) => row.key)).toEqual([
-      'gene_inside',
-      'gene_downstream',
-    ]);
-    expect(component.strengthBoxPlots()[1].rows.map((row) => row.key)).toEqual([
-      'gene_inside',
-      'gene_downstream',
-    ]);
+    expect(component.strengthBoxPlots()[0].rows.map((row) => row.key)).toEqual(['gene_inside']);
+    expect(component.strengthBoxPlots()[1].rows.map((row) => row.key)).toEqual(['gene_inside']);
   });
 });

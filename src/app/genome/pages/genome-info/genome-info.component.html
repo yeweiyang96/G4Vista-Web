@@ -76,6 +76,15 @@
           (categorySelectionChange)="setSelectedPositionDistributionCategoryKeys($event)"
         />
 
+        <app-position-statistics-panel
+          data-help-target="position-statistics"
+          [statistics]="positionStatistics()"
+          [isLoading]="positionStatisticsResource.isLoading()"
+          [errorMessage]="positionStatisticsErrorMessage()"
+          [g4Type]="positionDistributionG4Type()"
+          [selectedCategoryKeys]="selectedPositionDistributionCategoryKeys()"
+        />
+
         <section class="explorer-card section-panel" data-help-target="g4-explorer">
           <header class="section-panel-header">
             <h2>Explore motif sites</h2>

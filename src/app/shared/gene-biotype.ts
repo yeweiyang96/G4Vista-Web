@@ -1,6 +1,7 @@
 export function canonicalGeneBiotype(value: string | null | undefined): string {
   const text = value?.trim() ?? '';
-  if (!text || text.toLowerCase() === 'other') {
+  const normalizedText = text.toLowerCase();
+  if (!text || normalizedText === 'other' || normalizedText === 'unspecified gene biotype') {
     return 'other';
   }
   return text;
