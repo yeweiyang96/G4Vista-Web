@@ -1,0 +1,265 @@
+<main class="g4v-page help-doc-page">
+  <header class="help-doc-header" aria-labelledby="help-title">
+    <div class="header-copy">
+      <p class="section-kicker">Documentation</p>
+      <h1 id="help-title" class="g4v-page-title">G4Vista documentation</h1>
+    </div>
+
+    <a mat-stroked-button routerLink="/">
+      <mat-icon>home</mat-icon>
+      Back to G4Vista
+    </a>
+  </header>
+
+  <div class="help-doc-layout">
+    <nav class="page-index" aria-label="Documentation">
+      @for (item of documentationIndexItems; track item.id) {
+        <a
+          class="index-link"
+          [class.index-link-active]="selectedDocumentationId() === item.id"
+          routerLink="/documentation"
+          [queryParams]="{ doc: item.id }"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <article class="doc-content" aria-labelledby="help-title">
+      @if (selectedArticle(); as article) {
+        <section
+          class="doc-article"
+          [attr.id]="article.id"
+          [attr.aria-labelledby]="article.id + '-title'"
+        >
+          <header class="article-header">
+            <div>
+              <p class="section-kicker">{{ article.eyebrow }}</p>
+              <h2 [attr.id]="article.id + '-title'">{{ article.title }}</h2>
+              <p>{{ article.summary }}</p>
+            </div>
+            @if (article.action; as action) {
+              @if (action.kind === 'route') {
+                <a mat-stroked-button [routerLink]="action.url">
+                  {{ action.label }}
+                  <mat-icon iconPositionEnd>{{ action.icon }}</mat-icon>
+                </a>
+              } @else {
+                <a mat-stroked-button [href]="action.url" target="_blank" rel="noopener">
+                  {{ action.label }}
+                  <mat-icon iconPositionEnd>{{ action.icon }}</mat-icon>
+                </a>
+              }
+            }
+          </header>
+
+          @for (section of article.sections; track section.id) {
+            <section
+              class="doc-block doc-article-section"
+              [attr.id]="section.id"
+              [attr.aria-labelledby]="section.id + '-title'"
+            >
+              <h3 [attr.id]="section.id + '-title'">{{ section.title }}</h3>
+
+              @for (block of section.blocks; track $index) {
+                @switch (block.kind) {
+                  @case ('paragraph') {
+                    <p class="doc-paragraph">{{ block.body }}</p>
+                  }
+                  @case ('image') {
+                    <figure
+                      class="article-figure"
+                      [style.aspect-ratio]="block.aspectRatio"
+                    >
+                      <img
+                        [src]="block.src"
+                        [alt]="block.alt"
+                        [style.object-position]="block.position"
+                      />
+                      <figcaption>{{ block.caption }}</figcaption>
+                    </figure>
+                  }
+                  @case ('ordered-list') {
+                    <ol class="process-list">
+                      @for (item of block.items; track item.title) {
+                        <li>
+                          <span class="step-number">{{ $index + 1 }}</span>
+                          <span>
+                            <strong>{{ item.title }}</strong>
+                            {{ item.body }}
+                          </span>
+                        </li>
+                      }
+                    </ol>
+                  }
+                  @case ('bullet-list') {
+                    <ul class="bullet-list">
+                      @for (item of block.items; track item.title) {
+                        <li>
+                          <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                          <span>
+                            <strong>{{ item.title }}</strong>
+                            {{ item.body }}
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                  @case ('field-table') {
+                    <div class="field-table-shell">
+                      <table class="field-table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">How to use it</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (row of block.rows; track row.field) {
+                            <tr>
+                              <th scope="row">{{ row.field }}</th>
+                              <td>{{ row.description }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                  @case ('data-table') {
+                    <div class="data-table-shell">
+                      <table class="data-table">
+                        <caption>
+                          {{ block.caption }}
+                        </caption>
+                        <thead>
+                          <tr>
+                            @for (column of block.columns; track column) {
+                              <th scope="col">{{ column }}</th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (row of block.rows; track $index) {
+                            <tr>
+                              @for (cell of row; track $index) {
+                                <td>{{ cell }}</td>
+                              }
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                  @case ('note') {
+                    <aside class="article-note">
+                      <mat-icon aria-hidden="true">info</mat-icon>
+                      <span>
+                        <strong>{{ block.title }}</strong>
+                        {{ block.body }}
+                      </span>
+                    </aside>
+                  }
+                  @case ('api-doc-links') {
+                    <div class="api-doc-grid">
+                      @for (link of block.links; track link.href) {
+                        <a
+                          class="api-doc-link"
+                          [attr.id]="link.anchorId"
+                          [href]="link.href"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          <mat-icon aria-hidden="true">{{ link.icon }}</mat-icon>
+                          <span>
+                            <strong>{{ link.title }}</strong>
+                            {{ link.description }}
+                          </span>
+                          <mat-icon aria-hidden="true">open_in_new</mat-icon>
+                        </a>
+                      }
+                    </div>
+                  }
+                  @case ('api-sample') {
+                    <section
+                      class="api-sample"
+                      [attr.id]="block.sample.anchorId"
+                      [attr.aria-label]="block.sample.method + ' ' + block.sample.path"
+                    >
+                      <div class="api-sample-header">
+                        <span class="method-pill">{{ block.sample.method }}</span>
+                        <code class="sample-path">{{ block.sample.path }}</code>
+                        @if (block.sample.method === 'GET') {
+                          <a mat-button [href]="block.sample.path" target="_blank" rel="noopener">
+                            Open
+                            <mat-icon iconPositionEnd>open_in_new</mat-icon>
+                          </a>
+                        }
+                      </div>
+                      <p>{{ block.sample.description }}</p>
+                      @if (block.sample.requestBody !== null) {
+                        <pre class="code-block"><code>{{ block.sample.requestBody }}</code></pre>
+                      }
+                    </section>
+                  }
+                  @case ('citation-list') {
+                    <div class="citation-list">
+                      @for (reference of block.references; track reference.anchorId) {
+                        <article class="citation-item" [attr.id]="reference.anchorId">
+                          <h4>{{ reference.title }}</h4>
+                          <p>{{ reference.citation }}</p>
+                          <div class="reference-actions">
+                            <a
+                              [href]="reference.websiteUrl"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <mat-icon aria-hidden="true">language</mat-icon>
+                              Website
+                            </a>
+                            <a
+                              [href]="reference.citationUrl"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <mat-icon aria-hidden="true">format_quote</mat-icon>
+                              Citation
+                            </a>
+                          </div>
+                        </article>
+                      }
+                    </div>
+                  }
+                  @case ('contact') {
+                    <div class="contact-actions">
+                      <a
+                        mat-flat-button
+                        [href]="block.contact.websiteUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <mat-icon>contact_support</mat-icon>
+                        {{ block.contact.websiteLabel }}
+                      </a>
+                      <p>{{ block.contact.licenseNote }}</p>
+                    </div>
+                  }
+                }
+              }
+            </section>
+          }
+        </section>
+      }
+    </article>
+
+    <aside class="content-index" aria-label="Contents">
+      <p>Contents</p>
+      <div class="content-link-list">
+        @for (item of articleAnchors(); track item.anchorId) {
+          <a [href]="'/documentation?doc=' + selectedDocumentationId() + '#' + item.anchorId">
+            {{ item.label }}
+          </a>
+        }
+      </div>
+    </aside>
+  </div>
+</main>

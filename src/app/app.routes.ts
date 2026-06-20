@@ -77,8 +77,10 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'help',
-    title: 'G4Vista Help',
-    loadComponent: () => import('./help/help-page/help-page').then((m) => m.HelpPage),
+    path: 'documentation',
+    title: 'G4Vista Documentation',
+    loadComponent: () =>
+      import('./help/documentation/documentation').then((m) => m.DocumentationComponent),
   },
+  { path: 'help', redirectTo: 'documentation', pathMatch: 'full' },
 ];

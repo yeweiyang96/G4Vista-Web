@@ -3,9 +3,9 @@
 .navbar {
   display: flex;
   flex-wrap: nowrap;
+  gap: 12px;
   align-items: center;
   min-height: 72px;
-  gap: 12px;
   padding: 0 28px;
   color: var(--mat-sys-on-surface);
   background: color-mix(in srgb, var(--mat-sys-surface-container-lowest) 96%, transparent);
@@ -47,8 +47,19 @@
 .navbar-items,
 .navbar-link {
   position: relative;
+  min-width: 0;
   min-height: 72px;
+  overflow: hidden;
+  white-space: nowrap;
   border-radius: 0;
+}
+
+.navbar-items .mdc-button__label,
+.navbar-link .mdc-button__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .navbar-items.selected::after,
@@ -93,7 +104,7 @@
   display: none;
 }
 
-@media (width <= 900px) {
+@media (width <= 1120px) {
   .navbar {
     min-height: 64px;
     padding: 0 14px;
@@ -121,13 +132,19 @@
 
   .navbar.small-screen .navbar-link {
     justify-content: flex-start;
-    min-height: 44px;
     min-width: 0;
+    min-height: 44px;
     border-radius: var(--g4v-radius);
   }
 
   .github-logo {
     margin: 0;
+  }
+}
+
+@media (width <= 860px) {
+  .navbar.small-screen {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -139,10 +156,10 @@
 
 //footer
 .footer {
+  box-sizing: border-box;
   display: flex;
   flex-flow: row wrap;
   align-items: center;
-  box-sizing: border-box;
   width: min(var(--g4v-page-max), calc(100% - 2 * var(--g4v-page-pad)));
   padding: 10px 0 28px;
   margin: 0 auto;
@@ -198,8 +215,8 @@
   > div {
     display: flex;
     flex-direction: column;
-    align-self: flex-end;
     gap: 4px;
+    align-self: flex-end;
     text-align: right;
   }
 

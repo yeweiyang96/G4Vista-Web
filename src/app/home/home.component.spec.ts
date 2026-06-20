@@ -103,7 +103,7 @@ describe('HomeComponent', () => {
     );
     expect(research?.actions.find((action) => action.label === 'About this study')).toEqual(
       jasmine.objectContaining({
-        route: '/help',
+        route: '/documentation',
         queryParams: { topic: 'microbial-environment' },
       }),
     );

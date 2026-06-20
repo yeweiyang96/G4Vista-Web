@@ -255,7 +255,7 @@ export class HomeComponent {
           {
             icon: 'info',
             label: 'About this study',
-            route: '/help',
+            route: '/documentation',
             queryParams: startingActionQueryParams({ topic: 'microbial-environment' }),
           },
         ],

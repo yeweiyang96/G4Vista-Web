@@ -1,5 +1,5 @@
 <main class="g4v-page download-page">
-  <section class="download-header" aria-labelledby="download-title">
+  <section class="download-header" aria-labelledby="download-title" data-help-target="download-header">
     <div class="header-copy">
       <p class="section-kicker">Download package</p>
       <h1 id="download-title" class="g4v-page-title">G4 and i-motif package</h1>
@@ -18,6 +18,7 @@
         type="button"
         mat-flat-button
         color="primary"
+        data-help-target="download-create-package"
         [disabled]="!canCreatePackage()"
         (click)="createPackage()"
       >
@@ -35,7 +36,11 @@
   }
 
   <section class="download-layout" aria-label="Package builder">
-    <article class="assembly-panel" aria-labelledby="assembly-set-title">
+    <article
+      class="assembly-panel"
+      aria-labelledby="assembly-set-title"
+      data-help-target="download-assembly-set"
+    >
       <div class="panel-heading">
         <div>
           <p class="panel-kicker">Source</p>
@@ -89,7 +94,11 @@
       }
     </article>
 
-    <article class="options-panel" aria-labelledby="package-options-title">
+    <article
+      class="options-panel"
+      aria-labelledby="package-options-title"
+      data-help-target="download-options"
+    >
       <div class="panel-heading">
         <div>
           <p class="panel-kicker">Package options</p>

@@ -33,4 +33,17 @@ describe('App', () => {
     expect(navbarText).toContain('Analysis');
     expect(navbarText).not.toContain('Research');
   });
+
+  it('should expose documentation with the documentation route and icon', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    const documentation = app.sections.find((section) => section.name === 'Documentation');
+
+    expect(documentation).toEqual(
+      jasmine.objectContaining({
+        route: '/documentation',
+        icon: 'menu_book',
+      }),
+    );
+  });
 });

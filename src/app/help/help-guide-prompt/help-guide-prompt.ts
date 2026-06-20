@@ -44,7 +44,9 @@ function isPromptDismissed(routePath: string): boolean {
 
 function markPromptDismissed(routePath: string): void {
   if (!canUseLocalStorage()) {
-    throw new HelpGuidePromptStateError('Cannot persist the guide prompt dismissal outside a browser.');
+    throw new HelpGuidePromptStateError(
+      'Cannot persist the guide prompt dismissal outside a browser.',
+    );
   }
 
   window.localStorage.setItem(createStorageKey(routePath), 'true');
@@ -76,7 +78,7 @@ export class HelpGuidePrompt {
 
     const tour = getHelpTour(workflowId);
     return {
-      icon: tour.steps[0]?.icon ?? 'help_outline',
+      icon: tour.steps[0]?.icon ?? 'menu_book',
       label: tour.label,
       routePath,
     };

@@ -41,7 +41,7 @@ const FOOTER_HIDDEN_PATHS = new Set<string>([
   '/',
   '/gene',
   '/genome',
-  '/help',
+  '/documentation',
   '/download',
   '/research/microbial-environment-g4',
   '/taxonomy',
@@ -89,7 +89,7 @@ export class App {
     { name: 'Gene', route: '/gene', icon: 'search' },
     { name: 'Download', route: '/download', icon: 'archive' },
     { name: 'Analysis', route: '/research/microbial-environment-g4', icon: 'query_stats' },
-    { name: 'Help', route: '/help', icon: 'help_outline' },
+    { name: 'Documentation', route: '/documentation', icon: 'menu_book' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');
 
