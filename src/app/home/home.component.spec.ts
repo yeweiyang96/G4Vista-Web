@@ -83,6 +83,19 @@ describe('HomeComponent', () => {
     ]);
   });
 
+  it('renders the homepage word mark with an accessible heading name', () => {
+    const heading = fixture.nativeElement.querySelector(
+      '.home-wordmark',
+    ) as HTMLHeadingElement | null;
+    const image = heading?.querySelector('img');
+
+    expect(heading?.getAttribute('aria-label')).toBe('G4Vista');
+    expect(image?.getAttribute('src')).toBe('brand/g4vista-wordmark-home.png');
+    expect(image?.getAttribute('alt')).toBe('');
+    expect(image?.getAttribute('width')).toBe('1400');
+    expect(image?.getAttribute('height')).toBe('245');
+  });
+
   it('maps common starting point actions to functional entry routes', () => {
     const points = component.startingPoints();
     const human = points.find((point) => point.title === 'Human reference genome');

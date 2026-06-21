@@ -23,12 +23,16 @@
 
 .home-copy h1 {
   margin: 0;
-  font: var(--mat-sys-display-large);
-  font-size: clamp(4.2rem, 7vw, 5.75rem);
-  font-weight: 800;
-  line-height: 0.95;
-  color: var(--mat-sys-on-surface);
-  letter-spacing: 0;
+  line-height: 0;
+}
+
+.home-wordmark img {
+  display: block;
+  width: min(760px, 100%);
+  height: auto;
+  aspect-ratio: 1400 / 245;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .home-copy p {
@@ -392,8 +396,8 @@
     grid-template-columns: 1fr;
   }
 
-  .home-copy h1 {
-    font-size: clamp(3rem, 16vw, 4.2rem);
+  .home-wordmark img {
+    width: min(100%, 620px);
   }
 
   .home-copy p {

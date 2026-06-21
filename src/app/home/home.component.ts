@@ -50,14 +50,6 @@ const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMERIC_TAXON_ID_PATTERN = /^\d+$/;
 const WORKFLOW_CARDS: readonly WorkflowCard[] = [
   {
-    tone: 'taxonomy',
-    icon: 'account_tree',
-    title: 'Browse by taxonomy',
-    body: 'Explore G4 and i-motif sites by taxonomic groups.',
-    action: 'Open Taxonomy',
-    route: '/taxonomy',
-  },
-  {
     tone: 'genome',
     icon: 'biotech',
     title: 'Find a genome',
@@ -80,6 +72,14 @@ const WORKFLOW_CARDS: readonly WorkflowCard[] = [
     body: 'Analyze G4 site patterns in microbial environments and traits.',
     action: 'Open Research',
     route: '/research/microbial-environment-g4',
+  },
+  {
+    tone: 'taxonomy',
+    icon: 'account_tree',
+    title: 'Browse by taxonomy',
+    body: 'Explore G4 and i-motif sites by taxonomic groups.',
+    action: 'Open Taxonomy',
+    route: '/taxonomy',
   },
 ];
 
