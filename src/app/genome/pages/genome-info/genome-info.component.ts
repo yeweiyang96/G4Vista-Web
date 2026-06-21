@@ -176,6 +176,7 @@ function isG4GenePosition(value: unknown): value is G4GenePosition {
   );
 }
 const CHART_FOCUS_HALF_WINDOW_BP = 5000;
+const CHART_POINT_FOCUS_BIN_SIZE_BP = 100;
 const TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP = 100;
 const GENE_SEARCH_FOCUS_HALF_WINDOW_BP = 1000;
 const GENE_SEARCH_BIN_SIZE_BP = 100;
@@ -1482,7 +1483,7 @@ export class GenomeInfoComponent {
     this.updateChartViewport(normalizedTarget.seqid, {
       start: focusedRange.start,
       end: focusedRange.end,
-      binSize: this.chartViewport().binSize,
+      binSize: CHART_POINT_FOCUS_BIN_SIZE_BP,
     });
     this.navigateViewerToRange(normalizedTarget.seqid, focusedRange.start, focusedRange.end);
     this.resultsTabIndex.set(RESULTS_GENOME_BROWSER_TAB_INDEX);

@@ -429,6 +429,14 @@ function createDefaultVisibleTrackIds(assemblyAccession: string, g4Type: G4Type)
   ];
 }
 
+function createGeneDefaultVisibleTrackIds(assemblyAccession: string): string[] {
+  return [
+    `${assemblyAccession}_annotation`,
+    `${assemblyAccession}_g4`,
+    `${assemblyAccession}_i-motif`,
+  ];
+}
+
 function createMotifTrackIds(assemblyAccession: string): string[] {
   return [
     `${assemblyAccession}_g4`,
@@ -491,6 +499,24 @@ export class GenomeViewerConfigService {
 
   createViewerConfig(params: GenomeViewerConfigParams): GenomeViewerConfig {
     const assemblyAccession = params.assemblyAccession;
+    return this.createViewerConfigWithDefaultVisibleTrackIds(
+      params,
+      createDefaultVisibleTrackIds(assemblyAccession, params.g4Type),
+    );
+  }
+
+  createGeneViewerConfig(params: GenomeViewerConfigParams): GenomeViewerConfig {
+    return this.createViewerConfigWithDefaultVisibleTrackIds(
+      params,
+      createGeneDefaultVisibleTrackIds(params.assemblyAccession),
+    );
+  }
+
+  private createViewerConfigWithDefaultVisibleTrackIds(
+    params: GenomeViewerConfigParams,
+    defaultVisibleTrackIds: string[],
+  ): GenomeViewerConfig {
+    const assemblyAccession = params.assemblyAccession;
     const themeMode = params.themeMode ?? 'light';
 
     return {
@@ -503,7 +529,7 @@ export class GenomeViewerConfigService {
         theme: resolveActiveTheme(themeMode),
         extraThemes: EXTRA_THEMES,
       },
-      defaultVisibleTrackIds: createDefaultVisibleTrackIds(assemblyAccession, params.g4Type),
+      defaultVisibleTrackIds,
       motifTrackIds: createMotifTrackIds(assemblyAccession),
     };
   }

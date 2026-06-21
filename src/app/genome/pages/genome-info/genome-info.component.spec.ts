@@ -221,6 +221,7 @@ describe('GenomeInfoComponent', () => {
       of({
         assembly_accession: 'GCF_1',
         region_id: 'chr1',
+        region_name: null,
         seqid: 'chr1',
         source: null,
         feature: 'gene',
@@ -952,6 +953,7 @@ describe('GenomeInfoComponent', () => {
       of({
         assembly_accession: 'GCF_1',
         region_id: 'chr2',
+        region_name: null,
         seqid: 'chr2',
         source: null,
         feature: 'gene',
@@ -1178,6 +1180,7 @@ describe('GenomeInfoComponent', () => {
       of({
         assembly_accession: 'GCF_1',
         region_id: 'chr404',
+        region_name: null,
         seqid: 'chr404',
         source: null,
         feature: 'gene',
@@ -1558,7 +1561,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.chartViewport()).toEqual({
       start: 5000,
       end: 5500,
-      binSize: 200,
+      binSize: 100,
     });
     expect(viewerState.region()).toBe('chr2:5000..5500');
   });

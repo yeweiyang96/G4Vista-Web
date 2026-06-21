@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 export interface GeneDetail {
   assembly_accession: string;
   region_id: string;
+  region_name: string | null;
   feature_id: string;
   gene_id: string | null;
   gene_name: string | null;
@@ -48,6 +49,8 @@ export interface GeneQuadruplexRelation {
   quadruplex_type: string;
   start: number;
   end: number;
+  length: number;
+  score: number;
   relation_category: string;
   distance_bp: number;
   overlap_bp: number;

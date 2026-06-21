@@ -34,9 +34,6 @@
 
 .assembly-search-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px;
-  gap: 24px;
-  align-items: start;
   padding: 26px;
 }
 
@@ -55,12 +52,6 @@
 
 .assembly-search {
   display: block;
-}
-
-.open-selected {
-  width: 100%;
-  min-height: 48px;
-  margin-top: 56px;
 }
 
 .genome-content-grid {
@@ -246,10 +237,6 @@
   .assembly-search-card,
   .genome-content-grid {
     grid-template-columns: 1fr;
-  }
-
-  .open-selected {
-    margin-top: 0;
   }
 }
 

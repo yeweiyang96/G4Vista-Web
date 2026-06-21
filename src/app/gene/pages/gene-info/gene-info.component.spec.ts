@@ -26,6 +26,7 @@ describe('GeneInfoComponent', () => {
   const geneDetail: GeneDetail = {
     assembly_accession: 'GCF_1',
     region_id: 'chr1',
+    region_name: 'Chromosome 1',
     feature_id: 'gene-dnaK',
     gene_id: 'GENE_DNAK',
     gene_name: 'dnaK',
@@ -48,11 +49,13 @@ describe('GeneInfoComponent', () => {
         quadruplex_type: 'g4',
         start: 2200,
         end: 2224,
+        length: 25,
+        score: 42,
         relation_category: 'gene_inside',
         distance_bp: 0,
         overlap_bp: 25,
         overlap_fraction: 1,
-        relation_mode: 'within_gene',
+        relation_mode: 'overlap',
         gene_id: 'GENE_DNAK',
         gene_biotype: 'protein_coding',
       },
@@ -63,11 +66,13 @@ describe('GeneInfoComponent', () => {
         quadruplex_type: 'i-motif',
         start: 3700,
         end: 3720,
+        length: 21,
+        score: 31,
         relation_category: 'gene_downstream',
         distance_bp: 200,
         overlap_bp: 0,
         overlap_fraction: 0,
-        relation_mode: 'flank_window',
+        relation_mode: 'flank',
         gene_id: 'GENE_DNAK',
         gene_biotype: 'protein_coding',
       },
@@ -85,9 +90,9 @@ describe('GeneInfoComponent', () => {
     geneService.getGene.and.returnValue(of(geneDetail));
     genomeViewerConfigService = jasmine.createSpyObj<GenomeViewerConfigService>(
       'GenomeViewerConfigService',
-      ['createViewerConfig'],
+      ['createViewerConfig', 'createGeneViewerConfig'],
     );
-    genomeViewerConfigService.createViewerConfig.and.returnValue({
+    genomeViewerConfigService.createGeneViewerConfig.and.returnValue({
       assembly: { name: 'GCF_1' },
       tracks: [],
       configuration: {
@@ -141,7 +146,7 @@ describe('GeneInfoComponent', () => {
 
   it('loads gene detail, builds the genome browser config, and focuses the gene window', () => {
     expect(geneService.getGene).toHaveBeenCalledWith('GCF_1', 'chr1', 'gene-dnaK');
-    expect(genomeViewerConfigService.createViewerConfig).toHaveBeenCalledWith(
+    expect(genomeViewerConfigService.createGeneViewerConfig).toHaveBeenCalledWith(
       jasmine.objectContaining({
         assemblyAccession: 'GCF_1',
         dataBaseUrl: 'http://example.test/jbrowse',
@@ -155,12 +160,113 @@ describe('GeneInfoComponent', () => {
     expect(host.textContent).toContain('G4 sites');
     expect(host.textContent).toContain('i-motif sites');
     expect(host.textContent).toContain('Total motif sites');
-    expect(host.textContent).toContain('chr1:2,200..2,224');
+    expect(host.querySelector('.gene-hero')).not.toBeNull();
+    expect(host.querySelectorAll('.gene-summary > div').length).toBe(4);
+    expect(host.textContent).toContain('Chromosome 1');
+    expect(host.textContent).toContain('Chromosome 1:2,200..2,224');
     expect(host.textContent).toContain('Inside gene');
     expect(host.textContent).toContain('Downstream of gene');
   });
 
-  it('navigates the embedded browser to a selected relation row', () => {
+  it('labels relation mode, motif length, and score with biological table semantics', () => {
+    const columns = component.relationColumns().map((column) => column.header);
+    const insideRow = component
+      .relationDetailRows()
+      .find((row) => row.categoryLabel === 'Inside gene');
+
+    expect(columns).toContain('Motif length (nt)');
+    expect(columns).toContain('Score');
+    expect(insideRow).toEqual(
+      jasmine.objectContaining({
+        motifLengthNt: 25,
+        motifLengthLabel: '25',
+        score: 42,
+        location: 'Chromosome 1:2,200..2,224',
+        modeLabel: 'Intragenic',
+      }),
+    );
+  });
+
+  it('filters relation rows by motif, gene relation, and distance range', () => {
+    component.setSelectedMotifTypes(['i-motif']);
+
+    expect(component.sortedFilteredRelationRows().map((row) => row.typeLabel)).toEqual(['i-motif']);
+
+    component.clearRelationFilters();
+    component.setSelectedRelationCategories(['gene_inside']);
+
+    expect(component.sortedFilteredRelationRows().map((row) => row.categoryLabel)).toEqual([
+      'Inside gene',
+    ]);
+
+    component.clearRelationFilters();
+    component.setMinDistanceInput('100');
+    component.setMaxDistanceInput('250');
+
+    expect(component.sortedFilteredRelationRows().map((row) => row.distanceBp)).toEqual([200]);
+  });
+
+  it('keeps invalid distance input visible and shows no filtered relation rows', () => {
+    component.setMinDistanceInput('300');
+    component.setMaxDistanceInput('100');
+
+    expect(component.minDistanceInput()).toBe('300');
+    expect(component.maxDistanceInput()).toBe('100');
+    expect(component.relationFilterError()).toBe(
+      'Minimum distance must be less than or equal to maximum distance.',
+    );
+    expect(component.sortedFilteredRelationRows()).toEqual([]);
+    expect(component.canDownloadRelations()).toBeFalse();
+  });
+
+  it('downloads the filtered and sorted relation rows as TSV', async () => {
+    const view = fixture.nativeElement.ownerDocument.defaultView as Window & typeof globalThis;
+    const exportState: { blob: Blob | null; filename: string } = { blob: null, filename: '' };
+    spyOn(view.URL, 'createObjectURL').and.callFake((blob: Blob | MediaSource) => {
+      exportState.blob = blob as Blob;
+      return 'blob:g4vista-gene-relations';
+    });
+    spyOn(view.URL, 'revokeObjectURL');
+    spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (
+      this: HTMLAnchorElement,
+    ): void {
+      exportState.filename = this.download;
+    });
+    component.setSelectedRelationCategories(['gene_downstream']);
+
+    component.downloadFilteredRelations();
+
+    expect(exportState.filename).toBe('GCF_1_chr1_gene-dnaK_relations.tsv');
+    expect(exportState.blob).not.toBeNull();
+    const tsv = await exportState.blob!.text();
+    expect(tsv).toContain(
+      [
+        'motif',
+        'region_id',
+        'start',
+        'end',
+        'location',
+        'relation_category',
+        'gene_relation',
+        'distance_bp',
+        'distance',
+        'motif_length_nt',
+        'score',
+        'overlap_bp',
+        'overlap_fraction',
+        'overlap',
+        'relation_mode',
+        'gene_biotype',
+      ].join('\t'),
+    );
+    expect(tsv).toContain('i-motif\tchr1\t3700\t3720');
+    expect(tsv).toContain('Chromosome 1:3,700..3,720');
+    expect(tsv).toContain('gene_downstream\tDownstream of gene\t200\t200 bp\t21\t31');
+    expect(tsv).not.toContain('gene_inside');
+  });
+
+  it('navigates the embedded browser to a selected relation row and scrolls to the browser', () => {
+    spyOn(HTMLElement.prototype, 'scrollIntoView');
     const downstreamRow = component
       .relationDetailRows()
       .find((row) => row.categoryLabel === 'Downstream of gene');
@@ -168,6 +274,25 @@ describe('GeneInfoComponent', () => {
     expect(downstreamRow).toBeDefined();
     component.focusRelation(downstreamRow!);
 
-    expect(viewerState.region()).toBe('chr1:3450..3970');
+    expect(viewerState.region()).toBe('chr1:3600..3820');
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  });
+
+  it('resets the embedded browser to the default gene browser range', () => {
+    spyOn(HTMLElement.prototype, 'scrollIntoView');
+    const downstreamRow = component
+      .relationDetailRows()
+      .find((row) => row.categoryLabel === 'Downstream of gene');
+
+    expect(downstreamRow).toBeDefined();
+    component.focusRelation(downstreamRow!);
+    expect(viewerState.region()).toBe('chr1:3600..3820');
+
+    component.resetBrowserRange();
+
+    expect(viewerState.region()).toBe('chr1:1000..4500');
   });
 });

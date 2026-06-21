@@ -401,4 +401,18 @@ describe('GenomeViewerConfigService', () => {
       'GCF_000021765.1_i-motif_score',
     ]);
   });
+
+  it('uses both motif feature tracks and no quantitative tracks for gene viewer defaults', () => {
+    const config = service.createGeneViewerConfig(params);
+
+    expect(config.defaultVisibleTrackIds).toEqual([
+      'GCF_000021765.1_annotation',
+      'GCF_000021765.1_g4',
+      'GCF_000021765.1_i-motif',
+    ]);
+    expect(config.defaultVisibleTrackIds).not.toContain('GCF_000021765.1_g4_density');
+    expect(config.defaultVisibleTrackIds).not.toContain('GCF_000021765.1_i-motif_density');
+    expect(config.defaultVisibleTrackIds).not.toContain('GCF_000021765.1_g4_score');
+    expect(config.defaultVisibleTrackIds).not.toContain('GCF_000021765.1_i-motif_score');
+  });
 });

@@ -45,7 +45,7 @@
         </div>
         <div>
           <dt>Sequence record</dt>
-          <dd>{{ gene.region_id }}</dd>
+          <dd>{{ sequenceRecordLabel(gene) }}</dd>
         </div>
         <div>
           <dt>Range</dt>
@@ -76,13 +76,23 @@
       </dl>
     </section>
 
-    <section class="gene-panel browser-panel" aria-label="Gene genome browser">
-      <header class="gene-panel-header">
+    <section
+      #geneBrowserSection
+      class="gene-panel browser-panel"
+      aria-label="Gene genome browser"
+    >
+      <header class="gene-panel-header browser-panel-header">
         <mat-icon>travel_explore</mat-icon>
         <div>
           <h2>Genome browser</h2>
           <p>Annotation and quadruplex sequence tracks around the selected gene.</p>
         </div>
+        @if (geneBrowserRegion()) {
+          <button mat-stroked-button type="button" (click)="resetBrowserRange()">
+            <mat-icon aria-hidden="true">restart_alt</mat-icon>
+            Reset range
+          </button>
+        }
       </header>
 
       @if (geneBrowserRegion(); as browserRegion) {
@@ -117,7 +127,9 @@
         <mat-icon>table_rows</mat-icon>
         <div>
           <h2>Linked quadruplex sequence relations</h2>
-          <p>Server-side relation calls between this gene and predicted quadruplex sequence sites.</p>
+          <p>
+            Server-side relation calls between this gene and predicted quadruplex sequence sites.
+          </p>
         </div>
       </header>
 
@@ -132,41 +144,112 @@
       }
 
       @if (relationDetailRows().length) {
-        <div class="relation-table-shell">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Motif</th>
-                <th scope="col">Location</th>
-                <th scope="col">Gene relation</th>
-                <th scope="col">Distance</th>
-                <th scope="col">Overlap</th>
-                <th scope="col">Mode</th>
-                <th scope="col">Gene biotype</th>
-                <th scope="col" aria-label="Actions"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of relationDetailRows(); track row.id) {
-                <tr>
-                  <td>{{ row.typeLabel }}</td>
-                  <td>{{ row.location }}</td>
-                  <td>{{ row.categoryLabel }}</td>
-                  <td>{{ row.distanceLabel }}</td>
-                  <td>{{ row.overlapLabel }}</td>
-                  <td>{{ row.modeLabel }}</td>
-                  <td>{{ row.biotypeLabel }}</td>
-                  <td>
-                    <button mat-button type="button" (click)="focusRelation(row)">
-                      <mat-icon>my_location</mat-icon>
-                      Focus
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+        <div class="relation-tools" aria-label="Relation table controls">
+          <div class="relation-filter-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Motif</mat-label>
+              <mat-select
+                multiple
+                [value]="selectedMotifTypes()"
+                (selectionChange)="setSelectedMotifTypes($event.value)"
+              >
+                @for (option of motifTypeOptions; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Gene relation</mat-label>
+              <mat-select
+                multiple
+                [value]="selectedRelationCategories()"
+                (selectionChange)="setSelectedRelationCategories($event.value)"
+              >
+                @for (option of relationCategoryOptions; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Min distance (bp)</mat-label>
+              <input
+                #minDistance
+                matInput
+                inputmode="numeric"
+                type="number"
+                min="0"
+                [value]="minDistanceInput()"
+                (input)="setMinDistanceInput(minDistance.value)"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Max distance (bp)</mat-label>
+              <input
+                #maxDistance
+                matInput
+                inputmode="numeric"
+                type="number"
+                min="0"
+                [value]="maxDistanceInput()"
+                (input)="setMaxDistanceInput(maxDistance.value)"
+              />
+            </mat-form-field>
+          </div>
+
+          <div class="relation-table-actions">
+            <span class="relation-result-count">
+              Showing {{ formatCount(sortedFilteredRelationRows().length) }} of
+              {{ formatCount(relationDetailRows().length) }} relation rows
+            </span>
+            <button mat-button type="button" (click)="clearRelationFilters()">
+              <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+              Clear filters
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="!canDownloadRelations()"
+              (click)="downloadFilteredRelations()"
+            >
+              <mat-icon aria-hidden="true">download</mat-icon>
+              Download TSV
+            </button>
+          </div>
         </div>
+
+        @if (relationFilterError(); as filterError) {
+          <p class="relation-filter-error" role="alert">{{ filterError }}</p>
+        }
+
+        <ng-template #relationActionTpl let-row="rowData">
+          <button mat-button type="button" (click)="focusRelation(row)">
+            <mat-icon aria-hidden="true">my_location</mat-icon>
+            View in browser
+          </button>
+        </ng-template>
+
+        <mtx-grid
+          class="relation-grid"
+          [data]="sortedFilteredRelationRows()"
+          [columns]="relationColumns()"
+          [length]="sortedFilteredRelationRows().length"
+          [pageIndex]="relationPageIndex()"
+          [pageSize]="relationPageSize()"
+          [pageSizeOptions]="relationPageSizeOptions"
+          [pageOnFront]="true"
+          [sortOnFront]="true"
+          [sortDisableClear]="true"
+          [sortActive]="relationSortState().active"
+          [sortDirection]="relationSortState().direction"
+          [showToolbar]="false"
+          [columnHideable]="false"
+          [noResultText]="relationNoResultText()"
+          (page)="onRelationPageChange($event)"
+          (sortChange)="onRelationSortChange($event)"
+        ></mtx-grid>
       } @else {
         <p class="empty-state">No linked quadruplex sequence relations were reported.</p>
       }

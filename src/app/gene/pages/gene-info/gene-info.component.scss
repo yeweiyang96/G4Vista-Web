@@ -6,9 +6,9 @@
 
 .gene-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(520px, auto);
+  grid-template-columns: minmax(320px, 0.7fr) minmax(0, 1.3fr);
   gap: 32px;
-  align-items: center;
+  align-items: start;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
@@ -16,6 +16,7 @@
 .gene-title {
   display: grid;
   gap: 10px;
+  align-content: start;
   min-width: 0;
 }
 
@@ -52,8 +53,9 @@
 
 .gene-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
+  min-width: 0;
 }
 
 .gene-summary div {
@@ -116,6 +118,15 @@
 .gene-panel-header > div {
   display: grid;
   gap: 4px;
+  min-width: 0;
+}
+
+.browser-panel-header {
+  flex-wrap: wrap;
+}
+
+.browser-panel-header button {
+  margin-left: auto;
 }
 
 .gene-panel h2 {
@@ -220,39 +231,75 @@
   border-radius: var(--g4v-radius);
 }
 
-.relation-table-shell {
+.relation-tools {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--g4v-radius);
+}
+
+.relation-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(210px, 1.2fr) minmax(150px, 0.75fr) minmax(
+      150px,
+      0.75fr
+    );
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.relation-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.relation-result-count {
+  margin-right: auto;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.relation-filter-error {
+  margin: 0;
+  padding: 10px 12px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-error);
+  background: color-mix(in srgb, var(--mat-sys-error) 8%, var(--mat-sys-surface));
+  border: 1px solid color-mix(in srgb, var(--mat-sys-error) 45%, var(--mat-sys-outline-variant));
+  border-radius: var(--g4v-radius);
+}
+
+.relation-grid {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--g4v-radius);
 }
 
-.relation-table-shell table {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: collapse;
-  font: var(--mat-sys-body-medium);
+:host ::ng-deep .relation-grid .mat-mdc-header-cell,
+:host ::ng-deep .relation-grid .mat-mdc-cell {
+  padding-right: 12px;
+  padding-left: 12px;
 }
 
-.relation-table-shell th,
-.relation-table-shell td {
-  padding: 12px 14px;
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-}
-
-.relation-table-shell th {
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface-variant);
-  background: var(--mat-sys-surface-container);
-}
-
-.relation-table-shell td {
+:host ::ng-deep .relation-grid .mat-mdc-header-cell {
+  font-weight: 600;
   color: var(--mat-sys-on-surface);
 }
 
-.relation-table-shell tr:last-child td {
-  border-bottom: 0;
+:host ::ng-deep .relation-grid .mat-mdc-paginator {
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline) 30%, transparent);
 }
 
 .empty-state {
@@ -272,10 +319,25 @@
 
 @media (width <= 1120px) {
   .gene-hero,
-  .gene-summary,
   .detail-list,
   .browser-region-banner dl {
     grid-template-columns: 1fr;
+  }
+
+  .gene-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .relation-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .relation-table-actions {
+    justify-content: flex-start;
+  }
+
+  .browser-panel-header button {
+    margin-left: 0;
   }
 
   .detail-list div,
@@ -287,5 +349,16 @@
 
   .detail-list div:last-child {
     border-bottom: 0;
+  }
+}
+
+@media (width <= 720px) {
+  .gene-summary,
+  .relation-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .relation-table-actions > * {
+    width: 100%;
   }
 }

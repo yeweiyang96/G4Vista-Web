@@ -525,10 +525,16 @@ export class GenomeRangeChartComponent {
               ],
               stroke: { value: '#2f3d4f' },
               strokeWidth: { value: 0.3 },
+              cursor: { value: 'pointer' },
               tooltip: {
                 signal:
                   "{'start': datum.start, 'end': datum.end, 'count': datum.count, 'bin_length': datum.bin_length, 'density': datum.density, 'density_bin': datum.density_bin_label, 'mean_score': datum.mean_score}",
               },
+            },
+            hover: {
+              fill: { value: '#f59e0b' },
+              stroke: { value: '#7c2d12' },
+              strokeWidth: { value: 1.2 },
             },
           },
         },

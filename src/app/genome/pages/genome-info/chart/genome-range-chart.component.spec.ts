@@ -51,6 +51,11 @@ interface GenomeRangeChartPrivateApi {
             field?: string;
           };
         };
+        hover?: {
+          fill?: unknown;
+          stroke?: unknown;
+          strokeWidth?: unknown;
+        };
       };
     }[];
   };
@@ -324,7 +329,7 @@ describe('GenomeRangeChartComponent', () => {
     expect(renderChartSpy).toHaveBeenCalled();
   });
 
-  it('does not use pointer cursor in chart marks', async () => {
+  it('uses pointer cursor and hover color for clickable chart marks', async () => {
     const { fixture } = createComponent();
     const component = fixture.componentInstance;
     await fixture.whenStable();
@@ -336,7 +341,10 @@ describe('GenomeRangeChartComponent', () => {
       TEST_CHART_THEME_COLORS,
     );
 
-    expect(spec.marks[0]?.encode?.update?.cursor).toBeUndefined();
+    expect(spec.marks[0]?.encode?.update?.cursor).toEqual({ value: 'pointer' });
+    expect(spec.marks[0]?.encode?.hover?.fill).toEqual({ value: '#f59e0b' });
+    expect(spec.marks[0]?.encode?.hover?.stroke).toEqual({ value: '#7c2d12' });
+    expect(spec.marks[0]?.encode?.hover?.strokeWidth).toEqual({ value: 1.2 });
   });
 
   it('anchors the x scale at the selected viewport start', async () => {
