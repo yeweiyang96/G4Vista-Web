@@ -181,7 +181,6 @@ const ENVIRONMENT_TAXONOMY_RANKS: readonly EnvironmentTaxonomyRank[] = [
   'family',
   'genus',
   'species',
-  'full_scientific_name',
 ];
 
 function isEnvironmentOutcomeMetric(value: string): value is EnvironmentOutcomeMetric {
@@ -831,7 +830,9 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   addTaxonomyFilter(selection: EnvironmentTaxonomyFilter): void {
     const key = this.taxonomyKey(selection);
     this.taxonomyFiltersSignal.update((filters) =>
-      filters.some((filter) => this.taxonomyKey(filter) === key) ? filters : [...filters, selection],
+      filters.some((filter) => this.taxonomyKey(filter) === key)
+        ? filters
+        : [...filters, selection],
     );
     this.clearSubmittedResult();
   }
@@ -1256,10 +1257,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.form.controls.taxonomyRank.setValue(this.routeInitialization.taxonomyRank);
     this.form.controls.taxonomyKeyword.setValue(this.routeInitialization.taxon ?? '');
     const taxonomyRank = this.routeInitialization.taxonomyRank;
-    if (
-      this.routeInitialization.taxon !== null &&
-      taxonomyRank === ALL_TAXONOMY_RANK
-    ) {
+    if (this.routeInitialization.taxon !== null && taxonomyRank === ALL_TAXONOMY_RANK) {
       this.handleError(new Error('Environment-G4 taxon query param requires a specific rank.'));
       return;
     }
@@ -1534,7 +1532,9 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     });
   }
 
-  private vegaLinePoints(linePoints: readonly { x_value: number | null; y_value: number | null }[]): VegaLineDatum[] {
+  private vegaLinePoints(
+    linePoints: readonly { x_value: number | null; y_value: number | null }[],
+  ): VegaLineDatum[] {
     return linePoints.flatMap((point) => {
       const xValue = toFiniteNumber(point.x_value);
       const yValue = toFiniteNumber(point.y_value);

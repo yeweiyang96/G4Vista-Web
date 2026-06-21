@@ -22,8 +22,7 @@ export type EnvironmentTaxonomyRank =
   | 'order'
   | 'family'
   | 'genus'
-  | 'species'
-  | 'full_scientific_name';
+  | 'species';
 export type EnvironmentSortOrder = 'asc' | 'desc';
 export type EnvironmentSortCategoriesBy = 'median' | 'n_assemblies' | 'sort_order';
 export type EnvironmentDownloadMode = 'csv' | 'tsv';
@@ -211,8 +210,7 @@ export interface EnvironmentMetricFields {
 }
 
 export interface EnvironmentNumericScatterPoint
-  extends EnvironmentTaxonomyFields,
-    EnvironmentMetricFields {
+  extends EnvironmentTaxonomyFields, EnvironmentMetricFields {
   assembly_accession: string;
   trait_code: EnvironmentTraitCode;
   numeric_midpoint: number | null;
@@ -269,8 +267,7 @@ export interface EnvironmentBoxplotSummaryRow {
 }
 
 export interface EnvironmentCategoryDatasetRow
-  extends EnvironmentTaxonomyFields,
-    EnvironmentMetricFields {
+  extends EnvironmentTaxonomyFields, EnvironmentMetricFields {
   assembly_accession: string;
   trait_code: EnvironmentTraitCode;
   trait_group: string;

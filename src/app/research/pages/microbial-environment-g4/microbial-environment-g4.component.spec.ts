@@ -107,7 +107,6 @@ describe('MicrobialEnvironmentG4Component', () => {
     taxonomy_ranks: [
       { rank: 'genus', display_label: 'Genus' },
       { rank: 'family', display_label: 'Family' },
-      { rank: 'full_scientific_name', display_label: 'Full scientific name' },
     ],
     build_id: 'build-2026-06-21',
     source_dataset_version: 'bacdive-2026',
@@ -241,7 +240,9 @@ describe('MicrobialEnvironmentG4Component', () => {
     service.getOptions.and.returnValue(of(options));
     service.searchTaxonomy.and.returnValue(
       of({
-        results: [{ rank: 'genus', value: 'Bacillus', label: 'Bacillus', eligible_assembly_count: 6 }],
+        results: [
+          { rank: 'genus', value: 'Bacillus', label: 'Bacillus', eligible_assembly_count: 6 },
+        ],
       }),
     );
     service.queryNumericScatter.and.returnValue(of(numericResponse));
