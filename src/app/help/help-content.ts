@@ -299,36 +299,42 @@ export const HELP_API_SAMPLES: readonly HelpApiSample[] = [
   {
     anchorId: 'api-sample-g4-rows',
     method: 'GET',
-    path: '/api/v1/g4/GCF_000001735.4/g4?limit=20&tetrads=3&min_score=12',
+    path: '/api/v1/quadruplex-sequences/GCF_000001735.4?quadruplex_type=g4&limit=20&tetrads=3&min_score=12',
     description: 'Fetch filtered G4 quadruplex sequence rows for an assembly.',
     requestBody: null,
   },
   {
     anchorId: 'api-sample-position-distribution',
     method: 'GET',
-    path: '/api/v1/g4/GCF_000001735.4/g4/position-distribution?flank_window=1000&include_feature_breakdown=true',
+    path: '/api/v1/quadruplex-sequences/GCF_000001735.4/position-distribution?quadruplex_type=g4&flank_window=1000',
     description: 'Summarize motif position categories around gene landmarks.',
     requestBody: null,
   },
   {
     anchorId: 'api-sample-microbial-query',
     method: 'POST',
-    path: '/api/v1/research/microbial-environment-g4/query',
+    path: '/api/v1/research/microbial-environment-g4/query/numeric-scatter',
     description: 'Submit a microbial environment G4 analysis request.',
     requestBody: `{
-  "trait": "temperature",
-  "mode": "growth",
-  "taxonomy_selections": [
+  "trait_code": "growth_temperature",
+  "chart_kind": "scatter",
+  "outcome_metric": "g4_density_per_mb",
+  "taxonomy_filters": [
     {
       "rank": "genus",
       "value": "Bacillus"
     }
   ],
+  "category_filters": [],
+  "category_filter_logic": "intersection",
+  "min_mapping_confidence_rank": 1,
+  "include_review_values": false,
   "page_index": 0,
   "page_size": 50,
-  "sort_field": "phenotype_value",
+  "sort_field": "numeric_midpoint",
   "sort_order": "asc",
-  "density_metric": "g4_density_per_mb"
+  "numeric_min": null,
+  "numeric_max": null
 }`,
   },
 ];
@@ -906,7 +912,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
     title: 'Download package',
     eyebrow: 'Guide',
     summary:
-      'Download package creates a ZIP archive from assemblies collected on taxonomy pages, with selected motif types, filters, sorting, and TSV columns.',
+      'Download package creates TSV or ZIP exports from assemblies added on Download or taxonomy pages, with full source, motif, gene-relation, sorting, and column controls.',
     action: {
       kind: 'route',
       label: 'Open download package',
@@ -920,7 +926,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'The package builder uses the assembly set collected from taxonomy pages. Add assemblies first, then open Download to review the set and choose export options.',
+            body: 'The package builder uses a shared assembly set. Add assemblies directly on Download by searching accession, assembly name, organism, or taxonomy context; assemblies added from taxonomy pages appear in the same set.',
           },
           articleImage(
             'download.png',
@@ -933,16 +939,16 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             kind: 'ordered-list',
             items: [
               {
-                title: 'Open a taxon page',
-                body: 'Search for a taxon and review the genome assembly list.',
+                title: 'Search on Download',
+                body: 'Use assembly search to add individual assemblies without leaving the package builder.',
               },
               {
-                title: 'Add assemblies',
-                body: 'Select one or more assemblies that should be included in the package.',
+                title: 'Use taxonomy when useful',
+                body: 'Open a taxon page when you need to review and add many assemblies from a taxonomic group.',
               },
               {
-                title: 'Open Download',
-                body: 'Use the Download page to confirm the saved assembly set before creating a ZIP archive.',
+                title: 'Confirm scope',
+                body: 'Review selected assemblies or use taxon, species taxon, and region filters before exporting.',
               },
             ],
           },
@@ -955,6 +961,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           {
             kind: 'field-table',
             rows: [
+              {
+                field: 'Source filters',
+                description:
+                  'Limit rows by selected assemblies, taxon IDs, species taxon IDs, or region IDs.',
+              },
               {
                 field: 'Motif types',
                 description:
@@ -969,6 +980,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 field: 'Score range',
                 description:
                   'Use minimum and maximum score controls to restrict exported predictions.',
+              },
+              {
+                field: 'Gene relation filters',
+                description:
+                  'Filter rows by gene IDs, gene search term, relation categories, flank windows, and overlap thresholds.',
               },
               {
                 field: 'Sort order',
@@ -988,14 +1004,14 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'After the assembly set and package options are ready, use Create ZIP. The browser downloads one archive containing a manifest and TSV files for the selected assemblies and motif types.',
+            body: 'After the source, filters, columns, and output mode are ready, use Create download. ZIP mode downloads one archive containing a manifest and TSV files split by assembly and motif type; TSV mode streams one table.',
           },
           {
             kind: 'bullet-list',
             items: [
               {
                 title: 'Manifest',
-                body: 'Records the selected assemblies, motif types, filters, sort options, and columns.',
+                body: 'Records the selected assemblies, source filters, motif filters, gene-relation filters, sort options, and columns.',
               },
               {
                 title: 'TSV files',
@@ -1003,7 +1019,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               },
               {
                 title: 'Empty selections',
-                body: 'If no assemblies are present, return to Taxonomy and add assemblies before creating the package.',
+                body: 'If no assemblies or taxonomy filters are set, the request exports all rows that match the remaining filters.',
               },
             ],
           },
@@ -1016,7 +1032,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
     title: 'Microbial analysis',
     eyebrow: 'Guide',
     summary:
-      'The microbial analysis workbench compares BacDive-derived environmental traits with selected genome-level G4 density metrics for eligible microbial strains.',
+      'The Environment-G4 workbench compares BacDive-derived microbial environment traits with selected assembly-level quadruplex sequence density metrics.',
     action: {
       kind: 'route',
       label: 'Open microbial analysis',
@@ -1030,7 +1046,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'The workbench is designed for exploratory comparison of microbial environmental traits and G4 density metrics. It combines BacDive-derived growth condition data with genome assemblies that have predicted quadruplex sequence data in G4Vista.',
+            body: 'The workbench is designed for exploratory comparison of microbial environmental trait values and G4Vista density metrics. Numeric traits render as scatter plots; categorical and multi-label traits render as Server-prepared box plot summaries over canonical categories.',
           },
           articleImage(
             'microbial-environment.png',
@@ -1042,13 +1058,13 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           {
             kind: 'note',
             title: 'Interpretation',
-            body: 'The workbench reports associations in the selected dataset. A correlation result should not be interpreted as evidence of causation.',
+            body: 'The workbench reports descriptive associations in the selected dataset. Differences across environments or lineages should not be interpreted as causal evidence.',
           },
         ],
       },
       {
         id: 'microbial-select-trait',
-        title: 'Selecting trait and strain set',
+        title: 'Selecting trait, metric, and scope',
         blocks: [
           {
             kind: 'field-table',
@@ -1056,21 +1072,22 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 field: 'Trait',
                 description:
-                  'Choose temperature or pH, depending on which environmental condition should be compared with G4 density.',
+                  'Choose a Server-provided trait such as growth temperature, growth pH, oxygen tolerance, salt tolerance, or ecological context.',
               },
               {
-                field: 'Mode',
+                field: 'Outcome metric',
                 description:
-                  'Choose growth or optimum values according to the available BacDive-derived condition values.',
+                  'Choose one of the public density metrics allowed for the selected trait, such as genome-wide, gene-overlapping, upstream, downstream, or intergenic G4 density per Mb.',
+              },
+              {
+                field: 'Canonical categories',
+                description:
+                  'For categorical and multi-label traits, select canonical category values prepared by the Server. Raw BacDive values are reserved for provenance tables and downloads.',
               },
               {
                 field: 'Taxonomy selections',
                 description:
-                  'Use all eligible strains or restrict the analysis by taxonomy rank and search term.',
-              },
-              {
-                field: 'Density metric',
-                description: 'Choose the G4 density outcome to display after the query runs.',
+                  'Use all eligible assemblies or restrict the analysis by taxonomy rank and search term. Taxonomy filters remain available because ecological context and lineage can be confounded.',
               },
             ],
           },
@@ -1078,16 +1095,16 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             kind: 'ordered-list',
             items: [
               {
-                title: 'Choose trait and mode',
-                body: 'Set the environmental condition before defining the strain set.',
+                title: 'Choose trait and metric',
+                body: 'Set the environmental trait and outcome metric before defining taxonomy or category scope.',
               },
               {
-                title: 'Build a taxonomy selection',
-                body: 'Search and add taxonomy groups when the analysis should focus on a restricted lineage.',
+                title: 'Choose categories when applicable',
+                body: 'For categorical traits, use the checklist of canonical categories. Category membership is multi-label, not mutually exclusive unless marked by the data contract.',
               },
               {
                 title: 'Submit the query',
-                body: 'Run the analysis to refresh the summary metrics, scatter plot, and strain table.',
+                body: 'Run the analysis to refresh the summary metrics, chart, and assembly preview table.',
               },
             ],
           },
@@ -1101,24 +1118,19 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             kind: 'field-table',
             rows: [
               {
-                field: 'Correlation summary',
+                field: 'Summary',
                 description:
-                  'Reports the association statistic, p-value, and sample size for the submitted strain set.',
+                  'Reports assembly counts, read-model row counts, chart type, and the selected public density metric.',
               },
               {
-                field: 'Scatter plot',
+                field: 'Scatter plot or box plot',
                 description:
-                  'Shows condition values against the selected G4 density metric, with a trend line for visual comparison.',
+                  'Numeric traits use scatter plots. Categorical and multi-label traits use box plots with quartiles, whiskers, median, and sample size from the API.',
               },
               {
-                field: 'Strain table',
+                field: 'Assembly preview',
                 description:
-                  'Lists condition values, selected density metrics, genome size, organism names, and taxonomy context.',
-              },
-              {
-                field: 'Metric switch',
-                description:
-                  'Changes which G4 density outcome is displayed without changing the submitted strain set.',
+                  'Lists assembly accessions, organism names, selected trait values or categories, density metrics, genome size, taxonomy context, and raw values where available.',
               },
             ],
           },
@@ -1130,7 +1142,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'Use the table controls and download action to inspect or export the submitted strain set. Record the selected trait, mode, taxonomy filters, density metric, and sample size when reporting results.',
+            body: 'Use the table controls and download action to inspect or export the submitted assembly set. Record the selected trait code, chart kind, outcome metric, taxonomy filters, category filters, mapping confidence threshold, and sample size when reporting results.',
           },
         ],
       },
@@ -1559,28 +1571,28 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'archive',
         title: 'Download package page',
-        body: 'Use Download after adding assemblies from taxonomy pages to create a ZIP package.',
+        body: 'Use Download to build TSV or ZIP exports from assembly, taxonomy, motif, and gene-relation filters.',
         route: '/download',
         targetSelector: '[data-help-target="download-header"]',
       },
       {
         icon: 'inventory_2',
-        title: 'Review the assembly set',
-        body: 'Confirm the selected assemblies before submitting a package request.',
+        title: 'Choose source rows',
+        body: 'Search and add assemblies on this page, review assemblies added from taxonomy pages, or use taxon and region filters.',
         route: '/download',
         targetSelector: '[data-help-target="download-assembly-set"]',
       },
       {
         icon: 'tune',
         title: 'Set filters and columns',
-        body: 'Choose motif types, optional filters, sort order, and TSV columns.',
+        body: 'Choose motif, gene-relation, score, overlap, sort, output mode, and catalog-backed columns.',
         route: '/download',
         targetSelector: '[data-help-target="download-options"]',
       },
       {
         icon: 'folder_zip',
-        title: 'Create the ZIP',
-        body: 'Submit the package request when assemblies, motif types, and columns are selected.',
+        title: 'Create the export',
+        body: 'Submit the request when source scope, filters, output mode, and columns are ready.',
         route: '/download',
         targetSelector: '[data-help-target="download-create-package"]',
       },
@@ -1599,8 +1611,8 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       },
       {
         icon: 'tune',
-        title: 'Choose the environmental condition',
-        body: 'Select the trait and mode before defining the strain set.',
+        title: 'Choose trait and metric',
+        body: 'Select the environment trait, outcome metric, and category scope before running.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-condition"]',
       },

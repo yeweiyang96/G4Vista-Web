@@ -1,32 +1,50 @@
 <main class="g4v-page download-page">
-  <section class="download-header" aria-labelledby="download-title" data-help-target="download-header">
+  <section
+    class="download-header"
+    aria-labelledby="download-title"
+    data-help-target="download-header"
+  >
     <div class="header-copy">
-      <p class="section-kicker">Download package</p>
-      <h1 id="download-title" class="g4v-page-title">G4 and i-motif package</h1>
+      <p class="section-kicker">Download data</p>
+      <h1 id="download-title" class="g4v-page-title">Quadruplex sequence records</h1>
       <p>
-        Create a ZIP package from the assembly set collected on taxonomy pages. The package includes
-        a manifest and one TSV per assembly and motif type.
+        Choose the row scope, motif filters, gene-context filters, output format, and export
+        columns for a Server-backed download request.
       </p>
     </div>
 
     <div class="header-actions">
+      <a
+        mat-stroked-button
+        routerLink="/documentation"
+        [queryParams]="{ doc: 'download' }"
+      >
+        <mat-icon>menu_book</mat-icon>
+        Documentation
+      </a>
       <a mat-stroked-button routerLink="/taxonomy">
         <mat-icon>account_tree</mat-icon>
-        Add assemblies
+        Browse taxonomy
       </a>
       <button
         type="button"
         mat-flat-button
         color="primary"
-        data-help-target="download-create-package"
-        [disabled]="!canCreatePackage()"
-        (click)="createPackage()"
+        [disabled]="!canCreateDownload()"
+        (click)="createDownload()"
       >
-        <mat-icon>{{ isDownloading() ? 'hourglass_top' : 'archive' }}</mat-icon>
-        {{ isDownloading() ? 'Preparing package' : 'Create ZIP' }}
+        <mat-icon>{{ isDownloading() ? 'hourglass_top' : 'download' }}</mat-icon>
+        {{ isDownloading() ? 'Preparing export' : 'Create download' }}
       </button>
     </div>
   </section>
+
+  @if (catalogError()) {
+    <section class="download-error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon>
+      <span>{{ catalogError() }}</span>
+    </section>
+  }
 
   @if (errorMessage()) {
     <section class="download-error" role="alert">
@@ -35,134 +53,417 @@
     </section>
   }
 
-  <section class="download-layout" aria-label="Package builder">
-    <article
-      class="assembly-panel"
-      aria-labelledby="assembly-set-title"
-      data-help-target="download-assembly-set"
-    >
-      <div class="panel-heading">
-        <div>
-          <p class="panel-kicker">Source</p>
-          <h2 id="assembly-set-title">Assembly set</h2>
-        </div>
-        <button
-          type="button"
-          mat-stroked-button
-          [disabled]="assemblySet.count() === 0"
-          (click)="clearSet()"
+  <section class="download-workbench" aria-label="Download query builder">
+    <div class="workbench-main">
+      <section
+        class="builder-panel source-panel"
+        aria-labelledby="source-title"
+        data-help-target="download-assembly-set"
+      >
+        <header class="panel-heading">
+          <div>
+            <p class="panel-kicker">Data scope</p>
+            <h2 id="source-title">Rows to include</h2>
+          </div>
+        </header>
+
+        <mat-radio-group
+          class="scope-options"
+          [value]="dataScopeMode()"
+          (valueChange)="setDataScopeMode($event)"
+          aria-label="Data scope"
         >
-          <mat-icon>delete_sweep</mat-icon>
-          Clear
-        </button>
-      </div>
+          <mat-radio-button class="scope-card" value="assembly_set">
+            <span class="scope-card-copy">
+              <strong>Selected assembly set</strong>
+              <small>{{ assemblySet.count() }} assemblies saved from this page or taxonomy pages</small>
+            </span>
+          </mat-radio-button>
+          <mat-radio-button class="scope-card" value="taxon_or_region">
+            <span class="scope-card-copy">
+              <strong>Taxonomy or region filters</strong>
+              <small>Use NCBI taxon IDs, species taxon IDs, or chromosome and contig IDs</small>
+            </span>
+          </mat-radio-button>
+          <mat-radio-button class="scope-card warning" value="all_records">
+            <span class="scope-card-copy">
+              <strong>All matching records</strong>
+              <small>Search every assembly in the download index after the filters below</small>
+            </span>
+          </mat-radio-button>
+        </mat-radio-group>
 
-      @if (assemblySet.count() === 0) {
-        <div class="empty-state">
-          <mat-icon aria-hidden="true">inventory_2</mat-icon>
-          <p>No assemblies have been added yet.</p>
-          <a mat-flat-button color="primary" routerLink="/taxonomy">
-            <mat-icon>add</mat-icon>
-            Open taxonomy
-          </a>
-        </div>
-      } @else {
-        <div class="source-summary">
-          <span>{{ assemblySet.count() }} assemblies</span>
-          <span>{{ selectedMotifTypes().length }} motif types</span>
-          <span>{{ selectedColumns().length }} columns</span>
-        </div>
+        @if (dataScopeProblem()) {
+          <p class="scope-warning" role="status">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            <span>{{ dataScopeProblem() }}</span>
+          </p>
+        }
 
-        <div class="assembly-list" role="list" aria-label="Selected assemblies">
-          @for (item of assemblySet.items(); track item.assembly_accession) {
-            <div class="assembly-row" role="listitem">
-              <div class="assembly-row-copy">
-                <span class="assembly-accession">{{ item.assembly_accession }}</span>
-                <span>{{ item.organism_name || item.asm_name || 'Unnamed assembly' }}</span>
+        @if (dataScopeMode() === 'assembly_set') {
+          <div class="source-subsection">
+            <div class="subsection-heading">
+              <div>
+                <h3>Add assemblies on this page</h3>
+                <p>
+                  Search by RefSeq accession, assembly name, organism name, or taxonomy term.
+                  Selections are saved in the same download set used by taxonomy pages.
+                </p>
               </div>
               <button
                 type="button"
-                mat-icon-button
-                [attr.aria-label]="'Remove ' + item.assembly_accession"
-                (click)="removeAssembly(item)"
+                mat-stroked-button
+                [disabled]="assemblySet.count() === 0"
+                (click)="clearSet()"
               >
-                <mat-icon>close</mat-icon>
+                <mat-icon>delete_sweep</mat-icon>
+                Clear set
               </button>
             </div>
-          }
-        </div>
-      }
-    </article>
 
-    <article
-      class="options-panel"
-      aria-labelledby="package-options-title"
-      data-help-target="download-options"
-    >
-      <div class="panel-heading">
-        <div>
-          <p class="panel-kicker">Package options</p>
-          <h2 id="package-options-title">Filters and columns</h2>
-        </div>
-      </div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Assembly search</mat-label>
+              <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+              <input
+                matInput
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="GCF_000001405.40, Homo sapiens, TAIR10"
+                [formControl]="assemblySearchControl"
+                [matAutocomplete]="assemblySearch"
+              />
+              @if (assemblySearchControl.value) {
+                <button
+                  type="button"
+                  mat-icon-button
+                  matSuffix
+                  aria-label="Clear assembly search"
+                  (click)="clearAssemblySearch()"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+              <mat-autocomplete
+                #assemblySearch="matAutocomplete"
+                autoActiveFirstOption
+                hideSingleSelectionIndicator
+                (optionSelected)="onAssemblyOptionSelected($event)"
+              >
+                @if (assemblySearchResults$ | async; as results) {
+                  @if (results.length > 0) {
+                    @for (result of results; track result.assembly_accession) {
+                      <mat-option [value]="result.assembly_accession">
+                        <span class="assembly-option">
+                          <strong>{{ result.asm_name || result.assembly_accession }}</strong>
+                          <span>{{ result.assembly_accession }}</span>
+                          <em>{{ result.organism_name }}</em>
+                          @if (result.matched_taxonomy_name) {
+                            <small>
+                              matched {{ result.matched_taxonomy_rank }}:
+                              {{ result.matched_taxonomy_name }}
+                            </small>
+                          }
+                        </span>
+                      </mat-option>
+                    }
+                  } @else if (assemblySearchControl.value.trim()) {
+                    <mat-option disabled>No matching assemblies</mat-option>
+                  }
+                }
+              </mat-autocomplete>
+            </mat-form-field>
 
-      <section class="option-group" aria-labelledby="motif-options-title">
-        <h3 id="motif-options-title">Motif types</h3>
-        <div class="check-grid">
-          @for (option of motifTypeOptions; track option.value) {
+            @if (assemblySearchError()) {
+              <p class="inline-error" role="alert">{{ assemblySearchError() }}</p>
+            }
+
+            @if (assemblySet.count() === 0) {
+              <div class="empty-state">
+                <mat-icon aria-hidden="true">inventory_2</mat-icon>
+                <p>No assemblies are selected yet.</p>
+              </div>
+            } @else {
+              <div class="assembly-list" role="list" aria-label="Selected assemblies">
+                @for (item of assemblySet.items(); track item.assembly_accession) {
+                  <div class="assembly-row" role="listitem">
+                    <div class="assembly-row-copy">
+                      <span class="assembly-accession">{{ item.assembly_accession }}</span>
+                      <span>{{ item.organism_name || item.asm_name || 'Unnamed assembly' }}</span>
+                      @if (item.source_taxon_name) {
+                        <small>{{ item.source_taxon_name }}</small>
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      mat-icon-button
+                      [attr.aria-label]="'Remove ' + item.assembly_accession"
+                      (click)="removeAssembly(item)"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else if (dataScopeMode() === 'taxon_or_region') {
+          <div class="source-subsection">
+            <div class="subsection-heading">
+              <div>
+                <h3>Taxonomy and direct region filters</h3>
+                <p>
+                  Enter comma- or space-separated values. Taxon fields use NCBI taxonomy IDs; region
+                  IDs use chromosome, contig, or scaffold names from the assembly records.
+                </p>
+              </div>
+            </div>
+
+            <div class="field-grid three-columns">
+              <mat-form-field appearance="outline">
+                <mat-label>Taxon IDs</mat-label>
+                <input
+                  matInput
+                  [ngModel]="taxonIdsInput()"
+                  (ngModelChange)="taxonIdsInput.set($event)"
+                  placeholder="3702, 9606"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Species taxon IDs</mat-label>
+                <input
+                  matInput
+                  [ngModel]="speciesTaxonIdsInput()"
+                  (ngModelChange)="speciesTaxonIdsInput.set($event)"
+                  placeholder="optional"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Region IDs</mat-label>
+                <input
+                  matInput
+                  [ngModel]="regionIdsInput()"
+                  (ngModelChange)="regionIdsInput.set($event)"
+                  placeholder="NC_000001.11, chr1"
+                />
+              </mat-form-field>
+            </div>
+          </div>
+        } @else {
+          <div class="all-records-confirm">
             <mat-checkbox
-              [checked]="isMotifTypeSelected(option.value)"
-              (change)="toggleMotifType(option.value, $event)"
+              [checked]="allRecordsConfirmed()"
+              (change)="setAllRecordsConfirmed($event)"
             >
-              {{ option.label }}
+              I understand this request can export every quadruplex sequence row that matches the
+              filters below.
             </mat-checkbox>
+          </div>
+        }
+      </section>
+
+      <section
+        class="builder-panel"
+        aria-labelledby="filters-title"
+        data-help-target="download-options"
+      >
+        <header class="panel-heading">
+          <div>
+            <p class="panel-kicker">Filters</p>
+            <h2 id="filters-title">Sequence filters</h2>
+          </div>
+        </header>
+
+        <div class="filter-core">
+          <div class="option-section">
+            <h3>Motif types</h3>
+            <div class="check-grid compact">
+              @for (option of motifTypeOptions; track option.value) {
+                <mat-checkbox
+                  [checked]="isMotifTypeSelected(option.value)"
+                  (change)="toggleMotifType(option.value, $event)"
+                >
+                  {{ option.label }}
+                </mat-checkbox>
+              }
+            </div>
+          </div>
+
+          <div class="field-grid three-columns">
+            <mat-form-field appearance="outline">
+              <mat-label>Tetrads</mat-label>
+              <input
+                matInput
+                [ngModel]="tetradsInput()"
+                (ngModelChange)="tetradsInput.set($event)"
+                placeholder="2, 3, 4"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Minimum score</mat-label>
+              <input
+                matInput
+                inputmode="numeric"
+                [ngModel]="minScoreInput()"
+                (ngModelChange)="minScoreInput.set($event)"
+                placeholder="optional"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Maximum score</mat-label>
+              <input
+                matInput
+                inputmode="numeric"
+                [ngModel]="maxScoreInput()"
+                (ngModelChange)="maxScoreInput.set($event)"
+                placeholder="optional"
+              />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <details class="advanced-filters">
+          <summary>
+            <span>Genomic context filters</span>
+            <small>
+              Gene relation filters keep matching quadruplex sequence rows; they do not rewrite the
+              predicted motif records.
+            </small>
+          </summary>
+
+          <div class="advanced-filter-body">
+            <div class="relation-filter-grid">
+              <div class="option-section">
+                <h3>Gene relation categories</h3>
+                <div class="check-grid">
+                  @for (option of relationCategoryOptions; track option.value) {
+                    <mat-checkbox
+                      [checked]="isRelationCategorySelected(option.value)"
+                      (change)="toggleRelationCategory(option.value, $event)"
+                    >
+                      {{ option.label }}
+                    </mat-checkbox>
+                  }
+                </div>
+              </div>
+
+              <div class="option-section">
+                <h3>Flank windows</h3>
+                <p>Use these windows with upstream or downstream relation filters.</p>
+                <div class="window-grid">
+                  @for (option of flankWindowOptions; track option.value) {
+                    <mat-checkbox
+                      [checked]="isFlankWindowSelected(option.value)"
+                      (change)="toggleFlankWindow(option.value, $event)"
+                    >
+                      {{ option.label }}
+                    </mat-checkbox>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="field-grid two-columns">
+              <mat-form-field appearance="outline">
+                <mat-label>Gene IDs</mat-label>
+                <input
+                  matInput
+                  [ngModel]="geneIdsInput()"
+                  (ngModelChange)="geneIdsInput.set($event)"
+                  placeholder="geneA, AT1G01010"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Gene search term</mat-label>
+                <input
+                  matInput
+                  [ngModel]="geneSearchTermInput()"
+                  (ngModelChange)="geneSearchTermInput.set($event)"
+                  placeholder="dnaA, TP53"
+                />
+              </mat-form-field>
+            </div>
+
+            <div class="field-grid two-columns">
+              <mat-form-field appearance="outline">
+                <mat-label>Minimum overlap bp</mat-label>
+                <input
+                  matInput
+                  inputmode="numeric"
+                  [ngModel]="minOverlapBpInput()"
+                  (ngModelChange)="minOverlapBpInput.set($event)"
+                  placeholder="optional"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Minimum overlap fraction</mat-label>
+                <input
+                  matInput
+                  inputmode="decimal"
+                  [ngModel]="minOverlapFractionInput()"
+                  (ngModelChange)="minOverlapFractionInput.set($event)"
+                  placeholder="0 to 1"
+                />
+              </mat-form-field>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="builder-panel" aria-labelledby="attributes-title">
+        <header class="panel-heading">
+          <div>
+            <p class="panel-kicker">Attributes and export</p>
+            <h2 id="attributes-title">Columns and format</h2>
+          </div>
+          @if (isColumnCatalogLoading()) {
+            <div class="catalog-loading">
+              <mat-spinner diameter="22"></mat-spinner>
+              <span>Loading catalog</span>
+            </div>
+          } @else if (columnCatalog(); as catalog) {
+            <span class="catalog-version">
+              {{ catalog.schema_version }} - {{ catalog.catalog_version }}
+            </span>
           }
+        </header>
+
+        <div class="format-grid">
+          <mat-button-toggle-group
+            class="mode-toggle"
+            [value]="downloadMode()"
+            (valueChange)="setDownloadMode($event)"
+            aria-label="Download mode"
+          >
+            @for (option of downloadModeOptions; track option.value) {
+              <mat-button-toggle [value]="option.value">{{ option.label }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+
+          <div class="format-note">
+            @if (downloadMode() === 'zip') {
+              <p>
+                ZIP exports split TSV members by assembly and motif type, plus
+                <code>manifest.json</code> with the request, columns, and row counts.
+              </p>
+            } @else {
+              <p>
+                TSV streams one tab-separated table for the full request, suitable for shell
+                pipelines and spreadsheet import.
+              </p>
+            }
+          </div>
         </div>
-      </section>
 
-      <section class="option-group" aria-labelledby="filter-options-title">
-        <h3 id="filter-options-title">Motif filters</h3>
-        <div class="field-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>G-tetrads</mat-label>
-            <input
-              matInput
-              [ngModel]="tetradsInput()"
-              (ngModelChange)="tetradsInput.set($event)"
-              placeholder="2,3,4"
-            />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Minimum score</mat-label>
-            <input
-              matInput
-              inputmode="numeric"
-              [ngModel]="minScoreInput()"
-              (ngModelChange)="minScoreInput.set($event)"
-              placeholder="optional"
-            />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Maximum score</mat-label>
-            <input
-              matInput
-              inputmode="numeric"
-              [ngModel]="maxScoreInput()"
-              (ngModelChange)="maxScoreInput.set($event)"
-              placeholder="optional"
-            />
-          </mat-form-field>
-        </div>
-      </section>
-
-      <section class="option-group" aria-labelledby="sort-options-title">
-        <h3 id="sort-options-title">Sort order</h3>
         <div class="field-grid two-columns">
           <mat-form-field appearance="outline">
             <mat-label>Sort field</mat-label>
-            <mat-select [ngModel]="sortField()" (ngModelChange)="sortField.set($event)">
+            <mat-select [value]="sortField()" (valueChange)="setSortField($event)">
               @for (option of sortOptions; track option.value) {
                 <mat-option [value]="option.value">{{ option.label }}</mat-option>
               }
@@ -171,27 +472,92 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Direction</mat-label>
-            <mat-select [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event)">
+            <mat-select [value]="sortOrder()" (valueChange)="setSortOrder($event)">
               <mat-option value="asc">Ascending</mat-option>
               <mat-option value="desc">Descending</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
-      </section>
 
-      <section class="option-group" aria-labelledby="column-options-title">
-        <h3 id="column-options-title">TSV columns</h3>
-        <div class="column-grid">
-          @for (option of columnOptions; track option.value) {
-            <mat-checkbox
-              [checked]="isColumnSelected(option.value)"
-              (change)="toggleColumn(option.value, $event)"
-            >
-              {{ option.label }}
-            </mat-checkbox>
-          }
+        <div class="column-toolbar">
+          <mat-button-toggle-group
+            [value]="columnSelectionMode()"
+            (valueChange)="setColumnSelectionMode($event)"
+            aria-label="Column selection mode"
+          >
+            @for (option of columnSelectionModeOptions; track option.value) {
+              <mat-button-toggle [value]="option.value">{{ option.label }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+          <span>{{ selectedColumnCount() }} selected</span>
         </div>
+
+        @if (columnGroups().length > 0) {
+          <div class="column-groups">
+            @for (group of columnGroups(); track group.category) {
+              <section class="column-group" [attr.aria-label]="group.category + ' columns'">
+                <h3>{{ group.category }}</h3>
+                <div class="column-grid">
+                  @for (column of group.columns; track column.id) {
+                    <mat-checkbox
+                      [checked]="isColumnSelected(column.id)"
+                      (change)="toggleColumn(column.id, $event)"
+                    >
+                      <span class="column-label">
+                        <strong>{{ column.label }}</strong>
+                        <small>{{ column.id }} - {{ column.type }}</small>
+                        <small class="column-description">{{ column.description }}</small>
+                      </span>
+                    </mat-checkbox>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+        }
       </section>
-    </article>
+    </div>
+
+    <aside class="request-dock" aria-label="Download request summary">
+      <h2>Request summary</h2>
+      <dl>
+        <div>
+          <dt>Rows</dt>
+          <dd>{{ sourceScopeSummary() }}</dd>
+        </div>
+        <div>
+          <dt>Filters</dt>
+          <dd>{{ filterSummary() }}</dd>
+        </div>
+        <div>
+          <dt>Output</dt>
+          <dd>{{ outputSummary() }}</dd>
+        </div>
+      </dl>
+
+      @if (dataScopeProblem()) {
+        <p class="dock-warning">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <span>{{ dataScopeProblem() }}</span>
+        </p>
+      }
+
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        data-help-target="download-create-package"
+        [disabled]="!canCreateDownload()"
+        (click)="createDownload()"
+      >
+        <mat-icon>{{ isDownloading() ? 'hourglass_top' : 'download' }}</mat-icon>
+        {{ isDownloading() ? 'Preparing export' : 'Create download' }}
+      </button>
+
+      <p class="dock-note">
+        TSV is a single streamed table. ZIP splits TSV files by assembly and motif type and includes
+        <code>manifest.json</code>.
+      </p>
+    </aside>
   </section>
 </main>

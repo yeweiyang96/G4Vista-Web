@@ -134,8 +134,11 @@ describe('G4TableComponent', () => {
     expect(
       component.relationHits(
         {
+          quadruplex_sequence_id: 'NC_000001.1-100',
           assembly_accession: 'GCF_1',
+          region_id: 'NC_000001.1',
           seqid: 'NC_000001.1',
+          quadruplex_type: 'g4',
           g4_type: 'g4',
           start: 100,
           end: 120,
@@ -146,6 +149,13 @@ describe('G4TableComponent', () => {
           y3: 1,
           score: 18,
           sequence: 'GGGTTAGGGTTAGGGTTAGGG',
+          strand: '+',
+          gene_ids: '',
+          gene_names: '',
+          gene_biotypes: '',
+          relation_categories: '',
+          feature_types: '',
+          feature_ids: '',
         },
         'insideOf_gene_g4',
       ),

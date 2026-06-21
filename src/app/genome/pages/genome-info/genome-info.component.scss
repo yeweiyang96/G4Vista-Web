@@ -248,10 +248,6 @@
   border-radius: 8px;
 }
 
-.explore-filters.has-gene-search {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-}
-
 .motif-filter-control,
 .score-range {
   display: grid;
@@ -364,6 +360,32 @@ app-jbrowse-host {
   align-self: center;
 }
 
+.browser-asset-warning {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  color: var(--mat-sys-on-error-container);
+  background: var(--mat-sys-error-container);
+  border-radius: var(--g4v-radius, 8px);
+
+  mat-icon {
+    margin-top: 1px;
+  }
+
+  div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  code,
+  small {
+    overflow-wrap: anywhere;
+  }
+}
+
 .selection-panel {
   display: grid;
   gap: 14px;
@@ -410,9 +432,21 @@ app-jbrowse-host {
 
 .loading-state {
   display: grid;
+  gap: 12px;
   place-items: center;
   min-height: 30vh;
   color: var(--mat-sys-on-surface-variant);
+}
+
+.error-state {
+  color: var(--mat-sys-error);
+  text-align: center;
+}
+
+.error-state p {
+  max-width: 720px;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 :host ::ng-deep .genome-page .mat-mdc-text-field-wrapper {
@@ -447,8 +481,7 @@ app-jbrowse-host {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .explore-filters,
-  .explore-filters.has-gene-search {
+  .explore-filters {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -467,8 +500,7 @@ app-jbrowse-host {
     font-size: clamp(3rem, 14vw, 4rem);
   }
 
-  .explore-filters,
-  .explore-filters.has-gene-search {
+  .explore-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -476,8 +508,7 @@ app-jbrowse-host {
 @media (width <= 599.98px) {
   .genome-hero,
   .assembly-stats,
-  .explore-filters,
-  .explore-filters.has-gene-search {
+  .explore-filters {
     grid-template-columns: 1fr;
   }
 

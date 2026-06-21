@@ -245,8 +245,8 @@ export class HomeComponent {
             label: 'Open research',
             route: '/research/microbial-environment-g4',
             queryParams: startingActionQueryParams({
-              trait: 'temperature',
-              mode: 'growth',
+              trait: 'growth_temperature',
+              metric: 'g4_density_per_mb',
               rank: 'genus',
               taxon: 'Bacillus',
               run: 'true',

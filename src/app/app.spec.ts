@@ -34,6 +34,20 @@ describe('App', () => {
     expect(navbarText).not.toContain('Research');
   });
 
+  it('orders navbar sections by the current workflow', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+
+    expect(app.sections.map((section) => section.name)).toEqual([
+      'Genome',
+      'Gene',
+      'Analysis',
+      'Download',
+      'Taxonomy',
+      'Documentation',
+    ]);
+  });
+
   it('should expose documentation with the documentation route and icon', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;

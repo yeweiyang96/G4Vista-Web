@@ -8,7 +8,6 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
   withRouterConfig,
-  withViewTransitions,
 } from '@angular/router';
 import { ArcElement, DoughnutController, Legend, PieController, Tooltip } from 'chart.js';
 import { provideCharts } from 'ng2-charts';
@@ -28,7 +27,6 @@ export const appConfig: ApplicationConfig = {
       }),
       withComponentInputBinding(),
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
-      withViewTransitions(),
     ),
     provideHttpClient(),
     provideCharts({

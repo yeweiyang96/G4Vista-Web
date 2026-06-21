@@ -5,24 +5,26 @@
         <p class="gene-kicker">Gene / feature</p>
         <h1>{{ gene.gene_name || gene.locus_tag || gene.feature_id || featureId() }}</h1>
         <p>{{ gene.feature_id || featureId() }}</p>
+        <a
+          mat-stroked-button
+          class="page-doc-link"
+          routerLink="/documentation"
+          [queryParams]="{ doc: 'gene' }"
+        >
+          <mat-icon>menu_book</mat-icon>
+          Documentation
+        </a>
       </div>
 
       <div class="gene-summary" aria-label="Gene summary">
-        <div>
-          <mat-icon>description</mat-icon>
-          <span>Feature</span>
-          <strong>{{ gene.feature || 'gene' }}</strong>
-        </div>
-        <div>
-          <mat-icon>hub</mat-icon>
-          <span>Linked G4 starts</span>
-          <strong>{{ relatedStartCount() }}</strong>
-        </div>
-        <div>
-          <mat-icon>label</mat-icon>
-          <span>Biotype</span>
-          <strong>{{ geneBiotypeLabel(gene.gene_biotype) }}</strong>
-        </div>
+        @for (summary of motifSummaries(); track summary.key) {
+          <div>
+            <mat-icon>{{ summary.icon }}</mat-icon>
+            <span>{{ summary.label }}</span>
+            <strong>{{ formatCount(summary.value) }}</strong>
+            <small>{{ summary.description }}</small>
+          </div>
+        }
       </div>
     </section>
 
@@ -43,13 +45,13 @@
         </div>
         <div>
           <dt>Sequence record</dt>
-          <dd>{{ gene.seqid }}</dd>
+          <dd>{{ gene.region_id }}</dd>
         </div>
         <div>
           <dt>Range</dt>
           <dd>
-            @if (gene.feature_start !== null && gene.feature_end !== null) {
-              {{ gene.feature_start }}..{{ gene.feature_end }}
+            @if (gene.start !== null && gene.end !== null) {
+              {{ gene.start }}..{{ gene.end }}
             } @else {
               Unavailable
             }
@@ -60,6 +62,10 @@
           <dd>{{ gene.strand || 'Unspecified' }}</dd>
         </div>
         <div>
+          <dt>Biotype</dt>
+          <dd>{{ geneBiotypeLabel(gene.biotype) }}</dd>
+        </div>
+        <div>
           <dt>Locus tag</dt>
           <dd>{{ gene.locus_tag || 'Unavailable' }}</dd>
         </div>
@@ -68,19 +74,101 @@
           <dd>{{ gene.gene_id || 'Unavailable' }}</dd>
         </div>
       </dl>
+    </section>
+
+    <section class="gene-panel browser-panel" aria-label="Gene genome browser">
+      <header class="gene-panel-header">
+        <mat-icon>travel_explore</mat-icon>
+        <div>
+          <h2>Genome browser</h2>
+          <p>Annotation and quadruplex sequence tracks around the selected gene.</p>
+        </div>
+      </header>
+
+      @if (geneBrowserRegion(); as browserRegion) {
+        <div class="browser-region-banner" aria-label="Gene browser region">
+          <dl>
+            <div>
+              <dt>Focused region</dt>
+              <dd>{{ browserRegion.label }}</dd>
+            </div>
+            <div>
+              <dt>Window length</dt>
+              <dd>{{ browserRegion.lengthLabel }}</dd>
+            </div>
+            <div>
+              <dt>Current browser view</dt>
+              <dd>{{ viewerRegion() }}</dd>
+            </div>
+          </dl>
+        </div>
+        <app-jbrowse-host
+          [viewerConfig]="viewerConfig()"
+          [navigationCommand]="navCommand()"
+          (regionChanged)="handleViewerRegionChange($event)"
+        />
+      } @else {
+        <p class="empty-state">Genome coordinates are unavailable for this gene.</p>
+      }
+    </section>
+
+    <section class="gene-panel relation-section" aria-label="Linked quadruplex sequence relations">
+      <header class="gene-panel-header">
+        <mat-icon>table_rows</mat-icon>
+        <div>
+          <h2>Linked quadruplex sequence relations</h2>
+          <p>Server-side relation calls between this gene and predicted quadruplex sequence sites.</p>
+        </div>
+      </header>
 
       @if (relationSummaries().length) {
-        <section class="relation-section" aria-label="Linked G4 and i-motif windows">
-          <div>
-            <mat-icon>table_rows</mat-icon>
-            <h2>Linked motif windows</h2>
-          </div>
-          <mat-chip-listbox aria-label="Linked motif windows">
+        <div class="relation-summary-strip">
+          <mat-chip-listbox aria-label="Linked quadruplex sequence relations">
             @for (summary of relationSummaries(); track summary.key) {
               <mat-chip>{{ summary.label }}: {{ summary.count }}</mat-chip>
             }
           </mat-chip-listbox>
-        </section>
+        </div>
+      }
+
+      @if (relationDetailRows().length) {
+        <div class="relation-table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Motif</th>
+                <th scope="col">Location</th>
+                <th scope="col">Gene relation</th>
+                <th scope="col">Distance</th>
+                <th scope="col">Overlap</th>
+                <th scope="col">Mode</th>
+                <th scope="col">Gene biotype</th>
+                <th scope="col" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of relationDetailRows(); track row.id) {
+                <tr>
+                  <td>{{ row.typeLabel }}</td>
+                  <td>{{ row.location }}</td>
+                  <td>{{ row.categoryLabel }}</td>
+                  <td>{{ row.distanceLabel }}</td>
+                  <td>{{ row.overlapLabel }}</td>
+                  <td>{{ row.modeLabel }}</td>
+                  <td>{{ row.biotypeLabel }}</td>
+                  <td>
+                    <button mat-button type="button" (click)="focusRelation(row)">
+                      <mat-icon>my_location</mat-icon>
+                      Focus
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty-state">No linked quadruplex sequence relations were reported.</p>
       }
     </section>
   } @else {

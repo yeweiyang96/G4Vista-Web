@@ -84,11 +84,11 @@ export class App {
   readonly title = 'G4Vista';
   readonly year = new Date().getFullYear();
   readonly sections = [
-    { name: 'Taxonomy', route: '/taxonomy', icon: 'account_tree' },
     { name: 'Genome', route: '/genome', icon: 'biotech' },
     { name: 'Gene', route: '/gene', icon: 'search' },
-    { name: 'Download', route: '/download', icon: 'archive' },
     { name: 'Analysis', route: '/research/microbial-environment-g4', icon: 'query_stats' },
+    { name: 'Download', route: '/download', icon: 'archive' },
+    { name: 'Taxonomy', route: '/taxonomy', icon: 'account_tree' },
     { name: 'Documentation', route: '/documentation', icon: 'menu_book' },
   ];
   readonly theme = signal<ThemeMode>('brightness_medium');

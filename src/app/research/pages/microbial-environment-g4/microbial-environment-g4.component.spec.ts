@@ -1,24 +1,16 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
-import { NEVER, of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import {
-  MicrobialEnvironmentG4Options,
-  MicrobialEnvironmentG4Query,
-  MicrobialEnvironmentG4QueryResponse,
+  EnvironmentCategoryBoxplotResponse,
+  EnvironmentCategoryBoxplotRequest,
+  EnvironmentNumericScatterRequest,
+  EnvironmentNumericScatterResponse,
+  EnvironmentOptionsResponse,
   MicrobialEnvironmentG4Service,
-  MicrobialTaxonomySearchResult,
 } from '../../services/microbial-environment-g4.service';
 import { MicrobialEnvironmentG4Component } from './microbial-environment-g4.component';
-
-interface ChartRenderScheduler {
-  scheduleChartRender(): void;
-}
-
-interface VegaWidthCalculator {
-  vegaPlotWidth(element: HTMLDivElement): number;
-}
 
 describe('MicrobialEnvironmentG4Component', () => {
   let fixture: ComponentFixture<MicrobialEnvironmentG4Component>;
@@ -26,137 +18,237 @@ describe('MicrobialEnvironmentG4Component', () => {
   let service: jasmine.SpyObj<MicrobialEnvironmentG4Service>;
   let routeQueryParamMap: ParamMap;
 
-  const options: MicrobialEnvironmentG4Options = {
+  const options: EnvironmentOptionsResponse = {
     traits: [
-      { value: 'temperature', label: 'Temperature' },
-      { value: 'ph', label: 'pH' },
+      {
+        trait_code: 'ecological_context',
+        trait_group: 'ecology',
+        display_name: 'Ecological context',
+        value_kind: 'categorical_multi_label',
+        default_chart_kind: 'boxplot',
+        allowed_outcome_metrics: [
+          'g4_density_per_mb',
+          'gene_quadruplex_density_per_mb',
+          'upstream_quadruplex_density_per_mb',
+        ],
+        default_outcome_metric: 'gene_quadruplex_density_per_mb',
+        category_selection_mode: 'multi_label',
+        default_context_axis: 'environment',
+        min_default_mapping_confidence_rank: 1,
+        requires_taxonomy_controls: true,
+      },
+      {
+        trait_code: 'growth_temperature',
+        trait_group: 'physiology',
+        display_name: 'Growth temperature',
+        value_kind: 'numeric',
+        default_chart_kind: 'scatter',
+        allowed_outcome_metrics: ['g4_density_per_mb', 'gene_quadruplex_density_per_mb'],
+        default_outcome_metric: 'g4_density_per_mb',
+        category_selection_mode: 'none',
+        default_context_axis: null,
+        min_default_mapping_confidence_rank: 1,
+        requires_taxonomy_controls: true,
+      },
     ],
-    modes: [
-      { value: 'growth', label: 'Growth' },
-      { value: 'optimum', label: 'Optimum' },
+    outcome_metrics: [
+      {
+        metric: 'g4_density_per_mb',
+        display_name: 'G4 density',
+        unit: 'sequences/Mb',
+        description: 'Genome-wide quadruplex sequence density.',
+      },
+      {
+        metric: 'gene_quadruplex_density_per_mb',
+        display_name: 'Gene-overlapping G4 density',
+        unit: 'sequences/Mb',
+        description: 'Quadruplex sequence density in annotated gene intervals.',
+      },
+      {
+        metric: 'upstream_quadruplex_density_per_mb',
+        display_name: 'Upstream G4 density',
+        unit: 'sequences/Mb',
+        description: 'Quadruplex sequence density in upstream gene flanks.',
+      },
+    ],
+    context_axes: [
+      {
+        trait_code: 'ecological_context',
+        context_axis: 'environment',
+        display_label: 'Environment',
+        category_count: 2,
+        is_default_context_axis: true,
+      },
+    ],
+    categories: [
+      {
+        trait_code: 'ecological_context',
+        context_axis: 'environment',
+        category_id: 'soil',
+        canonical_value: 'soil',
+        display_label: 'Soil',
+        parent_category_id: null,
+        sort_order: 1,
+        is_default_visible: true,
+        eligible_assembly_count: 6,
+      },
+      {
+        trait_code: 'ecological_context',
+        context_axis: 'environment',
+        category_id: 'host_associated',
+        canonical_value: 'host-associated',
+        display_label: 'Host-associated',
+        parent_category_id: null,
+        sort_order: 2,
+        is_default_visible: true,
+        eligible_assembly_count: 5,
+      },
     ],
     taxonomy_ranks: [
-      { value: 'domain', label: 'Domain' },
-      { value: 'phylum', label: 'Phylum' },
-      { value: 'class', label: 'Class' },
-      { value: 'order', label: 'Order' },
-      { value: 'family', label: 'Family' },
-      { value: 'genus', label: 'Genus' },
-      { value: 'species', label: 'Species' },
+      { rank: 'genus', display_label: 'Genus' },
+      { rank: 'family', display_label: 'Family' },
+      { rank: 'full_scientific_name', display_label: 'Full scientific name' },
     ],
-    plans: [
-      {
-        plan_id: 'growth_temperature_g4',
-        trait: 'temperature',
-        mode: 'growth',
-        phenotype_label: 'Growth temperature',
-        phenotype_unit: 'celsius',
-        eligible_assemblies: 6,
-      },
-      {
-        plan_id: 'optimum_ph_g4',
-        trait: 'ph',
-        mode: 'optimum',
-        phenotype_label: 'Optimum pH',
-        phenotype_unit: 'pH',
-        eligible_assemblies: 7,
-      },
-    ],
+    build_id: 'build-2026-06-21',
+    source_dataset_version: 'bacdive-2026',
   };
 
-  const response: MicrobialEnvironmentG4QueryResponse = {
+  const numericResponse: EnvironmentNumericScatterResponse = {
     summary: {
-      plan_id: 'growth_temperature_g4',
+      trait_code: 'growth_temperature',
+      chart_kind: 'scatter',
+      outcome_metric: 'g4_density_per_mb',
       assembly_count: 6,
-      phenotype_label: 'Growth temperature',
-      phenotype_unit: 'celsius',
-    },
-    correlation: { method: 'spearman', n: 2, rho: 0.8, p_value: 0.01, status: 'ok' },
-    regression: {
-      method: 'ols',
-      slope: 0.2,
-      intercept: 1,
-      r_squared: 0.7,
-      line_points: [
-        { phenotype_value: 20, density_value: 5 },
-        { phenotype_value: 40, density_value: 9 },
-      ],
-      status: 'ok',
+      row_count: 6,
+      filter_hash: 'hash',
+      build_id: 'build-2026-06-21',
+      source_dataset_version: 'bacdive-2026',
+      description: 'Growth temperature association screen.',
     },
     scatter_points: [
       {
         assembly_accession: 'GCF_1',
-        phenotype_value: 25,
-        phenotype_min: 20,
-        phenotype_max: 30,
-        g4_density_per_mb: 5,
-        upstream_g4_density_per_mb: 1,
-        downstream_g4_density_per_mb: 1,
-        intergenic_g4_density_per_mb: 3,
-        g4_count: 10,
-        gc_percent: 50,
-        genome_size: 1_000_000,
-        strain: 'Alpha strain',
-        taxonomy: {
-          domain: 'Bacteria',
-          phylum: 'Firmicutes',
-          class_name: 'Bacilli',
-          order: 'Bacillales',
-          family: 'Bacillaceae',
-          genus: 'Alpha',
-          species: 'Alpha one',
-        },
-      },
-    ],
-    table_preview: [
-      {
-        assembly_accession: 'GCF_1',
-        phenotype_value: 25,
-        phenotype_min: 20,
-        phenotype_max: 30,
-        g4_density_per_mb: 5,
-        upstream_g4_density_per_mb: 1,
-        downstream_g4_density_per_mb: 1,
-        intergenic_g4_density_per_mb: 3,
-        g4_count: 10,
-        gc_percent: 50,
-        genome_size: 1_000_000,
-        strain: 'Alpha strain',
-        taxonomy: {
-          domain: 'Bacteria',
-          phylum: 'Firmicutes',
-          class_name: 'Bacilli',
-          order: 'Bacillales',
-          family: 'Bacillaceae',
-          genus: 'Alpha',
-          species: 'Alpha one',
-        },
-        phenotype_record_count: 1,
-        raw_phenotype_values: '["25"]',
+        trait_code: 'growth_temperature',
+        numeric_midpoint: 37,
+        numeric_min: 35,
+        numeric_max: 39,
+        numeric_unit_canonical: 'celsius',
+        g4_density_per_mb: 12,
+        gene_quadruplex_density_per_mb: 6,
+        upstream_quadruplex_density_per_mb: 2,
+        downstream_quadruplex_density_per_mb: 2,
+        intergenic_quadruplex_density_per_mb: 4,
+        g4_count: 120,
+        g4_mean_score: 28,
+        genome_size: 5_000_000,
+        gc_percent: 51,
+        domain: 'Bacteria',
+        phylum: 'Firmicutes',
+        class_name: 'Bacilli',
+        order: 'Bacillales',
+        family: 'Bacillaceae',
+        genus: 'Bacillus',
+        species: 'Bacillus subtilis',
+        full_scientific_name: 'Bacillus subtilis 168',
         assembly_level: 'Complete Genome',
-        g4_mean_score: 12,
-        gene_g4_density_per_mb: 2,
       },
     ],
+    regression_line: [],
+    numeric_bins: [],
+    analysis_results: [
+      {
+        run_id: 'run',
+        result_id: 'ols-growth-temperature',
+        trait_code: 'growth_temperature',
+        outcome_metric: 'g4_density_per_mb',
+        context_axis: null,
+        category_id: null,
+        predictor: 'numeric_midpoint',
+        group_value: null,
+        n_assemblies: 6,
+        estimate: 0.12,
+        effect_size: 0.34,
+        p_value: 0.045,
+        ci_low: 0.01,
+        ci_high: 0.23,
+        taxonomy_control_strategy: 'none',
+        filter_hash: 'hash',
+        status: 'ok',
+        result_json: '{}',
+      },
+    ],
+    table_preview: [],
     preview_total: 6,
-    download_filename: 'microbial_environment_g4_growth_temperature_results.csv',
+    download_filename: 'numeric.csv',
+    filter_hash: 'hash',
+    build_id: 'build-2026-06-21',
+    source_dataset_version: 'bacdive-2026',
+  };
+
+  const categoryResponse: EnvironmentCategoryBoxplotResponse = {
+    summary: {
+      trait_code: 'ecological_context',
+      chart_kind: 'boxplot',
+      outcome_metric: 'gene_quadruplex_density_per_mb',
+      assembly_count: 6,
+      row_count: 6,
+      filter_hash: 'hash',
+      build_id: 'build-2026-06-21',
+      source_dataset_version: 'bacdive-2026',
+      description: 'Ecological context distribution screen.',
+    },
+    boxplot_summary: [
+      {
+        run_id: 'run',
+        filter_hash: 'hash',
+        trait_code: 'ecological_context',
+        context_axis: 'environment',
+        category_id: 'soil',
+        canonical_value: 'soil',
+        outcome_metric: 'gene_quadruplex_density_per_mb',
+        n_assemblies: 6,
+        q1: 1,
+        median: 2,
+        q3: 3,
+        whisker_low: 0.5,
+        whisker_high: 4,
+        min_value: 0.5,
+        max_value: 4,
+        outlier_count: 0,
+        sort_value: 2,
+        status: 'ok',
+        build_id: 'build-2026-06-21',
+        source_dataset_version: 'bacdive-2026',
+      },
+    ],
+    raw_points_sample: [],
+    table_preview: [],
+    preview_total: 6,
+    download_filename: 'category.csv',
+    filter_hash: 'hash',
+    build_id: 'build-2026-06-21',
+    source_dataset_version: 'bacdive-2026',
   };
 
   beforeEach(async () => {
     service = jasmine.createSpyObj<MicrobialEnvironmentG4Service>('MicrobialEnvironmentG4Service', [
       'getOptions',
       'searchTaxonomy',
-      'query',
+      'queryNumericScatter',
+      'queryCategoryBoxplot',
       'downloadResults',
     ]);
     service.getOptions.and.returnValue(of(options));
     service.searchTaxonomy.and.returnValue(
       of({
-        results: [{ rank: 'genus', value: 'Alpha', label: 'Alpha', eligible_assembly_count: 6 }],
+        results: [{ rank: 'genus', value: 'Bacillus', label: 'Bacillus', eligible_assembly_count: 6 }],
       }),
     );
-    service.query.and.returnValue(of(response));
-    service.downloadResults.and.returnValue(NEVER);
+    service.queryNumericScatter.and.returnValue(of(numericResponse));
+    service.queryCategoryBoxplot.and.returnValue(of(categoryResponse));
+    service.downloadResults.and.returnValue(
+      of({ blob: new Blob(['assembly_accession\n']), filename: 'environment_g4.csv' }),
+    );
     routeQueryParamMap = convertToParamMap({});
 
     await TestBed.configureTestingModule({
@@ -182,37 +274,31 @@ describe('MicrobialEnvironmentG4Component', () => {
     fixture.detectChanges();
   });
 
-  it('loads options but does not run analysis until Search is submitted', () => {
+  it('loads Server options and automatically submits the default all-eligible query', () => {
     expect(service.getOptions).toHaveBeenCalledTimes(1);
-    expect(service.query).not.toHaveBeenCalled();
+    expect(component.selectedTraitCode()).toBe('ecological_context');
+    expect(component.selectedOutcomeMetric()).toBe('gene_quadruplex_density_per_mb');
 
-    component.form.controls.trait.setValue('ph');
-    component.form.controls.mode.setValue('optimum');
-    component.onAxisChange();
-    fixture.detectChanges();
-
-    expect(service.query).not.toHaveBeenCalled();
-
-    component.search();
-
-    expect(service.query).toHaveBeenCalledTimes(1);
-    const request = service.query.calls.mostRecent().args[0] as MicrobialEnvironmentG4Query;
-    expect(request.trait).toBe('ph');
-    expect(request.mode).toBe('optimum');
-    expect(request.page_index).toBe(0);
-    expect(request.page_size).toBe(10);
-    expect(request.sort_field).toBe('phenotype_value');
-    expect(request.sort_order).toBe('asc');
-    expect(request.density_metric).toBe('g4_density_per_mb');
+    const request = service.queryCategoryBoxplot.calls.mostRecent()
+      .args[0] as EnvironmentCategoryBoxplotRequest;
+    expect(request.trait_code).toBe('ecological_context');
+    expect(request.chart_kind).toBe('boxplot');
+    expect(request.outcome_metric).toBe('gene_quadruplex_density_per_mb');
+    expect(request.display_context_axis).toBe('environment');
+    expect(request.display_category_ids).toEqual(['soil', 'host_associated']);
+    expect(request.category_filter_logic).toBe('intersection');
+    expect(request.min_mapping_confidence_rank).toBe(1);
+    expect(request.taxonomy_filters).toEqual([]);
+    expect(component.form.controls.taxonomyRank.value).toBe('all');
     expect(component.submittedQuery()).toEqual(request);
   });
 
-  it('runs the Bacillus route preset only when run=true is present', () => {
+  it('uses new route query parameters for deep-linked analyses', () => {
     fixture.destroy();
-    service.query.calls.reset();
+    service.queryNumericScatter.calls.reset();
     routeQueryParamMap = convertToParamMap({
-      trait: 'temperature',
-      mode: 'growth',
+      trait: 'growth_temperature',
+      metric: 'gene_quadruplex_density_per_mb',
       rank: 'genus',
       taxon: 'Bacillus',
       run: 'true',
@@ -222,321 +308,119 @@ describe('MicrobialEnvironmentG4Component', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    expect(component.form.getRawValue()).toEqual({
-      trait: 'temperature',
-      mode: 'growth',
-      taxonomyRank: 'genus',
-      taxonomyKeyword: 'Bacillus',
-    });
-    expect(component.assemblyCollection()).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
-    expect(service.query).toHaveBeenCalledTimes(1);
-
-    const request = service.query.calls.mostRecent().args[0] as MicrobialEnvironmentG4Query;
-    expect(request.taxonomy_selections).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
-    expect(request.trait).toBe('temperature');
-    expect(request.mode).toBe('growth');
+    const request = service.queryNumericScatter.calls.mostRecent()
+      .args[0] as EnvironmentNumericScatterRequest;
+    expect(request.trait_code).toBe('growth_temperature');
+    expect(request.outcome_metric).toBe('gene_quadruplex_density_per_mb');
+    expect(request.taxonomy_filters).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
   });
 
-  it('renders the workflow and correlation result surfaces', () => {
-    component.search();
+  it('renders contract-driven controls and non-causal result copy', () => {
+    component.runAnalysis();
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('Microbial G4 environment research');
-    expect(text).toContain('Environment condition');
-    expect(text).toContain('Strain set');
-    expect(text).toContain('Growth temperature vs G4 density');
-    expect(text).toContain('G4 density (sequences/Mb)');
-    expect(text).toContain('Genome size (bp)');
-    expect(text).not.toContain('分析结果');
-    expect(fixture.nativeElement.querySelector('.axis-note')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.condition-count')).toBeNull();
-    expect(text).not.toContain('Current condition has');
-    expect(text).toContain('Run analysis');
-    expect(text).toContain('Spearman r');
-    expect(text).toContain('p-value');
-    expect(text).toContain('Upstream G4 density');
-    expect(text).toContain('Downstream G4 density');
-    expect(text).toContain('Intergenic G4 density');
-    expect(text).toContain('Download table');
-    expect(text).not.toContain('Download CSV');
-    expect(text).not.toContain('Submitted');
-    expect(text).toContain('Strain set (6)');
-    expect(text.toLowerCase()).not.toContain('bin statistics');
-    expect(text.toLowerCase()).not.toContain('16s g4');
+    expect(text).toContain('Microbial environment associations');
+    expect(text).toContain('Ecological context');
+    expect(text).toContain('Gene-overlapping G4 density');
+    expect(text).toContain('Associations are descriptive');
+    expect(text).toContain('Ecological context distribution screen.');
+    expect(text).toContain('Filter hash');
+    expect(text).toContain('hash');
+    expect(text).toContain('build-2026-06-21');
+    expect(text).toContain('Category status');
+    expect(text).toContain('Soil');
+    expect(text).toContain('Ok');
+    expect(text).not.toContain('optimum');
   });
 
-  it('updates the study summary when the environment axis changes', () => {
-    component.form.controls.trait.setValue('ph');
-    component.form.controls.mode.setValue('optimum');
-    component.onAxisChange();
+  it('renders Server analysis result fields for numeric traits without inventing R2', () => {
+    component.selectTrait('growth_temperature');
+    component.runAnalysis();
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
 
-    expect(component.studySummary()).toBe('Correlate Optimum pH with genome-wide G4 density.');
-    expect(text).toContain('Optimum pH');
+    expect(text).toContain('Statistical summary');
+    expect(text).toContain('numeric_midpoint');
+    expect(text).toContain('0.045');
+    expect(text).not.toContain('R2');
   });
 
-  it('uses explicit taxonomy Find and Add to build a strain collection', () => {
+  it('uses boxplot endpoint and canonical categories for categorical traits', () => {
+    component.selectTrait('ecological_context');
+    component.runAnalysis();
+
+    const request = service.queryCategoryBoxplot.calls.mostRecent()
+      .args[0] as EnvironmentCategoryBoxplotRequest;
+    expect(request.trait_code).toBe('ecological_context');
+    expect(request.chart_kind).toBe('boxplot');
+    expect(request.outcome_metric).toBe('gene_quadruplex_density_per_mb');
+    expect(request.display_context_axis).toBe('environment');
+    expect(request.display_category_ids).toEqual(['soil', 'host_associated']);
+    expect(request.category_filters).toEqual([]);
+  });
+
+  it('searches taxonomy with current trait code, chart kind, and context axis', () => {
+    component.selectTrait('ecological_context');
     component.form.controls.taxonomyRank.setValue('genus');
-    component.form.controls.taxonomyKeyword.setValue('Alp');
+    component.form.controls.taxonomyKeyword.setValue('Bac');
 
     component.findTaxonomy();
 
     expect(service.searchTaxonomy).toHaveBeenCalledOnceWith(
       'genus',
-      'Alp',
-      'temperature',
-      'growth',
+      'Bac',
+      'ecological_context',
+      'boxplot',
+      'environment',
     );
     expect(component.taxonomyCandidates().length).toBe(1);
-
-    component.addTaxonomySelection(component.taxonomyCandidates()[0]);
-    component.addTaxonomySelection(component.taxonomyCandidates()[0]);
-
-    expect(component.assemblyCollection()).toEqual([{ rank: 'genus', value: 'Alpha' }]);
   });
 
-  it('clears submitted results when trait or mode changes but keeps draft assembly collection', () => {
-    component.addTaxonomySelection({ rank: 'genus', value: 'Alpha' });
-    component.search();
+  it('keeps All as a UI-only taxonomy scope and does not send rank=all to the Server', () => {
+    component.form.controls.taxonomyKeyword.setValue('Bac');
 
-    expect(component.result()).not.toBeNull();
+    component.findTaxonomy();
 
-    component.form.controls.mode.setValue('optimum');
-    component.onAxisChange();
-
-    expect(component.result()).toBeNull();
-    expect(component.submittedQuery()).toBeNull();
-    expect(component.assemblyCollection()).toEqual([{ rank: 'genus', value: 'Alpha' }]);
+    expect(service.searchTaxonomy).not.toHaveBeenCalled();
+    expect(component.errorMessage()).toContain('Choose a specific microbial taxonomy rank');
   });
 
-  it('downloads CSV using the last submitted query', () => {
-    component.search();
+  it('imports checked visible taxonomy candidates into the submitted taxonomy filters', () => {
+    component.selectTrait('ecological_context');
+    component.form.controls.taxonomyRank.setValue('genus');
+    component.form.controls.taxonomyKeyword.setValue('Bac');
+    component.findTaxonomy();
+
+    component.selectVisibleTaxonomyCandidates();
+    component.importCheckedTaxonomyCandidates();
+    component.runAnalysis();
+
+    const request = service.queryCategoryBoxplot.calls.mostRecent()
+      .args[0] as EnvironmentCategoryBoxplotRequest;
+    expect(component.taxonomyFilters()).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
+    expect(request.taxonomy_filters).toEqual([{ rank: 'genus', value: 'Bacillus' }]);
+  });
+
+  it('exposes provenance and taxonomy columns in the result table model', () => {
+    const headers = component.tableColumns().map((column) => column.header);
+
+    expect(headers).toContain('Taxonomy summary');
+    expect(headers).toContain('Assembly level');
+    expect(headers).toContain('GC (%)');
+    expect(headers).toContain('Raw BacDive values');
+    expect(headers).toContain('Normalized values');
+    expect(headers).toContain('Mapping methods');
+  });
+
+  it('downloads from the last submitted query', () => {
+    spyOn(component as unknown as { saveBlob(blob: Blob, filename: string): void }, 'saveBlob');
+    component.runAnalysis();
+
     component.downloadResults();
 
-    expect(service.downloadResults).toHaveBeenCalledOnceWith(component.submittedQuery()!);
-  });
-
-  it('requests server-backed table pages and sorts', () => {
-    const chartRenderSpy = spyOn(
-      component as unknown as ChartRenderScheduler,
-      'scheduleChartRender',
-    );
-    component.search();
-    expect(chartRenderSpy).toHaveBeenCalledTimes(1);
-    chartRenderSpy.calls.reset();
-
-    component.onTablePageChange({ pageIndex: 1, pageSize: 10, length: 6, previousPageIndex: 0 });
-    component.onTableSortChange({ active: 'species', direction: 'desc' });
-
-    const pageRequest = service.query.calls.all()[1].args[0] as MicrobialEnvironmentG4Query;
-    const sortRequest = service.query.calls.all()[2].args[0] as MicrobialEnvironmentG4Query;
-
-    expect(pageRequest.page_index).toBe(1);
-    expect(pageRequest.page_size).toBe(10);
-    expect(pageRequest.density_metric).toBe('g4_density_per_mb');
-    expect(sortRequest.page_index).toBe(0);
-    expect(sortRequest.page_size).toBe(10);
-    expect(sortRequest.sort_field).toBe('species');
-    expect(sortRequest.sort_order).toBe('desc');
-    expect(chartRenderSpy).not.toHaveBeenCalled();
-  });
-
-  it('refreshes chart statistics when the density metric changes', () => {
-    const upstreamResponse: MicrobialEnvironmentG4QueryResponse = {
-      ...response,
-      correlation: { ...response.correlation, rho: -0.25, p_value: 0.02 },
-      regression: {
-        ...response.regression,
-        r_squared: 0.42,
-        line_points: [
-          { phenotype_value: 20, density_value: 2 },
-          { phenotype_value: 40, density_value: 4 },
-        ],
-      },
-      scatter_points: [
-        {
-          ...response.scatter_points[0],
-          upstream_g4_density_per_mb: 2,
-        },
-      ],
-      table_preview: [
-        {
-          ...response.table_preview[0],
-          strain: 'Unexpected table refresh',
-        },
-      ],
-      preview_total: 999,
-      download_filename: 'unexpected_table_refresh.csv',
-    };
-    service.query.and.callFake((request) =>
-      of(request.density_metric === 'upstream_g4_density_per_mb' ? upstreamResponse : response),
-    );
-    const chartRenderSpy = spyOn(
-      component as unknown as ChartRenderScheduler,
-      'scheduleChartRender',
-    );
-    component.search();
-    component.onTablePageChange({ pageIndex: 1, pageSize: 10, length: 6, previousPageIndex: 0 });
-    const tablePreviewBeforeMetricChange = component.result()!.table_preview;
-    service.query.calls.reset();
-    chartRenderSpy.calls.reset();
-
-    component.onDensityMetricChange('upstream_g4_density_per_mb');
-
-    const request = service.query.calls.mostRecent().args[0] as MicrobialEnvironmentG4Query;
-    expect(request.density_metric).toBe('upstream_g4_density_per_mb');
-    expect(request.page_index).toBe(1);
-    expect(request.page_size).toBe(10);
-    expect(component.submittedQuery()?.density_metric).toBe('upstream_g4_density_per_mb');
-    expect(component.result()?.correlation.rho).toBe(-0.25);
-    expect(component.result()?.regression.r_squared).toBe(0.42);
-    expect(component.result()?.table_preview).toBe(tablePreviewBeforeMetricChange);
-    expect(component.result()?.preview_total).toBe(6);
-    expect(component.result()?.download_filename).toBe(
-      'microbial_environment_g4_growth_temperature_results.csv',
-    );
-    expect(chartRenderSpy).toHaveBeenCalledTimes(1);
-
-    fixture.detectChanges();
-    const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('-0.25');
-    expect(text).toContain('Growth temperature vs Upstream G4 density');
-  });
-
-  it('keeps the strain grid out of loading state during chart-only metric refresh', () => {
-    component.search();
-    service.query.calls.reset();
-    service.query.and.returnValue(NEVER);
-
-    component.onDensityMetricChange('upstream_g4_density_per_mb');
-
-    expect(component.loadingQuery()).toBeTrue();
-    expect(component.tableLoading()).toBeFalse();
-  });
-
-  it('marks the strain grid as loading for server-backed table changes', () => {
-    component.search();
-    service.query.calls.reset();
-    service.query.and.returnValue(NEVER);
-
-    component.onTablePageChange({ pageIndex: 1, pageSize: 10, length: 6, previousPageIndex: 0 });
-
-    expect(component.tableLoading()).toBeTrue();
-  });
-
-  it('accepts numeric string density values from API responses for chart points', () => {
-    const stringDensityResponse: MicrobialEnvironmentG4QueryResponse = {
-      ...response,
-      scatter_points: [
-        {
-          ...response.scatter_points[0],
-          upstream_g4_density_per_mb: '2.5' as unknown as number,
-        },
-      ],
-      regression: {
-        ...response.regression,
-        line_points: [
-          { phenotype_value: 20, density_value: '2.5' as unknown as number },
-          { phenotype_value: 40, density_value: '4.5' as unknown as number },
-        ],
-      },
-    };
-    service.query.and.callFake((request) =>
-      of(
-        request.density_metric === 'upstream_g4_density_per_mb' ? stringDensityResponse : response,
-      ),
-    );
-
-    component.search();
-    component.onDensityMetricChange('upstream_g4_density_per_mb');
-
-    expect(component.chartPointCount(component.result()!.scatter_points)).toBe(1);
-  });
-
-  it('uses the chart container width instead of the previous Vega element width', () => {
-    const chartFrame = document.createElement('div');
-    const host = document.createElement('div');
-    Object.defineProperty(chartFrame, 'clientWidth', {
-      configurable: true,
-      value: 800,
-    });
-    Object.defineProperty(host, 'clientWidth', {
-      configurable: true,
-      value: 1200,
-    });
-    chartFrame.appendChild(host);
-
-    const width = (component as unknown as VegaWidthCalculator).vegaPlotWidth(host);
-
-    expect(width).toBe(712);
-  });
-
-  it('resets the analysis setup completely', () => {
-    component.form.controls.trait.setValue('ph');
-    component.form.controls.mode.setValue('optimum');
-    component.onAxisChange();
-    component.form.controls.taxonomyKeyword.setValue('Alpha');
-    component.addTaxonomySelection({ rank: 'genus', value: 'Alpha' });
-    component.search();
-
-    component.resetAnalysisSetup();
-
-    expect(component.form.getRawValue()).toEqual({
-      trait: 'temperature',
-      mode: 'growth',
-      taxonomyRank: 'genus',
-      taxonomyKeyword: '',
-    });
-    expect(component.assemblyCollection()).toEqual([]);
-    expect(component.taxonomyCandidates()).toEqual([]);
-    expect(component.result()).toBeNull();
-    expect(component.submittedQuery()).toBeNull();
-    expect(component.selectedDensityMetric()).toBe('g4_density_per_mb');
-  });
-
-  it('shows an inline notice and skips submit when the known strain count is below five', () => {
-    const smallSelection: MicrobialTaxonomySearchResult = {
-      rank: 'genus',
-      value: 'Tiny',
-      label: 'Tiny',
-      eligible_assembly_count: 4,
-    };
-    component.addTaxonomySelection(smallSelection);
-    service.query.calls.reset();
-
-    component.search();
-
-    expect(service.query).not.toHaveBeenCalled();
-    expect(component.errorMessage()).toBe(
-      'At least 5 strains are required for analysis; current selection has 4 strains.',
-    );
-    expect(component.result()).toBeNull();
-    expect(component.submittedQuery()).toBeNull();
-  });
-
-  it('shows a lightweight unavailable state when options return 503', () => {
-    fixture.destroy();
-    service.getOptions.calls.reset();
-    service.getOptions.and.returnValue(
-      throwError(
-        () =>
-          new HttpErrorResponse({
-            status: 503,
-            error: { detail: 'g4vista.microbial_environment_g4_assembly_plan is not loaded.' },
-          }),
-      ),
-    );
-
-    fixture = TestBed.createComponent(MicrobialEnvironmentG4Component);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    const text = fixture.nativeElement.textContent as string;
-    expect(component.dataLayerUnavailable()).toBeTrue();
-    expect(text).toContain('Research query tables are unavailable');
+    expect(service.downloadResults).toHaveBeenCalled();
   });
 });

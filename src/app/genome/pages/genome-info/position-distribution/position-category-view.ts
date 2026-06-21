@@ -15,7 +15,7 @@ export interface PositionStatisticsCategoryView extends G4PositionStatisticsCate
 interface PositionCategoryTextSource {
   key: string;
   label: string;
-  description: string;
+  description?: string;
   display_label?: string;
   display_description?: string;
 }
@@ -115,7 +115,7 @@ export function categoryDisplayText(category: PositionCategoryTextSource): {
     default:
       return {
         displayLabel: apiDisplayLabel ?? category.label,
-        displayDescription: apiDisplayDescription ?? category.description,
+        displayDescription: apiDisplayDescription ?? category.description ?? category.label,
       };
   }
 }
@@ -149,14 +149,11 @@ export function defaultPositionCategoryViews(
       const rightOrder = right.display_order ?? right.precedence_rank;
       return leftOrder - rightOrder;
     });
-  const total = defaultCategories.reduce((sum, category) => sum + category.count, 0);
-
   return defaultCategories.map((category) => {
     const displayText = categoryDisplayText(category);
     return {
       ...category,
       ...displayText,
-      ratio: total ? category.count / total : 0,
       color: positionCategoryColor(category.key),
     };
   });
@@ -171,8 +168,10 @@ export function defaultPositionStatisticsCategoryViews(
     .filter((category) => isDefaultPositionCategory(category))
     .filter((category) => selectedKeys.has(category.key))
     .sort((left, right) => {
-      const leftOrder = left.display_order ?? left.precedence_rank;
-      const rightOrder = right.display_order ?? right.precedence_rank;
+      const leftOrder =
+        left.display_order ?? left.precedence_rank ?? DEFAULT_POSITION_CATEGORY_KEYS.length;
+      const rightOrder =
+        right.display_order ?? right.precedence_rank ?? DEFAULT_POSITION_CATEGORY_KEYS.length;
       return leftOrder - rightOrder;
     })
     .map((category) => {

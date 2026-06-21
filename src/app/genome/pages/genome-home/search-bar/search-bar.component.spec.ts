@@ -15,6 +15,10 @@ describe('SearchBarComponent', () => {
     asm_name: 'ASM188410v1',
     assembly_accession: 'GCA_001884105.1',
     organism_name: 'Bacillus luti',
+    species_name: 'Bacillus luti',
+    strain_name: 'strain LAM100',
+    matched_taxonomy_name: 'Bacillus',
+    matched_taxonomy_rank: 'genus',
   };
 
   beforeEach(async () => {
@@ -71,6 +75,13 @@ describe('SearchBarComponent', () => {
     component.onOptionSelected({ option: { value: bacillusAssembly.assembly_accession } } as never);
 
     expect(navigateSpy).toHaveBeenCalledWith(['/genome', 'GCA_001884105.1']);
+  });
+
+  it('formats taxonomy, species, and strain context for autocomplete results', () => {
+    expect(component.optionContextLabels(bacillusAssembly)).toEqual([
+      'Strain: strain LAM100',
+      'Matched taxonomy: genus: Bacillus',
+    ]);
   });
 
   it('clears the input and stays on the genome search page', () => {

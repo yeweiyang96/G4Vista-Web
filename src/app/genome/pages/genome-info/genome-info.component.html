@@ -17,6 +17,15 @@
                 <mat-icon iconPositionEnd>open_in_new</mat-icon>
               </a>
             }
+            <a
+              mat-stroked-button
+              class="page-doc-link"
+              routerLink="/documentation"
+              [queryParams]="{ doc: 'genome-detail' }"
+            >
+              <mat-icon>menu_book</mat-icon>
+              Documentation
+            </a>
           </div>
 
           <div class="assembly-stats" aria-label="Assembly summary">
@@ -261,7 +270,12 @@
 
             <div class="results-layout">
               <section class="results-panel" aria-label="Motif site results">
-                <mat-tab-group class="results-tabs" animationDuration="160ms">
+                <mat-tab-group
+                  class="results-tabs"
+                  animationDuration="160ms"
+                  [selectedIndex]="resultsTabIndex()"
+                  (selectedIndexChange)="setResultsTabIndex($event)"
+                >
                   <mat-tab label="Table">
                     <app-g4-table
                       data-help-target="g4-explorer-table"
@@ -318,6 +332,7 @@
                           [filters]="chartFilters()"
                           [axisFeatureRange]="chartAxisFeatureRange()"
                           (viewportChange)="applyChartViewport($event)"
+                          (pointFocus)="focusChartPoint($event)"
                           (resetRange)="resetChartViewport()"
                         />
                       } @else {
@@ -349,13 +364,29 @@
                             </div>
                           </dl>
                         </div>
-                        <button mat-button type="button" (click)="resetBrowser()">
-                          Reset browser view
-                        </button>
+                      <button mat-button type="button" (click)="resetBrowser()">
+                        Reset browser view
+                      </button>
+                    </div>
+                    @if (viewerAssetWarning(); as warning) {
+                      <div class="browser-asset-warning" role="status">
+                        <mat-icon>warning</mat-icon>
+                        <div>
+                          <strong>JBrowse default-region asset failed.</strong>
+                          <span>
+                            {{ warning.status ?? 'No status' }}
+                            @if (warning.statusText) {
+                              · {{ warning.statusText }}
+                            }
+                          </span>
+                          <code>{{ warning.url }}</code>
+                          <small>{{ warning.message }}</small>
+                        </div>
                       </div>
-                      <app-jbrowse-host
-                        [viewerConfig]="viewerConfig()"
-                        [navigationCommand]="navCommand()"
+                    }
+                    <app-jbrowse-host
+                      [viewerConfig]="viewerConfig()"
+                      [navigationCommand]="navCommand()"
                         (regionChanged)="handleViewerRegionChange($event)"
                       />
                     </section>
@@ -380,6 +411,11 @@
           </div>
         </section>
       </div>
+    </div>
+  } @else if (assemblyErrorMessage()) {
+    <div class="loading-state error-state" role="alert">
+      <mat-icon>error</mat-icon>
+      <p>{{ assemblyErrorMessage() }}</p>
     </div>
   } @else {
     <div class="loading-state">

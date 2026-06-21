@@ -8,6 +8,7 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormField, form } from '@angular/forms/signals';
@@ -30,6 +31,7 @@ import { Observable, catchError, finalize, forkJoin, map, of, switchMap, timer }
 import { GeneService } from '../../../gene/services/gene.service';
 import {
   type G4ChartAxisFeatureRange,
+  type G4ChartPointFocus,
   GenomeRangeChartComponent,
 } from './chart/genome-range-chart.component';
 import { G4TableComponent } from './g4-table/g4-table.component';
@@ -66,6 +68,7 @@ import {
   G4Type,
 } from '../../services/g4.service';
 import {
+  GenomeViewerDefaultRegionResult,
   GenomeViewerConfigService,
   GenomeViewerStateService,
   JbrowseHostComponent,
@@ -179,6 +182,8 @@ const GENE_SEARCH_BIN_SIZE_BP = 100;
 const GENE_CANDIDATE_MIN_CHARS = 2;
 const GENE_CANDIDATE_LIMIT = 20;
 const GENE_CANDIDATE_DEBOUNCE_MS = 300;
+const RESULTS_TABLE_TAB_INDEX = 0;
+const RESULTS_GENOME_BROWSER_TAB_INDEX = 2;
 
 type BrowseScope = string;
 type GeneRelationFilterValue = typeof ANY_GENE_RELATION | G4GenePosition;
@@ -290,6 +295,27 @@ function formatGeneCandidateLabel(candidate: G4GeneCandidate): string {
 
 function formatBasePairCount(value: number): string {
   return `${BASE_PAIR_FORMAT.format(Math.max(1, Math.trunc(value)))} bp`;
+}
+
+function responseBodySummary(body: unknown): string {
+  if (typeof body === 'string') {
+    return body.trim();
+  }
+  if (body === null || body === undefined) {
+    return '';
+  }
+  return JSON.stringify(body);
+}
+
+function assemblyRequestErrorMessage(assemblyAccession: string, error: unknown): string {
+  const endpoint = `/api/v1/genome/${assemblyAccession}`;
+  if (error instanceof HttpErrorResponse) {
+    const statusText = error.statusText || 'Unknown status';
+    const bodySummary = responseBodySummary(error.error);
+    const bodySuffix = bodySummary ? ` Response: ${bodySummary}` : '';
+    return `Genome detail request failed for ${assemblyAccession}. GET ${endpoint} returned ${error.status} ${statusText}.${bodySuffix}`;
+  }
+  return `Genome detail request failed for ${assemblyAccession}. GET ${endpoint} returned an unexpected client error.`;
 }
 
 function groupStartsBySeqid(items: readonly G4PageItem[]): { seqid: string; starts: number[] }[] {
@@ -448,7 +474,14 @@ export class GenomeInfoComponent {
     params: () => this.assemblyAccession(),
     stream: ({ params }) => this.genomeDetailService.getAssembly(params),
   });
+  readonly assemblyErrorMessage = computed(() => {
+    const error = this.assemblyResource.error();
+    return error ? assemblyRequestErrorMessage(this.assemblyAccession(), error) : '';
+  });
   readonly assemblyDetail = computed<GenomeAssemblyDetail | undefined>(() => {
+    if (this.assemblyResource.error()) {
+      return undefined;
+    }
     const assembly = this.assemblyResource.value();
     return assembly?.assembly_accession === this.assemblyAccession() ? assembly : undefined;
   });
@@ -469,7 +502,7 @@ export class GenomeInfoComponent {
     }),
   );
   readonly defaultRegionResource = rxResource<
-    string,
+    GenomeViewerDefaultRegionResult,
     { assemblyAccession: string; dataBaseUrl: string }
   >({
     params: () => ({
@@ -477,12 +510,13 @@ export class GenomeInfoComponent {
       dataBaseUrl: this.dataBaseUrl(),
     }),
     stream: ({ params }) => this.genomeViewerConfigService.resolveDefaultRegion(params),
-    defaultValue: '1..1000',
+    defaultValue: { region: '1..1000', warning: null },
   });
+  readonly viewerAssetWarning = computed(() => this.defaultRegionResource.value().warning);
   readonly browseScopeSource = computed(() => ({
     assemblyAccession: this.assemblyAccession(),
     seqids: this.assemblyDetail()?.seqids ?? [],
-    defaultRegion: this.defaultRegionResource.value(),
+    defaultRegion: this.defaultRegionResource.value().region,
   }));
   readonly defaultBrowseScope = computed<BrowseScope>(() => WHOLE_GENOME_SCOPE);
   readonly browseScope = signal<BrowseScope>('');
@@ -493,6 +527,7 @@ export class GenomeInfoComponent {
     end: 1,
     binSize: 1,
   });
+  readonly resultsTabIndex = signal(RESULTS_TABLE_TAB_INDEX);
   readonly selectedGeneAxisRange = signal<GenomeViewportTarget | null>(null);
   readonly chartAxisFeatureRange = computed<G4ChartAxisFeatureRange | null>(() => {
     const range = this.selectedGeneAxisRange();
@@ -991,7 +1026,7 @@ export class GenomeInfoComponent {
         return;
       }
 
-      const defaultRegion = this.defaultRegionResource.value();
+      const defaultRegion = this.defaultRegionResource.value().region;
       const browseScope = this.browseScope();
       if (!browseScope) {
         return;
@@ -1412,6 +1447,47 @@ export class GenomeInfoComponent {
     this.resetBrowser();
   }
 
+  setResultsTabIndex(index: number): void {
+    if (
+      !Number.isInteger(index) ||
+      index < RESULTS_TABLE_TAB_INDEX ||
+      index > RESULTS_GENOME_BROWSER_TAB_INDEX
+    ) {
+      throw new Error(`Invalid genome result tab index: ${index}.`);
+    }
+    this.resultsTabIndex.set(index);
+  }
+
+  focusChartPoint(point: G4ChartPointFocus): void {
+    const normalizedTarget = this.normalizeViewportTarget({
+      seqid: point.seqid,
+      start: point.start,
+      end: point.end,
+    });
+    if (!normalizedTarget) {
+      this.snackBar.open(
+        'Cannot navigate to this chart bin because it is outside the selected sequence record.',
+        'Dismiss',
+        { duration: 5000 },
+      );
+      return;
+    }
+
+    const seqidLength = this.seqidLengthFor(normalizedTarget.seqid);
+    const focusedRange = normalizedChartRange(
+      normalizedTarget.start,
+      normalizedTarget.end,
+      seqidLength,
+    );
+    this.updateChartViewport(normalizedTarget.seqid, {
+      start: focusedRange.start,
+      end: focusedRange.end,
+      binSize: this.chartViewport().binSize,
+    });
+    this.navigateViewerToRange(normalizedTarget.seqid, focusedRange.start, focusedRange.end);
+    this.resultsTabIndex.set(RESULTS_GENOME_BROWSER_TAB_INDEX);
+  }
+
   navigateToG4(item: G4PageItem): void {
     const normalizedTarget = this.normalizeViewportTarget({
       seqid: item.seqid,
@@ -1645,13 +1721,13 @@ export class GenomeInfoComponent {
       .getGene(this.assemblyAccession(), selectedGene.seqid, selectedGene.feature_id)
       .pipe(
         map((gene): GenomeViewportTarget | null => {
-          if (gene.feature_start === null || gene.feature_end === null) {
+          if (gene.start === null || gene.end === null) {
             return null;
           }
           return {
             seqid: selectedGene.seqid,
-            start: gene.feature_start,
-            end: gene.feature_end,
+            start: gene.start,
+            end: gene.end,
           };
         }),
         catchError(() => of(null)),

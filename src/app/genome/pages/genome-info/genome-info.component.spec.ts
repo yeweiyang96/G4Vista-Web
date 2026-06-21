@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { GeneService } from '../../../gene/services/gene.service';
 import { GenomeInfoComponent } from './genome-info.component';
@@ -80,8 +81,11 @@ describe('GenomeInfoComponent', () => {
     max_score: 50,
     g4s: [
       {
+        quadruplex_sequence_id: 'chr1-5',
         assembly_accession: 'GCF_1',
+        region_id: 'chr1',
         seqid: 'chr1',
+        quadruplex_type: 'g4',
         g4_type: 'g4',
         start: 5,
         end: 20,
@@ -92,6 +96,13 @@ describe('GenomeInfoComponent', () => {
         y3: 1,
         score: 15,
         sequence: 'GGGGTTGGGGTTGGGG',
+        strand: '+',
+        gene_ids: '',
+        gene_names: '',
+        gene_biotypes: '',
+        relation_categories: '',
+        feature_types: '',
+        feature_ids: '',
       },
     ],
   };
@@ -103,8 +114,11 @@ describe('GenomeInfoComponent', () => {
     max_score: 51,
     g4s: [
       {
+        quadruplex_sequence_id: 'chr2-50',
         assembly_accession: 'GCF_1',
+        region_id: 'chr2',
         seqid: 'chr2',
+        quadruplex_type: 'g4',
         g4_type: 'g4',
         start: 50,
         end: 70,
@@ -115,6 +129,13 @@ describe('GenomeInfoComponent', () => {
         y3: 1,
         score: 18,
         sequence: 'GGGTTAGGGTTAGGGTTAGGG',
+        strand: '+',
+        gene_ids: '',
+        gene_names: '',
+        gene_biotypes: '',
+        relation_categories: '',
+        feature_types: '',
+        feature_ids: '',
       },
     ],
   };
@@ -132,8 +153,11 @@ describe('GenomeInfoComponent', () => {
     max_score: 41,
     g4s: [
       {
+        quadruplex_sequence_id: 'chr1-10',
         assembly_accession: 'GCF_1',
+        region_id: 'chr1',
         seqid: 'chr1',
+        quadruplex_type: 'g4',
         g4_type: 'g4',
         start: 10,
         end: 25,
@@ -144,10 +168,20 @@ describe('GenomeInfoComponent', () => {
         y3: 1,
         score: 22,
         sequence: 'GGGGTTGGGGTTGGGG',
+        strand: '+',
+        gene_ids: 'GENE_DNAK',
+        gene_names: 'dnaK',
+        gene_biotypes: 'protein_coding',
+        relation_categories: 'gene_inside',
+        feature_types: 'gene',
+        feature_ids: 'dnaK',
       },
       {
+        quadruplex_sequence_id: 'chr2-30',
         assembly_accession: 'GCF_1',
+        region_id: 'chr2',
         seqid: 'chr2',
+        quadruplex_type: 'g4',
         g4_type: 'g4',
         start: 30,
         end: 44,
@@ -158,6 +192,13 @@ describe('GenomeInfoComponent', () => {
         y3: 1,
         score: 41,
         sequence: 'GGGAGGGTTGGGAGG',
+        strand: '+',
+        gene_ids: 'GENE_DNAK',
+        gene_names: 'dnaK',
+        gene_biotypes: 'protein_coding',
+        relation_categories: 'gene_inside',
+        feature_types: 'gene',
+        feature_ids: 'dnaK',
       },
     ],
   };
@@ -179,11 +220,14 @@ describe('GenomeInfoComponent', () => {
     geneService.getGene.and.returnValue(
       of({
         assembly_accession: 'GCF_1',
+        region_id: 'chr1',
         seqid: 'chr1',
         source: null,
         feature: 'gene',
         feature_start: null,
         feature_end: null,
+        start: null,
+        end: null,
         strand: null,
         phase: null,
         feature_id: 'dnaK',
@@ -192,7 +236,15 @@ describe('GenomeInfoComponent', () => {
         parent_id: null,
         locus_tag: null,
         description: null,
+        biotype: 'protein_coding',
         gene_biotype: 'protein_coding',
+        attributes_raw: '',
+        counts: {
+          g4_count: 0,
+          i_motif_count: 0,
+          quadruplex_sequence_count: 0,
+        },
+        relations: [],
         feature_key: 'dnaK',
         insideOf_gene_g4: [],
         insideOf_genes_upstream_100bp_g4: [],
@@ -351,10 +403,7 @@ describe('GenomeInfoComponent', () => {
         genome_length_mb: 0.03,
         filters: {
           windows: [1000],
-          g4_type: 'g4',
-          tetrads: [],
-          min_score: null,
-          max_score: null,
+          quadruplex_type: 'g4',
         },
         windows: [
           {
@@ -435,7 +484,9 @@ describe('GenomeInfoComponent', () => {
       defaultVisibleTrackIds: [],
       motifTrackIds: [],
     });
-    genomeViewerConfigService.resolveDefaultRegion.and.returnValue(of('chr1:1..1000'));
+    genomeViewerConfigService.resolveDefaultRegion.and.returnValue(
+      of({ region: 'chr1:1..1000', warning: null }),
+    );
     snackBar = jasmine.createSpyObj<MatSnackBar>('MatSnackBar', ['open']);
 
     await TestBed.configureTestingModule({
@@ -463,6 +514,30 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  it('reports assembly detail request failures with endpoint and status context', async () => {
+    genomeDetailService.getAssembly.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: 'Internal Server Error',
+            status: 500,
+            statusText: 'Internal Server Error',
+            url: '/api/v1/genome/GCF_1',
+          }),
+      ),
+    );
+
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.assemblyErrorMessage()).toContain(
+      'GET /api/v1/genome/GCF_1 returned 500 Internal Server Error',
+    );
+    expect(component.assemblyErrorMessage()).toContain('Response: Internal Server Error');
+  });
 
   it('derives search scope options directly from the current g4 type enum', () => {
     const fixture = createComponent();
@@ -836,7 +911,9 @@ describe('GenomeInfoComponent', () => {
   });
 
   it('uses the first sequence record full range when default region is invalid', async () => {
-    genomeViewerConfigService.resolveDefaultRegion.and.returnValue(of('1..1000'));
+    genomeViewerConfigService.resolveDefaultRegion.and.returnValue(
+      of({ region: '1..1000', warning: null }),
+    );
 
     const fixture = createComponent();
     const component = fixture.componentInstance;
@@ -874,11 +951,14 @@ describe('GenomeInfoComponent', () => {
     geneService.getGene.and.returnValue(
       of({
         assembly_accession: 'GCF_1',
+        region_id: 'chr2',
         seqid: 'chr2',
         source: null,
         feature: 'gene',
         feature_start: 6000,
         feature_end: 8000,
+        start: 6000,
+        end: 8000,
         strand: null,
         phase: null,
         feature_id: 'dnaK',
@@ -887,7 +967,15 @@ describe('GenomeInfoComponent', () => {
         parent_id: null,
         locus_tag: null,
         description: null,
+        biotype: 'protein_coding',
         gene_biotype: 'protein_coding',
+        attributes_raw: '',
+        counts: {
+          g4_count: 0,
+          i_motif_count: 0,
+          quadruplex_sequence_count: 0,
+        },
+        relations: [],
         feature_key: 'dnaK',
         insideOf_gene_g4: [],
         insideOf_genes_upstream_100bp_g4: [],
@@ -1089,11 +1177,14 @@ describe('GenomeInfoComponent', () => {
     geneService.getGene.and.returnValue(
       of({
         assembly_accession: 'GCF_1',
+        region_id: 'chr404',
         seqid: 'chr404',
         source: null,
         feature: 'gene',
         feature_start: 6000,
         feature_end: 8000,
+        start: 6000,
+        end: 8000,
         strand: null,
         phase: null,
         feature_id: 'dnaK',
@@ -1101,6 +1192,14 @@ describe('GenomeInfoComponent', () => {
         gene_id: 'GENE_DNAK',
         parent_id: null,
         locus_tag: null,
+        biotype: 'protein_coding',
+        attributes_raw: '',
+        counts: {
+          g4_count: 0,
+          i_motif_count: 0,
+          quadruplex_sequence_count: 0,
+        },
+        relations: [],
         description: null,
         gene_biotype: 'protein_coding',
         feature_key: 'dnaK',
@@ -1323,7 +1422,10 @@ describe('GenomeInfoComponent', () => {
       motifTrackIds: [],
     }));
     genomeViewerConfigService.resolveDefaultRegion.and.callFake(({ assemblyAccession }) =>
-      of(assemblyAccession === 'GCF_2' ? 'chrA:1..1000' : 'chr1:1..1000'),
+      of({
+        region: assemblyAccession === 'GCF_2' ? 'chrA:1..1000' : 'chr1:1..1000',
+        warning: null,
+      }),
     );
 
     const fixture = createComponent();
@@ -1430,5 +1532,34 @@ describe('GenomeInfoComponent', () => {
       binSize: 200,
     });
     expect(viewerState.region()).toBe('chr2:1..20000');
+  });
+
+  it('focuses a clicked range-chart point in the genome browser tab', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.selectBrowseScope('chr2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.setResultsTabIndex(1);
+    component.focusChartPoint({
+      seqid: 'chr2',
+      start: 5000,
+      end: 5500,
+      center: 5250,
+    });
+
+    expect(component.resultsTabIndex()).toBe(2);
+    expect(component.chartSeqid()).toBe('chr2');
+    expect(component.chartViewport()).toEqual({
+      start: 5000,
+      end: 5500,
+      binSize: 200,
+    });
+    expect(viewerState.region()).toBe('chr2:5000..5500');
   });
 });

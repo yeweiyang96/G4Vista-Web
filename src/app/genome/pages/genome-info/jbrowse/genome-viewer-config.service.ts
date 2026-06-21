@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, of } from 'rxjs';
 import { UiThemeMode } from '../../../../theme/ui-theme.service';
@@ -83,6 +83,18 @@ export interface GenomeViewerAssetParams {
 export interface GenomeViewerConfigParams extends GenomeViewerAssetParams {
   g4Type: G4Type;
   themeMode?: UiThemeMode;
+}
+
+export interface GenomeViewerAssetWarning {
+  readonly url: string;
+  readonly status: number | null;
+  readonly statusText: string | null;
+  readonly message: string;
+}
+
+export interface GenomeViewerDefaultRegionResult {
+  readonly region: string;
+  readonly warning: GenomeViewerAssetWarning | null;
 }
 
 const FALLBACK_REGION = '1..1000';
@@ -446,6 +458,31 @@ function parseDefaultRegionFromFaiContent(faiContent: string): string {
   return `${firstRefName}:1..1000`;
 }
 
+function assetWarningFromError(url: string, error: unknown): GenomeViewerAssetWarning {
+  if (error instanceof HttpErrorResponse) {
+    return {
+      url,
+      status: error.status,
+      statusText: error.statusText || null,
+      message: error.message,
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      url,
+      status: null,
+      statusText: null,
+      message: error.message,
+    };
+  }
+  return {
+    url,
+    status: null,
+    statusText: null,
+    message: 'JBrowse asset request failed.',
+  };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -471,13 +508,21 @@ export class GenomeViewerConfigService {
     };
   }
 
-  resolveDefaultRegion(params: GenomeViewerAssetParams): Observable<string> {
+  resolveDefaultRegion(params: GenomeViewerAssetParams): Observable<GenomeViewerDefaultRegionResult> {
     const assemblyAccession = params.assemblyAccession;
     const faiUrl = buildAssemblyAssetUrl(params, `${assemblyAccession}.fna.gz.fai`);
 
     return this.http.get(faiUrl, { responseType: 'text' }).pipe(
-      map((faiContent) => parseDefaultRegionFromFaiContent(faiContent)),
-      catchError(() => of(FALLBACK_REGION)),
+      map((faiContent) => ({
+        region: parseDefaultRegionFromFaiContent(faiContent),
+        warning: null,
+      })),
+      catchError((error: unknown) =>
+        of({
+          region: FALLBACK_REGION,
+          warning: assetWarningFromError(faiUrl, error),
+        }),
+      ),
     );
   }
 }

@@ -80,8 +80,11 @@ export const G4_GENE_POSITION_OPTIONS_BY_TYPE: Record<G4Type, readonly G4GenePos
 };
 
 export interface G4PageItem {
+  quadruplex_sequence_id: string | null;
   assembly_accession: string;
+  region_id: string;
   seqid: string;
+  quadruplex_type: G4Type;
   g4_type: G4Type;
   start: number;
   end: number;
@@ -92,6 +95,13 @@ export interface G4PageItem {
   y3: number;
   score: number;
   sequence: string;
+  strand: string;
+  gene_ids: string;
+  gene_names: string;
+  gene_biotypes: string;
+  relation_categories: string;
+  feature_types: string;
+  feature_ids: string;
 }
 
 export interface G4PageResponse {
@@ -100,6 +110,78 @@ export interface G4PageResponse {
   tetrads_list: number[];
   max_score: number;
   min_score: number;
+}
+
+interface QuadruplexSequenceApiItem {
+  quadruplex_sequence_id: string | null;
+  assembly_accession: string;
+  region_id: string;
+  quadruplex_type: G4Type;
+  start: number;
+  end: number;
+  length: number;
+  tetrads: number;
+  y1: number | null;
+  y2: number | null;
+  y3: number | null;
+  score: number;
+  sequence: string;
+  strand: string;
+  gene_ids: string;
+  gene_names: string;
+  gene_biotypes: string;
+  relation_categories: string;
+  feature_types: string;
+  feature_ids: string;
+}
+
+interface QuadruplexSequenceApiPage {
+  quadruplex_sequences: QuadruplexSequenceApiItem[];
+  count: number;
+  tetrads_list: number[];
+  max_score: number;
+  min_score: number;
+}
+
+interface GeneSearchApiItem {
+  assembly_accession: string;
+  region_id: string;
+  feature_id: string;
+  gene_name: string | null;
+  locus_tag: string | null;
+  biotype: string | null;
+}
+
+interface GeneSearchApiPage {
+  genes: GeneSearchApiItem[];
+  count: number;
+}
+
+type G4DownloadRelationCategory = 'gene_inside' | 'gene_upstream' | 'gene_downstream';
+
+interface G4DownloadApiFilters {
+  assembly_accessions: readonly string[];
+  taxon_ids: readonly number[];
+  species_taxon_ids: readonly number[];
+  region_ids: readonly string[];
+  quadruplex_types: readonly G4Type[];
+  gene_ids: readonly string[];
+  gene_search_term: string | null;
+  relation_categories: readonly G4DownloadRelationCategory[];
+  flank_windows: readonly number[];
+  min_overlap_bp: number | null;
+  min_overlap_fraction: number | null;
+  tetrads: readonly number[];
+  min_score: number | null;
+  max_score: number | null;
+}
+
+interface G4DownloadApiRequest {
+  mode: 'tsv';
+  columns: readonly string[] | 'default';
+  filters: G4DownloadApiFilters;
+  sort: string;
+  order: 'asc' | 'desc';
 }
 
 export interface G4GeneRelationHit {
@@ -219,10 +301,7 @@ export interface G4PositionDistributionResponse {
 
 export interface G4PositionStatisticsFilters {
   windows: number[];
-  g4_type: G4Type | null;
-  tetrads: number[];
-  min_score: number | null;
-  max_score: number | null;
+  quadruplex_type: G4Type | null;
 }
 
 export interface G4PositionMotifStats {
@@ -260,17 +339,18 @@ export interface G4PositionAsymmetry {
 export interface G4PositionStatisticsCategory {
   key: string;
   label: string;
-  description: string;
-  precedence_rank: number;
+  description?: string;
+  precedence_rank?: number;
   display_label?: string;
   display_description?: string;
   category_group?: 'gene_context' | 'background';
   is_default_chart_category?: boolean;
   display_order?: number;
-  merged_interval_length_bp: number;
-  length_mb: number;
-  motifs: Partial<Record<G4Type, G4PositionMotifStats>>;
-  asymmetry: G4PositionAsymmetry;
+  merged_interval_length_bp?: number;
+  length_mb?: number;
+  motifs?: Partial<Record<G4Type, G4PositionMotifStats>>;
+  asymmetry?: G4PositionAsymmetry;
+  quadruplex_types?: Partial<Record<G4Type, G4PositionCategoryStats>>;
 }
 
 export interface G4PositionStatisticsGeneBiotypeCategory {
@@ -289,6 +369,19 @@ export interface G4PositionStatisticsGeneBiotypeCategory {
   motifs: Partial<Record<G4Type, G4PositionMotifStats>>;
 }
 
+export interface G4PositionCategoryStats {
+  count: number;
+  denominator_bp: number;
+  denominator_mode: string | null;
+  density_per_mb: number | null;
+}
+
+export interface G4PositionStatisticsBiotypeCategory {
+  biotype: string;
+  category: string;
+  quadruplex_types: Partial<Record<G4Type, G4PositionCategoryStats>>;
+}
+
 export interface G4PositionStatisticsGeneBiotypeBreakdown {
   bio_type: string;
   display_label: string;
@@ -299,7 +392,8 @@ export interface G4PositionStatisticsGeneBiotypeBreakdown {
 export interface G4PositionStatisticsWindow {
   window_bp: number;
   categories: G4PositionStatisticsCategory[];
-  gene_biotype_breakdown: G4PositionStatisticsGeneBiotypeBreakdown[];
+  biotype_categories?: G4PositionStatisticsBiotypeCategory[];
+  gene_biotype_breakdown?: G4PositionStatisticsGeneBiotypeBreakdown[];
 }
 
 export interface G4PositionStatisticsResponse {
@@ -309,6 +403,11 @@ export interface G4PositionStatisticsResponse {
   genome_length_mb: number;
   windows: G4PositionStatisticsWindow[];
   quality: G4PositionDistributionQuality;
+}
+
+interface G4PositionStatisticsApiResponse
+  extends Omit<G4PositionStatisticsResponse, 'quality'> {
+  quality?: G4PositionDistributionQuality;
 }
 
 export interface G4PositionDistributionRequest {
@@ -428,10 +527,7 @@ export const EMPTY_G4_POSITION_STATISTICS: G4PositionStatisticsResponse = {
   assembly_accession: '',
   filters: {
     windows: [],
-    g4_type: null,
-    tetrads: [],
-    min_score: null,
-    max_score: null,
+    quadruplex_type: null,
   },
   genome_length_bp: 0,
   genome_length_mb: 0,
@@ -443,6 +539,15 @@ export const EMPTY_G4_POSITION_STATISTICS: G4PositionStatisticsResponse = {
     warnings: [],
   },
 };
+
+function normalizePositionStatisticsResponse(
+  response: G4PositionStatisticsApiResponse,
+): G4PositionStatisticsResponse {
+  return {
+    ...response,
+    quality: response.quality ?? EMPTY_G4_POSITION_STATISTICS.quality,
+  };
+}
 
 const SORT_FIELD_PARAM_MAP: Record<G4SortField, string> = {
   start: 'start',
@@ -546,13 +651,232 @@ function parseContentDispositionFilename(contentDisposition: string | null): str
   return null;
 }
 
+function mapQuadruplexSequenceItem(item: QuadruplexSequenceApiItem): G4PageItem {
+  return {
+    quadruplex_sequence_id: item.quadruplex_sequence_id,
+    assembly_accession: item.assembly_accession,
+    region_id: item.region_id,
+    seqid: item.region_id,
+    quadruplex_type: item.quadruplex_type,
+    g4_type: item.quadruplex_type,
+    start: item.start,
+    end: item.end,
+    length: item.length,
+    tetrads: item.tetrads,
+    y1: item.y1 ?? 0,
+    y2: item.y2 ?? 0,
+    y3: item.y3 ?? 0,
+    score: item.score,
+    sequence: item.sequence,
+    strand: item.strand,
+    gene_ids: item.gene_ids,
+    gene_names: item.gene_names,
+    gene_biotypes: item.gene_biotypes,
+    relation_categories: item.relation_categories,
+    feature_types: item.feature_types,
+    feature_ids: item.feature_ids,
+  };
+}
+
+function mapQuadruplexSequencePage(response: QuadruplexSequenceApiPage): G4PageResponse {
+  return {
+    g4s: response.quadruplex_sequences.map(mapQuadruplexSequenceItem),
+    count: response.count,
+    tetrads_list: response.tetrads_list,
+    max_score: response.max_score,
+    min_score: response.min_score,
+  };
+}
+
+function mapGeneSearchItemToCandidate(item: GeneSearchApiItem): G4GeneCandidate {
+  return {
+    feature_id: item.feature_id,
+    seqid: item.region_id,
+    gene_name: item.gene_name,
+    locus_tag: item.locus_tag,
+    gene_biotype: item.biotype,
+  };
+}
+
+function appendArrayParams<T extends string | number>(
+  params: HttpParams,
+  name: string,
+  values: readonly T[],
+): HttpParams {
+  let nextParams = params;
+  for (const value of values) {
+    nextParams = nextParams.append(name, value);
+  }
+  return nextParams;
+}
+
+function geneRelationFilterFromPosition(
+  position: G4GenePosition | undefined,
+): { relationCategory: G4DownloadRelationCategory; flankWindow?: number } | null {
+  if (!position) {
+    return null;
+  }
+  if (position.startsWith('insideOf_gene_')) {
+    return { relationCategory: 'gene_inside' };
+  }
+
+  const upstreamMatch = /insideOf_genes_upstream_(\d+)(bp|k)_(?:g4|i_motif)/.exec(position);
+  if (upstreamMatch?.[1]) {
+    const rawWindow = Number(upstreamMatch[1]);
+    return {
+      relationCategory: 'gene_upstream',
+      flankWindow: upstreamMatch[2] === 'k' ? rawWindow * 1000 : rawWindow,
+    };
+  }
+
+  const downstreamMatch = /insideOf_genes_downstream_(\d+)(bp|k)_(?:g4|i_motif)/.exec(position);
+  if (downstreamMatch?.[1]) {
+    const rawWindow = Number(downstreamMatch[1]);
+    return {
+      relationCategory: 'gene_downstream',
+      flankWindow: downstreamMatch[2] === 'k' ? rawWindow * 1000 : rawWindow,
+    };
+  }
+
+  return null;
+}
+
+function appendGeneRelationParams(
+  params: HttpParams,
+  selectedPosition: G4GenePosition | undefined,
+): HttpParams {
+  const relationFilter = geneRelationFilterFromPosition(selectedPosition);
+  if (relationFilter === null) {
+    return params;
+  }
+  const nextParams = params.append('relation_categories', relationFilter.relationCategory);
+  return relationFilter.flankWindow === undefined
+    ? nextParams
+    : nextParams.append('flank_windows', relationFilter.flankWindow);
+}
+
+function splitRelationText(value: string): readonly string[] {
+  return value
+    .split(/[;,|]/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function relationPositionFromCategory(category: string, g4Type: G4Type): G4GenePosition | null {
+  const suffix = g4Type === 'g4' ? 'g4' : 'i_motif';
+  if (category === 'gene_inside') {
+    return `insideOf_gene_${suffix}` as G4GenePosition;
+  }
+  if (category === 'gene_upstream') {
+    return `insideOf_genes_upstream_1k_${suffix}` as G4GenePosition;
+  }
+  if (category === 'gene_downstream') {
+    return `insideOf_genes_downstream_1k_${suffix}` as G4GenePosition;
+  }
+  return null;
+}
+
+function relationHitsFromItem(item: G4PageItem): Partial<Record<G4GenePosition, G4GeneRelationHit[]>> {
+  const relationCategories = splitRelationText(item.relation_categories);
+  const featureIds = splitRelationText(item.feature_ids || item.gene_ids);
+  const geneNames = splitRelationText(item.gene_names);
+  const geneBiotypes = splitRelationText(item.gene_biotypes);
+  const positions: Partial<Record<G4GenePosition, G4GeneRelationHit[]>> = {};
+
+  relationCategories.forEach((category, index) => {
+    const position = relationPositionFromCategory(category, item.g4_type);
+    if (position === null) {
+      return;
+    }
+    const featureId = featureIds[index] ?? featureIds[0] ?? item.gene_ids;
+    if (!featureId) {
+      return;
+    }
+    const label = geneNames[index] || featureId;
+    const hit: G4GeneRelationHit = {
+      feature_id: featureId,
+      label,
+      gene_biotype: geneBiotypes[index] ?? null,
+    };
+    positions[position] = [...(positions[position] ?? []), hit];
+  });
+
+  return positions;
+}
+
+function mergeGeneRelationPositions(
+  left: Partial<Record<G4GenePosition, G4GeneRelationHit[]>>,
+  right: Partial<Record<G4GenePosition, G4GeneRelationHit[]>>,
+): Partial<Record<G4GenePosition, G4GeneRelationHit[]>> {
+  const merged: Partial<Record<G4GenePosition, G4GeneRelationHit[]>> = { ...left };
+  for (const key of Object.keys(right) as G4GenePosition[]) {
+    merged[key] = [...(merged[key] ?? []), ...(right[key] ?? [])];
+  }
+  return merged;
+}
+
+function relationItemForStart(start: number, items: readonly G4PageItem[]): G4GeneRelationItem {
+  const positions = items
+    .filter((item) => item.start === start)
+    .map(relationHitsFromItem)
+    .reduce<Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>(
+      mergeGeneRelationPositions,
+      {},
+    );
+  return { start, positions };
+}
+
+function mapDownloadColumn(column: G4DownloadColumn): string | null {
+  if (column === 'seqid') {
+    return 'region_id';
+  }
+  if (column.startsWith('gene_relation:')) {
+    return null;
+  }
+  return column;
+}
+
+function mapDownloadColumns(columns: readonly G4DownloadColumn[]): readonly string[] | 'default' {
+  const mappedColumns = Array.from(
+    new Set(columns.map(mapDownloadColumn).filter((column): column is string => column !== null)),
+  );
+  return mappedColumns.length ? mappedColumns : 'default';
+}
+
+function createDownloadApiRequest(request: G4DownloadRequest): G4DownloadApiRequest {
+  const relationFilter = geneRelationFilterFromPosition(request.selectedPosition);
+  const geneSearchTerm = request.searchTerm || request.selectedFeatureId || null;
+  return {
+    mode: 'tsv',
+    columns: mapDownloadColumns(request.columns),
+    filters: {
+      assembly_accessions: [request.assemblyAccession],
+      taxon_ids: [],
+      species_taxon_ids: [],
+      region_ids: request.seqid ? [request.seqid] : [],
+      quadruplex_types: [request.g4Type],
+      gene_ids: [],
+      gene_search_term: geneSearchTerm,
+      relation_categories: relationFilter ? [relationFilter.relationCategory] : [],
+      flank_windows: relationFilter?.flankWindow === undefined ? [] : [relationFilter.flankWindow],
+      min_overlap_bp: null,
+      min_overlap_fraction: null,
+      tetrads: request.tetrads,
+      min_score: request.minScore ?? null,
+      max_score: request.maxScore ?? null,
+    },
+    sort: SORT_FIELD_PARAM_MAP[request.sort],
+    order: request.order,
+  };
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class G4Service {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/v1/g4';
-  private readonly quadruplexSequenceApiUrl = '/api/v1/quadruplex-sequences';
+  private readonly apiUrl = '/api/v1/quadruplex-sequences';
+  private readonly downloadApiUrl = '/api/v1/download';
 
   private appendCommonFilterParams(
     params: HttpParams,
@@ -561,10 +885,7 @@ export class G4Service {
       'tetrads' | 'minScore' | 'maxScore'
     >,
   ): HttpParams {
-    let nextParams = params;
-    for (const tetrad of filters.tetrads) {
-      nextParams = nextParams.append('tetrads', tetrad);
-    }
+    let nextParams = appendArrayParams(params, 'tetrads', filters.tetrads);
     if (filters.minScore !== undefined) {
       nextParams = nextParams.set('min_score', filters.minScore);
     }
@@ -588,79 +909,52 @@ export class G4Service {
     return this.appendCommonFilterParams(params, request);
   }
 
-  private appendDownloadColumnParams(
-    params: HttpParams,
-    columns: readonly G4DownloadColumn[],
-  ): HttpParams {
-    let nextParams = params;
-    for (const column of columns) {
-      nextParams = nextParams.append('columns', column);
-    }
-    return nextParams;
-  }
-
   getAssemblyG4Page(request: G4PageRequest): Observable<G4PageResponse> {
-    const params = this.buildCommonPageParams(request);
+    const params = this.buildCommonPageParams(request).set('quadruplex_type', request.g4Type);
 
-    return this.http.get<G4PageResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}`,
-      { params },
-    );
+    return this.http
+      .get<QuadruplexSequenceApiPage>(
+        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}`,
+        { params },
+      )
+      .pipe(map(mapQuadruplexSequencePage));
   }
 
   getG4Page(request: G4PageRequest & { seqid: string }): Observable<G4PageResponse> {
-    const params = this.buildCommonPageParams(request);
+    const params = this.buildCommonPageParams(request).set('quadruplex_type', request.g4Type);
 
-    return this.http.get<G4PageResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}`,
-      { params },
-    );
+    return this.http
+      .get<QuadruplexSequenceApiPage>(
+        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}`,
+        { params },
+      )
+      .pipe(map(mapQuadruplexSequencePage));
   }
 
   getGeneSearchPage(request: G4GeneSearchRequest): Observable<G4PageResponse> {
-    const params = this.buildCommonPageParams(request)
-      .set('selected_feature_id', request.selectedFeatureId)
-      .set('selected_position', request.selectedPosition);
-    const searchParams = request.searchTerm
-      ? params.set('search_term', request.searchTerm)
-      : params;
-
-    return this.http.get<G4PageResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-search`,
-      { params: searchParams },
+    const params = appendGeneRelationParams(
+      this.buildCommonPageParams(request).set('quadruplex_type', request.g4Type),
+      request.selectedPosition,
     );
+    const geneSearchTerm = request.searchTerm || request.selectedFeatureId;
+    const searchParams = geneSearchTerm ? params.set('gene_search_term', geneSearchTerm) : params;
+
+    return this.http
+      .get<QuadruplexSequenceApiPage>(
+        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}`,
+        { params: searchParams },
+      )
+      .pipe(map(mapQuadruplexSequencePage));
   }
 
   downloadG4Table(request: G4DownloadRequest): Observable<G4DownloadResponse> {
-    const params = this.appendDownloadColumnParams(
-      this.appendCommonFilterParams(
-        new HttpParams()
-          .set('sort', SORT_FIELD_PARAM_MAP[request.sort])
-          .set('order', request.order),
-        request,
-      ),
-      request.columns,
-    );
-    const scopedParams = request.seqid ? params.set('seqid', request.seqid) : params;
-    const geneParams =
-      request.selectedFeatureId && request.selectedPosition
-        ? scopedParams
-            .set('selected_feature_id', request.selectedFeatureId)
-            .set('selected_position', request.selectedPosition)
-        : scopedParams;
-    const searchParams = request.searchTerm
-      ? geneParams.set('search_term', request.searchTerm)
-      : geneParams;
+    const apiRequest = createDownloadApiRequest(request);
 
     return this.http
-      .get(
-        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/download`,
-        {
-          params: searchParams,
-          responseType: 'blob',
-          observe: 'response',
-        },
-      )
+      .post(`${this.downloadApiUrl}/`, apiRequest, {
+        responseType: 'blob',
+        observe: 'response',
+      })
       .pipe(
         map((response: HttpResponse<Blob>) => {
           if (response.body === null) {
@@ -680,30 +974,44 @@ export class G4Service {
   getGeneCandidates(request: G4GeneCandidatesRequest): Observable<G4GeneCandidate[]> {
     const params = new HttpParams()
       .set('search_term', request.searchTerm)
-      .set('selected_position', request.selectedPosition)
+      .set('assembly_accession', request.assemblyAccession)
+      .set('offset', 0)
       .set('limit', request.limit);
 
-    return this.http.get<G4GeneCandidate[]>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${request.g4Type}/gene-candidates`,
-      { params },
-    );
+    return this.http
+      .get<GeneSearchApiPage>('/api/v1/genes/page', { params })
+      .pipe(map((response) => response.genes.map(mapGeneSearchItemToCandidate)));
   }
 
   getGeneRelations(request: G4GeneRelationsRequest): Observable<G4GeneRelationsResponse> {
-    let params = new HttpParams();
-    for (const start of request.starts) {
-      params = params.append('start', start);
-    }
+    const params = new HttpParams()
+      .set('quadruplex_type', request.g4Type)
+      .set('offset', 0)
+      .set('limit', 500)
+      .set('sort', 'start')
+      .set('order', 'asc');
 
-    return this.http.get<G4GeneRelationsResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}/gene-relations`,
-      { params },
-    );
+    return this.http
+      .get<QuadruplexSequenceApiPage>(
+        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}`,
+        {
+          params,
+        },
+      )
+      .pipe(
+        map((response) => {
+          const items = response.quadruplex_sequences.map(mapQuadruplexSequenceItem);
+          return {
+            relations: request.starts.map((start) => relationItemForStart(start, items)),
+          };
+        }),
+      );
   }
 
   getHistogram(request: G4HistogramRequest): Observable<G4HistogramResponse> {
     const params = this.appendCommonFilterParams(
       new HttpParams()
+        .set('quadruplex_type', request.g4Type)
         .set('range_start', request.viewport.start)
         .set('range_end', request.viewport.end)
         .set('bin_size', request.viewport.binSize),
@@ -711,7 +1019,7 @@ export class G4Service {
     );
 
     return this.http.get<G4HistogramResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/${request.g4Type}/histogram`,
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/${encodeURIComponent(request.seqid)}/histogram`,
       { params },
     );
   }
@@ -724,7 +1032,7 @@ export class G4Service {
       .set('flank_window', request.flankWindow);
 
     return this.http.get<G4PositionDistributionResponse>(
-      `${this.quadruplexSequenceApiUrl}/${encodeURIComponent(request.assemblyAccession)}/position-distribution`,
+      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/position-distribution`,
       { params },
     );
   }
@@ -737,16 +1045,14 @@ export class G4Service {
       params = params.append('windows', window);
     }
     if (request.g4Type !== undefined) {
-      params = params.set('g4_type', request.g4Type);
+      params = params.set('quadruplex_type', request.g4Type);
     }
-    if (request.includeGeneBiotypeBreakdown !== undefined) {
-      params = params.set('include_gene_biotype_breakdown', request.includeGeneBiotypeBreakdown);
-    }
-    params = this.appendCommonFilterParams(params, request);
 
-    return this.http.get<G4PositionStatisticsResponse>(
-      `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/position-statistics`,
-      { params },
-    );
+    return this.http
+      .get<G4PositionStatisticsApiResponse>(
+        `${this.apiUrl}/${encodeURIComponent(request.assemblyAccession)}/position-statistics`,
+        { params },
+      )
+      .pipe(map(normalizePositionStatisticsResponse));
   }
 }

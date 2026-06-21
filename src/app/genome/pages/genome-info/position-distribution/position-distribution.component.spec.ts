@@ -145,9 +145,15 @@ describe('PositionDistributionComponent', () => {
       'Other',
     ]);
     expect(component.summaryDoughnutData().datasets[0].data).toEqual([2, 1, 1, 2]);
+    expect(component.chartLegendRows().map((category) => category.ratio)).toEqual([
+      1 / 3,
+      1 / 6,
+      1 / 6,
+      1 / 3,
+    ]);
   });
 
-  it('folds legacy background categories into the fallback Other row', () => {
+  it('does not derive fallback Other from legacy background categories', () => {
     fixture.componentRef.setInput('distribution', {
       ...distribution,
       categories: [
@@ -192,8 +198,9 @@ describe('PositionDistributionComponent', () => {
       'In genes',
       'Upstream flank',
       'Downstream flank',
-      'Other',
     ]);
+    expect(fixture.componentInstance.otherPositionCount()).toBe(0);
+    expect(fixture.componentInstance.displayedPositionTotal()).toBe(6);
     expect(text).not.toContain('Other root non-gene feature');
     expect(text).not.toContain('Non-feature');
     expect(text).not.toContain('Non-gene annotation feature');

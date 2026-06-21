@@ -119,19 +119,6 @@ function categoryCount(categories: readonly G4PositionCategory[], key: string): 
   return categories.find((category) => category.key === key)?.count ?? 0;
 }
 
-function publicPositionCategoryCount(
-  category: PublicPositionCategoryConfig,
-  categories: readonly G4PositionCategory[],
-  apiOtherCount: number,
-  legacyOtherCount: number,
-  hasApiOther: boolean,
-): number {
-  if (category.key !== 'other') {
-    return categoryCount(categories, category.key);
-  }
-  return hasApiOther ? apiOtherCount : legacyOtherCount;
-}
-
 function boundedGeneBiotypePageIndex(
   rowCount: number,
   pageSize: number,
@@ -260,41 +247,24 @@ export class TaxonomyInfoComponent {
   readonly positionCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const distribution = this.summary()?.position_distribution;
     const categories = distribution?.categories ?? [];
-    const geneContextTotal = PUBLIC_POSITION_CATEGORIES.reduce(
-      (sum, category) =>
-        category.key === 'other' ? sum : sum + categoryCount(categories, category.key),
-      0,
-    );
-    const apiOtherCount = categoryCount(categories, 'other');
-    const hasApiOther = categories.some((category) => category.key === 'other');
-    const total = Math.max(distribution?.total_count ?? 0, geneContextTotal + apiOtherCount);
-    const legacyOtherCount = Math.max(0, total - geneContextTotal);
 
     return PUBLIC_POSITION_CATEGORIES.map((category) => {
-      const count = publicPositionCategoryCount(
-        category,
-        categories,
-        apiOtherCount,
-        legacyOtherCount,
-        hasApiOther,
-      );
-      const ratio = total ? count / total : 0;
+      const apiCategory = categories.find((candidate) => candidate.key === category.key);
+      const ratio = apiCategory?.ratio ?? 0;
       return {
         key: category.key,
-        label: category.label,
-        count,
+        label: apiCategory?.label ?? category.label,
+        count: apiCategory?.count ?? 0,
         ratio,
-        precedence_rank: 0,
-        description: category.description,
-        displayLabel: category.label,
+        precedence_rank: apiCategory?.precedence_rank ?? 0,
+        description: apiCategory?.description ?? category.description,
+        displayLabel: apiCategory?.display_label ?? apiCategory?.label ?? category.label,
         ratioLabel: PERCENT_FORMATTER.format(ratio),
         color: category.color,
       };
     });
   });
-  readonly positionContextTotal = computed(() =>
-    this.positionCategoryRows().reduce((sum, category) => sum + category.count, 0),
-  );
+  readonly positionContextTotal = computed(() => this.summary()?.position_distribution.total_count ?? 0);
   readonly positionPieData = computed<ChartData<'pie', number[], string>>(() => {
     const rows = this.positionCategoryRows().filter((category) => category.count > 0);
     return {
@@ -399,8 +369,11 @@ export class TaxonomyInfoComponent {
   private positionPieTooltipLabel(context: TooltipItem<'pie'>): string {
     const label = context.label || 'Context';
     const value = Number(context.parsed);
-    const total = this.positionContextTotal();
-    const ratio = total ? value / total : 0;
+    const ratio = this.positionPieDataRows()[context.dataIndex]?.ratio ?? 0;
     return `${label}: ${this.formatChartCount(value)} (${PERCENT_FORMATTER.format(ratio)})`;
+  }
+
+  private positionPieDataRows(): readonly PositionCategoryView[] {
+    return this.positionCategoryRows().filter((category) => category.count > 0);
   }
 }

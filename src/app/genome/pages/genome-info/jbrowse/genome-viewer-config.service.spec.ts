@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import {
   GenomeViewerConfigParams,
   GenomeViewerConfigService,
+  GenomeViewerDefaultRegionResult,
 } from './genome-viewer-config.service';
 
 describe('GenomeViewerConfigService', () => {
@@ -251,10 +252,10 @@ describe('GenomeViewerConfigService', () => {
   });
 
   it('parses default region from the first row of fai content', () => {
-    let actualRegion = '';
+    const actualResults: GenomeViewerDefaultRegionResult[] = [];
 
-    service.resolveDefaultRegion(params).subscribe((region) => {
-      actualRegion = region;
+    service.resolveDefaultRegion(params).subscribe((result) => {
+      actualResults.push(result);
     });
 
     const request = httpMock.expectOne(
@@ -263,14 +264,17 @@ describe('GenomeViewerConfigService', () => {
     expect(request.request.responseType).toBe('text');
     request.flush('NC_011662.2\t4496212\t55\t80\t81\nNC_011667.1\t78374\t4552540\t80\t81\n');
 
-    expect(actualRegion).toBe('NC_011662.2:1..1000');
+    expect(actualResults[0]).toEqual({
+      region: 'NC_011662.2:1..1000',
+      warning: null,
+    });
   });
 
-  it('falls back when fai request fails', () => {
-    let actualRegion = '';
+  it('returns an actionable warning when fai request fails', () => {
+    const actualResults: GenomeViewerDefaultRegionResult[] = [];
 
-    service.resolveDefaultRegion(params).subscribe((region) => {
-      actualRegion = region;
+    service.resolveDefaultRegion(params).subscribe((result) => {
+      actualResults.push(result);
     });
 
     const request = httpMock.expectOne(
@@ -278,7 +282,14 @@ describe('GenomeViewerConfigService', () => {
     );
     request.flush('Not Found', { status: 404, statusText: 'Not Found' });
 
-    expect(actualRegion).toBe('1..1000');
+    expect(actualResults[0].region).toBe('1..1000');
+    expect(actualResults[0].warning).toEqual(
+      jasmine.objectContaining({
+        url: 'http://localhost:8000/jbrowse/GCF_000021765.1/jbrowse/GCF_000021765.1.fna.gz.fai',
+        status: 404,
+        statusText: 'Not Found',
+      }),
+    );
   });
 
   it('uses Material-aligned dark theme when themeMode is dark', () => {

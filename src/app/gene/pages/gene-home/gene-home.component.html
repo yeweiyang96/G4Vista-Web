@@ -2,6 +2,15 @@
   <section class="page-heading" data-help-target="gene-header">
     <h1>Search genes and features</h1>
     <p>Find annotated features by feature ID, gene ID, gene symbol, or locus tag.</p>
+    <a
+      mat-stroked-button
+      class="page-doc-link"
+      routerLink="/documentation"
+      [queryParams]="{ doc: 'gene' }"
+    >
+      <mat-icon>menu_book</mat-icon>
+      Documentation
+    </a>
   </section>
 
   <div class="gene-workspace">
@@ -182,7 +191,7 @@
     <a
       mat-button
       class="feature-link"
-      [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
+      [routerLink]="['/gene', row.assembly_accession, row.region_id, row.feature_id]"
     >
       {{ row.gene_name || row.feature_id }}
     </a>
@@ -213,7 +222,7 @@
       mat-icon-button
       class="detail-action-link"
       aria-label="Open gene detail"
-      [routerLink]="['/gene', row.assembly_accession, row.seqid, row.feature_id]"
+      [routerLink]="['/gene', row.assembly_accession, row.region_id, row.feature_id]"
     >
       <mat-icon>chevron_right</mat-icon>
     </a>

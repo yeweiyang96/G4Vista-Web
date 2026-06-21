@@ -2,11 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
+  G4PositionCategoryStats,
   G4PositionMotifStats,
+  G4PositionStatisticsBiotypeCategory,
   G4PositionStatisticsCategory,
   G4PositionStatisticsGeneBiotypeBreakdown,
   G4PositionStatisticsGeneBiotypeCategory,
   G4PositionStatisticsResponse,
+  G4PositionStatisticsWindow,
   G4Type,
 } from '../../../services/g4.service';
 import { canonicalGeneBiotype } from '../../../../shared/gene-biotype';
@@ -101,10 +104,20 @@ function formatLengthMb(value: number): string {
 }
 
 function motifStatsForType(
-  source: Pick<G4PositionStatisticsCategory, 'motifs'>,
+  source: Pick<G4PositionStatisticsCategory, 'motifs' | 'quadruplex_types'>,
   g4Type: G4Type,
 ): G4PositionMotifStats {
-  return source.motifs[g4Type] ?? EMPTY_MOTIF_STATS;
+  const legacyStats = source.motifs?.[g4Type];
+  if (legacyStats) {
+    return legacyStats;
+  }
+
+  const categoryStats = source.quadruplex_types?.[g4Type];
+  if (!categoryStats) {
+    return EMPTY_MOTIF_STATS;
+  }
+
+  return motifStatsFromCategoryStats(categoryStats);
 }
 
 function biotypeRowKey(row: G4PositionStatisticsGeneBiotypeBreakdown): string {
@@ -182,6 +195,90 @@ function biotypeDensityRow(
       biotypeDensityCell(row.categories, categoryKey, g4Type),
     ),
   };
+}
+
+function motifStatsFromCategoryStats(stats: G4PositionCategoryStats): G4PositionMotifStats {
+  return {
+    ...EMPTY_MOTIF_STATS,
+    count: stats.count,
+    density_per_mb: stats.density_per_mb,
+  };
+}
+
+function biotypeCategoryLabel(biotype: string): string {
+  const canonicalValue = canonicalGeneBiotype(biotype);
+  if (canonicalValue === 'other') {
+    return 'Other';
+  }
+  return biotype.trim() || 'Unspecified';
+}
+
+function biotypeCategoryCell(
+  categories: readonly G4PositionStatisticsBiotypeCategory[],
+  key: GeneContextCategoryKey,
+  g4Type: G4Type,
+): GeneBiotypeDensityCell {
+  const category = categories.find((candidate) => candidate.category === key) ?? null;
+  const stats = category?.quadruplex_types[g4Type] ?? null;
+  const displayText = categoryDisplayText({
+    key,
+    label: key,
+    description: '',
+  });
+  return {
+    key,
+    label: displayText.displayLabel,
+    color: positionCategoryColor(key),
+    count: stats?.count ?? 0,
+    lengthMb: stats ? stats.denominator_bp / 1_000_000 : 0,
+    densityPerMb: stats?.density_per_mb ?? null,
+  };
+}
+
+function groupedBiotypeCategories(
+  categories: readonly G4PositionStatisticsBiotypeCategory[],
+): readonly {
+  biotype: string;
+  categories: readonly G4PositionStatisticsBiotypeCategory[];
+}[] {
+  const grouped = new Map<string, readonly G4PositionStatisticsBiotypeCategory[]>();
+  for (const category of categories) {
+    grouped.set(category.biotype, [...(grouped.get(category.biotype) ?? []), category]);
+  }
+  return Array.from(grouped.entries()).map(([biotype, biotypeCategories]) => ({
+    biotype,
+    categories: biotypeCategories,
+  }));
+}
+
+function biotypeCategoryDensityRow(
+  biotype: string,
+  categories: readonly G4PositionStatisticsBiotypeCategory[],
+  g4Type: G4Type,
+): GeneBiotypeDensityRow {
+  const cells = GENE_CONTEXT_CATEGORY_KEYS.map((categoryKey) =>
+    biotypeCategoryCell(categories, categoryKey, g4Type),
+  );
+  return {
+    key: canonicalGeneBiotype(biotype),
+    label: biotypeCategoryLabel(biotype),
+    totalCount: cells.reduce((sum, cell) => sum + cell.count, 0),
+    cells,
+  };
+}
+
+function biotypeDensityRowsForWindow(
+  window: G4PositionStatisticsWindow,
+  g4Type: G4Type,
+): readonly GeneBiotypeDensityRow[] {
+  const legacyRows = window.gene_biotype_breakdown ?? [];
+  if (legacyRows.length > 0) {
+    return legacyRows.map((row) => biotypeDensityRow(row, g4Type));
+  }
+
+  return groupedBiotypeCategories(window.biotype_categories ?? []).map((group) =>
+    biotypeCategoryDensityRow(group.biotype, group.categories, g4Type),
+  );
 }
 
 function compareBiotypeDensityRows(
@@ -263,9 +360,7 @@ export class PositionStatisticsPanelComponent {
   );
   readonly biotypeDensityRows = computed<readonly GeneBiotypeDensityRow[]>(() =>
     this.statistics()
-      .windows.flatMap((window) =>
-        (window.gene_biotype_breakdown ?? []).map((row) => biotypeDensityRow(row, this.g4Type())),
-      )
+      .windows.flatMap((window) => biotypeDensityRowsForWindow(window, this.g4Type()))
       .sort(compareBiotypeDensityRows),
   );
   readonly visibleBiotypeDensityRows = computed<readonly GeneBiotypeDensityRow[]>(() =>

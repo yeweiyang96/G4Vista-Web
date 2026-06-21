@@ -1,198 +1,287 @@
 <main class="g4v-page environment-page">
   <section class="service-header" data-help-target="microbial-header">
     <div class="header-copy">
-      <p class="eyebrow">Microbial G4Vista</p>
-      <h1 class="g4v-page-title">Microbial G4 environment research</h1>
+      <p class="eyebrow">Environment-G4</p>
+      <h1 class="g4v-page-title">Microbial environment associations</h1>
       <p class="subtitle">{{ studySummary() }}</p>
+      <p class="source-line">{{ sourceLabel() }}</p>
+      <a
+        mat-stroked-button
+        class="page-doc-link"
+        routerLink="/documentation"
+        [queryParams]="{ doc: 'microbial-environment' }"
+      >
+        <mat-icon>menu_book</mat-icon>
+        Documentation
+      </a>
     </div>
 
-    <div class="capability-grid" aria-label="Research state">
+    <div class="capability-grid" aria-label="Environment-G4 state">
       <div class="capability-card">
-        <mat-icon>groups</mat-icon>
-        <strong>{{ currentPlan().eligible_assemblies | number }}</strong>
-        <span>eligible strains</span>
+        <mat-icon>science</mat-icon>
+        <strong>{{ options()?.traits?.length ?? 0 }}</strong>
+        <span>trait models</span>
       </div>
       <div class="capability-card">
         <mat-icon>query_stats</mat-icon>
-        <strong>Spearman</strong>
-        <span>correlation</span>
+        <strong>{{ chartKind() === 'scatter' ? 'Scatter' : 'Box plot' }}</strong>
+        <span>current chart</span>
       </div>
       <div class="capability-card">
-        <mat-icon>timeline</mat-icon>
-        <strong>OLS</strong>
-        <span>regression line</span>
+        <mat-icon>category</mat-icon>
+        <strong>{{ selectedCategoryCount() }}</strong>
+        <span>displayed categories</span>
       </div>
-      <div
-        class="capability-card capability-ready"
-        [class.capability-pending]="dataLayerUnavailable()"
-      >
-        <mat-icon>{{ dataLayerUnavailable() ? 'sync_problem' : 'check_circle' }}</mat-icon>
-        <strong>Data</strong>
-        <span>{{ dataLayerUnavailable() ? 'unavailable' : 'ready' }}</span>
+      <div class="capability-card capability-ready">
+        <mat-icon>verified</mat-icon>
+        <strong>Data-only</strong>
+        <span>Server-backed API</span>
       </div>
     </div>
   </section>
 
-  <form class="workbench-form" [formGroup]="form" (submit)="$event.preventDefault(); search()">
+  <form class="workbench-form" [formGroup]="form" (submit)="$event.preventDefault(); runAnalysis()">
     <div class="workbench-shell">
       <aside class="query-rail">
         <div class="rail-title">
           <div>
             <h2>Analysis setup</h2>
-            <p>Set the environment condition and strain scope.</p>
+            <p>Use canonical BacDive-derived traits and public G4Vista metrics.</p>
           </div>
         </div>
 
         <div class="setup-steps">
           <section class="setup-step-card" data-help-target="microbial-condition">
-            <div class="control-stack">
-              <div class="setup-step-heading">
-                <span class="setup-step-number">1</span>
-                <div>
-                  <h3>Environment condition</h3>
-                  <p>Define the environmental trait and mode.</p>
-                </div>
-              </div>
-
-              <div class="segmented-field">
-                <span>Trait</span>
-                <mat-button-toggle-group formControlName="trait" (change)="onAxisChange()">
-                  <mat-button-toggle value="temperature">
-                    <mat-icon>device_thermostat</mat-icon>
-                    Temperature
-                  </mat-button-toggle>
-                  <mat-button-toggle value="ph">
-                    <mat-icon>thermostat</mat-icon>
-                    pH
-                  </mat-button-toggle>
-                </mat-button-toggle-group>
-              </div>
-
-              <div class="segmented-field">
-                <span>Mode</span>
-                <mat-button-toggle-group formControlName="mode" (change)="onAxisChange()">
-                  <mat-button-toggle value="growth">
-                    <mat-icon>trending_up</mat-icon>
-                    Growth
-                  </mat-button-toggle>
-                  <mat-button-toggle value="optimum">
-                    <mat-icon>track_changes</mat-icon>
-                    Optimum
-                  </mat-button-toggle>
-                </mat-button-toggle-group>
+            <div class="setup-step-heading">
+              <span class="setup-step-number">1</span>
+              <div>
+                <h3>Trait and metric</h3>
+                <p>Trait options, defaults, and metric availability come from the Server.</p>
               </div>
             </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Environmental trait</mat-label>
+              <mat-select formControlName="traitCode" (selectionChange)="selectTrait($event.value)">
+                @for (trait of options()?.traits ?? []; track trait.trait_code) {
+                  <mat-option [value]="trait.trait_code">
+                    {{ trait.display_name }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Outcome metric</mat-label>
+              <mat-select
+                formControlName="outcomeMetric"
+                (selectionChange)="selectOutcomeMetric($event.value)"
+              >
+                @for (metric of outcomeMetricOptions(); track metric.metric) {
+                  <mat-option [value]="metric.metric">
+                    {{ metric.display_name }}
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-hint>{{ selectedOutcomeMetricOption()?.description }}</mat-hint>
+            </mat-form-field>
+
+            @if (chartKind() === 'scatter') {
+              <div class="range-fields">
+                <mat-form-field appearance="outline">
+                  <mat-label>Numeric minimum</mat-label>
+                  <input matInput type="number" formControlName="numericMin" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Numeric maximum</mat-label>
+                  <input matInput type="number" formControlName="numericMax" />
+                </mat-form-field>
+              </div>
+            }
           </section>
 
-          <section class="setup-step-card">
-            <div class="control-stack">
+          @if (chartKind() === 'boxplot') {
+            <section class="setup-step-card">
               <div class="setup-step-heading">
                 <span class="setup-step-number">2</span>
                 <div>
-                  <h3>Strain set</h3>
-                  <p>Select taxonomy groups to build the strain set.</p>
+                  <h3>Canonical categories</h3>
+                  <p>Choose displayed box-plot categories; membership is counted once per assembly per category.</p>
                 </div>
               </div>
 
               <mat-form-field appearance="outline">
-                <mat-label>Taxonomy rank</mat-label>
-                <mat-select formControlName="taxonomyRank">
-                  @for (option of options()?.taxonomy_ranks ?? []; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                <mat-label>Context axis</mat-label>
+                <mat-select
+                  [value]="selectedContextAxis()"
+                  (selectionChange)="selectContextAxis($event.value)"
+                >
+                  @for (axis of contextAxisOptions(); track axis.context_axis) {
+                    <mat-option [value]="axis.context_axis">
+                      {{ axis.display_label }} ({{ axis.category_count | number }})
+                    </mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
-              <div class="taxonomy-search" data-help-target="microbial-taxonomy">
-                <mat-form-field appearance="outline">
-                  <mat-label>Search taxonomy</mat-label>
-                  <input
-                    matInput
-                    type="search"
-                    formControlName="taxonomyKeyword"
-                    placeholder="Search genus, family, phylum..."
-                  />
-                </mat-form-field>
+              <div class="category-checklist" aria-label="Displayed canonical categories">
+                @for (category of categoryOptions(); track category.category_id) {
+                  <mat-checkbox
+                    [checked]="categoryChecked(category)"
+                    (change)="toggleCategory(category, $event.checked)"
+                  >
+                    <span class="category-label">{{ category.display_label }}</span>
+                    <span class="category-count">
+                      {{ category.eligible_assembly_count | number }} assemblies
+                    </span>
+                  </mat-checkbox>
+                }
+              </div>
+            </section>
+          }
+
+          <section class="setup-step-card">
+            <div class="setup-step-heading">
+              <span class="setup-step-number">{{ chartKind() === 'boxplot' ? 3 : 2 }}</span>
+              <div>
+                <h3>Taxonomy scope</h3>
+                <p>Keep taxonomy filters available because ecology and lineage are confounded.</p>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Taxonomy rank</mat-label>
+              <mat-select formControlName="taxonomyRank">
+                @for (rank of taxonomyRankOptions(); track rank.rank) {
+                  <mat-option [value]="rank.rank">{{ rank.display_label }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>All keeps every eligible assembly in scope.</mat-hint>
+            </mat-form-field>
+
+            <div class="taxonomy-search" data-help-target="microbial-taxonomy">
+              <mat-form-field appearance="outline">
+                <mat-label>Search taxonomy</mat-label>
+                <input matInput type="search" formControlName="taxonomyKeyword" />
+              </mat-form-field>
+              <button
+                mat-icon-button
+                class="taxonomy-search-button"
+                type="button"
+                aria-label="Find taxonomy groups"
+                matTooltip="Find taxonomy groups"
+                (click)="findTaxonomy()"
+                [disabled]="loadingTaxonomy()"
+              >
+                @if (loadingTaxonomy()) {
+                  <mat-spinner diameter="18"></mat-spinner>
+                } @else {
+                  <mat-icon>search</mat-icon>
+                }
+              </button>
+            </div>
+
+            @if (taxonomyCandidates().length) {
+              <div class="candidate-actions" aria-label="Taxonomy candidate bulk actions">
+                <button mat-button type="button" (click)="selectVisibleTaxonomyCandidates()">
+                  <mat-icon>done_all</mat-icon>
+                  Select visible
+                </button>
                 <button
-                  mat-icon-button
-                  class="taxonomy-search-button"
+                  mat-button
                   type="button"
-                  aria-label="Find taxonomy groups"
-                  matTooltip="Find taxonomy groups"
-                  (click)="findTaxonomy()"
-                  [disabled]="loadingTaxonomy() || dataLayerUnavailable()"
+                  (click)="clearCheckedTaxonomyCandidates()"
+                  [disabled]="!selectedTaxonomyCandidateKeys().length"
                 >
-                  @if (loadingTaxonomy()) {
-                    <mat-spinner diameter="18"></mat-spinner>
-                  } @else {
-                    <mat-icon>search</mat-icon>
-                  }
+                  <mat-icon>check_box_outline_blank</mat-icon>
+                  Clear checked
+                </button>
+                <button
+                  mat-flat-button
+                  type="button"
+                  (click)="importCheckedTaxonomyCandidates()"
+                  [disabled]="!selectedTaxonomyCandidateKeys().length"
+                >
+                  <mat-icon>playlist_add_check</mat-icon>
+                  Import selected
                 </button>
               </div>
 
-              @if (taxonomyCandidates().length) {
-                <div
-                  class="candidate-list"
-                  role="list"
-                  aria-label="Taxonomy search results"
-                  tabindex="0"
-                >
-                  @for (candidate of taxonomyCandidates(); track candidate.rank + candidate.value) {
-                    <div class="candidate-row" role="listitem">
-                      <div>
-                        <strong>{{ candidate.label }}</strong>
-                        <span
-                          >{{ candidate.rank | titlecase }} ·
-                          {{ candidate.eligible_assembly_count }} strains</span
-                        >
-                      </div>
-                      <button mat-button type="button" (click)="addTaxonomySelection(candidate)">
-                        <mat-icon>add</mat-icon>
-                        Add
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
-
-              <section class="collection-box" aria-label="Strain collection">
-                <div class="section-heading">
-                  <div>
-                    <h3>Selected set</h3>
-                    <p>{{ collectionSummary() }}</p>
-                  </div>
-                  @if (assemblyCollection().length) {
-                    <button mat-button type="button" (click)="clearAssemblyCollection()">
-                      <mat-icon>backspace</mat-icon>
-                      Clear
-                    </button>
-                  }
-                </div>
-
-                @if (assemblyCollection().length) {
-                  <div class="collection-chip-scroll">
-                    <mat-chip-set aria-label="Selected taxonomy groups">
-                      @for (
-                        selection of assemblyCollection();
-                        track selection.rank + selection.value
-                      ) {
-                        <mat-chip-row (removed)="removeTaxonomySelection(selection)">
-                          {{ taxonomyRankLabel(selection.rank) }}: {{ selection.value }}
-                          <button matChipRemove [attr.aria-label]="'Remove ' + selection.value">
-                            <mat-icon>cancel</mat-icon>
-                          </button>
-                        </mat-chip-row>
-                      }
-                    </mat-chip-set>
-                  </div>
-                } @else {
-                  <div class="collection-empty">
-                    <mat-icon>public</mat-icon>
-                    <span>All eligible strains are included until taxonomy groups are added.</span>
+              <div class="candidate-list" role="list" aria-label="Taxonomy search results">
+                @for (candidate of taxonomyCandidates(); track candidate.rank + candidate.value) {
+                  <div class="candidate-row" role="listitem">
+                    <mat-checkbox
+                      [checked]="taxonomyCandidateChecked(candidate)"
+                      (change)="toggleTaxonomyCandidate(candidate, $event.checked)"
+                    >
+                      <span class="candidate-label">{{ candidate.label }}</span>
+                      <span class="candidate-meta">
+                        {{ candidate.rank | titlecase }} ·
+                        {{ candidate.eligible_assembly_count | number }} assemblies
+                      </span>
+                    </mat-checkbox>
                   </div>
                 }
-              </section>
+              </div>
+            }
+
+            <section class="collection-box" aria-label="Selected taxonomy filters">
+              <div class="section-heading">
+                <div>
+                  <h3>Selected taxonomy</h3>
+                  <p>
+                    @if (taxonomyFilters().length) {
+                      {{ taxonomyFilters().length }} filters are applied as a union.
+                    } @else {
+                      All eligible assemblies remain in scope.
+                    }
+                  </p>
+                </div>
+                @if (taxonomyFilters().length) {
+                  <button mat-button type="button" (click)="clearTaxonomyFilters()">
+                    <mat-icon>backspace</mat-icon>
+                    Clear
+                  </button>
+                }
+              </div>
+
+              @if (taxonomyFilters().length) {
+                <mat-chip-set aria-label="Selected taxonomy filters">
+                  @for (filter of taxonomyFilters(); track filter.rank + filter.value) {
+                    <mat-chip-row (removed)="removeTaxonomyFilter(filter)">
+                      {{ taxonomyRankLabel(filter.rank) }}: {{ filter.value }}
+                      <button matChipRemove [attr.aria-label]="'Remove ' + filter.value">
+                        <mat-icon>cancel</mat-icon>
+                      </button>
+                    </mat-chip-row>
+                  }
+                </mat-chip-set>
+              } @else {
+                <div class="collection-empty">
+                  <mat-icon>public</mat-icon>
+                  <span>No lineage restriction is applied.</span>
+                </div>
+              }
+            </section>
+          </section>
+
+          <section class="setup-step-card">
+            <div class="setup-step-heading">
+              <span class="setup-step-number">{{ chartKind() === 'boxplot' ? 4 : 3 }}</span>
+              <div>
+                <h3>Evidence controls</h3>
+                <p>Default filters use mapped values suitable for analysis.</p>
+              </div>
             </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Minimum mapping confidence rank</mat-label>
+              <input matInput type="number" min="0" max="3" formControlName="minMappingConfidenceRank" />
+            </mat-form-field>
+
+            <mat-checkbox formControlName="includeReviewValues">
+              Include values marked for review
+            </mat-checkbox>
           </section>
         </div>
 
@@ -201,11 +290,7 @@
             <mat-icon>restart_alt</mat-icon>
             Reset
           </button>
-          <button
-            mat-flat-button
-            type="submit"
-            [disabled]="!canSearch()"
-          >
+          <button mat-flat-button type="submit" [disabled]="!canRun()">
             @if (loadingQuery()) {
               <mat-spinner diameter="18"></mat-spinner>
             } @else {
@@ -217,25 +302,7 @@
       </aside>
 
       <section class="workbench-content" data-help-target="microbial-workbench">
-        @if (dataLayerUnavailable()) {
-          <div class="status-note pending" aria-live="polite">
-            <mat-icon>cloud_off</mat-icon>
-            <span>Research query tables are unavailable in this session.</span>
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="reloadOptions()"
-              [disabled]="loadingOptions()"
-            >
-              @if (loadingOptions()) {
-                <mat-spinner diameter="18"></mat-spinner>
-              } @else {
-                <mat-icon>refresh</mat-icon>
-              }
-              Reload
-            </button>
-          </div>
-        } @else if (errorMessage()) {
+        @if (errorMessage()) {
           <div class="status-note error" aria-live="polite">
             <mat-icon>error</mat-icon>
             <span>{{ errorMessage() }}</span>
@@ -256,32 +323,29 @@
             }
           </section>
 
+          <section class="query-status" aria-label="Submitted Environment-G4 query status">
+            @for (row of submittedStatusRows(); track row.label) {
+              <dl>
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
+              </dl>
+            }
+          </section>
+
           <section class="results-panel plot-panel" data-help-target="microbial-chart">
             <div class="panel-heading">
               <div>
-                <h2>{{ response.summary.phenotype_label }} vs {{ densityMetricLabel() }}</h2>
-              </div>
-              <div class="segmented-field" style="width: min(720px, 100%)">
-                <mat-button-toggle-group
-                  style="grid-template-columns: repeat(auto-fit, minmax(148px, 1fr))"
-                  [value]="selectedDensityMetric()"
-                  [disabled]="loadingQuery()"
-                  aria-label="Chart density metric"
-                  (change)="onDensityMetricChange($event.value)"
-                >
-                  @for (option of densityMetricOptions; track option.value) {
-                    <mat-button-toggle [value]="option.value">{{ option.label }}</mat-button-toggle>
-                  }
-                </mat-button-toggle-group>
+                <h2>{{ selectedTrait()?.display_name }} vs {{ selectedOutcomeMetricOption()?.display_name }}</h2>
+                <p>{{ resultDescription() }}</p>
               </div>
             </div>
 
             <div class="chart-frame">
-              @if (chartPointCount(response.scatter_points)) {
+              @if (chartRecordCount() > 0) {
                 <div
-                  #scatterPlot
+                  #chartPlot
                   class="vega-host"
-                  [attr.aria-label]="densityMetricLabel() + ' scatter plot'"
+                  [attr.aria-label]="selectedTrait()?.display_name + ' Environment-G4 chart'"
                 ></div>
                 @if (chartError()) {
                   <div class="chart-error">{{ chartError() }}</div>
@@ -289,23 +353,105 @@
               } @else {
                 <div class="no-points">
                   <mat-icon>query_stats</mat-icon>
-                  <span>No complete strain points for {{ densityMetricLabel() }}.</span>
+                  <span>No complete chart rows for the submitted Environment-G4 query.</span>
                 </div>
               }
             </div>
           </section>
 
+          @if (categoryStatusRows().length) {
+            <section class="results-panel status-panel" aria-label="Category box plot status">
+              <div class="panel-heading">
+                <div>
+                  <h2>Category status</h2>
+                  <p>Server-prepared summary rows, sample sizes, and category-level status.</p>
+                </div>
+              </div>
+
+              <div class="compact-table-shell">
+                <table class="compact-result-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Category</th>
+                      <th scope="col">Assemblies</th>
+                      <th scope="col">Median</th>
+                      <th scope="col">Whisker range</th>
+                      <th scope="col">Outliers</th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of categoryStatusRows(); track row.key) {
+                      <tr>
+                        <th scope="row">{{ row.category }}</th>
+                        <td>{{ row.nAssemblies }}</td>
+                        <td>{{ row.median }}</td>
+                        <td>{{ row.whiskerRange }}</td>
+                        <td>{{ row.outliers }}</td>
+                        <td>{{ row.status }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+
+          @if (analysisResultRows().length) {
+            <section class="results-panel status-panel" aria-label="Environment-G4 statistical summary">
+              <div class="panel-heading">
+                <div>
+                  <h2>Statistical summary</h2>
+                  <p>Displayed only when the Server returns analysis result fields for the submitted query.</p>
+                </div>
+              </div>
+
+              <div class="compact-table-shell">
+                <table class="compact-result-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Predictor</th>
+                      <th scope="col">Group</th>
+                      <th scope="col">Assemblies</th>
+                      <th scope="col">Estimate</th>
+                      <th scope="col">Effect size</th>
+                      <th scope="col">p-value</th>
+                      <th scope="col">CI</th>
+                      <th scope="col">Taxonomy control</th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of analysisResultRows(); track row.key) {
+                      <tr>
+                        <th scope="row">{{ row.predictor }}</th>
+                        <td>{{ row.groupValue }}</td>
+                        <td>{{ row.nAssemblies }}</td>
+                        <td>{{ row.estimate }}</td>
+                        <td>{{ row.effectSize }}</td>
+                        <td>{{ row.pValue }}</td>
+                        <td>{{ row.confidenceInterval }}</td>
+                        <td>{{ row.taxonomyControlStrategy }}</td>
+                        <td>{{ row.status }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+
           <section class="results-panel" data-help-target="microbial-table">
             <div class="panel-heading">
               <div>
-                <h2>Strain set ({{ response.preview_total | number }})</h2>
-                <p>{{ response.preview_total }} strains match the submitted study.</p>
+                <h2>Assembly preview ({{ previewTotal() | number }})</h2>
+                <p>Raw BacDive values are kept in the table and downloads for provenance review.</p>
               </div>
             </div>
 
             <ng-template #tableToolbar>
               <div class="table-toolbar">
-                <span>{{ response.preview_total }} strains</span>
+                <span>{{ previewTotal() | number }} rows</span>
                 <button
                   mat-stroked-button
                   type="button"
@@ -317,16 +463,16 @@
                   } @else {
                     <mat-icon>download</mat-icon>
                   }
-                  Download table
+                  Download
                 </button>
               </div>
             </ng-template>
 
             <mtx-grid
               class="strain-grid"
-              [data]="response.table_preview"
+              [data]="tableRows()"
               [columns]="tableColumns()"
-              [length]="response.preview_total"
+              [length]="previewTotal()"
               [loading]="tableLoading()"
               [pageIndex]="tablePageIndex()"
               [pageSize]="tablePageSize()"
@@ -346,11 +492,15 @@
           <section class="empty-state">
             @if (loadingOptions()) {
               <mat-spinner diameter="28"></mat-spinner>
-              <span>Loading environment-G4 research options.</span>
+              <span>Loading Environment-G4 options.</span>
             } @else {
               <mat-icon>query_stats</mat-icon>
               <div>
-                <strong>Build a microbial G4 study</strong>
+                <strong>Configure an Environment-G4 comparison</strong>
+                <p>
+                  Numeric traits render as scatter plots. Categorical and multi-label traits render
+                  as category box plots from Server-prepared summaries.
+                </p>
               </div>
             }
           </section>

@@ -62,7 +62,7 @@ interface GeneTaxonScope {
 }
 
 function internalG4SiteCount(row: GeneSearchItem): number {
-  return row.insideOf_gene_g4_count;
+  return row.g4_count;
 }
 
 function normalizeTaxonSearchValue(value: string | TaxonomySearch | null): string {
@@ -328,21 +328,21 @@ export class GeneHomeComponent {
     },
     {
       header: 'Sequence record',
-      field: 'seqid',
+      field: 'region_id',
     },
     {
       header: 'Biotype',
-      field: 'gene_biotype',
-      formatter: (row) => geneBiotypeLabel(row.gene_biotype),
+      field: 'biotype',
+      formatter: (row) => geneBiotypeLabel(row.biotype),
     },
     {
       header: 'Range',
-      field: 'feature_start',
+      field: 'start',
       cellTemplate: this.rangeTpl as unknown as never,
     },
     {
       header: 'Internal G4 count',
-      field: 'insideOf_gene_g4_count',
+      field: 'g4_count',
       cellTemplate: this.internalG4Tpl as unknown as never,
       sortable: true,
     },
@@ -423,11 +423,11 @@ export class GeneHomeComponent {
   }
 
   formatRange(row: GeneSearchItem): string {
-    if (row.feature_start === null || row.feature_end === null) {
+    if (row.start === null || row.end === null) {
       return 'Unavailable';
     }
     const strand = row.strand ? ` (${row.strand})` : '';
-    return `${COUNT_FORMATTER.format(row.feature_start)}..${COUNT_FORMATTER.format(row.feature_end)}${strand}`;
+    return `${COUNT_FORMATTER.format(row.start)}..${COUNT_FORMATTER.format(row.end)}${strand}`;
   }
 
   internalG4Count(row: GeneSearchItem): string {

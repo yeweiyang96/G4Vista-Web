@@ -422,6 +422,39 @@ describe('TaxonomyInfoComponent', () => {
     expect(text).not.toContain('No assigned feature');
   });
 
+  it('uses Server-provided position ratios and does not synthesize missing other counts', async () => {
+    const summaryWithoutApiOther: TaxonomyG4Summary = {
+      ...singleSummary,
+      position_distribution: {
+        ...singleSummary.position_distribution,
+        total_count: 20,
+        categories: singleSummary.position_distribution.categories
+          .filter((category) => category.key !== 'other')
+          .map((category) =>
+            category.key === 'gene_inside'
+              ? {
+                  ...category,
+                  count: 6,
+                  ratio: 0.25,
+                }
+              : category,
+          ),
+      },
+    };
+    const fixture = await createComponent(summaryWithoutApiOther);
+
+    const rows = fixture.componentInstance.positionCategoryRows();
+    const insideRow = rows.find((row) => row.key === 'gene_inside');
+    const otherRow = rows.find((row) => row.key === 'other');
+
+    expect(insideRow?.count).toBe(6);
+    expect(insideRow?.ratio).toBe(0.25);
+    expect(insideRow?.ratioLabel).toBe('25%');
+    expect(otherRow?.count).toBe(0);
+    expect(otherRow?.ratio).toBe(0);
+    expect(otherRow?.ratioLabel).toBe('0%');
+  });
+
   it('paginates gene biotype rows sorted by total gene-context counts', async () => {
     const pagedSummary: TaxonomyG4Summary = {
       ...singleSummary,

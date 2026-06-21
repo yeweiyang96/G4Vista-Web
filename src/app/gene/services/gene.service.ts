@@ -4,75 +4,57 @@ import { Observable, map } from 'rxjs';
 
 export interface GeneDetail {
   assembly_accession: string;
-  seqid: string;
-  source: string | null;
-  feature: string | null;
-  feature_start: number | null;
-  feature_end: number | null;
-  strand: string | null;
-  phase: number | null;
-  feature_id: string | null;
-  gene_name: string | null;
+  region_id: string;
+  feature_id: string;
   gene_id: string | null;
-  parent_id: string | null;
+  gene_name: string | null;
   locus_tag: string | null;
-  description: string | null;
-  gene_biotype: string | null;
-  feature_key: string;
-  insideOf_gene_g4: number[];
-  insideOf_genes_upstream_100bp_g4: number[];
-  insideOf_genes_downstream_100bp_g4: number[];
-  insideOf_genes_upstream_200bp_g4: number[];
-  insideOf_genes_downstream_200bp_g4: number[];
-  insideOf_genes_upstream_300bp_g4: number[];
-  insideOf_genes_downstream_300bp_g4: number[];
-  insideOf_genes_upstream_500bp_g4: number[];
-  insideOf_genes_downstream_500bp_g4: number[];
-  insideOf_genes_upstream_1k_g4: number[];
-  insideOf_genes_upstream_2k_g4: number[];
-  insideOf_genes_upstream_3k_g4: number[];
-  insideOf_genes_upstream_4k_g4: number[];
-  insideOf_genes_upstream_5k_g4: number[];
-  insideOf_genes_downstream_1k_g4: number[];
-  insideOf_genes_downstream_2k_g4: number[];
-  insideOf_genes_downstream_3k_g4: number[];
-  insideOf_genes_downstream_4k_g4: number[];
-  insideOf_genes_downstream_5k_g4: number[];
-  insideOf_gene_i_motif: number[];
-  insideOf_genes_upstream_100bp_i_motif: number[];
-  insideOf_genes_downstream_100bp_i_motif: number[];
-  insideOf_genes_upstream_200bp_i_motif: number[];
-  insideOf_genes_downstream_200bp_i_motif: number[];
-  insideOf_genes_upstream_300bp_i_motif: number[];
-  insideOf_genes_downstream_300bp_i_motif: number[];
-  insideOf_genes_upstream_500bp_i_motif: number[];
-  insideOf_genes_downstream_500bp_i_motif: number[];
-  insideOf_genes_upstream_1k_i_motif: number[];
-  insideOf_genes_upstream_2k_i_motif: number[];
-  insideOf_genes_upstream_3k_i_motif: number[];
-  insideOf_genes_upstream_4k_i_motif: number[];
-  insideOf_genes_upstream_5k_i_motif: number[];
-  insideOf_genes_downstream_1k_i_motif: number[];
-  insideOf_genes_downstream_2k_i_motif: number[];
-  insideOf_genes_downstream_3k_i_motif: number[];
-  insideOf_genes_downstream_4k_i_motif: number[];
-  insideOf_genes_downstream_5k_i_motif: number[];
+  biotype: string | null;
+  start: number | null;
+  end: number | null;
+  strand: string | null;
+  attributes_raw: string;
+  counts: GeneQuadruplexCounts;
+  relations: GeneQuadruplexRelation[];
 }
 
 export interface GeneSearchItem {
   assembly_accession: string;
   organism_name: string;
-  seqid: string;
-  feature_start: number | null;
-  feature_end: number | null;
-  strand: string | null;
-  feature_id: string | null;
+  region_id: string;
+  feature_id: string;
   gene_id: string | null;
   gene_name: string | null;
-  gene_biotype: string | null;
-  insideOf_gene_g4_count: number;
-  insideOf_genes_upstream_1k_g4_count: number;
-  insideOf_genes_downstream_1k_g4_count: number;
+  locus_tag: string | null;
+  biotype: string | null;
+  start: number | null;
+  end: number | null;
+  strand: string | null;
+  g4_count: number;
+  i_motif_count: number;
+  quadruplex_sequence_count: number;
+}
+
+export interface GeneQuadruplexCounts {
+  g4_count: number;
+  i_motif_count: number;
+  quadruplex_sequence_count: number;
+}
+
+export interface GeneQuadruplexRelation {
+  assembly_accession: string;
+  region_id: string;
+  quadruplex_sequence_id: string;
+  quadruplex_type: string;
+  start: number;
+  end: number;
+  relation_category: string;
+  distance_bp: number;
+  overlap_bp: number;
+  overlap_fraction: number;
+  relation_mode: string;
+  gene_id: string;
+  gene_biotype: string;
 }
 
 export interface GeneSearchRequest {
@@ -125,7 +107,7 @@ function parseContentDispositionFilename(contentDisposition: string | null): str
 })
 export class GeneService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/v1/gene';
+  private readonly apiUrl = '/api/v1/genes';
 
   private geneSearchParams(request: GeneSearchRequest): HttpParams {
     let params = new HttpParams().set('search_term', request.searchTerm);
@@ -173,9 +155,13 @@ export class GeneService {
       );
   }
 
-  getGene(assemblyAccession: string, seqid: string, featureId: string): Observable<GeneDetail> {
+  getGene(
+    assemblyAccession: string,
+    regionId: string,
+    featureId: string,
+  ): Observable<GeneDetail> {
     return this.http.get<GeneDetail>(
-      `${this.apiUrl}/${encodeURIComponent(assemblyAccession)}/${encodeURIComponent(seqid)}/${encodeURIComponent(featureId)}`,
+      `${this.apiUrl}/${encodeURIComponent(assemblyAccession)}/${encodeURIComponent(regionId)}/${encodeURIComponent(featureId)}`,
     );
   }
 }

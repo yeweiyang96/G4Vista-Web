@@ -50,6 +50,13 @@
                   <span aria-hidden="true">·</span>
                   <em>{{ one.organism_name }}</em>
                 </span>
+                @if (optionContextLabels(one).length) {
+                  <span class="genome-search-option-context">
+                    @for (label of optionContextLabels(one); track label) {
+                      <span>{{ label }}</span>
+                    }
+                  </span>
+                }
               </span>
             </mat-option>
           }

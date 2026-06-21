@@ -70,6 +70,19 @@ describe('HomeComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/gene'], { queryParams: { search: 'TP53' } });
   });
 
+  it('defaults homepage search to genome and places taxonomy last', () => {
+    const toggles = Array.from(
+      fixture.nativeElement.querySelectorAll('.home-search-targets mat-button-toggle'),
+    ) as HTMLElement[];
+
+    expect(component.heroTargetControl.value).toBe('genome');
+    expect(toggles.map((toggle) => toggle.textContent?.trim())).toEqual([
+      'Genome',
+      'Gene',
+      'Taxonomy',
+    ]);
+  });
+
   it('maps common starting point actions to functional entry routes', () => {
     const points = component.startingPoints();
     const human = points.find((point) => point.title === 'Human reference genome');
@@ -93,8 +106,8 @@ describe('HomeComponent', () => {
       jasmine.objectContaining({
         route: '/research/microbial-environment-g4',
         queryParams: {
-          trait: 'temperature',
-          mode: 'growth',
+          trait: 'growth_temperature',
+          metric: 'g4_density_per_mb',
           rank: 'genus',
           taxon: 'Bacillus',
           run: 'true',

@@ -124,10 +124,7 @@ describe('PositionStatisticsPanelComponent', () => {
     genome_length_mb: 0.01,
     filters: {
       windows: [1000],
-      g4_type: 'g4',
-      tetrads: [],
-      min_score: null,
-      max_score: null,
+      quadruplex_type: 'g4',
     },
     windows: [
       {

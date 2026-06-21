@@ -26,7 +26,7 @@ describe('GeneService', () => {
     service.searchGenes({ searchTerm: 'ATP6' }).subscribe(responseSpy);
 
     const request = httpMock.expectOne(
-      (req) => req.url === '/api/v1/gene/' && req.params.get('search_term') === 'ATP6',
+      (req) => req.url === '/api/v1/genes/' && req.params.get('search_term') === 'ATP6',
     );
 
     expect(request.request.method).toBe('GET');
@@ -35,14 +35,18 @@ describe('GeneService', () => {
       {
         assembly_accession: 'GCF_000001405.39',
         organism_name: 'Homo sapiens',
-        seqid: 'NC_012920.1',
+        region_id: 'NC_012920.1',
         feature_id: 'gene-ATP6',
         gene_id: 'ATP6',
         gene_name: null,
-        gene_biotype: 'protein_coding',
-        insideOf_gene_g4_count: 0,
-        insideOf_genes_upstream_1k_g4_count: 0,
-        insideOf_genes_downstream_1k_g4_count: 0,
+        locus_tag: null,
+        biotype: 'protein_coding',
+        start: 1,
+        end: 200,
+        strand: '+',
+        g4_count: 0,
+        i_motif_count: 0,
+        quadruplex_sequence_count: 0,
       },
     ]);
 
@@ -59,7 +63,7 @@ describe('GeneService', () => {
 
     const request = httpMock.expectOne(
       (req) =>
-        req.url === '/api/v1/gene/' &&
+        req.url === '/api/v1/genes/' &&
         req.params.get('search_term') === 'dnaK' &&
         req.params.get('assembly_accession') === 'GCF_1',
     );
@@ -73,7 +77,7 @@ describe('GeneService', () => {
 
     const request = httpMock.expectOne(
       (req) =>
-        req.url === '/api/v1/gene/' &&
+        req.url === '/api/v1/genes/' &&
         req.params.get('search_term') === 'TP53' &&
         req.params.get('taxon_id') === '9606',
     );
@@ -91,7 +95,7 @@ describe('GeneService', () => {
 
     const request = httpMock.expectOne(
       (req) =>
-        req.url === '/api/v1/gene/page' &&
+        req.url === '/api/v1/genes/page' &&
         req.params.get('search_term') === 'dnaK' &&
         req.params.get('offset') === '2' &&
         req.params.get('limit') === '25',
@@ -111,7 +115,7 @@ describe('GeneService', () => {
 
     const request = httpMock.expectOne(
       (req) =>
-        req.url === '/api/v1/gene/download' &&
+        req.url === '/api/v1/genes/download' &&
         req.params.get('search_term') === 'TP53' &&
         req.params.get('taxon_id') === '9606',
     );

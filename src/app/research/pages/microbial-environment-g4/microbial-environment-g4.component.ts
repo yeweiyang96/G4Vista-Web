@@ -16,9 +16,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,75 +30,109 @@ import { Sort } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
 import embed, { VisualizationSpec } from 'vega-embed';
-import { finalize } from 'rxjs';
+import { finalize, Observable } from 'rxjs';
 import {
-  MicrobialEnvironmentDensityMetric,
-  MicrobialEnvironmentG4Options,
-  MicrobialEnvironmentG4Query,
-  MicrobialEnvironmentG4QueryResponse,
+  EnvironmentCategoryBoxplotResponse,
+  EnvironmentCategoryOption,
+  EnvironmentChartKind,
+  EnvironmentDownloadMode,
+  EnvironmentDownloadRequest,
+  EnvironmentNumericScatterPoint,
+  EnvironmentNumericScatterResponse,
+  EnvironmentOptionsResponse,
+  EnvironmentOutcomeMetric,
+  EnvironmentOutcomeMetricOption,
+  EnvironmentQueryRequest,
+  EnvironmentQueryResponse,
+  EnvironmentSortCategoriesBy,
+  EnvironmentSortOrder,
+  EnvironmentTableRow,
+  EnvironmentTaxonomyFilter,
+  EnvironmentTaxonomyRank,
+  EnvironmentTaxonomySearchResult,
+  EnvironmentTraitCode,
+  EnvironmentTraitOption,
   MicrobialEnvironmentG4Service,
-  MicrobialEnvironmentMode,
-  MicrobialEnvironmentOption,
-  MicrobialEnvironmentScatterPoint,
-  MicrobialEnvironmentSortField,
-  MicrobialEnvironmentSortOrder,
-  MicrobialEnvironmentTableRow,
-  MicrobialEnvironmentTrait,
-  MicrobialTaxonomyRank,
-  MicrobialTaxonomySearchResult,
-  MicrobialTaxonomySelection,
 } from '../../services/microbial-environment-g4.service';
 import { UiThemeMode, UiThemeService } from '../../../theme/ui-theme.service';
 
 interface SummaryMetric {
-  label: string;
-  value: string;
-  hint: string;
-  icon: string;
+  readonly label: string;
+  readonly value: string;
+  readonly hint: string;
+  readonly icon: string;
 }
 
-interface AxisSelection {
-  readonly trait: MicrobialEnvironmentTrait;
-  readonly mode: MicrobialEnvironmentMode;
+interface SubmittedStatusRow {
+  readonly label: string;
+  readonly value: string;
 }
 
 interface TableSortState {
-  readonly active: MicrobialEnvironmentSortField;
-  readonly direction: MicrobialEnvironmentSortOrder;
+  readonly active: string;
+  readonly direction: EnvironmentSortOrder;
 }
 
-interface DensityMetricOption {
-  readonly value: MicrobialEnvironmentDensityMetric;
-  readonly label: string;
+interface AnalysisResultRow {
+  readonly key: string;
+  readonly predictor: string;
+  readonly groupValue: string;
+  readonly nAssemblies: string;
+  readonly estimate: string;
+  readonly effectSize: string;
+  readonly pValue: string;
+  readonly confidenceInterval: string;
+  readonly taxonomyControlStrategy: string;
+  readonly status: string;
+}
+
+interface CategoryStatusRow {
+  readonly key: string;
+  readonly category: string;
+  readonly nAssemblies: string;
+  readonly median: string;
+  readonly whiskerRange: string;
+  readonly outliers: string;
+  readonly status: string;
+}
+
+type EnvironmentTaxonomyRankSelection = 'all' | EnvironmentTaxonomyRank;
+
+interface TaxonomyRankUiOption {
+  readonly rank: EnvironmentTaxonomyRankSelection;
+  readonly display_label: string;
+}
+
+interface RouteInitialization {
+  readonly traitCode: string | null;
+  readonly outcomeMetric: EnvironmentOutcomeMetric | null;
+  readonly taxonomyRank: EnvironmentTaxonomyRankSelection;
+  readonly taxon: string | null;
+  readonly run: boolean;
 }
 
 interface VegaPointDatum {
-  assembly_accession: string;
-  phenotype_value: number;
-  density_value: number;
-  strain: string;
-  genus: string;
-  species: string;
+  readonly assembly_accession: string;
+  readonly x_value: number;
+  readonly y_value: number;
+  readonly species: string;
+  readonly genus: string;
 }
 
 interface VegaLineDatum {
-  phenotype_value: number;
-  density_value: number;
+  readonly x_value: number;
+  readonly y_value: number;
 }
 
-interface QueryExecutionBehavior {
-  readonly clearExistingResult: boolean;
-  readonly refreshChart: boolean;
-  readonly showTableLoading: boolean;
-  readonly preserveTablePayload: boolean;
-}
-
-interface MicrobialEnvironmentRouteInitialization {
-  readonly trait: MicrobialEnvironmentTrait;
-  readonly mode: MicrobialEnvironmentMode;
-  readonly rank: MicrobialTaxonomyRank;
-  readonly taxon: string | null;
-  readonly run: boolean;
+interface VegaBoxplotDatum {
+  readonly category_id: string;
+  readonly label: string;
+  readonly n_assemblies: number;
+  readonly q1: number;
+  readonly median: number;
+  readonly q3: number;
+  readonly whisker_low: number;
+  readonly whisker_high: number;
 }
 
 interface VegaChartPadding {
@@ -116,104 +150,124 @@ interface VegaThemeColors {
 
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US');
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 });
-const STAT_FORMATTER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
-const INITIAL_AXIS_SELECTION: AxisSelection = {
-  trait: 'temperature',
-  mode: 'growth',
-};
-const INITIAL_DENSITY_METRIC: MicrobialEnvironmentDensityMetric = 'g4_density_per_mb';
-const INITIAL_TAXONOMY_RANK: MicrobialTaxonomyRank = 'genus';
+const INITIAL_TRAIT_CODE: EnvironmentTraitCode = 'growth_temperature';
+const INITIAL_OUTCOME_METRIC: EnvironmentOutcomeMetric = 'g4_density_per_mb';
+const ALL_TAXONOMY_RANK: EnvironmentTaxonomyRankSelection = 'all';
+const INITIAL_TAXONOMY_RANK: EnvironmentTaxonomyRankSelection = ALL_TAXONOMY_RANK;
 const INITIAL_PAGE_INDEX = 0;
-const INITIAL_PAGE_SIZE = 10;
+const INITIAL_PAGE_SIZE = 20;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
-const MINIMUM_ANALYSIS_STRAINS = 5;
 const INITIAL_TABLE_SORT: TableSortState = {
-  active: 'phenotype_value',
+  active: 'assembly_accession',
   direction: 'asc',
 };
-const ANALYSIS_QUERY_BEHAVIOR: QueryExecutionBehavior = {
-  clearExistingResult: true,
-  refreshChart: true,
-  showTableLoading: true,
-  preserveTablePayload: false,
-};
-const TABLE_QUERY_BEHAVIOR: QueryExecutionBehavior = {
-  clearExistingResult: false,
-  refreshChart: false,
-  showTableLoading: true,
-  preserveTablePayload: false,
-};
-const CHART_QUERY_BEHAVIOR: QueryExecutionBehavior = {
-  clearExistingResult: false,
-  refreshChart: true,
-  showTableLoading: false,
-  preserveTablePayload: true,
-};
-const VEGA_CHART_PADDING: VegaChartPadding = { left: 64, right: 24, top: 10, bottom: 36 };
+const INITIAL_SORT_CATEGORIES_BY: EnvironmentSortCategoriesBy = 'sort_order';
+const INITIAL_DOWNLOAD_MODE: EnvironmentDownloadMode = 'csv';
+const VEGA_CHART_PADDING: VegaChartPadding = { left: 70, right: 24, top: 16, bottom: 54 };
 const VEGA_CHART_HEIGHT = 360;
 const MINIMUM_VEGA_PLOT_WIDTH = 320;
-const DENSITY_METRIC_OPTIONS: readonly DensityMetricOption[] = [
-  { value: 'g4_density_per_mb', label: 'G4 density' },
-  { value: 'upstream_g4_density_per_mb', label: 'Upstream G4 density' },
-  { value: 'downstream_g4_density_per_mb', label: 'Downstream G4 density' },
-  { value: 'intergenic_g4_density_per_mb', label: 'Intergenic G4 density' },
+const ENVIRONMENT_OUTCOME_METRICS: readonly EnvironmentOutcomeMetric[] = [
+  'g4_density_per_mb',
+  'gene_quadruplex_density_per_mb',
+  'upstream_quadruplex_density_per_mb',
+  'downstream_quadruplex_density_per_mb',
+  'intergenic_quadruplex_density_per_mb',
 ];
-const FALLBACK_OPTIONS: MicrobialEnvironmentG4Options = {
-  traits: [
-    { value: 'temperature', label: 'Temperature' },
-    { value: 'ph', label: 'pH' },
-  ],
-  modes: [
-    { value: 'growth', label: 'Growth' },
-    { value: 'optimum', label: 'Optimum' },
-  ],
-  taxonomy_ranks: [
-    { value: 'domain', label: 'Domain' },
-    { value: 'phylum', label: 'Phylum' },
-    { value: 'class', label: 'Class' },
-    { value: 'order', label: 'Order' },
-    { value: 'family', label: 'Family' },
-    { value: 'genus', label: 'Genus' },
-    { value: 'species', label: 'Species' },
-  ],
-  plans: [
-    {
-      plan_id: 'growth_temperature_g4',
-      trait: 'temperature',
-      mode: 'growth',
-      phenotype_label: 'Growth temperature',
-      phenotype_unit: 'celsius',
-      eligible_assemblies: 0,
-    },
-    {
-      plan_id: 'optimum_temperature_g4',
-      trait: 'temperature',
-      mode: 'optimum',
-      phenotype_label: 'Optimum temperature',
-      phenotype_unit: 'celsius',
-      eligible_assemblies: 0,
-    },
-    {
-      plan_id: 'growth_ph_g4',
-      trait: 'ph',
-      mode: 'growth',
-      phenotype_label: 'Growth pH',
-      phenotype_unit: 'pH',
-      eligible_assemblies: 0,
-    },
-    {
-      plan_id: 'optimum_ph_g4',
-      trait: 'ph',
-      mode: 'optimum',
-      phenotype_label: 'Optimum pH',
-      phenotype_unit: 'pH',
-      eligible_assemblies: 0,
-    },
-  ],
-};
+const ENVIRONMENT_TAXONOMY_RANKS: readonly EnvironmentTaxonomyRank[] = [
+  'domain',
+  'phylum',
+  'class',
+  'order',
+  'family',
+  'genus',
+  'species',
+  'full_scientific_name',
+];
 
-function optionLabel(options: readonly MicrobialEnvironmentOption[], value: string): string {
-  return options.find((option) => option.value === value)?.label ?? value;
+function isEnvironmentOutcomeMetric(value: string): value is EnvironmentOutcomeMetric {
+  return ENVIRONMENT_OUTCOME_METRICS.includes(value as EnvironmentOutcomeMetric);
+}
+
+function isEnvironmentTaxonomyRank(value: string): value is EnvironmentTaxonomyRank {
+  return ENVIRONMENT_TAXONOMY_RANKS.includes(value as EnvironmentTaxonomyRank);
+}
+
+function isEnvironmentTaxonomyRankSelection(
+  value: string,
+): value is EnvironmentTaxonomyRankSelection {
+  return value === ALL_TAXONOMY_RANK || isEnvironmentTaxonomyRank(value);
+}
+
+function queryParamValue(params: ParamMap, key: string): string | null {
+  const value = params.get(key)?.trim();
+  return value ? value : null;
+}
+
+function routeTraitCodeFromParamMap(params: ParamMap): string | null {
+  return queryParamValue(params, 'trait');
+}
+
+function routeOutcomeMetricFromParamMap(params: ParamMap): EnvironmentOutcomeMetric | null {
+  const value = queryParamValue(params, 'metric');
+  if (value === null) {
+    return null;
+  }
+  if (isEnvironmentOutcomeMetric(value)) {
+    return value;
+  }
+  throw new Error(`Invalid Environment-G4 metric query param: ${value}.`);
+}
+
+function routeRankFromParamMap(params: ParamMap): EnvironmentTaxonomyRankSelection {
+  const value = queryParamValue(params, 'rank');
+  if (value === null) {
+    return INITIAL_TAXONOMY_RANK;
+  }
+  if (isEnvironmentTaxonomyRankSelection(value)) {
+    return value;
+  }
+  throw new Error(`Invalid Environment-G4 taxonomy rank query param: ${value}.`);
+}
+
+function routeRunFromParamMap(params: ParamMap): boolean {
+  const value = queryParamValue(params, 'run');
+  if (value === null) {
+    return false;
+  }
+  if (value === 'true') {
+    return true;
+  }
+  if (value === 'false') {
+    return false;
+  }
+  throw new Error(`Invalid Environment-G4 run query param: ${value}.`);
+}
+
+function routeInitializationFromParamMap(params: ParamMap): RouteInitialization {
+  return {
+    traitCode: routeTraitCodeFromParamMap(params),
+    outcomeMetric: routeOutcomeMetricFromParamMap(params),
+    taxonomyRank: routeRankFromParamMap(params),
+    taxon: queryParamValue(params, 'taxon'),
+    run: routeRunFromParamMap(params),
+  };
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    const detail = (error.error as { detail?: unknown } | null)?.detail;
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
+    }
+    if (typeof error.error === 'string' && error.error.trim()) {
+      return error.error;
+    }
+    return error.message;
+  }
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return 'Environment-G4 request failed.';
 }
 
 function resolveLightDarkColor(value: string, mode: UiThemeMode): string | null {
@@ -244,157 +298,54 @@ function formatNumber(value: number | null | undefined): string {
   return NUMBER_FORMATTER.format(value);
 }
 
-function formatStat(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
+function formatStatusLabel(value: string): string {
+  return value
+    .split('_')
+    .filter((part) => part.length > 0)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function confidenceIntervalLabel(low: number | null, high: number | null): string {
+  if (low === null && high === null) {
     return 'NA';
   }
-  return STAT_FORMATTER.format(value);
+  return `${formatNumber(low)}..${formatNumber(high)}`;
 }
 
-function formatPValue(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return 'NA';
-  }
-  if (value > 0 && value < 0.001) {
-    return value.toExponential(2);
-  }
-  return STAT_FORMATTER.format(value);
+function metricValue(row: EnvironmentTableRow, metric: EnvironmentOutcomeMetric): number | null {
+  return row[metric];
 }
 
-function preserveTablePayload(
-  response: MicrobialEnvironmentG4QueryResponse,
-  currentResult: MicrobialEnvironmentG4QueryResponse | null,
-): MicrobialEnvironmentG4QueryResponse {
-  if (!currentResult) {
-    return response;
-  }
-  return {
-    ...response,
-    table_preview: currentResult.table_preview,
-    preview_total: currentResult.preview_total,
-    download_filename: currentResult.download_filename,
-  };
+function joinedValues(values: readonly string[]): string {
+  return values.length ? values.join('; ') : 'NA';
 }
 
-function extractErrorMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse) {
-    const detail = (error.error as { detail?: unknown } | null)?.detail;
-    if (typeof detail === 'string' && detail.trim()) {
-      return detail;
-    }
-    if (typeof error.error === 'string' && error.error.trim()) {
-      return error.error;
-    }
-    return error.message;
-  }
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    return String((error as { message: unknown }).message);
-  }
-  return 'Environment-G4 research query failed.';
-}
-
-function isResearchTableError(message: string, error: unknown): boolean {
-  return (
-    message.includes('microbial_environment_g4_assembly_plan') ||
-    message.includes('microbial_environment_g4_taxonomy_index') ||
-    message.includes('environment-G4 data') ||
-    (error instanceof HttpErrorResponse && error.status === 503)
+function taxonomySummary(row: EnvironmentTableRow): string {
+  const lineage = [row.domain, row.phylum, row.class_name, row.order, row.family, row.genus].filter(
+    (value) => value.length > 0,
   );
+  return lineage.length ? lineage.join(' > ') : 'NA';
 }
 
-function selectionKey(selection: MicrobialTaxonomySelection): string {
-  return `${selection.rank}:${selection.value}`;
+function isNumericResponse(
+  response: EnvironmentQueryResponse,
+): response is EnvironmentNumericScatterResponse {
+  return 'scatter_points' in response;
 }
 
-function isMicrobialEnvironmentTrait(value: string): value is MicrobialEnvironmentTrait {
-  return value === 'temperature' || value === 'ph';
-}
-
-function isMicrobialEnvironmentMode(value: string): value is MicrobialEnvironmentMode {
-  return value === 'growth' || value === 'optimum';
-}
-
-function isMicrobialTaxonomyRank(value: string): value is MicrobialTaxonomyRank {
-  return (
-    value === 'domain' ||
-    value === 'phylum' ||
-    value === 'class' ||
-    value === 'order' ||
-    value === 'family' ||
-    value === 'genus' ||
-    value === 'species'
-  );
-}
-
-function queryParamValue(params: ParamMap, key: string): string | null {
-  const value = params.get(key)?.trim();
-  return value ? value : null;
-}
-
-function routeTraitFromParamMap(params: ParamMap): MicrobialEnvironmentTrait {
-  const value = queryParamValue(params, 'trait');
-  if (value === null) {
-    return INITIAL_AXIS_SELECTION.trait;
-  }
-  if (isMicrobialEnvironmentTrait(value)) {
-    return value;
-  }
-  throw new Error(`Invalid microbial environment trait query param: ${value}.`);
-}
-
-function routeModeFromParamMap(params: ParamMap): MicrobialEnvironmentMode {
-  const value = queryParamValue(params, 'mode');
-  if (value === null) {
-    return INITIAL_AXIS_SELECTION.mode;
-  }
-  if (isMicrobialEnvironmentMode(value)) {
-    return value;
-  }
-  throw new Error(`Invalid microbial environment mode query param: ${value}.`);
-}
-
-function routeRankFromParamMap(params: ParamMap): MicrobialTaxonomyRank {
-  const value = queryParamValue(params, 'rank');
-  if (value === null) {
-    return INITIAL_TAXONOMY_RANK;
-  }
-  if (isMicrobialTaxonomyRank(value)) {
-    return value;
-  }
-  throw new Error(`Invalid microbial taxonomy rank query param: ${value}.`);
-}
-
-function routeRunFromParamMap(params: ParamMap): boolean {
-  const value = queryParamValue(params, 'run');
-  if (value === null) {
-    return false;
-  }
-  if (value === 'true') {
-    return true;
-  }
-  if (value === 'false') {
-    return false;
-  }
-  throw new Error(`Invalid microbial run query param: ${value}.`);
-}
-
-function routeInitializationFromParamMap(
-  params: ParamMap,
-): MicrobialEnvironmentRouteInitialization {
-  return {
-    trait: routeTraitFromParamMap(params),
-    mode: routeModeFromParamMap(params),
-    rank: routeRankFromParamMap(params),
-    taxon: queryParamValue(params, 'taxon'),
-    run: routeRunFromParamMap(params),
-  };
+function defaultSelectedCategoryIds(categories: readonly EnvironmentCategoryOption[]): string[] {
+  return categories
+    .filter((category) => category.is_default_visible)
+    .sort((left, right) => left.sort_order - right.sort_order)
+    .map((category) => category.category_id);
 }
 
 @Component({
   selector: 'app-microbial-environment-g4',
   imports: [
     MatButtonModule,
-    MatButtonToggleModule,
+    MatCheckboxModule,
     MatChipsModule,
     MatFormFieldModule,
     MatIconModule,
@@ -404,6 +355,7 @@ function routeInitializationFromParamMap(
     MatTooltipModule,
     MtxGridModule,
     ReactiveFormsModule,
+    RouterLink,
     DecimalPipe,
     TitleCasePipe,
   ],
@@ -412,7 +364,7 @@ function routeInitializationFromParamMap(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy {
-  @ViewChild('scatterPlot') private scatterPlot?: ElementRef<HTMLDivElement>;
+  @ViewChild('chartPlot') private chartPlot?: ElementRef<HTMLDivElement>;
 
   private readonly service = inject(MicrobialEnvironmentG4Service);
   private readonly route = inject(ActivatedRoute);
@@ -422,90 +374,131 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private readonly routeInitialization = routeInitializationFromParamMap(
     this.route.snapshot.queryParamMap,
   );
-  private readonly axisSelection = signal<AxisSelection>(INITIAL_AXIS_SELECTION);
-  private readonly taxonomySelectionCounts = signal<Record<string, number>>({});
+  private readonly selectedTraitCodeSignal = signal<EnvironmentTraitCode>(INITIAL_TRAIT_CODE);
+  private readonly selectedOutcomeMetricSignal =
+    signal<EnvironmentOutcomeMetric>(INITIAL_OUTCOME_METRIC);
+  private readonly selectedContextAxisSignal = signal<string | null>(null);
+  private readonly selectedCategoryIdsSignal = signal<readonly string[]>([]);
+  private readonly taxonomyFiltersSignal = signal<EnvironmentTaxonomyFilter[]>([]);
+  private readonly selectedTaxonomyCandidateKeysSignal = signal<readonly string[]>([]);
   private readonly pageIndex = signal(INITIAL_PAGE_INDEX);
   private readonly pageSize = signal(INITIAL_PAGE_SIZE);
   private readonly sortStateSignal = signal<TableSortState>(INITIAL_TABLE_SORT);
-  private readonly densityMetric =
-    signal<MicrobialEnvironmentDensityMetric>(INITIAL_DENSITY_METRIC);
-  private readonly resultDensityMetric =
-    signal<MicrobialEnvironmentDensityMetric>(INITIAL_DENSITY_METRIC);
 
   private chartCleanup: (() => void) | null = null;
   private taxonomyRequestVersion = 0;
   private queryRequestVersion = 0;
-  private tableLoadingRequestVersion = 0;
   private hasAppliedRouteInitialization = false;
 
-  readonly options = signal<MicrobialEnvironmentG4Options | null>(null);
-  readonly result = signal<MicrobialEnvironmentG4QueryResponse | null>(null);
-  readonly taxonomyCandidates = signal<MicrobialTaxonomySearchResult[]>([]);
-  readonly assemblyCollection = signal<MicrobialTaxonomySelection[]>([]);
-  readonly submittedQuery = signal<MicrobialEnvironmentG4Query | null>(null);
+  readonly options = signal<EnvironmentOptionsResponse | null>(null);
+  readonly result = signal<EnvironmentQueryResponse | null>(null);
+  readonly submittedQuery = signal<EnvironmentQueryRequest | null>(null);
+  readonly taxonomyCandidates = signal<EnvironmentTaxonomySearchResult[]>([]);
   readonly loadingOptions = signal(false);
   readonly loadingTaxonomy = signal(false);
   readonly loadingQuery = signal(false);
   readonly tableLoading = signal(false);
   readonly downloading = signal(false);
-  readonly dataLayerUnavailable = signal(false);
   readonly errorMessage = signal('');
   readonly chartError = signal('');
 
   readonly form = new FormGroup({
-    trait: new FormControl<MicrobialEnvironmentTrait>(INITIAL_AXIS_SELECTION.trait, {
+    traitCode: new FormControl<EnvironmentTraitCode>(INITIAL_TRAIT_CODE, { nonNullable: true }),
+    outcomeMetric: new FormControl<EnvironmentOutcomeMetric>(INITIAL_OUTCOME_METRIC, {
       nonNullable: true,
     }),
-    mode: new FormControl<MicrobialEnvironmentMode>(INITIAL_AXIS_SELECTION.mode, {
-      nonNullable: true,
-    }),
-    taxonomyRank: new FormControl<MicrobialTaxonomyRank>(INITIAL_TAXONOMY_RANK, {
+    taxonomyRank: new FormControl<EnvironmentTaxonomyRankSelection>(INITIAL_TAXONOMY_RANK, {
       nonNullable: true,
     }),
     taxonomyKeyword: new FormControl('', { nonNullable: true }),
+    numericMin: new FormControl('', { nonNullable: true }),
+    numericMax: new FormControl('', { nonNullable: true }),
+    minMappingConfidenceRank: new FormControl(0, { nonNullable: true }),
+    includeReviewValues: new FormControl(false, { nonNullable: true }),
   });
 
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
-  readonly densityMetricOptions = DENSITY_METRIC_OPTIONS;
   readonly tablePageIndex = this.pageIndex.asReadonly();
   readonly tablePageSize = this.pageSize.asReadonly();
   readonly tableSortState = this.sortStateSignal.asReadonly();
-  readonly selectedDensityMetric = this.densityMetric.asReadonly();
+  readonly selectedTraitCode = this.selectedTraitCodeSignal.asReadonly();
+  readonly selectedOutcomeMetric = this.selectedOutcomeMetricSignal.asReadonly();
+  readonly selectedContextAxis = this.selectedContextAxisSignal.asReadonly();
+  readonly selectedCategoryIds = this.selectedCategoryIdsSignal.asReadonly();
+  readonly taxonomyFilters = this.taxonomyFiltersSignal.asReadonly();
+  readonly selectedTaxonomyCandidateKeys = this.selectedTaxonomyCandidateKeysSignal.asReadonly();
+  readonly taxonomyRankOptions = computed<readonly TaxonomyRankUiOption[]>(() => [
+    { rank: ALL_TAXONOMY_RANK, display_label: 'All' },
+    ...(this.options()?.taxonomy_ranks ?? []),
+  ]);
 
-  readonly canSearch = computed(
-    () =>
-      Boolean(this.options()) &&
-      !this.loadingOptions() &&
-      !this.loadingQuery() &&
-      !this.dataLayerUnavailable(),
+  readonly selectedTrait = computed<EnvironmentTraitOption | null>(() => {
+    const traitCode = this.selectedTraitCodeSignal();
+    return this.options()?.traits.find((trait) => trait.trait_code === traitCode) ?? null;
+  });
+  readonly chartKind = computed<EnvironmentChartKind>(
+    () => this.selectedTrait()?.default_chart_kind ?? 'scatter',
   );
-
-  readonly currentPlan = computed(() => {
-    const { trait, mode } = this.axisSelection();
-    return (
-      this.options()?.plans.find((plan) => plan.trait === trait && plan.mode === mode) ??
-      FALLBACK_OPTIONS.plans.find((plan) => plan.trait === trait && plan.mode === mode) ??
-      FALLBACK_OPTIONS.plans[0]
+  readonly contextAxisOptions = computed(() => {
+    const options = this.options();
+    if (!options) {
+      return [];
+    }
+    return options.context_axes.filter(
+      (axis) => axis.trait_code === this.selectedTraitCodeSignal(),
     );
   });
-
-  readonly dataStatusLabel = computed(() =>
-    this.dataLayerUnavailable() ? 'Research data unavailable' : 'Ready for correlation queries',
-  );
-
-  readonly studySummary = computed(() => {
-    const plan = this.currentPlan();
-    return `Correlate ${plan.phenotype_label} with genome-wide G4 density.`;
-  });
-
-  readonly collectionSummary = computed(() => {
-    const count = this.assemblyCollection().length;
-    if (!count) {
-      return 'All eligible strains will be used.';
+  readonly categoryOptions = computed(() => {
+    const options = this.options();
+    const contextAxis = this.selectedContextAxisSignal();
+    if (!options || contextAxis === null) {
+      return [];
     }
-    return `${count} taxonomy ${count === 1 ? 'selection' : 'selections'} will be unioned into one strain set.`;
+    return options.categories
+      .filter(
+        (category) =>
+          category.trait_code === this.selectedTraitCodeSignal() &&
+          category.context_axis === contextAxis,
+      )
+      .sort((left, right) => left.sort_order - right.sort_order);
   });
-
+  readonly outcomeMetricOptions = computed<readonly EnvironmentOutcomeMetricOption[]>(() => {
+    const options = this.options();
+    const trait = this.selectedTrait();
+    if (!options || !trait) {
+      return [];
+    }
+    const allowed = new Set(trait.allowed_outcome_metrics);
+    return options.outcome_metrics.filter((metric) => allowed.has(metric.metric));
+  });
+  readonly selectedOutcomeMetricOption = computed<EnvironmentOutcomeMetricOption | null>(() => {
+    const selectedMetric = this.selectedOutcomeMetricSignal();
+    return (
+      this.options()?.outcome_metrics.find((metric) => metric.metric === selectedMetric) ?? null
+    );
+  });
+  readonly tableRows = computed<EnvironmentTableRow[]>(() => {
+    const response = this.result();
+    return response ? [...response.table_preview] : [];
+  });
+  readonly previewTotal = computed(() => this.result()?.preview_total ?? 0);
+  readonly sourceLabel = computed(() => {
+    const options = this.options();
+    if (!options) {
+      return 'Loading source metadata';
+    }
+    return `Build ${options.build_id} · ${options.source_dataset_version}`;
+  });
+  readonly canRun = computed(
+    () => Boolean(this.options()) && !this.loadingOptions() && !this.loadingQuery(),
+  );
+  readonly studySummary = computed(() => {
+    const trait = this.selectedTrait();
+    const metric = this.selectedOutcomeMetricOption();
+    const traitLabel = trait?.display_name ?? 'environmental trait';
+    const metricLabel = metric?.display_name ?? 'quadruplex sequence density';
+    return `Compare BacDive-derived ${traitLabel} with ${metricLabel}. Associations are descriptive and taxonomy-aware.`;
+  });
   readonly summaryMetrics = computed<SummaryMetric[]>(() => {
     const response = this.result();
     if (!response) {
@@ -513,67 +506,210 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
     return [
       {
-        label: 'strains',
+        label: 'assemblies',
         value: COUNT_FORMATTER.format(response.summary.assembly_count),
-        hint: 'Strains in the submitted set',
+        hint: 'Assemblies in the submitted query',
         icon: 'groups',
       },
       {
-        label: 'Spearman r',
-        value: formatStat(response.correlation.rho),
-        hint: `${response.correlation.n} complete pairs`,
+        label: 'rows',
+        value: COUNT_FORMATTER.format(response.summary.row_count),
+        hint: 'Read-model rows after filters',
+        icon: 'table_rows',
+      },
+      {
+        label: 'chart',
+        value: response.summary.chart_kind === 'scatter' ? 'Scatter' : 'Box plot',
+        hint: this.selectedTrait()?.value_kind ?? 'Trait value kind',
         icon: 'query_stats',
       },
       {
-        label: 'p-value',
-        value: formatPValue(response.correlation.p_value),
-        hint: response.correlation.method,
-        icon: 'notifications_none',
-      },
-      {
-        label: 'G4 density metric',
-        value: 'sequences/Mb',
-        hint: this.densityMetricLabel(),
+        label: 'metric',
+        value: this.selectedOutcomeMetricOption()?.unit ?? 'per Mb',
+        hint: this.selectedOutcomeMetricOption()?.display_name ?? response.summary.outcome_metric,
         icon: 'biotech',
       },
     ];
   });
-
-  readonly tableColumns = computed<MtxGridColumn<MicrobialEnvironmentTableRow>[]>(() => [
-    {
-      header: 'Organism',
-      field: 'taxonomy.species',
-      sortable: true,
-      sortProp: { id: 'species' },
-    },
-    { header: 'Assembly accession', field: 'assembly_accession', sortable: false },
-    {
-      header: `${this.phenotypeLabel()} (${this.phenotypeUnitLabel()})`,
-      field: 'phenotype_value',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.phenotype_value),
-    },
-    {
-      header: 'G4 density (sequences/Mb)',
-      field: 'g4_density_per_mb',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.g4_density_per_mb),
-    },
-    {
-      header: 'Genome size (bp)',
-      field: 'genome_size',
-      sortable: true,
-      type: 'number',
-      formatter: (row) => this.formatValue(row.genome_size),
-    },
-    {
-      header: 'Taxonomy',
-      field: 'taxonomy.genus',
-      sortable: false,
-    },
-  ]);
+  readonly categoryStatusRows = computed<readonly CategoryStatusRow[]>(() => {
+    const response = this.result();
+    if (!response || isNumericResponse(response)) {
+      return [];
+    }
+    const categoryLabels = new Map(
+      this.categoryOptions().map((category) => [category.category_id, category.display_label]),
+    );
+    return response.boxplot_summary.map((row) => ({
+      key: `${row.context_axis}:${row.category_id}`,
+      category: categoryLabels.get(row.category_id) ?? row.canonical_value,
+      nAssemblies: COUNT_FORMATTER.format(row.n_assemblies),
+      median: formatNumber(row.median),
+      whiskerRange: `${formatNumber(row.whisker_low)}..${formatNumber(row.whisker_high)}`,
+      outliers: COUNT_FORMATTER.format(row.outlier_count),
+      status: formatStatusLabel(row.status),
+    }));
+  });
+  readonly analysisResultRows = computed<readonly AnalysisResultRow[]>(() => {
+    const response = this.result();
+    if (!response || !isNumericResponse(response)) {
+      return [];
+    }
+    return response.analysis_results.map((row) => ({
+      key: row.result_id,
+      predictor: row.predictor,
+      groupValue: row.group_value ?? 'All assemblies',
+      nAssemblies: COUNT_FORMATTER.format(row.n_assemblies),
+      estimate: formatNumber(row.estimate),
+      effectSize: formatNumber(row.effect_size),
+      pValue: formatNumber(row.p_value),
+      confidenceInterval: confidenceIntervalLabel(row.ci_low, row.ci_high),
+      taxonomyControlStrategy: formatStatusLabel(row.taxonomy_control_strategy),
+      status: formatStatusLabel(row.status),
+    }));
+  });
+  readonly submittedStatusRows = computed<readonly SubmittedStatusRow[]>(() => {
+    const response = this.result();
+    const query = this.submittedQuery();
+    if (!response || !query) {
+      return [];
+    }
+    return [
+      {
+        label: 'Filter hash',
+        value: response.summary.filter_hash,
+      },
+      {
+        label: 'Build',
+        value: response.summary.build_id,
+      },
+      {
+        label: 'Source dataset',
+        value: response.summary.source_dataset_version,
+      },
+      {
+        label: 'Taxonomy scope',
+        value: this.taxonomyScopeLabel(query.taxonomy_filters),
+      },
+      {
+        label: 'Mapping confidence rank',
+        value: `${query.min_mapping_confidence_rank}+`,
+      },
+      {
+        label: 'Review values',
+        value: query.include_review_values ? 'Included' : 'Excluded',
+      },
+      {
+        label: 'Category filters',
+        value: `${query.category_filters.length} active`,
+      },
+      {
+        label: 'Table sort',
+        value: `${query.sort_field} ${query.sort_order}`,
+      },
+    ];
+  });
+  readonly tableColumns = computed<MtxGridColumn<EnvironmentTableRow>[]>(() => {
+    const metric = this.selectedOutcomeMetricSignal();
+    const metricLabel = this.selectedOutcomeMetricOption()?.display_name ?? metric;
+    const trait = this.selectedTrait();
+    const traitLabel = trait?.display_name ?? 'Trait value';
+    const sharedColumns: MtxGridColumn<EnvironmentTableRow>[] = [
+      {
+        header: 'Organism',
+        field: 'full_scientific_name',
+        sortable: true,
+        sortProp: { id: 'full_scientific_name' },
+      },
+      { header: 'Assembly accession', field: 'assembly_accession', sortable: true },
+      {
+        header: 'Taxonomy summary',
+        field: 'genus',
+        sortable: true,
+        formatter: (row) => taxonomySummary(row),
+      },
+      { header: 'Assembly level', field: 'assembly_level', sortable: true },
+      {
+        header: `${metricLabel} (${this.selectedOutcomeMetricOption()?.unit ?? 'per Mb'})`,
+        field: metric,
+        sortable: true,
+        type: 'number',
+        formatter: (row) => this.formatValue(metricValue(row, metric)),
+      },
+      {
+        header: 'Genome size (bp)',
+        field: 'genome_size',
+        sortable: true,
+        type: 'number',
+        formatter: (row) => this.formatValue(row.genome_size),
+      },
+      {
+        header: 'GC (%)',
+        field: 'gc_percent',
+        sortable: true,
+        type: 'number',
+        formatter: (row) => this.formatValue(row.gc_percent),
+      },
+    ];
+    if (this.chartKind() === 'scatter') {
+      return [
+        ...sharedColumns.slice(0, 2),
+        {
+          header: traitLabel,
+          field: 'numeric_midpoint',
+          sortable: true,
+          sortProp: { id: 'numeric_midpoint' },
+          type: 'number',
+          formatter: (row) =>
+            'numeric_midpoint' in row ? this.formatValue(row.numeric_midpoint) : 'NA',
+        },
+        {
+          header: 'Raw BacDive values',
+          field: 'raw_values',
+          formatter: (row) => ('raw_values' in row ? joinedValues(row.raw_values) : 'NA'),
+        },
+        {
+          header: 'Normalized values',
+          field: 'normalized_values',
+          formatter: (row) =>
+            'normalized_values' in row ? joinedValues(row.normalized_values) : 'NA',
+        },
+        ...sharedColumns.slice(2),
+      ];
+    }
+    return [
+      ...sharedColumns.slice(0, 2),
+      {
+        header: 'Canonical category',
+        field: 'canonical_value',
+        sortable: true,
+        sortProp: { id: 'canonical_value' },
+      },
+      {
+        header: 'Mapping confidence',
+        field: 'mapping_confidence_rank',
+        sortable: true,
+        sortProp: { id: 'mapping_confidence_rank' },
+        type: 'number',
+      },
+      {
+        header: 'Mapping methods',
+        field: 'mapping_methods',
+        formatter: (row) => ('mapping_methods' in row ? joinedValues(row.mapping_methods) : 'NA'),
+      },
+      {
+        header: 'Raw BacDive values',
+        field: 'raw_values',
+        formatter: (row) => ('raw_values' in row ? joinedValues(row.raw_values) : 'NA'),
+      },
+      {
+        header: 'Normalized values',
+        field: 'normalized_values',
+        formatter: (row) =>
+          'normalized_values' in row ? joinedValues(row.normalized_values) : 'NA',
+      },
+      ...sharedColumns.slice(2),
+    ];
+  });
 
   constructor() {
     effect(() => {
@@ -597,28 +733,74 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.loadOptions();
   }
 
-  onAxisChange(): void {
-    const axisSelection: AxisSelection = {
-      trait: this.form.controls.trait.value,
-      mode: this.form.controls.mode.value,
-    };
-    this.axisSelection.set(axisSelection);
+  selectTrait(value: unknown): void {
+    const options = this.options();
+    if (typeof value !== 'string' || !options?.traits.some((trait) => trait.trait_code === value)) {
+      throw new Error(`Unsupported Environment-G4 trait selected: ${String(value)}.`);
+    }
+    this.applyTraitSelection(value as EnvironmentTraitCode, true);
+  }
+
+  selectOutcomeMetric(value: unknown): void {
+    if (typeof value !== 'string' || !isEnvironmentOutcomeMetric(value)) {
+      throw new Error(`Unsupported Environment-G4 outcome metric selected: ${String(value)}.`);
+    }
+    this.selectedOutcomeMetricSignal.set(value);
+    this.form.controls.outcomeMetric.setValue(value);
+    this.clearSubmittedResult();
+  }
+
+  selectContextAxis(value: unknown): void {
+    if (typeof value !== 'string') {
+      throw new Error(`Unsupported Environment-G4 context axis selected: ${String(value)}.`);
+    }
+    this.selectedContextAxisSignal.set(value);
+    this.selectedCategoryIdsSignal.set(defaultSelectedCategoryIds(this.categoryOptions()));
     this.taxonomyCandidates.set([]);
-    this.taxonomySelectionCounts.set({});
+    this.clearSubmittedResult();
+  }
+
+  toggleCategory(category: EnvironmentCategoryOption, checked: boolean): void {
+    const selectedIds = new Set(this.selectedCategoryIdsSignal());
+    if (checked) {
+      selectedIds.add(category.category_id);
+    } else {
+      selectedIds.delete(category.category_id);
+    }
+    this.selectedCategoryIdsSignal.set([...selectedIds]);
     this.clearSubmittedResult();
   }
 
   findTaxonomy(): void {
-    if (!this.options() || this.dataLayerUnavailable()) {
-      this.showNotice('Load research data before searching taxonomy.');
+    const options = this.options();
+    if (!options) {
+      this.showNotice('Load Environment-G4 options before taxonomy search.');
+      return;
+    }
+    const keyword = this.form.controls.taxonomyKeyword.value.trim();
+    if (!keyword) {
+      this.showNotice('Enter a taxonomy term before searching.');
       return;
     }
     const rank = this.form.controls.taxonomyRank.value;
-    const keyword = this.form.controls.taxonomyKeyword.value;
+    if (rank === ALL_TAXONOMY_RANK) {
+      this.showNotice('Choose a specific microbial taxonomy rank before searching.');
+      return;
+    }
+    if (!isEnvironmentTaxonomyRank(rank)) {
+      throw new Error(`Unsupported Environment-G4 taxonomy rank selected: ${String(rank)}.`);
+    }
     const requestVersion = ++this.taxonomyRequestVersion;
     this.loadingTaxonomy.set(true);
+    this.errorMessage.set('');
     this.service
-      .searchTaxonomy(rank, keyword, this.form.controls.trait.value, this.form.controls.mode.value)
+      .searchTaxonomy(
+        rank,
+        keyword,
+        this.selectedTraitCodeSignal(),
+        this.chartKind(),
+        this.selectedContextAxisSignal(),
+      )
       .pipe(
         finalize(() => {
           if (requestVersion === this.taxonomyRequestVersion) {
@@ -633,8 +815,9 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
             return;
           }
           this.taxonomyCandidates.set(response.results);
+          this.selectedTaxonomyCandidateKeysSignal.set([]);
           if (!response.results.length) {
-            this.showNotice('No taxonomy matches for the current axis.');
+            this.showNotice('No taxonomy matches for the current Environment-G4 trait.');
           }
         },
         error: (error: unknown) => {
@@ -645,91 +828,106 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       });
   }
 
-  addTaxonomySelection(selection: MicrobialTaxonomySelection): void {
-    const normalizedSelection: MicrobialTaxonomySelection = {
-      rank: selection.rank,
-      value: selection.value,
-    };
-    const key = selectionKey(normalizedSelection);
-    this.assemblyCollection.update((items) =>
-      items.some((item) => selectionKey(item) === key) ? items : [...items, normalizedSelection],
+  addTaxonomyFilter(selection: EnvironmentTaxonomyFilter): void {
+    const key = this.taxonomyKey(selection);
+    this.taxonomyFiltersSignal.update((filters) =>
+      filters.some((filter) => this.taxonomyKey(filter) === key) ? filters : [...filters, selection],
     );
-    const eligibleAssemblyCount = (selection as Partial<MicrobialTaxonomySearchResult>)
-      .eligible_assembly_count;
-    if (typeof eligibleAssemblyCount === 'number') {
-      this.taxonomySelectionCounts.update((counts) => ({
-        ...counts,
-        [key]: eligibleAssemblyCount,
-      }));
+    this.clearSubmittedResult();
+  }
+
+  removeTaxonomyFilter(selection: EnvironmentTaxonomyFilter): void {
+    const key = this.taxonomyKey(selection);
+    this.taxonomyFiltersSignal.update((filters) =>
+      filters.filter((filter) => this.taxonomyKey(filter) !== key),
+    );
+    this.clearSubmittedResult();
+  }
+
+  clearTaxonomyFilters(): void {
+    this.taxonomyFiltersSignal.set([]);
+    this.clearSubmittedResult();
+  }
+
+  taxonomyCandidateChecked(candidate: EnvironmentTaxonomySearchResult): boolean {
+    return this.selectedTaxonomyCandidateKeysSignal().includes(this.taxonomyKey(candidate));
+  }
+
+  toggleTaxonomyCandidate(candidate: EnvironmentTaxonomySearchResult, checked: boolean): void {
+    const key = this.taxonomyKey(candidate);
+    const selectedKeys = new Set(this.selectedTaxonomyCandidateKeysSignal());
+    if (checked) {
+      selectedKeys.add(key);
+    } else {
+      selectedKeys.delete(key);
     }
+    this.selectedTaxonomyCandidateKeysSignal.set([...selectedKeys]);
   }
 
-  removeTaxonomySelection(selection: MicrobialTaxonomySelection): void {
-    const key = selectionKey(selection);
-    this.assemblyCollection.update((items) => items.filter((item) => selectionKey(item) !== key));
-    this.taxonomySelectionCounts.update((counts) => {
-      const next = { ...counts };
-      delete next[key];
-      return next;
+  selectVisibleTaxonomyCandidates(): void {
+    this.selectedTaxonomyCandidateKeysSignal.set(
+      this.taxonomyCandidates().map((candidate) => this.taxonomyKey(candidate)),
+    );
+  }
+
+  clearCheckedTaxonomyCandidates(): void {
+    this.selectedTaxonomyCandidateKeysSignal.set([]);
+  }
+
+  importCheckedTaxonomyCandidates(): void {
+    const selectedKeys = new Set(this.selectedTaxonomyCandidateKeysSignal());
+    if (!selectedKeys.size) {
+      this.showNotice('Select taxonomy candidates before importing.');
+      return;
+    }
+    const importedFilters: EnvironmentTaxonomyFilter[] = this.taxonomyCandidates()
+      .filter((candidate) => selectedKeys.has(this.taxonomyKey(candidate)))
+      .map((candidate) => ({
+        rank: candidate.rank,
+        value: candidate.value,
+      }));
+    this.taxonomyFiltersSignal.update((filters) => {
+      const existingKeys = new Set(filters.map((filter) => this.taxonomyKey(filter)));
+      const additions = importedFilters.filter(
+        (candidate) => !existingKeys.has(this.taxonomyKey(candidate)),
+      );
+      return additions.length ? [...filters, ...additions] : filters;
     });
-  }
-
-  clearAssemblyCollection(): void {
-    this.assemblyCollection.set([]);
-    this.taxonomySelectionCounts.set({});
+    this.selectedTaxonomyCandidateKeysSignal.set([]);
+    this.clearSubmittedResult();
   }
 
   resetAnalysisSetup(): void {
     this.taxonomyRequestVersion++;
     this.queryRequestVersion++;
-    this.tableLoadingRequestVersion++;
-    this.form.setValue({
-      trait: INITIAL_AXIS_SELECTION.trait,
-      mode: INITIAL_AXIS_SELECTION.mode,
-      taxonomyRank: INITIAL_TAXONOMY_RANK,
-      taxonomyKeyword: '',
-    });
-    this.axisSelection.set(INITIAL_AXIS_SELECTION);
+    const options = this.options();
+    const traitCode = options?.traits[0]?.trait_code ?? INITIAL_TRAIT_CODE;
+    this.applyTraitSelection(traitCode, false);
+    this.form.controls.taxonomyRank.setValue(INITIAL_TAXONOMY_RANK);
+    this.form.controls.taxonomyKeyword.setValue('');
+    this.form.controls.numericMin.setValue('');
+    this.form.controls.numericMax.setValue('');
     this.taxonomyCandidates.set([]);
-    this.clearAssemblyCollection();
-    this.result.set(null);
-    this.submittedQuery.set(null);
+    this.selectedTaxonomyCandidateKeysSignal.set([]);
+    this.taxonomyFiltersSignal.set([]);
+    this.pageIndex.set(INITIAL_PAGE_INDEX);
+    this.pageSize.set(INITIAL_PAGE_SIZE);
+    this.sortStateSignal.set(INITIAL_TABLE_SORT);
     this.loadingTaxonomy.set(false);
     this.loadingQuery.set(false);
     this.tableLoading.set(false);
     this.downloading.set(false);
-    this.errorMessage.set('');
-    this.chartError.set('');
-    this.pageIndex.set(INITIAL_PAGE_INDEX);
-    this.pageSize.set(INITIAL_PAGE_SIZE);
-    this.sortStateSignal.set(INITIAL_TABLE_SORT);
-    this.densityMetric.set(INITIAL_DENSITY_METRIC);
-    this.resultDensityMetric.set(INITIAL_DENSITY_METRIC);
-    this.clearChart();
+    this.clearSubmittedResult();
   }
 
-  search(): void {
+  runAnalysis(): void {
     if (!this.options()) {
-      this.showNotice('Load research options before Search.');
-      return;
-    }
-    if (this.dataLayerUnavailable()) {
-      this.showNotice('Environment-G4 data is not available yet.');
-      return;
-    }
-    const knownStrainCount = this.knownSelectedStrainCount();
-    if (knownStrainCount !== null && knownStrainCount < MINIMUM_ANALYSIS_STRAINS) {
-      this.showNotice(
-        `At least ${MINIMUM_ANALYSIS_STRAINS} strains are required for analysis; current selection has ${knownStrainCount} strains.`,
-      );
-      this.result.set(null);
-      this.submittedQuery.set(null);
-      this.clearChart();
+      this.showNotice('Load Environment-G4 options before running analysis.');
       return;
     }
     this.pageIndex.set(INITIAL_PAGE_INDEX);
     const request = this.buildQuery();
-    this.runQuery(request, ANALYSIS_QUERY_BEHAVIOR);
+    this.runQuery(request, true);
   }
 
   onTablePageChange(event: PageEvent): void {
@@ -739,36 +937,168 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   }
 
   onTableSortChange(sort: Sort): void {
-    const sortField = this.tableSortField(sort.active);
-    if (!sortField || !sort.direction) {
+    if (!sort.direction) {
       return;
     }
     this.sortStateSignal.set({
-      active: sortField,
-      direction: sort.direction as MicrobialEnvironmentSortOrder,
+      active: sort.active,
+      direction: sort.direction as EnvironmentSortOrder,
     });
     this.pageIndex.set(INITIAL_PAGE_INDEX);
     this.runSubmittedQuery();
   }
 
-  onDensityMetricChange(metric: MicrobialEnvironmentDensityMetric): void {
-    if (metric === this.densityMetric()) {
+  downloadResults(): void {
+    const query = this.submittedQuery();
+    if (!query) {
+      this.showNotice('Run an Environment-G4 query before downloading results.');
       return;
     }
-    this.densityMetric.set(metric);
-    const submittedQuery = this.submittedQuery();
-    if (!submittedQuery) {
-      return;
+    const request = this.downloadRequestFromQuery(query, INITIAL_DOWNLOAD_MODE);
+    this.downloading.set(true);
+    this.service
+      .downloadResults(request)
+      .pipe(
+        finalize(() => this.downloading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (download) => this.saveBlob(download.blob, download.filename),
+        error: (error: unknown) => this.handleError(error),
+      });
+  }
+
+  taxonomyRankLabel(rank: string): string {
+    return (
+      this.options()?.taxonomy_ranks.find((option) => option.rank === rank)?.display_label ?? rank
+    );
+  }
+
+  taxonomyScopeLabel(filters: readonly EnvironmentTaxonomyFilter[]): string {
+    if (!filters.length) {
+      return 'All eligible assemblies';
     }
-    const request: MicrobialEnvironmentG4Query = {
-      ...submittedQuery,
-      density_metric: metric,
+    return filters
+      .map((filter) => `${this.taxonomyRankLabel(filter.rank)}: ${filter.value}`)
+      .join('; ');
+  }
+
+  categoryChecked(category: EnvironmentCategoryOption): boolean {
+    return this.selectedCategoryIdsSignal().includes(category.category_id);
+  }
+
+  selectedCategoryCount(): number {
+    return this.selectedCategoryIdsSignal().length;
+  }
+
+  formatValue(value: string | number | null): string {
+    if (typeof value === 'number') {
+      return formatNumber(value);
+    }
+    return value ?? 'NA';
+  }
+
+  resultDescription(): string {
+    return this.result()?.summary.description ?? this.studySummary();
+  }
+
+  chartRecordCount(): number {
+    const response = this.result();
+    if (!response) {
+      return 0;
+    }
+    if (isNumericResponse(response)) {
+      return this.vegaPoints(response.scatter_points).length;
+    }
+    return this.vegaBoxplotRows(response).length;
+  }
+
+  private applyTraitSelection(traitCode: EnvironmentTraitCode, clearResult: boolean): void {
+    const options = this.options();
+    const trait = options?.traits.find((candidate) => candidate.trait_code === traitCode) ?? null;
+    if (options && !trait) {
+      throw new Error(`Environment-G4 options do not include trait: ${traitCode}.`);
+    }
+    this.selectedTraitCodeSignal.set(traitCode);
+    this.form.controls.traitCode.setValue(traitCode);
+
+    const metric = trait?.default_outcome_metric ?? INITIAL_OUTCOME_METRIC;
+    this.selectedOutcomeMetricSignal.set(metric);
+    this.form.controls.outcomeMetric.setValue(metric);
+
+    const contextAxis =
+      trait?.default_context_axis ??
+      options?.context_axes.find((axis) => axis.trait_code === traitCode)?.context_axis ??
+      null;
+    this.selectedContextAxisSignal.set(contextAxis);
+    const categories = options?.categories.filter(
+      (category) => category.trait_code === traitCode && category.context_axis === contextAxis,
+    );
+    this.selectedCategoryIdsSignal.set(defaultSelectedCategoryIds(categories ?? []));
+
+    this.form.controls.minMappingConfidenceRank.setValue(
+      trait?.min_default_mapping_confidence_rank ?? 0,
+    );
+    this.taxonomyCandidates.set([]);
+    this.selectedTaxonomyCandidateKeysSignal.set([]);
+    if (clearResult) {
+      this.clearSubmittedResult();
+    }
+  }
+
+  private buildQuery(): EnvironmentQueryRequest {
+    const trait = this.selectedTrait();
+    if (!trait) {
+      throw new Error('Cannot build Environment-G4 query without a selected trait option.');
+    }
+    const base = this.buildBaseQuery();
+    if (trait.default_chart_kind === 'scatter') {
+      return {
+        ...base,
+        chart_kind: 'scatter',
+        numeric_min: this.parseOptionalNumber(this.form.controls.numericMin.value, 'numeric_min'),
+        numeric_max: this.parseOptionalNumber(this.form.controls.numericMax.value, 'numeric_max'),
+      };
+    }
+    const contextAxis = this.selectedContextAxisSignal();
+    if (contextAxis === null) {
+      throw new Error('Cannot build category boxplot query without a context axis.');
+    }
+    return {
+      ...base,
+      chart_kind: 'boxplot',
+      display_context_axis: contextAxis,
+      display_category_ids: [...this.selectedCategoryIdsSignal()],
+      sort_categories_by: INITIAL_SORT_CATEGORIES_BY,
+    };
+  }
+
+  private buildBaseQuery(): Omit<EnvironmentQueryRequest, 'chart_kind'> {
+    return {
+      trait_code: this.selectedTraitCodeSignal(),
+      outcome_metric: this.selectedOutcomeMetricSignal(),
+      taxonomy_filters: this.taxonomyFiltersSignal(),
+      category_filters: [],
+      category_filter_logic: 'intersection',
+      min_mapping_confidence_rank: this.form.controls.minMappingConfidenceRank.value,
+      include_review_values: this.form.controls.includeReviewValues.value,
       page_index: this.pageIndex(),
       page_size: this.pageSize(),
       sort_field: this.sortStateSignal().active,
       sort_order: this.sortStateSignal().direction,
     };
-    this.runQuery(request, CHART_QUERY_BEHAVIOR);
+  }
+
+  private parseOptionalNumber(value: string, fieldName: string): number | null {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      return null;
+    }
+    const parsed = Number(trimmedValue);
+    if (!Number.isFinite(parsed)) {
+      throw new Error(`Invalid ${fieldName}: ${value}.`);
+    }
+    return parsed;
   }
 
   private runSubmittedQuery(): void {
@@ -776,44 +1106,41 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     if (!submittedQuery) {
       return;
     }
-    const request: MicrobialEnvironmentG4Query = {
-      ...submittedQuery,
-      page_index: this.pageIndex(),
-      page_size: this.pageSize(),
-      sort_field: this.sortStateSignal().active,
-      sort_order: this.sortStateSignal().direction,
-      density_metric: this.densityMetric(),
-    };
-    this.runQuery(request, TABLE_QUERY_BEHAVIOR);
+    const request: EnvironmentQueryRequest =
+      submittedQuery.chart_kind === 'scatter'
+        ? {
+            ...submittedQuery,
+            page_index: this.pageIndex(),
+            page_size: this.pageSize(),
+            sort_field: this.sortStateSignal().active,
+            sort_order: this.sortStateSignal().direction,
+          }
+        : {
+            ...submittedQuery,
+            page_index: this.pageIndex(),
+            page_size: this.pageSize(),
+            sort_field: this.sortStateSignal().active,
+            sort_order: this.sortStateSignal().direction,
+          };
+    this.runQuery(request, false);
   }
 
-  private runQuery(request: MicrobialEnvironmentG4Query, behavior: QueryExecutionBehavior): void {
+  private runQuery(request: EnvironmentQueryRequest, clearExistingResult: boolean): void {
     const requestVersion = ++this.queryRequestVersion;
-    const tableLoadingRequestVersion = behavior.showTableLoading
-      ? ++this.tableLoadingRequestVersion
-      : this.tableLoadingRequestVersion;
     this.loadingQuery.set(true);
-    if (behavior.showTableLoading) {
-      this.tableLoading.set(true);
-    }
+    this.tableLoading.set(true);
     this.errorMessage.set('');
     this.chartError.set('');
-    if (behavior.clearExistingResult) {
+    if (clearExistingResult) {
       this.result.set(null);
       this.submittedQuery.set(null);
       this.clearChart();
     }
-    this.service
-      .query(request)
+    this.queryObservable(request)
       .pipe(
         finalize(() => {
           if (requestVersion === this.queryRequestVersion) {
             this.loadingQuery.set(false);
-          }
-          if (
-            behavior.showTableLoading &&
-            tableLoadingRequestVersion === this.tableLoadingRequestVersion
-          ) {
             this.tableLoading.set(false);
           }
         }),
@@ -825,140 +1152,70 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
             return;
           }
           this.submittedQuery.set(request);
-          this.resultDensityMetric.set(request.density_metric);
-          this.result.set(
-            behavior.preserveTablePayload
-              ? preserveTablePayload(response, this.result())
-              : response,
-          );
-          if (behavior.refreshChart) {
-            this.scheduleChartRender();
-          }
+          this.result.set(response);
+          this.scheduleChartRender();
         },
         error: (error: unknown) => {
           if (requestVersion !== this.queryRequestVersion) {
             return;
           }
-          if (behavior.clearExistingResult) {
+          if (clearExistingResult) {
             this.result.set(null);
             this.submittedQuery.set(null);
             this.clearChart();
           }
-          this.densityMetric.set(
-            this.submittedQuery()?.density_metric ?? this.resultDensityMetric(),
-          );
           this.handleError(error);
         },
       });
   }
 
-  downloadResults(): void {
-    const request = this.submittedQuery();
-    const response = this.result();
-    if (!request || !response) {
-      this.showNotice('Run Search before downloading CSV.');
-      return;
-    }
-    this.downloading.set(true);
-    this.service
-      .downloadResults(request)
-      .pipe(
-        finalize(() => this.downloading.set(false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (blob) => this.saveBlob(blob, response.download_filename),
-        error: (error: unknown) => this.handleError(error),
-      });
+  private queryObservable(request: EnvironmentQueryRequest): Observable<EnvironmentQueryResponse> {
+    return request.chart_kind === 'scatter'
+      ? this.service.queryNumericScatter(request)
+      : this.service.queryCategoryBoxplot(request);
   }
 
-  currentTraitLabel(): string {
-    return optionLabel(
-      this.options()?.traits ?? FALLBACK_OPTIONS.traits,
-      this.axisSelection().trait,
-    );
-  }
-
-  currentModeLabel(): string {
-    return optionLabel(this.options()?.modes ?? FALLBACK_OPTIONS.modes, this.axisSelection().mode);
-  }
-
-  taxonomyRankLabel(rank: string): string {
-    return optionLabel(this.options()?.taxonomy_ranks ?? FALLBACK_OPTIONS.taxonomy_ranks, rank);
-  }
-
-  phenotypeLabel(): string {
-    return this.currentPlan().phenotype_label;
-  }
-
-  phenotypeUnitLabel(): string {
-    const unit = this.currentPlan().phenotype_unit;
-    return unit === 'celsius' ? '°C' : unit;
-  }
-
-  eligibleStrainLabel(): string {
-    return `${COUNT_FORMATTER.format(this.currentPlan().eligible_assemblies)} eligible strains`;
-  }
-
-  densityMetricLabel(): string {
-    return optionLabel(DENSITY_METRIC_OPTIONS, this.resultDensityMetric());
-  }
-
-  chartPointCount(points: MicrobialEnvironmentScatterPoint[]): number {
-    const metric = this.resultDensityMetric();
-    return points.filter((point) => toFiniteNumber(point[metric]) !== null).length;
-  }
-
-  formatValue(value: string | number | null): string {
-    if (typeof value === 'number') {
-      return formatNumber(value);
-    }
-    return value ?? 'NA';
-  }
-
-  private buildQuery(): MicrobialEnvironmentG4Query {
-    return {
-      trait: this.form.controls.trait.value,
-      mode: this.form.controls.mode.value,
-      taxonomy_selections: this.assemblyCollection(),
-      page_index: this.pageIndex(),
-      page_size: this.pageSize(),
-      sort_field: this.sortStateSignal().active,
-      sort_order: this.sortStateSignal().direction,
-      density_metric: this.densityMetric(),
+  private downloadRequestFromQuery(
+    query: EnvironmentQueryRequest,
+    mode: EnvironmentDownloadMode,
+  ): EnvironmentDownloadRequest {
+    const base = {
+      trait_code: query.trait_code,
+      chart_kind: query.chart_kind,
+      outcome_metric: query.outcome_metric,
+      taxonomy_filters: query.taxonomy_filters,
+      category_filters: query.category_filters,
+      category_filter_logic: query.category_filter_logic,
+      min_mapping_confidence_rank: query.min_mapping_confidence_rank,
+      include_review_values: query.include_review_values,
+      page_index: query.page_index,
+      page_size: query.page_size,
+      sort_field: query.sort_field,
+      sort_order: query.sort_order,
+      mode,
     };
-  }
-
-  private knownSelectedStrainCount(): number | null {
-    const selections = this.assemblyCollection();
-    if (!selections.length) {
-      return this.currentPlan().eligible_assemblies;
-    }
-    if (selections.length === 1) {
-      return this.taxonomySelectionCounts()[selectionKey(selections[0])] ?? null;
-    }
-    return null;
-  }
-
-  private tableSortField(field: string): MicrobialEnvironmentSortField | null {
-    const fields: Record<string, MicrobialEnvironmentSortField> = {
-      species: 'species',
-      strain: 'strain',
-      phenotype_value: 'phenotype_value',
-      g4_density_per_mb: 'g4_density_per_mb',
-      upstream_g4_density_per_mb: 'upstream_g4_density_per_mb',
-      downstream_g4_density_per_mb: 'downstream_g4_density_per_mb',
-      intergenic_g4_density_per_mb: 'intergenic_g4_density_per_mb',
-      genome_size: 'genome_size',
-      gc_percent: 'gc_percent',
-    };
-    return fields[field] ?? null;
+    return query.chart_kind === 'scatter'
+      ? {
+          ...base,
+          numeric_min: query.numeric_min,
+          numeric_max: query.numeric_max,
+          display_context_axis: null,
+          display_category_ids: [],
+          sort_categories_by: INITIAL_SORT_CATEGORIES_BY,
+        }
+      : {
+          ...base,
+          numeric_min: null,
+          numeric_max: null,
+          display_context_axis: query.display_context_axis,
+          display_category_ids: query.display_category_ids,
+          sort_categories_by: query.sort_categories_by,
+        };
   }
 
   private loadOptions(): void {
     this.loadingOptions.set(true);
     this.errorMessage.set('');
-    this.dataLayerUnavailable.set(false);
     this.service
       .getOptions()
       .pipe(
@@ -968,54 +1225,73 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       .subscribe({
         next: (options) => {
           this.options.set(options);
-          this.dataLayerUnavailable.set(false);
-          this.applyInitialRouteState();
+          this.applyInitialRouteState(options);
         },
-        error: (error: unknown) => {
-          const message = extractErrorMessage(error);
-          if (isResearchTableError(message, error)) {
-            this.options.set(FALLBACK_OPTIONS);
-            this.result.set(null);
-            this.submittedQuery.set(null);
-            this.taxonomyCandidates.set([]);
-            this.errorMessage.set('');
-            this.dataLayerUnavailable.set(true);
-            this.clearChart();
-            return;
-          }
-          this.handleError(error);
-        },
+        error: (error: unknown) => this.handleError(error),
       });
   }
 
-  private applyInitialRouteState(): void {
+  private applyInitialRouteState(options: EnvironmentOptionsResponse): void {
     if (this.hasAppliedRouteInitialization) {
       return;
     }
     this.hasAppliedRouteInitialization = true;
-
-    const initialization = this.routeInitialization;
-    this.form.setValue({
-      trait: initialization.trait,
-      mode: initialization.mode,
-      taxonomyRank: initialization.rank,
-      taxonomyKeyword: initialization.taxon ?? '',
-    });
-    this.axisSelection.set({
-      trait: initialization.trait,
-      mode: initialization.mode,
-    });
-    this.taxonomyCandidates.set([]);
-    this.taxonomySelectionCounts.set({});
-    this.assemblyCollection.set(
-      initialization.taxon === null
-        ? []
-        : [{ rank: initialization.rank, value: initialization.taxon }],
-    );
-
-    if (initialization.run) {
-      this.search();
+    if (!options.traits.length) {
+      this.handleError(new Error('Environment-G4 options did not include any trait definitions.'));
+      return;
     }
+
+    const traitCode = this.initialTraitCodeFromOptions(options);
+    if (traitCode === null) {
+      return;
+    }
+    this.applyTraitSelection(traitCode, false);
+
+    const routeMetric = this.routeInitialization.outcomeMetric;
+    const selectedTrait = this.selectedTrait();
+    if (routeMetric !== null && selectedTrait?.allowed_outcome_metrics.includes(routeMetric)) {
+      this.selectedOutcomeMetricSignal.set(routeMetric);
+      this.form.controls.outcomeMetric.setValue(routeMetric);
+    }
+    this.form.controls.taxonomyRank.setValue(this.routeInitialization.taxonomyRank);
+    this.form.controls.taxonomyKeyword.setValue(this.routeInitialization.taxon ?? '');
+    const taxonomyRank = this.routeInitialization.taxonomyRank;
+    if (
+      this.routeInitialization.taxon !== null &&
+      taxonomyRank === ALL_TAXONOMY_RANK
+    ) {
+      this.handleError(new Error('Environment-G4 taxon query param requires a specific rank.'));
+      return;
+    }
+    const taxonomyFilters: EnvironmentTaxonomyFilter[] =
+      this.routeInitialization.taxon === null
+        ? []
+        : [
+            {
+              rank: taxonomyRank as EnvironmentTaxonomyRank,
+              value: this.routeInitialization.taxon,
+            },
+          ];
+    this.taxonomyFiltersSignal.set(taxonomyFilters);
+
+    this.runAnalysis();
+  }
+
+  private initialTraitCodeFromOptions(
+    options: EnvironmentOptionsResponse,
+  ): EnvironmentTraitCode | null {
+    const routeTrait = this.routeInitialization.traitCode;
+    if (routeTrait === null) {
+      return options.traits[0].trait_code;
+    }
+    const trait = options.traits.find((candidate) => candidate.trait_code === routeTrait);
+    if (!trait) {
+      this.handleError(
+        new Error(`Environment-G4 options do not include requested trait: ${routeTrait}.`),
+      );
+      return null;
+    }
+    return trait.trait_code;
   }
 
   private clearSubmittedResult(): void {
@@ -1023,6 +1299,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.submittedQuery.set(null);
     this.errorMessage.set('');
     this.chartError.set('');
+    this.pageIndex.set(INITIAL_PAGE_INDEX);
     this.clearChart();
   }
 
@@ -1033,20 +1310,20 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   }
 
   private async renderChart(): Promise<void> {
-    const element = this.scatterPlot?.nativeElement;
+    const element = this.chartPlot?.nativeElement;
     const response = this.result();
     if (!element || !response) {
       return;
     }
-    const points = this.vegaPoints(response.scatter_points);
-    if (!points.length) {
+    const width = this.vegaPlotWidth(element);
+    const spec = isNumericResponse(response)
+      ? this.numericScatterSpec(response, width)
+      : this.categoryBoxplotSpec(response, width);
+    if (spec === null) {
       this.clearChart();
       return;
     }
-    const linePoints = this.vegaLinePoints(response.regression.line_points);
-    const width = this.vegaPlotWidth(element);
     this.clearChart();
-    const spec = this.vegaSpec(points, linePoints, width);
     try {
       const chart = await embed(element, spec, {
         actions: false,
@@ -1060,61 +1337,26 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
   }
 
-  private vegaPoints(points: MicrobialEnvironmentScatterPoint[]): VegaPointDatum[] {
-    const metric = this.resultDensityMetric();
-    return points.flatMap((point) => {
-      const densityValue = point[metric];
-      const normalizedDensityValue = toFiniteNumber(densityValue);
-      const normalizedPhenotypeValue = toFiniteNumber(point.phenotype_value);
-      if (normalizedDensityValue === null || normalizedPhenotypeValue === null) {
-        return [];
-      }
-      return [
-        {
-          assembly_accession: point.assembly_accession,
-          phenotype_value: normalizedPhenotypeValue,
-          density_value: normalizedDensityValue,
-          strain: point.strain,
-          genus: point.taxonomy.genus,
-          species: point.taxonomy.species,
-        },
-      ];
-    });
-  }
-
-  private vegaLinePoints(linePoints: VegaLineDatum[]): VegaLineDatum[] {
-    return linePoints.flatMap((point) => {
-      const phenotypeValue = toFiniteNumber(point.phenotype_value);
-      const densityValue = toFiniteNumber(point.density_value);
-      if (phenotypeValue === null || densityValue === null) {
-        return [];
-      }
-      return [{ phenotype_value: phenotypeValue, density_value: densityValue }];
-    });
-  }
-
-  private vegaSpec(
-    points: VegaPointDatum[],
-    linePoints: VegaLineDatum[],
+  private numericScatterSpec(
+    response: EnvironmentNumericScatterResponse,
     width: number,
-  ): VisualizationSpec {
-    const densityLabel = this.densityMetricLabel();
+  ): VisualizationSpec | null {
+    const points = this.vegaPoints(response.scatter_points);
+    if (!points.length) {
+      return null;
+    }
+    const linePoints = this.vegaLinePoints(response.regression_line);
     const themeColors = this.resolveVegaThemeColors(this.uiThemeService.resolvedMode());
+    const traitLabel = this.selectedTrait()?.display_name ?? response.summary.trait_code;
+    const metricLabel =
+      this.selectedOutcomeMetricOption()?.display_name ?? response.summary.outcome_metric;
     return {
       $schema: 'https://vega.github.io/schema/vega/v6.json',
       width,
       height: VEGA_CHART_HEIGHT,
       padding: VEGA_CHART_PADDING,
       background: 'transparent',
-      config: {
-        axis: {
-          labelColor: themeColors.axisText,
-          titleColor: themeColors.axisText,
-          domainColor: themeColors.axisLine,
-          tickColor: themeColors.axisLine,
-          gridColor: themeColors.gridLine,
-        },
-      },
+      config: this.vegaConfig(themeColors),
       data: [
         { name: 'points', values: points },
         { name: 'line', values: linePoints },
@@ -1123,7 +1365,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         {
           name: 'x',
           type: 'linear',
-          domain: { data: 'points', field: 'phenotype_value' },
+          domain: { data: 'points', field: 'x_value' },
           nice: true,
           range: 'width',
           zero: false,
@@ -1131,20 +1373,15 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
         {
           name: 'y',
           type: 'linear',
-          domain: { data: 'points', field: 'density_value' },
+          domain: { data: 'points', field: 'y_value' },
           nice: true,
           range: 'height',
           zero: false,
         },
       ],
       axes: [
-        {
-          orient: 'bottom',
-          scale: 'x',
-          title: `${this.phenotypeLabel()} (${this.phenotypeUnitLabel()})`,
-          grid: true,
-        },
-        { orient: 'left', scale: 'y', title: `${densityLabel} (sequences/Mb)`, grid: true },
+        { orient: 'bottom', scale: 'x', title: traitLabel, grid: true },
+        { orient: 'left', scale: 'y', title: metricLabel, grid: true },
       ],
       marks: [
         {
@@ -1152,20 +1389,20 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           from: { data: 'points' },
           encode: {
             enter: {
-              fillOpacity: { value: 0.72 },
+              fillOpacity: { value: 0.74 },
               stroke: { value: '#1d3557' },
               strokeWidth: { value: 0.6 },
               tooltip: {
-                signal: `{'Strain accession': datum.assembly_accession, 'Strain': datum.strain, 'Phenotype': datum.phenotype_value, '${densityLabel}': datum.density_value, 'Genus': datum.genus, 'Species': datum.species}`,
+                signal: `{'Assembly': datum.assembly_accession, 'Species': datum.species, '${traitLabel}': datum.x_value, '${metricLabel}': datum.y_value, 'Genus': datum.genus}`,
               },
             },
             update: {
-              x: { scale: 'x', field: 'phenotype_value' },
-              y: { scale: 'y', field: 'density_value' },
-              fill: { value: '#4f7cac' },
-              size: { value: 62 },
+              x: { scale: 'x', field: 'x_value' },
+              y: { scale: 'y', field: 'y_value' },
+              fill: { value: '#3f7f8f' },
+              size: { value: 72 },
             },
-            hover: { size: { value: 110 }, fill: { value: '#c7522a' } },
+            hover: { size: { value: 118 }, fill: { value: '#b44e2d' } },
           },
         },
         {
@@ -1173,16 +1410,187 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
           from: { data: 'line' },
           encode: {
             enter: {
-              stroke: { value: '#c7522a' },
+              stroke: { value: '#b44e2d' },
               strokeWidth: { value: 3 },
             },
             update: {
-              x: { scale: 'x', field: 'phenotype_value' },
-              y: { scale: 'y', field: 'density_value' },
+              x: { scale: 'x', field: 'x_value' },
+              y: { scale: 'y', field: 'y_value' },
             },
           },
         },
       ],
+    };
+  }
+
+  private categoryBoxplotSpec(
+    response: EnvironmentCategoryBoxplotResponse,
+    width: number,
+  ): VisualizationSpec | null {
+    const rows = this.vegaBoxplotRows(response);
+    if (!rows.length) {
+      return null;
+    }
+    const themeColors = this.resolveVegaThemeColors(this.uiThemeService.resolvedMode());
+    const metricLabel =
+      this.selectedOutcomeMetricOption()?.display_name ?? response.summary.outcome_metric;
+    return {
+      $schema: 'https://vega.github.io/schema/vega/v6.json',
+      width,
+      height: VEGA_CHART_HEIGHT,
+      padding: VEGA_CHART_PADDING,
+      background: 'transparent',
+      config: this.vegaConfig(themeColors),
+      data: [{ name: 'boxplots', values: rows }],
+      scales: [
+        {
+          name: 'x',
+          type: 'band',
+          domain: { data: 'boxplots', field: 'label' },
+          range: 'width',
+          padding: 0.26,
+        },
+        {
+          name: 'y',
+          type: 'linear',
+          domain: { data: 'boxplots', fields: ['whisker_low', 'whisker_high'] },
+          nice: true,
+          range: 'height',
+          zero: false,
+        },
+      ],
+      axes: [
+        { orient: 'bottom', scale: 'x', title: 'Canonical category', labelAngle: -30 },
+        { orient: 'left', scale: 'y', title: metricLabel, grid: true },
+      ],
+      marks: [
+        {
+          type: 'rule',
+          from: { data: 'boxplots' },
+          encode: {
+            update: {
+              x: { scale: 'x', field: 'label', band: 0.5 },
+              y: { scale: 'y', field: 'whisker_low' },
+              y2: { scale: 'y', field: 'whisker_high' },
+              stroke: { value: '#3f7f8f' },
+              strokeWidth: { value: 2 },
+            },
+          },
+        },
+        {
+          type: 'rect',
+          from: { data: 'boxplots' },
+          encode: {
+            enter: {
+              tooltip: {
+                signal: `{'Category': datum.label, 'n assemblies': datum.n_assemblies, 'Median ${metricLabel}': datum.median, 'Q1': datum.q1, 'Q3': datum.q3}`,
+              },
+            },
+            update: {
+              x: { scale: 'x', field: 'label', band: 0.18 },
+              width: { scale: 'x', band: 0.64 },
+              y: { scale: 'y', field: 'q3' },
+              y2: { scale: 'y', field: 'q1' },
+              fill: { value: '#8fbf88' },
+              stroke: { value: '#315f50' },
+              strokeWidth: { value: 1 },
+            },
+          },
+        },
+        {
+          type: 'rule',
+          from: { data: 'boxplots' },
+          encode: {
+            update: {
+              x: { scale: 'x', field: 'label', band: 0.18 },
+              x2: { scale: 'x', field: 'label', band: 0.82 },
+              y: { scale: 'y', field: 'median' },
+              stroke: { value: '#1d3557' },
+              strokeWidth: { value: 3 },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  private vegaPoints(points: readonly EnvironmentNumericScatterPoint[]): VegaPointDatum[] {
+    const metric = this.selectedOutcomeMetricSignal();
+    return points.flatMap((point) => {
+      const xValue = toFiniteNumber(point.numeric_midpoint);
+      const yValue = toFiniteNumber(point[metric]);
+      if (xValue === null || yValue === null) {
+        return [];
+      }
+      return [
+        {
+          assembly_accession: point.assembly_accession,
+          x_value: xValue,
+          y_value: yValue,
+          species: point.species,
+          genus: point.genus,
+        },
+      ];
+    });
+  }
+
+  private vegaLinePoints(linePoints: readonly { x_value: number | null; y_value: number | null }[]): VegaLineDatum[] {
+    return linePoints.flatMap((point) => {
+      const xValue = toFiniteNumber(point.x_value);
+      const yValue = toFiniteNumber(point.y_value);
+      if (xValue === null || yValue === null) {
+        return [];
+      }
+      return [{ x_value: xValue, y_value: yValue }];
+    });
+  }
+
+  private vegaBoxplotRows(response: EnvironmentCategoryBoxplotResponse): VegaBoxplotDatum[] {
+    const categoryLabels = new Map(
+      this.categoryOptions().map((category) => [category.category_id, category.display_label]),
+    );
+    return response.boxplot_summary.flatMap((row) => {
+      if (
+        row.q1 === null ||
+        row.median === null ||
+        row.q3 === null ||
+        row.whisker_low === null ||
+        row.whisker_high === null
+      ) {
+        return [];
+      }
+      return [
+        {
+          category_id: row.category_id,
+          label: categoryLabels.get(row.category_id) ?? row.canonical_value,
+          n_assemblies: row.n_assemblies,
+          q1: row.q1,
+          median: row.median,
+          q3: row.q3,
+          whisker_low: row.whisker_low,
+          whisker_high: row.whisker_high,
+        },
+      ];
+    });
+  }
+
+  private vegaConfig(themeColors: VegaThemeColors): {
+    axis: {
+      labelColor: string;
+      titleColor: string;
+      domainColor: string;
+      tickColor: string;
+      gridColor: string;
+    };
+  } {
+    return {
+      axis: {
+        labelColor: themeColors.axisText,
+        titleColor: themeColors.axisText,
+        domainColor: themeColors.axisLine,
+        tickColor: themeColors.axisLine,
+        gridColor: themeColors.gridLine,
+      },
     };
   }
 
@@ -1220,7 +1628,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private clearChart(): void {
     this.chartCleanup?.();
     this.chartCleanup = null;
-    const element = this.scatterPlot?.nativeElement;
+    const element = this.chartPlot?.nativeElement;
     if (element) {
       element.innerHTML = '';
       element.className = 'vega-host';
@@ -1234,10 +1642,14 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     return Math.max(parentWidth - horizontalPadding, MINIMUM_VEGA_PLOT_WIDTH);
   }
 
+  private taxonomyKey(selection: EnvironmentTaxonomyFilter): string {
+    return `${selection.rank}:${selection.value}`;
+  }
+
   private saveBlob(blob: Blob, filename: string): void {
     const windowRef = this.document.defaultView;
     if (!windowRef) {
-      return;
+      throw new Error('Cannot save Environment-G4 download because window is unavailable.');
     }
     const url = windowRef.URL.createObjectURL(blob);
     const anchor = this.document.createElement('a');
@@ -1248,10 +1660,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   }
 
   private handleError(error: unknown): void {
-    const rawMessage = extractErrorMessage(error);
-    const unavailable = isResearchTableError(rawMessage, error);
-    const message = unavailable ? 'Environment-G4 data is not available yet.' : rawMessage;
-    this.dataLayerUnavailable.set(unavailable);
+    const message = extractErrorMessage(error);
     this.errorMessage.set(message);
     this.showNotice(message);
   }

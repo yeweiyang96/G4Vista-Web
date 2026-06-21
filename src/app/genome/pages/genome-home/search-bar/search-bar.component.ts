@@ -27,6 +27,20 @@ const EXAMPLE_DATA: GenomeSearch[] = [
   },
 ];
 
+function compactGenomeContext(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function taxonomyContextLabel(match: GenomeSearch): string | null {
+  const taxonomyName = compactGenomeContext(match.matched_taxonomy_name);
+  if (!taxonomyName) {
+    return null;
+  }
+  const rank = compactGenomeContext(match.matched_taxonomy_rank);
+  return rank ? `${rank}: ${taxonomyName}` : taxonomyName;
+}
+
 @Component({
   selector: 'app-search-bar',
   imports: [
@@ -82,5 +96,23 @@ export class SearchBarComponent {
 
   submitSearch(event: Event): void {
     event.preventDefault();
+  }
+
+  optionContextLabels(match: GenomeSearch): readonly string[] {
+    const labels: string[] = [];
+    const speciesName = compactGenomeContext(match.species_name);
+    const strainName = compactGenomeContext(match.strain_name);
+    const taxonomyLabel = taxonomyContextLabel(match);
+
+    if (speciesName && speciesName !== match.organism_name) {
+      labels.push(`Species: ${speciesName}`);
+    }
+    if (strainName) {
+      labels.push(`Strain: ${strainName}`);
+    }
+    if (taxonomyLabel && taxonomyLabel !== speciesName && taxonomyLabel !== strainName) {
+      labels.push(`Matched taxonomy: ${taxonomyLabel}`);
+    }
+    return labels;
   }
 }

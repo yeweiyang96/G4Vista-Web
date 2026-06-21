@@ -4,8 +4,15 @@ import { Observable } from 'rxjs';
 
 export interface GenomeSearch {
   assembly_accession: string;
-  asm_name: string;
+  asm_name: string | null;
   organism_name: string;
+  matched_taxonomy_name?: string | null;
+  matched_taxonomy_taxon_id?: number | null;
+  matched_taxonomy_rank?: string | null;
+  species_name?: string | null;
+  species_taxon_id?: number | null;
+  strain_name?: string | null;
+  strain_taxon_id?: number | null;
 }
 
 export interface GenomeDatabaseStatus {

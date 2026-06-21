@@ -7,6 +7,15 @@
         Search NCBI taxonomic names or Taxon IDs to find genome assemblies and predicted
         G-quadruplex (G4) and i-motif sites.
       </p>
+      <a
+        mat-stroked-button
+        class="page-doc-link"
+        routerLink="/documentation"
+        [queryParams]="{ doc: 'taxonomy' }"
+      >
+        <mat-icon>menu_book</mat-icon>
+        Documentation
+      </a>
     </div>
 
     <form

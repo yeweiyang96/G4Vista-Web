@@ -2,6 +2,15 @@
   <section class="page-heading">
     <h1>Find a genome assembly</h1>
     <p>Search by assembly name, organism, or assembly accession.</p>
+    <a
+      mat-stroked-button
+      class="page-doc-link"
+      routerLink="/documentation"
+      [queryParams]="{ doc: 'genome' }"
+    >
+      <mat-icon>menu_book</mat-icon>
+      Documentation
+    </a>
   </section>
 
   <section class="assembly-search-card" aria-label="Assembly search">

@@ -89,3 +89,28 @@
 .genome-search-option-label em {
   color: var(--mat-sys-on-surface-variant);
 }
+
+.genome-search-option-context {
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+}
+
+.genome-search-option-context span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.genome-search-option-label,
+.genome-search-option-context {
+  flex: 1 1 auto;
+}
+
+.genome-search-option-content {
+  flex-wrap: wrap;
+}

@@ -47,10 +47,6 @@ interface SummaryDoughnutSegment {
   color: string;
 }
 
-const OTHER_SUMMARY_CATEGORY_COLOR = '#a8adb7';
-const OTHER_SUMMARY_CATEGORY_DESCRIPTION =
-  'Predicted motif sites outside genes and selected gene flanks.';
-
 function motifTypeShortLabel(g4Type: G4Type): string {
   return g4Type === 'i-motif' ? 'i-motif' : 'G4';
 }
@@ -143,14 +139,7 @@ export class PositionDistributionComponent {
   readonly categoryRows = computed<readonly PositionCategoryView[]>(() =>
     defaultPositionCategoryViews(this.distribution().categories),
   );
-  readonly displayedPositionTotal = computed(
-    () =>
-      this.categoryRows().reduce((sum, category) => sum + category.count, 0) +
-      (this.hasDisplayedOtherCategory() ? 0 : this.otherPositionCount()),
-  );
-  readonly hasDisplayedOtherCategory = computed(() =>
-    this.categoryRows().some((category) => category.key === 'other'),
-  );
+  readonly displayedPositionTotal = computed(() => this.distribution().total_count);
   readonly selectedCategoryRows = computed<readonly PositionCategoryView[]>(() => {
     const selectedKeys = new Set(this.selectedCategoryKeys());
     return this.categoryRows().filter((category) => selectedKeys.has(category.key));
@@ -158,35 +147,20 @@ export class PositionDistributionComponent {
   readonly selectedPositionTotal = computed(() =>
     this.selectedCategoryRows().reduce((sum, category) => sum + category.count, 0),
   );
-  readonly otherPositionCount = computed(() => {
-    const categories = this.distribution().categories;
-    const apiOtherCount = categoryCount(categories, 'other');
-    if (categories.some((category) => category.key === 'other')) {
-      return apiOtherCount;
-    }
-
-    const total = this.distribution().total_count;
-    const geneInside = categoryCount(categories, 'gene_inside');
-    const upstream = categoryCount(categories, 'gene_upstream');
-    const downstream = categoryCount(categories, 'gene_downstream');
-    return Math.max(0, total - geneInside - upstream - downstream);
-  });
-  readonly chartLegendRows = computed<readonly SummaryDoughnutSegment[]>(() => {
-    const total = this.displayedPositionTotal();
-    return [
-      ...this.categoryRows().map((category) => ({
-        key: category.key,
-        label: category.displayLabel,
-        count: category.count,
-        ratio: total ? category.count / total : 0,
-        color: category.color,
-      })),
-      ...this.fallbackOtherSegments(total),
-    ];
-  });
+  readonly otherPositionCount = computed(() =>
+    categoryCount(this.distribution().categories, 'other'),
+  );
+  readonly chartLegendRows = computed<readonly SummaryDoughnutSegment[]>(() =>
+    this.categoryRows().map((category) => ({
+      key: category.key,
+      label: category.displayLabel,
+      count: category.count,
+      ratio: category.ratio,
+      color: category.color,
+    })),
+  );
   readonly summaryDoughnutSegments = computed<readonly SummaryDoughnutSegment[]>(() => {
     const selectedKeys = new Set(this.selectedCategoryKeys());
-    const total = this.displayedPositionTotal();
     const segments: SummaryDoughnutSegment[] = [];
 
     for (const category of this.categoryRows()) {
@@ -195,14 +169,10 @@ export class PositionDistributionComponent {
           key: category.key,
           label: summaryChartLabel(category),
           count: category.count,
-          ratio: total ? category.count / total : 0,
+          ratio: category.ratio,
           color: category.color,
         });
       }
-    }
-
-    if (!this.hasDisplayedOtherCategory() && selectedKeys.has('other')) {
-      segments.push(...this.fallbackOtherSegments(total).filter((segment) => segment.count > 0));
     }
 
     return segments;
@@ -259,27 +229,7 @@ export class PositionDistributionComponent {
   });
 
   chartLegendDescription(key: string): string {
-    if (key === 'other') {
-      return OTHER_SUMMARY_CATEGORY_DESCRIPTION;
-    }
     return this.categoryRows().find((category) => category.key === key)?.displayDescription ?? '';
-  }
-
-  private fallbackOtherSegments(total: number): readonly SummaryDoughnutSegment[] {
-    if (this.hasDisplayedOtherCategory()) {
-      return [];
-    }
-
-    const count = this.otherPositionCount();
-    return [
-      {
-        key: 'other',
-        label: 'Other',
-        count,
-        ratio: total ? count / total : 0,
-        color: OTHER_SUMMARY_CATEGORY_COLOR,
-      },
-    ];
   }
 
   changeG4Type(value: G4Type): void {

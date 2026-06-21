@@ -59,6 +59,9 @@ export const routes: Routes = [
   {
     path: 'gene/:assemblyAccession/:seqid/:featureId',
     title: 'Gene',
+    data: {
+      dataBaseUrl: JBROWSE_BASE_URL,
+    },
     loadComponent: () =>
       import('./gene/pages/gene-info/gene-info.component').then((m) => m.GeneInfoComponent),
   },
