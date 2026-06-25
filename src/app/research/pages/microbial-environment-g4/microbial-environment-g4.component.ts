@@ -29,7 +29,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Sort } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MtxGridColumn, MtxGridModule } from '@ng-matero/extensions/grid';
-import embed, { VisualizationSpec } from 'vega-embed';
+import type { VisualizationSpec } from 'vega-embed';
 import { finalize, Observable } from 'rxjs';
 import {
   EnvironmentCategoryBoxplotResponse,
@@ -1294,6 +1294,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
     this.clearChart();
     try {
+      const { default: embed } = await import('vega-embed');
       const chart = await embed(element, spec, {
         actions: false,
         mode: 'vega',

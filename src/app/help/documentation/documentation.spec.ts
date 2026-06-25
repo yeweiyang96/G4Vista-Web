@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { getOptionalHelpWorkflowIdForUrl } from '../help-content';
+import { getOptionalHelpWorkflowIdForUrl } from '../help-tour-content';
 import { DocumentationComponent } from './documentation';
 
 describe('DocumentationComponent', () => {

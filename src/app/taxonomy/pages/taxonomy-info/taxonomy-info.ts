@@ -1,9 +1,18 @@
 import { computed, effect, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ChangeDetectionStrategy, Component, inject, input, numberAttribute } from '@angular/core';
-import type { ChartData, ChartOptions, Plugin, TooltipItem } from 'chart.js';
+import {
+  ArcElement,
+  Legend,
+  PieController,
+  Tooltip,
+  type ChartData,
+  type ChartOptions,
+  type Plugin,
+  type TooltipItem,
+} from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { BaseChartDirective } from 'ng2-charts';
+import { BaseChartDirective, provideCharts } from 'ng2-charts';
 import {
   Taxonomy,
   TaxonomyG4Summary,
@@ -157,6 +166,11 @@ function geneBiotypeTablePage(
     MatTooltipModule,
     AssemblyListComponent,
     RouterLink,
+  ],
+  providers: [
+    provideCharts({
+      registerables: [PieController, ArcElement, Tooltip, Legend],
+    }),
   ],
   templateUrl: './taxonomy-info.html',
   styleUrl: './taxonomy-info.scss',

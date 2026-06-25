@@ -1,13 +1,11 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { HelpTourDefinition, HelpWorkflowId, TourStep } from './help-content-types';
 import {
   HelpTourConfigurationError,
-  HelpTourDefinition,
-  HelpWorkflowId,
-  TourStep,
   getHelpTour,
   getHelpWorkflowIdForUrl,
   normalizeHelpRoutePath,
-} from './help-content';
+} from './help-tour-content';
 
 export interface HelpTourSession {
   readonly workflowId: HelpWorkflowId;

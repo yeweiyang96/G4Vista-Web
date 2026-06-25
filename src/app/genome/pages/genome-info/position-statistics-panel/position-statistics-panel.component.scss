@@ -69,13 +69,11 @@
 .biotype-density,
 .statistics-details {
   gap: 14px;
-  background: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
 }
 
 .biotype-density {
-  padding: 0;
   overflow: hidden;
   background: var(--mat-sys-surface-container-lowest);
 }
@@ -174,7 +172,6 @@
 }
 
 .statistics-details {
-  padding: 0;
   overflow: hidden;
   background: var(--mat-sys-surface-container-lowest);
 }
@@ -198,34 +195,26 @@
   color: var(--g4v-g4);
 }
 
-.warnings p {
-  margin: 0;
-}
-
-:host ::ng-deep .statistics-details .mat-expansion-panel,
-:host ::ng-deep .density-table-accordion .mat-expansion-panel,
-:host ::ng-deep .additional-biotypes .mat-expansion-panel {
+:host ::ng-deep :is(.statistics-details, .density-table-accordion, .additional-biotypes)
+  .mat-expansion-panel {
   background: transparent;
   border-radius: 8px;
   box-shadow: none;
 }
 
-:host ::ng-deep .statistics-details .mat-expansion-panel-header,
-:host ::ng-deep .density-table-accordion .mat-expansion-panel-header,
-:host ::ng-deep .additional-biotypes .mat-expansion-panel-header {
+:host ::ng-deep :is(.statistics-details, .density-table-accordion, .additional-biotypes)
+  .mat-expansion-panel-header {
   min-height: 60px;
   padding: 0 18px;
 }
 
-:host ::ng-deep .statistics-details .mat-expansion-panel-body,
-:host ::ng-deep .density-table-accordion .mat-expansion-panel-body,
-:host ::ng-deep .additional-biotypes .mat-expansion-panel-body {
+:host ::ng-deep :is(.statistics-details, .density-table-accordion, .additional-biotypes)
+  .mat-expansion-panel-body {
   padding: 0 18px 18px;
 }
 
-:host ::ng-deep .statistics-details .mat-expansion-panel-header-description,
-:host ::ng-deep .density-table-accordion .mat-expansion-panel-header-description,
-:host ::ng-deep .additional-biotypes .mat-expansion-panel-header-description {
+:host ::ng-deep :is(.statistics-details, .density-table-accordion, .additional-biotypes)
+  .mat-expansion-panel-header-description {
   justify-content: flex-end;
   color: var(--mat-sys-on-surface-variant);
 }
@@ -245,16 +234,14 @@
     padding: 18px;
   }
 
-  :host ::ng-deep .statistics-details .mat-expansion-panel-header,
-  :host ::ng-deep .density-table-accordion .mat-expansion-panel-header,
-  :host ::ng-deep .additional-biotypes .mat-expansion-panel-header {
+  :host ::ng-deep :is(.statistics-details, .density-table-accordion, .additional-biotypes)
+    .mat-expansion-panel-header {
     height: auto;
     min-height: 68px;
   }
 
-  :host ::ng-deep .statistics-details .mat-expansion-panel-header-description,
-  :host ::ng-deep .density-table-accordion .mat-expansion-panel-header-description,
-  :host ::ng-deep .additional-biotypes .mat-expansion-panel-header-description {
+  :host ::ng-deep :is(.statistics-details, .density-table-accordion, .additional-biotypes)
+    .mat-expansion-panel-header-description {
     display: none;
   }
 }

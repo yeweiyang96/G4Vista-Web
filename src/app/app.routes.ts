@@ -1,10 +1,13 @@
 import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
-import { HomeComponent } from './home/home.component';
 
 const JBROWSE_BASE_URL = '/api/jbrowse';
 
 export const routes: Routes = [
-  { path: '', title: 'G4ViSTA', component: HomeComponent },
+  {
+    path: '',
+    title: 'G4ViSTA',
+    loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+  },
   {
     path: 'taxonomy',
     title: 'Taxonomy',

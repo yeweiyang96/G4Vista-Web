@@ -9,7 +9,7 @@ import {
   getHelpTour,
   getOptionalHelpWorkflowIdForUrl,
   normalizeHelpRoutePath,
-} from '../help-content';
+} from '../help-tour-content';
 
 interface HelpGuidePromptViewModel {
   readonly icon: string;

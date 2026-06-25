@@ -1,14 +1,18 @@
 <header>
   <nav class="navbar" aria-label="Top toolbar">
-    <button mat-button class="brand-button" routerLink="/" aria-label="Home">
-      <app-logo class="navbar-logo" matButtonIcon />
-      G4ViSTA
-    </button>
+    <a class="brand-button navbar-control" routerLink="/" aria-label="Home">
+      <app-logo class="navbar-logo" />
+      <span>G4ViSTA</span>
+    </a>
     <div class="navbar-primary">
       @for (section of sections; track section.route) {
-        <a mat-button class="navbar-items" [routerLink]="section.route" routerLinkActive="selected">
-          <mat-icon>{{ section.icon }}</mat-icon>
-          {{ section.name }}
+        <a
+          class="navbar-items navbar-control"
+          [routerLink]="section.route"
+          routerLinkActive="selected"
+        >
+          <span class="material-icons nav-icon" aria-hidden="true">{{ section.icon }}</span>
+          <span class="navbar-label">{{ section.name }}</span>
         </a>
       }
     </div>
@@ -16,28 +20,34 @@
 
     <div class="navbar-actions">
       <button
-        mat-icon-button
+        type="button"
         (click)="toggleTheme()"
         aria-label="Toggle theme"
-        class="theme-button"
+        class="theme-button navbar-icon-button"
       >
-        <mat-icon class="icon">{{ theme() }}</mat-icon>
+        <span class="material-icons icon" aria-hidden="true">{{ theme() }}</span>
       </button>
     </div>
   </nav>
   <nav class="navbar small-screen" aria-label="Section Nav Bar">
     @for (section of sections; track section.route) {
-      <a mat-button class="navbar-link" [routerLink]="section.route" routerLinkActive="selected">
-        <mat-icon>{{ section.icon }}</mat-icon>
-        {{ section.name }}
+      <a
+        class="navbar-link navbar-control"
+        [routerLink]="section.route"
+        routerLinkActive="selected"
+      >
+        <span class="material-icons nav-icon" aria-hidden="true">{{ section.icon }}</span>
+        <span class="navbar-label">{{ section.name }}</span>
       </a>
     }
   </nav>
 </header>
 
 <router-outlet />
-<app-help-guide-prompt />
-<app-help-tour-overlay />
+@defer (on idle) {
+  <app-help-guide-prompt />
+  <app-help-tour-overlay />
+}
 @if (showFooter()) {
   <footer class="footer" aria-label="G4ViSTA footer">
     <div class="footer-brand">

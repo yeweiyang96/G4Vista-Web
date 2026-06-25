@@ -12,7 +12,8 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { HelpTourService } from '../help-tour';
-import { TourStep, normalizeHelpRoutePath } from '../help-content';
+import { TourStep } from '../help-content-types';
+import { normalizeHelpRoutePath } from '../help-tour-content';
 
 interface HelpTargetRect {
   readonly top: number;

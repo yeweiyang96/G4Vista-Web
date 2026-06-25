@@ -7,11 +7,15 @@ import {
   HELP_API_SERVICE_SECTION_ID,
   HELP_DOCUMENTATION_ARTICLES,
   HELP_DOCUMENTATION_INDEX_ITEMS,
+} from '../help-documentation-content';
+import {
   HelpDocumentationArticle,
   HelpDocumentationId,
   HelpWorkflowId,
+} from '../help-content-types';
+import {
   isHelpWorkflowId,
-} from '../help-content';
+} from '../help-tour-content';
 
 interface HelpArticleAnchor {
   readonly anchorId: string;

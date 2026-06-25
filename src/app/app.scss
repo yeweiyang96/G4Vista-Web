@@ -1,4 +1,3 @@
-@use '@angular/material' as mat;
 //header
 .navbar {
   display: flex;
@@ -17,7 +16,6 @@
   color: currentColor;
 }
 
-.github-logo,
 .navbar-logo {
   width: 34px;
   height: 34px;
@@ -27,6 +25,50 @@
 .selected {
   color: var(--mat-sys-primary);
   background: transparent;
+}
+
+.navbar-control,
+.navbar-icon-button {
+  padding: 0;
+  appearance: none;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.navbar-control {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 12px;
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+}
+
+.navbar-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.navbar-control:hover,
+.navbar-control:focus-visible,
+.navbar-icon-button:hover,
+.navbar-icon-button:focus-visible {
+  color: var(--mat-sys-primary);
+  background: color-mix(in srgb, var(--mat-sys-primary) 7%, transparent);
+  outline: none;
+}
+
+.navbar-control:focus-visible,
+.navbar-icon-button:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--mat-sys-primary);
 }
 
 .brand-button {
@@ -54,8 +96,7 @@
   border-radius: 0;
 }
 
-.navbar-items .mdc-button__label,
-.navbar-link .mdc-button__label {
+.navbar-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -73,13 +114,12 @@
   background: var(--mat-sys-primary);
 }
 
-.navbar-items mat-icon,
-.navbar-link mat-icon,
-.brand-button mat-icon {
+.nav-icon,
+.brand-button .nav-icon {
   width: 20px;
   height: 20px;
-  margin-right: 6px;
   font-size: 20px;
+  line-height: 1;
 }
 
 .flex-spacer {
@@ -97,7 +137,6 @@
 .navbar-link {
   flex: 1;
   justify-content: center;
-  text-decoration: inherit;
 }
 
 .small-screen {
@@ -135,10 +174,6 @@
     min-width: 0;
     min-height: 44px;
     border-radius: var(--g4v-radius);
-  }
-
-  .github-logo {
-    margin: 0;
   }
 }
 

@@ -9,8 +9,6 @@ import {
   withInMemoryScrolling,
   withRouterConfig,
 } from '@angular/router';
-import { ArcElement, DoughnutController, Legend, PieController, Tooltip } from 'chart.js';
-import { provideCharts } from 'ng2-charts';
 
 import { routes } from './app.routes';
 import { provideHttpClient } from '@angular/common/http';
@@ -29,8 +27,5 @@ export const appConfig: ApplicationConfig = {
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
     ),
     provideHttpClient(),
-    provideCharts({
-      registerables: [DoughnutController, PieController, ArcElement, Tooltip, Legend],
-    }),
   ],
 };

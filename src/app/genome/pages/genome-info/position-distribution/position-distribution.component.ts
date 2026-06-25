@@ -7,9 +7,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import type { ChartData, ChartOptions, Plugin, TooltipItem } from 'chart.js';
+import {
+  ArcElement,
+  DoughnutController,
+  Legend,
+  Tooltip,
+  type ChartData,
+  type ChartOptions,
+  type Plugin,
+  type TooltipItem,
+} from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { BaseChartDirective } from 'ng2-charts';
+import { BaseChartDirective, provideCharts } from 'ng2-charts';
 import {
   G4FlankWindow,
   G4_FLANK_WINDOW_OPTIONS,
@@ -63,6 +72,11 @@ function motifTypeShortLabel(g4Type: G4Type): string {
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+  ],
+  providers: [
+    provideCharts({
+      registerables: [DoughnutController, ArcElement, Tooltip, Legend],
+    }),
   ],
   templateUrl: './position-distribution.component.html',
   styleUrl: './position-distribution.component.scss',
