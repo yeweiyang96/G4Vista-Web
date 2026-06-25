@@ -17,6 +17,17 @@ import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type ThemeMode = 'brightness_medium' | 'dark_mode' | 'light_mode';
+interface NavigationSection {
+  readonly name: string;
+  readonly route: string;
+  readonly icon: string;
+}
+
+interface FooterExternalLink {
+  readonly label: string;
+  readonly url: string;
+}
+
 const THEME_STORAGE_KEY = 'theme';
 
 function isThemeMode(value: string | null): value is ThemeMode {
@@ -38,7 +49,6 @@ function routePath(url: string): string {
 }
 
 const FOOTER_HIDDEN_PATHS = new Set<string>([
-  '/',
   '/gene',
   '/genome',
   '/documentation',
@@ -47,6 +57,18 @@ const FOOTER_HIDDEN_PATHS = new Set<string>([
   '/taxonomy',
 ]);
 const FOOTER_HIDDEN_PREFIXES = ['/gene/', '/genome/', '/taxonomy/'] as const;
+const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
+  { name: 'Genome', route: '/genome', icon: 'biotech' },
+  { name: 'Gene', route: '/gene', icon: 'search' },
+  { name: 'Analysis', route: '/research/microbial-environment-g4', icon: 'query_stats' },
+  { name: 'Download', route: '/download', icon: 'archive' },
+  { name: 'Taxonomy', route: '/taxonomy', icon: 'account_tree' },
+  { name: 'Documentation', route: '/documentation', icon: 'menu_book' },
+];
+const MEDICAL_AI_CENTER_LINK: FooterExternalLink = {
+  label: 'Medical AI Center',
+  url: 'https://bioinfo.med.niigata-u.ac.jp/',
+};
 
 function shouldShowFooter(url: string): boolean {
   const path = routePath(url);
@@ -83,14 +105,8 @@ const GITHUB_ICON = `
 export class App {
   readonly title = 'G4ViSTA';
   readonly year = new Date().getFullYear();
-  readonly sections = [
-    { name: 'Genome', route: '/genome', icon: 'biotech' },
-    { name: 'Gene', route: '/gene', icon: 'search' },
-    { name: 'Analysis', route: '/research/microbial-environment-g4', icon: 'query_stats' },
-    { name: 'Download', route: '/download', icon: 'archive' },
-    { name: 'Taxonomy', route: '/taxonomy', icon: 'account_tree' },
-    { name: 'Documentation', route: '/documentation', icon: 'menu_book' },
-  ];
+  readonly sections = NAVIGATION_SECTIONS;
+  readonly medicalAiCenterLink = MEDICAL_AI_CENTER_LINK;
   readonly theme = signal<ThemeMode>('brightness_medium');
 
   private readonly router = inject(Router);

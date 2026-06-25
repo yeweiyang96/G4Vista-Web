@@ -157,24 +157,18 @@
 //footer
 .footer {
   box-sizing: border-box;
-  display: flex;
-  flex-flow: row wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: end;
   width: min(var(--g4v-page-max), calc(100% - 2 * var(--g4v-page-pad)));
-  padding: 10px 0 28px;
+  padding: 24px 0 30px;
   margin: 0 auto;
-  font-size: 12px;
   color: var(--mat-sys-on-surface-variant);
-  background: transparent;
-  border-top: 0;
-
-  &,
-  a {
-    color: var(--mat-sys-on-surface-variant);
-  }
+  border-top: 1px solid var(--mat-sys-outline-variant);
 
   a {
-    color: inherit;
+    color: var(--mat-sys-primary);
     text-decoration: none;
 
     &:hover,
@@ -182,51 +176,57 @@
       text-decoration: underline;
     }
   }
+
+  a:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 3px;
+  }
+
+  p {
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+    line-height: 1.5;
+  }
 }
 
-.footer-left {
-  display: flex;
-  flex: 1;
+.footer-brand,
+.footer-meta {
+  display: grid;
+  gap: 8px;
+}
+
+.footer-brand-mark {
+  display: inline-flex;
+  gap: 10px;
   align-items: center;
-
-  .logo {
-    width: 34px;
-    height: 34px;
-    opacity: 0.72;
-  }
-
-  a {
-    display: inline-block;
-    margin: 0 12px;
-    font-size: 14px;
-    line-height: 34px;
-    vertical-align: bottom;
-  }
+  font: var(--mat-sys-title-large);
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
 }
 
-.footer-right {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-width: 225px;
-  margin-top: 16px;
-
-  > div {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-self: flex-end;
-    text-align: right;
-  }
-
-  @media (width >= 599.98px) {
-    margin-top: 0;
-  }
+.footer-logo {
+  width: 40px;
+  height: 40px;
 }
 
-@media screen and (width <= 599.98px) {
+.footer-meta {
+  justify-items: end;
+  text-align: right;
+}
+
+.footer-license {
+  font: var(--mat-sys-body-small) !important;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (width <= 720px) {
   .footer {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .footer-meta {
+    justify-items: start;
+    text-align: left;
   }
 }
