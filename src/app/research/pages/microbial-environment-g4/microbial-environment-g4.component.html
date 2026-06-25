@@ -18,7 +18,7 @@
       <div class="capability-card">
         <mat-icon>science</mat-icon>
         <strong>{{ options()?.traits?.length ?? 0 }}</strong>
-        <span>trait models</span>
+        <span>traits available</span>
       </div>
       <div class="capability-card">
         <mat-icon>query_stats</mat-icon>
@@ -32,8 +32,8 @@
       </div>
       <div class="capability-card capability-ready">
         <mat-icon>verified</mat-icon>
-        <strong>Server healthy</strong>
-        <span>API connected</span>
+        <strong>Ready</strong>
+        <span>Curated dataset</span>
       </div>
     </div>
   </section>
@@ -44,7 +44,7 @@
         <div class="rail-title">
           <div>
             <h2>Analysis setup</h2>
-            <p>Use canonical BacDive-derived traits and public G4Vista metrics.</p>
+            <p>Use canonical BacDive-derived traits and public G4ViSTA metrics.</p>
           </div>
         </div>
 
@@ -54,7 +54,10 @@
               <span class="setup-step-number">1</span>
               <div>
                 <h3>Trait and metric</h3>
-                <p>Trait options, defaults, and metric availability come from the Server.</p>
+                <p>
+                  Trait options, defaults, and metric availability are loaded from the current
+                  dataset.
+                </p>
               </div>
             </div>
 
@@ -104,7 +107,10 @@
                 <span class="setup-step-number">2</span>
                 <div>
                   <h3>Standard categories</h3>
-                  <p>Choose displayed box-plot categories; membership is counted once per assembly per category.</p>
+                  <p>
+                    Choose displayed box-plot categories; membership is counted once per assembly
+                    per category.
+                  </p>
                 </div>
               </div>
 
@@ -348,7 +354,10 @@
           <section class="results-panel plot-panel" data-help-target="microbial-chart">
             <div class="panel-heading">
               <div>
-                <h2>{{ selectedTrait()?.display_name }} vs {{ selectedOutcomeMetricOption()?.display_name }}</h2>
+                <h2>
+                  {{ selectedTrait()?.display_name }} vs
+                  {{ selectedOutcomeMetricOption()?.display_name }}
+                </h2>
                 <p>{{ resultDescription() }}</p>
               </div>
             </div>
@@ -377,7 +386,7 @@
               <div class="panel-heading">
                 <div>
                   <h2>Category status</h2>
-                  <p>Server-prepared summary rows, sample sizes, and category-level status.</p>
+                  <p>Precomputed summary rows, sample sizes, and category-level status.</p>
                 </div>
               </div>
 
@@ -414,7 +423,9 @@
             <div class="panel-heading">
               <div>
                 <h2>Assembly preview ({{ previewTotal() | number }})</h2>
-                <p>Raw BacDive values are kept in the table and downloads for checking source values.</p>
+                <p>
+                  Raw BacDive values are kept in the table and downloads for checking source values.
+                </p>
               </div>
             </div>
 
@@ -468,7 +479,7 @@
                 <strong>Configure an Environment-G4 comparison</strong>
                 <p>
                   Numeric traits render as scatter plots. Categorical and multi-label traits render
-                  as category box plots from Server-prepared summaries.
+                  as category box plots from precomputed summaries.
                 </p>
               </div>
             }

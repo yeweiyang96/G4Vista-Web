@@ -96,7 +96,7 @@
 
         <section class="explorer-card section-panel" data-help-target="g4-explorer">
           <header class="section-panel-header">
-            <h2>Explore motif sites</h2>
+            <h2>Explore G4 and i-motif-forming sequences</h2>
           </header>
 
           <div class="section-panel-content">
@@ -364,29 +364,29 @@
                             </div>
                           </dl>
                         </div>
-                      <button mat-button type="button" (click)="resetBrowser()">
-                        Reset browser view
-                      </button>
-                    </div>
-                    @if (viewerAssetWarning(); as warning) {
-                      <div class="browser-asset-warning" role="status">
-                        <mat-icon>warning</mat-icon>
-                        <div>
-                          <strong>JBrowse default-region asset failed.</strong>
-                          <span>
-                            {{ warning.status ?? 'No status' }}
-                            @if (warning.statusText) {
-                              · {{ warning.statusText }}
-                            }
-                          </span>
-                          <code>{{ warning.url }}</code>
-                          <small>{{ warning.message }}</small>
-                        </div>
+                        <button mat-button type="button" (click)="resetBrowser()">
+                          Reset browser view
+                        </button>
                       </div>
-                    }
-                    <app-jbrowse-host
-                      [viewerConfig]="viewerConfig()"
-                      [navigationCommand]="navCommand()"
+                      @if (viewerAssetWarning(); as warning) {
+                        <div class="browser-asset-warning" role="status">
+                          <mat-icon>warning</mat-icon>
+                          <div>
+                            <strong>JBrowse default-region asset failed.</strong>
+                            <span>
+                              {{ warning.status ?? 'No status' }}
+                              @if (warning.statusText) {
+                                · {{ warning.statusText }}
+                              }
+                            </span>
+                            <code>{{ warning.url }}</code>
+                            <small>{{ warning.message }}</small>
+                          </div>
+                        </div>
+                      }
+                      <app-jbrowse-host
+                        [viewerConfig]="viewerConfig()"
+                        [navigationCommand]="navCommand()"
                         (regionChanged)="handleViewerRegionChange($event)"
                       />
                     </section>

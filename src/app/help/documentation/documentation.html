@@ -2,12 +2,12 @@
   <header class="help-doc-header" aria-labelledby="help-title">
     <div class="header-copy">
       <p class="section-kicker">Documentation</p>
-      <h1 id="help-title" class="g4v-page-title">G4Vista documentation</h1>
+      <h1 id="help-title" class="g4v-page-title">G4ViSTA documentation</h1>
     </div>
 
     <a mat-stroked-button routerLink="/">
       <mat-icon>home</mat-icon>
-      Back to G4Vista
+      Back to G4ViSTA
     </a>
   </header>
 
@@ -67,10 +67,11 @@
                     <p class="doc-paragraph">{{ block.body }}</p>
                   }
                   @case ('image') {
-                    <figure class="article-figure" [style.aspect-ratio]="block.aspectRatio">
+                    <figure class="article-figure">
                       <img
                         [src]="block.src"
                         [alt]="block.alt"
+                        [style.aspect-ratio]="block.aspectRatio"
                         [style.object-position]="block.position"
                       />
                       <figcaption>{{ block.caption }}</figcaption>
@@ -104,13 +105,7 @@
                   }
                   @case ('field-table') {
                     <div class="field-table-shell">
-                      <table class="field-table">
-                        <thead>
-                          <tr>
-                            <th scope="col">Field</th>
-                            <th scope="col">How to use it</th>
-                          </tr>
-                        </thead>
+                      <table class="field-table" aria-label="Documentation details">
                         <tbody>
                           @for (row of block.rows; track row.field) {
                             <tr>

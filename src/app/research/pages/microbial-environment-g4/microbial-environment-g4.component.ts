@@ -542,7 +542,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       {
         label: 'rows',
         value: COUNT_FORMATTER.format(response.summary.row_count),
-        hint: 'Read-model rows after filters',
+        hint: 'Rows after selected filters',
         icon: 'table_rows',
       },
       {

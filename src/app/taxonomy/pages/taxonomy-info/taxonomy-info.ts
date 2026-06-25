@@ -75,25 +75,27 @@ const PUBLIC_POSITION_CATEGORIES: readonly PublicPositionCategoryConfig[] = [
     key: 'gene_inside',
     label: 'In genes',
     color: '#07879a',
-    description: 'Predicted motif sites that fall within annotated gene intervals.',
+    description:
+      'Predicted G4 or i-motif-forming sequences that fall within annotated gene intervals.',
   },
   {
     key: 'gene_upstream',
     label: 'Upstream flank',
     color: '#8ec8ef',
-    description: 'Predicted motif sites in the selected upstream gene flank.',
+    description: 'Predicted G4 or i-motif-forming sequences in the selected upstream gene flank.',
   },
   {
     key: 'gene_downstream',
     label: 'Downstream flank',
     color: '#8ab84e',
-    description: 'Predicted motif sites in the selected downstream gene flank.',
+    description: 'Predicted G4 or i-motif-forming sequences in the selected downstream gene flank.',
   },
   {
     key: 'other',
     label: 'Other',
     color: '#a8adb7',
-    description: 'Predicted motif sites outside genes and selected gene flanks.',
+    description:
+      'Predicted G4 or i-motif-forming sequences outside genes and selected gene flanks.',
   },
 ];
 
@@ -264,7 +266,9 @@ export class TaxonomyInfoComponent {
       };
     });
   });
-  readonly positionContextTotal = computed(() => this.summary()?.position_distribution.total_count ?? 0);
+  readonly positionContextTotal = computed(
+    () => this.summary()?.position_distribution.total_count ?? 0,
+  );
   readonly positionPieData = computed<ChartData<'pie', number[], string>>(() => {
     const rows = this.positionCategoryRows().filter((category) => category.count > 0);
     return {

@@ -8,7 +8,7 @@
   min-height: 72px;
   padding: 0 28px;
   color: var(--mat-sys-on-surface);
-  background: color-mix(in srgb, var(--mat-sys-surface-container-lowest) 96%, transparent);
+  background: color-mix(in srgb, var(--g4v-page-bg) 92%, var(--g4v-surface-bg) 8%);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
   backdrop-filter: blur(16px);
 }

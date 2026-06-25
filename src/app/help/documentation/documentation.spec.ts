@@ -60,12 +60,17 @@ describe('DocumentationComponent', () => {
     const host = fixture.nativeElement as HTMLElement;
 
     expect(component.selectedDocumentationId()).toBe('home');
-    expect(host.querySelector('.page-index')?.textContent).toContain('Home');
+    expect(host.querySelector('.page-index')?.textContent).toContain('Welcome to G4ViSTA');
     expect(host.querySelector('.doc-content')?.textContent).toContain('Welcome to G4ViSTA');
     expect(host.querySelector('.doc-content')?.textContent).toContain(
-      'G4ViSTA is a cross-species platform for exploring the genomic landscape of G-quadruplexes',
+      'G4ViSTA helps biologists search genomes, taxa, genes, and microbial trait datasets',
     );
-    expect(host.querySelector('.content-index')?.textContent).toContain('Overview');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('What G4ViSTA contains');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('Choose a workflow');
+    expect(host.querySelector('.doc-content')?.textContent).toContain(
+      'Are these experimentally validated structures?',
+    );
+    expect(host.querySelector('.content-index')?.textContent).toContain('Contents');
   });
 
   it('renders the taxonomy article with section-based contents', async () => {
@@ -85,13 +90,21 @@ describe('DocumentationComponent', () => {
     expect(pageIndexText).not.toContain('The Taxonomy page is the starting point');
     expect(docContentText).toContain('Simple taxon search');
     expect(docContentText).toContain('Taxon records and assemblies');
+    expect(docContentText).toContain('Using a taxon detail page');
+    expect(docContentText).toContain('Q&A');
     expect(docContentText).not.toContain('What to enter');
     expect(docContentText).not.toContain('Results');
     expect(host.querySelector('.article-figure figcaption')?.textContent).toContain(
-      'Taxonomy search field',
+      'Taxonomy search panel',
     );
+    const articleFigure = host.querySelector('.article-figure') as HTMLElement | null;
+    const articleImage = host.querySelector('.article-figure img') as HTMLElement | null;
+    expect(articleFigure?.style.aspectRatio).toBe('');
+    expect(articleImage?.style.aspectRatio).toBe('1256 / 316');
     expect(host.querySelector('.field-table')).not.toBeNull();
+    expect(host.querySelector('.field-table thead')).toBeNull();
     expect(contentIndexText).toContain('Simple taxon search');
+    expect(contentIndexText).toContain('Q&A');
     expect(contentIndexText).toContain('Next steps from taxonomy');
     expect(host.querySelector('.index-link')?.getAttribute('href')).toContain('/documentation');
     expect(host.querySelector('.content-link-list a')?.getAttribute('href')).toContain(
@@ -165,7 +178,7 @@ describe('DocumentationComponent', () => {
     expect(getOptionalHelpWorkflowIdForUrl('/help')).toBeNull();
     expect(host.querySelector('.doc-content')?.textContent).toContain('Creating the ZIP file');
     expect(host.querySelector('.content-index')?.textContent).toContain('Package options');
-    expect(image?.getAttribute('src')).toContain('/documentation/screenshots/download.png');
+    expect(image?.getAttribute('src')).toContain('/documentation/screenshots/download.webp');
   });
 
   it('renders the temperature statistics report as a documentation article', async () => {

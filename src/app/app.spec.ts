@@ -21,7 +21,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.navbar')?.textContent).toContain('G4Vista');
+    expect(compiled.querySelector('.navbar')?.textContent).toContain('G4ViSTA');
   });
 
   it('should expose analysis as a navbar menu trigger', () => {

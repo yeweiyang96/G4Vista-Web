@@ -581,9 +581,9 @@ export class GeneInfoComponent {
       {
         key: 'quadruplex-sequence',
         icon: 'hub',
-        label: 'Total motif sites',
+        label: 'Total predicted sequences',
         value: gene.counts.quadruplex_sequence_count,
-        description: 'All linked quadruplex-forming sequence sites in the current gene context.',
+        description: 'All linked G4 and i-motif-forming sequences in the current gene context.',
       },
       {
         key: 'relation',

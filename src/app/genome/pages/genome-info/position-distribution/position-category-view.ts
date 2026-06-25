@@ -95,22 +95,26 @@ export function categoryDisplayText(category: PositionCategoryTextSource): {
     case 'gene_inside':
       return {
         displayLabel: 'In genes',
-        displayDescription: 'Predicted motif sites that fall within annotated gene intervals.',
+        displayDescription:
+          'Predicted G4 or i-motif-forming sequences that fall within annotated gene intervals.',
       };
     case 'gene_upstream':
       return {
         displayLabel: 'Upstream flank',
-        displayDescription: 'Predicted motif sites in the selected upstream gene flank.',
+        displayDescription:
+          'Predicted G4 or i-motif-forming sequences in the selected upstream gene flank.',
       };
     case 'gene_downstream':
       return {
         displayLabel: 'Downstream flank',
-        displayDescription: 'Predicted motif sites in the selected downstream gene flank.',
+        displayDescription:
+          'Predicted G4 or i-motif-forming sequences in the selected downstream gene flank.',
       };
     case 'other':
       return {
         displayLabel: 'Other',
-        displayDescription: 'Predicted motif sites outside genes and selected gene flanks.',
+        displayDescription:
+          'Predicted G4 or i-motif-forming sequences outside genes and selected gene flanks.',
       };
     default:
       return {

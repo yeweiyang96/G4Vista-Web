@@ -1,11 +1,11 @@
 <main class="g4v-page taxonomy-page" aria-label="Taxonomy">
   <section class="taxonomy-hero" data-help-target="taxonomy-header">
     <div class="hero-copy">
-      <p class="eyebrow">G4Vista taxonomy</p>
+      <p class="eyebrow">G4ViSTA taxonomy</p>
       <h1>Taxonomy</h1>
       <p>
         Search NCBI taxonomic names or Taxon IDs to find genome assemblies and predicted
-        G-quadruplex (G4) and i-motif sites.
+        G-quadruplex (G4) and i-motif-forming sequences.
       </p>
       <a
         mat-stroked-button
@@ -108,7 +108,10 @@
             <p class="taxonomy-results-state">Loading taxonomy results.</p>
           } @else if (submittedSearchResource.value().length > 0) {
             <div class="taxonomy-results-list">
-              @for (option of submittedSearchResource.value(); track option.taxon_id + option.name) {
+              @for (
+                option of submittedSearchResource.value();
+                track option.taxon_id + option.name
+              ) {
                 <a
                   mat-button
                   class="taxonomy-result-link"
@@ -134,9 +137,7 @@
     <div class="section-heading">
       <p class="eyebrow">Browse taxonomy</p>
       <h2>Common starting taxa</h2>
-      <p>
-        These groups provide quick entry points into taxon records and genome assembly lists.
-      </p>
+      <p>These groups provide quick entry points into taxon records and genome assembly lists.</p>
       @if (browseCountsResource.error()) {
         <p class="count-warning">Assembly counts are temporarily unavailable.</p>
       }

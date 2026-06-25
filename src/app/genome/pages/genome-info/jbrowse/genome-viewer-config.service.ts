@@ -102,7 +102,7 @@ const LIGHT_THEME_KEY = 'g4vistaLight';
 const DARK_THEME_KEY = 'g4vistaDark';
 
 const LIGHT_THEME: JBrowseThemeConfig = {
-  name: 'G4Vista Light',
+  name: 'G4ViSTA Light',
   mode: 'light',
   components: createPaperNoShadowThemeConfig(),
   palette: {
@@ -130,7 +130,7 @@ const LIGHT_THEME: JBrowseThemeConfig = {
 };
 
 const DARK_THEME: JBrowseThemeConfig = {
-  name: 'G4Vista Dark',
+  name: 'G4ViSTA Dark',
   mode: 'dark',
   components: createPaperNoShadowThemeConfig(),
   palette: {
@@ -534,7 +534,9 @@ export class GenomeViewerConfigService {
     };
   }
 
-  resolveDefaultRegion(params: GenomeViewerAssetParams): Observable<GenomeViewerDefaultRegionResult> {
+  resolveDefaultRegion(
+    params: GenomeViewerAssetParams,
+  ): Observable<GenomeViewerDefaultRegionResult> {
     const assemblyAccession = params.assemblyAccession;
     const faiUrl = buildAssemblyAssetUrl(params, `${assemblyAccession}.fna.gz.fai`);
 

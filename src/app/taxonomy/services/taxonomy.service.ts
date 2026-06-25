@@ -252,15 +252,15 @@ function mapTaxonomyAssemblySummary(
 
 function categoryDescription(categoryKey: string): string {
   if (categoryKey === 'gene_inside') {
-    return 'Predicted motif sites that fall within annotated gene intervals.';
+    return 'Predicted G4 or i-motif-forming sequences that fall within annotated gene intervals.';
   }
   if (categoryKey === 'gene_upstream') {
-    return 'Predicted motif sites in the selected upstream gene flank.';
+    return 'Predicted G4 or i-motif-forming sequences in the selected upstream gene flank.';
   }
   if (categoryKey === 'gene_downstream') {
-    return 'Predicted motif sites in the selected downstream gene flank.';
+    return 'Predicted G4 or i-motif-forming sequences in the selected downstream gene flank.';
   }
-  return 'Predicted motif sites outside genes and selected gene flanks.';
+  return 'Predicted G4 or i-motif-forming sequences outside genes and selected gene flanks.';
 }
 
 function mapPositionCategory(

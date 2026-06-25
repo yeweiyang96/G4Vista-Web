@@ -26,8 +26,11 @@
   grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
   gap: 36px;
   align-items: end;
-  padding: 38px;
-  background: color-mix(in srgb, var(--mat-sys-primary-container) 18%, var(--mat-sys-surface-container-lowest));
+  padding: 28px 0 34px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0;
 }
 
 .hero-copy,
@@ -266,7 +269,7 @@
 
 @media (width <= 820px) {
   .taxonomy-hero {
-    padding: 24px;
+    padding: 18px 0 24px;
   }
 
   .hero-copy h1 {

@@ -193,7 +193,7 @@ export const HELP_API_DOCUMENTATION_SECTION_ID = 'api-documentation';
 export const HELP_API_SAMPLE_SECTION_ID = 'api-sample-requests';
 export const DEFAULT_GENOME_DETAIL_HELP_ROUTE = '/genome/GCF_000001405.40';
 
-const SCREENSHOT_VERSION = '20260612';
+const SCREENSHOT_VERSION = '20260626';
 const HELP_WORKFLOW_IDS: readonly HelpWorkflowId[] = [
   'taxonomy',
   'genome',
@@ -407,11 +407,145 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
   {
     id: 'home',
     title: 'Welcome to G4ViSTA',
-    eyebrow: '',
+    eyebrow: 'Overview',
     summary:
-      'G4ViSTA is a cross-species platform for exploring the genomic landscape of G-quadruplexes across diverse organisms. It provides interactive visualization and statistical analysis tools for examining G4 density, genomic distribution patterns, and their associations with taxonomic, genomic, and environmental features. By integrating G4 prediction, comparative genomics, and cross-species correlation analysis, G4ViSTA enables researchers to investigate how G4-forming sequences vary across evolutionary lineages and how these patterns may relate to genome organization, environmental adaptation, and species diversity.',
+      'G4ViSTA helps biologists search genomes, taxa, genes, and microbial trait datasets, then inspect predicted G4 and i-motif-forming sequences with tables, charts, genome browser views, and export tools.',
     action: null,
-    sections: [],
+    sections: [
+      {
+        id: 'g4-i-motif-definition',
+        title: 'What G4ViSTA contains',
+        blocks: [
+          {
+            kind: 'paragraph',
+            body: 'G4ViSTA stores predicted G-quadruplex-forming sequences in guanine-rich genomic regions and predicted i-motif-forming sequences in cytosine-rich genomic regions. These are computational predictions, so they are best used as candidates for comparison, visualization, filtering, and follow-up experiments.',
+          },
+          {
+            kind: 'field-table',
+            rows: [
+              {
+                field: 'G4',
+                description:
+                  'Predicted G-quadruplex-forming sequence. In G4ViSTA tables this is the guanine-rich motif class.',
+              },
+              {
+                field: 'i-motif',
+                description:
+                  'Predicted i-motif-forming sequence. In G4ViSTA tables this is the cytosine-rich motif class.',
+              },
+              {
+                field: 'Density per Mb',
+                description:
+                  'A count normalized by genome length, useful when comparing genomes with very different sizes.',
+              },
+              {
+                field: 'Gene context',
+                description:
+                  'The relationship between a predicted sequence and annotated genes, such as inside a gene, upstream, downstream, or intergenic.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'choose-a-workflow',
+        title: 'Choose a workflow',
+        blocks: [
+          {
+            kind: 'paragraph',
+            body: 'Start with the biological identifier you already know. A taxon name, an assembly accession, a gene name, and an environmental trait each lead to a different G4ViSTA workflow.',
+          },
+          {
+            kind: 'field-table',
+            rows: [
+              {
+                field: 'I know the organism or lineage',
+                description:
+                  'Use Taxonomy to search NCBI taxon names or Taxon IDs, browse common groups, open a taxon record, and review available assemblies.',
+              },
+              {
+                field: 'I know the assembly',
+                description:
+                  'Use Genome search to open a specific assembly by accession, assembly name, or organism name.',
+              },
+              {
+                field: 'I know a gene or feature',
+                description:
+                  'Use Gene search to find annotated features by gene symbol, locus tag, feature ID, gene ID, or product keyword.',
+              },
+              {
+                field: 'I need data files',
+                description:
+                  'Use Download to build TSV or ZIP exports from selected assemblies, taxonomy filters, motif filters, gene-context filters, and column selections.',
+              },
+              {
+                field: 'I am comparing microbial traits',
+                description:
+                  'Use Microbial analysis to compare BacDive-derived traits with selected assembly-level G4 density metrics.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recommended-first-steps',
+        title: 'Recommended first steps',
+        blocks: [
+          {
+            kind: 'ordered-list',
+            items: [
+              {
+                title: 'Identify the biological scope',
+                body: 'Decide whether your question is about one assembly, a taxonomic group, a gene family, or a microbial trait comparison.',
+              },
+              {
+                title: 'Open the matching search page',
+                body: 'Use the page index on this documentation screen or the main navigation bar to open the relevant tool.',
+              },
+              {
+                title: 'Check assembly and taxonomy context',
+                body: 'Before interpreting counts or densities, confirm the organism, assembly accession, taxon rank, and sequence record count.',
+              },
+              {
+                title: 'Filter before exporting',
+                body: 'Apply motif type, score, tetrad, region, gene relation, and taxonomy filters before downloading files for downstream analysis.',
+              },
+              {
+                title: 'Record the query settings',
+                body: 'For reproducibility, record the assembly accession, taxon ID, motif type, score range, flank window, gene relation, and selected density metric.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'home-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Are these experimentally validated structures?',
+                body: 'No. G4ViSTA presents predicted G4 and i-motif-forming sequences. Treat them as computational candidates that need biological interpretation and, when required, experimental validation.',
+              },
+              {
+                title: 'Why do counts differ between species?',
+                body: 'Genome size, assembly quality, gene annotation, taxonomic scope, and filter settings can all change counts. Use density per Mb when comparing genomes of different sizes.',
+              },
+              {
+                title: 'Should I start from Taxonomy or Genome search?',
+                body: 'Use Taxonomy when you want to browse organisms or lineages. Use Genome search when you already know the exact assembly accession or assembly name.',
+              },
+              {
+                title: 'Why do some pages show no rows?',
+                body: 'The selected assembly, taxon, trait, or filter combination may not have matching records. Clear filters, broaden the taxon scope, or check whether the assembly has predicted sequence data.',
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'taxonomy',
@@ -435,11 +569,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             body: 'The simple search accepts scientific names, common names, broader lineage names, and NCBI Taxon IDs. When the user starts typing, G4ViSTA shows matching taxa so the intended organism or lineage can be selected before opening a record.',
           },
           articleImage(
-            'taxonomy.png',
-            'Taxonomy search field and common taxon entry points.',
-            'The Taxonomy search field and common taxon entry points.',
+            'taxonomy.webp',
+            'Taxonomy search panel with taxon name and Taxon ID input.',
+            'The Taxonomy search panel accepts scientific names, common names, broader groups, and NCBI Taxon IDs.',
             'top center',
-            '16 / 7',
+            '1256 / 316',
           ),
           {
             kind: 'field-table',
@@ -501,7 +635,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'A taxon record summarizes the selected taxonomy node and lists genome assemblies connected to that taxon. The assembly table is the bridge from taxonomy browsing to sequence-level analysis.',
+            body: 'A taxon record summarizes the selected taxonomy node and lists genome assemblies connected to that taxon. Use this page to confirm taxon rank, inspect lineage context, compare position summaries, and move from a biological group to individual assemblies.',
           },
           {
             kind: 'field-table',
@@ -522,9 +656,55 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                   'Counts or status indicators show whether G4 and i-motif quadruplex sequence data are available.',
               },
               {
+                field: 'Position context',
+                description:
+                  'The pie chart groups predicted sequences by genomic context, such as inside genes, upstream, downstream, or other regions.',
+              },
+              {
+                field: 'Gene biotype table',
+                description:
+                  'When available, the table summarizes intragenic and flanking predicted sequences by gene biotype.',
+              },
+              {
+                field: 'Lineage panel',
+                description:
+                  'Use lineage links to move up or down the taxonomy tree and compare related groups.',
+              },
+              {
                 field: 'Assembly selection',
                 description:
                   'Assemblies can be opened immediately or added to the download set for package creation.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'taxonomy-detail-steps',
+        title: 'Using a taxon detail page',
+        blocks: [
+          {
+            kind: 'ordered-list',
+            items: [
+              {
+                title: 'Confirm the taxon',
+                body: 'Check the Taxon ID, rank, and assembly count. A species page and a family page can answer very different questions.',
+              },
+              {
+                title: 'Choose motif type and flank window',
+                body: 'Switch between G4 and i-motif summaries, then choose the gene flank distance used for upstream and downstream categories.',
+              },
+              {
+                title: 'Read the position context first',
+                body: 'Use the chart to see whether predicted sequences are mostly intragenic, flanking genes, or outside the selected gene windows.',
+              },
+              {
+                title: 'Open or collect assemblies',
+                body: 'Open one assembly for detailed inspection, or add assemblies to the download set when you need files for several genomes.',
+              },
+              {
+                title: 'Use lineage links for comparison',
+                body: 'Move to parent or related taxonomy nodes when the current taxon has too few or too many assemblies.',
               },
             ],
           },
@@ -548,6 +728,33 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 title: 'Search genes later',
                 body: 'After choosing an assembly, use Gene search when the biological question starts from a gene or feature name.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'taxonomy-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'I searched a common name and got unexpected results.',
+                body: 'Choose the autocomplete result with the expected scientific name, rank, and Taxon ID. Common names can map to multiple taxonomy records.',
+              },
+              {
+                title: 'Why does a broad taxon have many assemblies?',
+                body: 'Higher ranks include descendants. Open a lower rank or use the assembly table to choose specific accessions before analysis.',
+              },
+              {
+                title: 'Why are upstream and downstream counts sensitive to the flank window?',
+                body: 'A larger flank window includes more sequence around genes. Keep the same window when comparing taxa or reporting counts.',
+              },
+              {
+                title: 'What should I do if a taxon has no assemblies?',
+                body: 'Try a parent taxon, a species-level taxon, or Genome search by organism name. G4ViSTA can only analyze assemblies that are present in its database.',
               },
             ],
           },
@@ -577,11 +784,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             body: 'The search box accepts assembly accessions, assembly names, and organism names. Accession searches are the most precise; organism-name searches can return several assemblies that need to be compared.',
           },
           articleImage(
-            'genome.png',
-            'Genome search field and recommended assembly table.',
-            'The genome search field accepts accessions, assembly names, and organism names.',
+            'genome.webp',
+            'Genome search field, recommended assembly table, and search tips.',
+            'Genome search combines accession search with recommended assemblies and quick search tips.',
             'top center',
-            '16 / 7',
+            '1256 / 583',
           ),
           {
             kind: 'field-table',
@@ -673,6 +880,69 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           },
         ],
       },
+      {
+        id: 'genome-search-strategy',
+        title: 'Search strategy',
+        blocks: [
+          {
+            kind: 'field-table',
+            rows: [
+              {
+                field: 'Exact accession search',
+                description:
+                  'Best for reproducible work. Use the accession named in a paper, notebook, or external annotation file.',
+              },
+              {
+                field: 'Assembly name search',
+                description:
+                  'Useful when you know a reference name such as TAIR10.1 but not the accession.',
+              },
+              {
+                field: 'Organism search',
+                description:
+                  'Useful for browsing available assemblies. Check organism name, assembly name, and accession before opening a result.',
+              },
+              {
+                field: 'Recommended assemblies',
+                description:
+                  'Fast entry points for common organisms. Use them for exploration, then record the accession used in your analysis.',
+              },
+            ],
+          },
+          {
+            kind: 'note',
+            title: 'Version matters',
+            body: 'Different assembly versions can have different sequence records, coordinates, annotations, and predicted sequence counts. Always report the assembly accession.',
+          },
+        ],
+      },
+      {
+        id: 'genome-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Why do several rows appear for one organism?',
+                body: 'An organism may have reference, alternate, strain, or updated assemblies. Choose the accession that matches your biological question and downstream coordinate system.',
+              },
+              {
+                title: 'What if I only know the species name?',
+                body: 'Search the species name here for assemblies, or use Taxonomy when you want to inspect the taxonomic group before choosing an assembly.',
+              },
+              {
+                title: 'Why does a recommended assembly differ from my paper?',
+                body: 'Recommended rows are convenient defaults, not a substitute for a publication-specific accession. Search the exact accession when reproducing a published analysis.',
+              },
+              {
+                title: 'What does sequence records mean?',
+                body: 'It is the number of chromosomes, scaffolds, contigs, or other assembly records that can contain predicted G4 or i-motif-forming sequences.',
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {
@@ -697,11 +967,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             body: 'The top of the genome workspace identifies the selected assembly and summarizes the data available for exploration. This context should be checked before interpreting any table or chart.',
           },
           articleImage(
-            'genome-detail.png',
-            'Genome detail workspace with overview and G4 Explorer panels.',
-            'The genome workspace combines assembly context, position summaries, filters, and result views.',
+            'genome-detail.webp',
+            'G4 Explorer filter controls, result tabs, table, and current selection panel.',
+            'The G4 Explorer links filter controls with table, range chart, genome browser, and current-selection views.',
             'top center',
-            '16 / 7',
+            '1256 / 680',
           ),
           {
             kind: 'field-table',
@@ -734,7 +1004,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'Position summary panels show how predicted quadruplex sequences are distributed relative to gene landmarks. These views are useful for deciding which filters to apply before reading individual rows.',
+            body: 'Position distribution and statistics panels show how predicted quadruplex sequences are distributed relative to gene landmarks. These views are useful for deciding which filters to apply before reading individual rows.',
           },
           {
             kind: 'bullet-list',
@@ -750,6 +1020,14 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 title: 'Motif type comparison',
                 body: 'Switching between G4 and i-motif views changes which predicted records are summarized.',
+              },
+              {
+                title: 'Flank window control',
+                body: 'The selected window defines how far upstream or downstream of a gene a predicted sequence can be counted as flanking.',
+              },
+              {
+                title: 'Tetrad and score filters',
+                body: 'Use these filters when the summary should match the strength criteria used in the table.',
               },
             ],
           },
@@ -782,6 +1060,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                   'Filter rows by their relationship to genes and nearby annotated features.',
               },
               {
+                field: 'Gene keyword',
+                description:
+                  'Search a feature ID, gene name, or locus tag to focus the explorer around a selected gene or feature.',
+              },
+              {
                 field: 'G-tetrads and score',
                 description:
                   'Use structural and score filters to focus on stronger or more specific predictions.',
@@ -800,6 +1083,10 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         title: 'Linked views and export',
         blocks: [
           {
+            kind: 'paragraph',
+            body: 'The table, range chart, genome browser, and current-selection panel are linked by the active assembly, sequence record, region, motif type, and filters.',
+          },
+          {
             kind: 'ordered-list',
             items: [
               {
@@ -811,8 +1098,43 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 body: 'Compare the table coordinates with the range chart and JBrowse view before using a candidate in downstream work.',
               },
               {
+                title: 'Use the range chart',
+                body: 'Zoom or reset the range chart to inspect local density and gene-centered context for the active sequence record.',
+              },
+              {
+                title: 'Use the genome browser',
+                body: 'Open the Genome browser tab to view sequence, annotation, and predicted sequence tracks in genomic coordinates.',
+              },
+              {
                 title: 'Download filtered rows',
                 body: 'Use the table download action when the current filtered result set is needed as a TSV file.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'g4-explorer-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Why did my table count change after using the position panel?',
+                body: 'Position summaries and table filters can use motif type, flank window, tetrad, score, sequence, and gene settings. Check that the same settings are applied before comparing counts.',
+              },
+              {
+                title: 'Why are some gene relation fields unavailable?',
+                body: 'Gene relation values depend on annotation and read-model availability for the assembly. Try a different sequence record or clear the gene filter if the current scope is too narrow.',
+              },
+              {
+                title: 'Why does the genome browser show a different region than the table?',
+                body: 'The browser follows the active sequence record and displayed region. Reset the browser view or select a row again to synchronize the visible interval.',
+              },
+              {
+                title: 'Can I compare two assemblies on this page?',
+                body: 'This workspace focuses on one assembly. Use Genome search to open another assembly, or Download to export comparable files for multiple assemblies.',
               },
             ],
           },
@@ -842,11 +1164,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             body: 'The search input accepts gene symbols, locus tags, feature IDs, gene IDs, and annotation keywords. The search is useful for finding annotated features that can then be linked back to genome assemblies and nearby quadruplex sequences.',
           },
           articleImage(
-            'gene.png',
-            'Gene search field and feature result grid.',
-            'Gene search returns annotated feature rows with assembly and genomic range context.',
+            'gene.webp',
+            'Gene keyword search, optional taxon scope, and result guidance panel.',
+            'Gene search starts with a gene or feature keyword and can be narrowed with a taxon scope.',
             'top center',
-            '16 / 7',
+            '1256 / 500',
           ),
           {
             kind: 'field-table',
@@ -874,12 +1196,12 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'Gene search can be opened from a taxon context when the result set should be limited to a selected lineage. This is useful for repeated gene-family searches across assemblies from one group.',
+            body: 'Gene search can be opened from a taxon context or narrowed manually with the Taxon scope field. This is useful for repeated gene-family searches across assemblies from one organism or lineage.',
           },
           {
             kind: 'note',
             title: 'Broad keywords',
-            body: 'Product keywords can return many rows. Add taxon context or use a more specific identifier when the result grid is too broad.',
+            body: 'Product keywords and short gene symbols can return many rows. Add taxon context or use a more specific identifier when the result grid is too broad or slow.',
           },
         ],
       },
@@ -908,6 +1230,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 description:
                   'Show whether nearby G4 or i-motif predictions are available for the feature context.',
               },
+              {
+                field: 'Export',
+                description:
+                  'Download the complete result set for the current gene keyword and taxon scope, not only the visible page.',
+              },
             ],
           },
         ],
@@ -928,8 +1255,39 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 body: 'Use feature or linked motif actions to review predicted quadruplex sequences around the selected feature.',
               },
               {
+                title: 'Review the gene detail page',
+                body: 'The detail page shows feature coordinates, strand, biotype, annotation attributes, and linked G4/i-motif relation rows.',
+              },
+              {
                 title: 'Export the full result',
                 body: 'Use the download action after searching when the complete matching result set is required.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'gene-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Why is global gene search slow?',
+                body: 'A global keyword search scans many assemblies. Select a taxon scope or use a more specific feature ID, gene ID, locus tag, or product term.',
+              },
+              {
+                title: 'Why do gene names repeat across rows?',
+                body: 'The same gene symbol can appear in different assemblies, sequence records, strains, paralogs, or annotation versions. Use assembly accession, region, and feature ID to distinguish them.',
+              },
+              {
+                title: 'Why are linked G4 counts zero for a gene?',
+                body: 'No predicted G4 or i-motif-forming sequences may overlap the selected gene context under the current relation rules and available annotation.',
+              },
+              {
+                title: 'What should I export?',
+                body: 'Export gene search results when you need a gene list. Use the genome explorer table or Download page when you need the predicted sequence rows themselves.',
               },
             ],
           },
@@ -959,11 +1317,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             body: 'The package builder uses a shared assembly set. Add assemblies directly on Download by searching accession, assembly name, organism, or taxonomy context; assemblies added from taxonomy pages appear in the same set.',
           },
           articleImage(
-            'download.png',
-            'Download package controls for selected assemblies and TSV options.',
-            'The Download page combines the selected assembly set with package filters and column controls.',
+            'download.webp',
+            'Download source controls and request summary.',
+            'The Download page starts by choosing the row scope, then summarizes filters and output before export.',
             'top center',
-            '16 / 7',
+            '1256 / 650',
           ),
           {
             kind: 'ordered-list',
@@ -978,7 +1336,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               },
               {
                 title: 'Confirm scope',
-                body: 'Review selected assemblies or use taxon, species taxon, and region filters before exporting.',
+                body: 'Choose one source mode: selected assembly set, taxonomy or region filters, or all matching records. Review the request summary before exporting.',
               },
             ],
           },
@@ -994,7 +1352,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 field: 'Source filters',
                 description:
-                  'Limit rows by selected assemblies, taxon IDs, species taxon IDs, or region IDs.',
+                  'Limit rows by the saved assembly set, by taxon IDs, species taxon IDs, or region IDs, or by all matching records after explicit confirmation.',
               },
               {
                 field: 'Motif types',
@@ -1015,6 +1373,16 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 field: 'Gene relation filters',
                 description:
                   'Filter rows by gene IDs, gene search term, relation categories, flank windows, and overlap thresholds.',
+              },
+              {
+                field: 'Flank windows',
+                description:
+                  'Apply selected upstream and downstream windows when gene relation categories include flanking rows.',
+              },
+              {
+                field: 'Overlap thresholds',
+                description:
+                  'Use minimum overlap base pairs or overlap fraction when you need stricter gene-context evidence.',
               },
               {
                 field: 'Sort order',
@@ -1048,8 +1416,43 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 body: 'Contain filtered predicted quadruplex sequence rows split by assembly and motif type.',
               },
               {
+                title: 'Single TSV mode',
+                body: 'Creates one tab-separated table for the full request, useful for spreadsheet import or command-line processing.',
+              },
+              {
                 title: 'Empty selections',
-                body: 'If no assemblies or taxonomy filters are set, the request exports all rows that match the remaining filters.',
+                body: 'If all matching records is selected, confirm the broad export intentionally. Otherwise choose assemblies or taxonomy and region filters first.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'download-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Why is Create download disabled?',
+                body: 'The source scope may be incomplete, all-records mode may need confirmation, no motif type may be selected, or the column catalog may not be loaded.',
+              },
+              {
+                title: 'Which format should I choose?',
+                body: 'Use ZIP when exporting multiple assemblies or motif types because it includes a manifest. Use single TSV when you want one table for quick import.',
+              },
+              {
+                title: 'Why are upstream or downstream rows missing?',
+                body: 'Select upstream or downstream gene context categories and the flank windows you want. The default source focuses on inside-gene rows.',
+              },
+              {
+                title: 'Why did a numeric filter fail?',
+                body: 'Score, overlap base pairs, and overlap fraction fields require valid numeric ranges. Overlap fraction must be between 0 and 1.',
+              },
+              {
+                title: 'How do I reproduce an export later?',
+                body: 'Keep the ZIP manifest or record the source mode, taxon IDs, assemblies, motif types, score range, gene relation filters, sort order, and column set.',
               },
             ],
           },
@@ -1076,14 +1479,14 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'The workbench is designed for exploratory comparison of microbial environmental trait values and G4ViSTA density metrics. Numeric traits render as scatter plots; categorical and multi-label traits render as box plot summaries over standard categories.',
+            body: 'The workbench is designed for exploratory comparison of microbial environmental trait values and G4ViSTA density metrics. Numeric traits render as scatter plots; categorical and multi-label traits render as box plot summaries over standard categories loaded from the current Server options response.',
           },
           articleImage(
-            'microbial-environment.png',
-            'Microbial analysis setup controls, scatter plot, and strain table.',
-            'The microbial analysis workbench connects setup controls with correlation summaries and strain-level rows.',
+            'microbial-environment.webp',
+            'Microbial analysis setup controls, summary metrics, and category box plot.',
+            'The microbial analysis workbench connects Server-provided setup options with chart-ready results.',
             'top center',
-            '16 / 7',
+            '1256 / 680',
           ),
           {
             kind: 'note',
@@ -1102,7 +1505,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 field: 'Trait',
                 description:
-                  'Choose a Server-provided trait such as growth temperature, growth pH, oxygen tolerance, salt tolerance, or ecological context.',
+                  'Choose a Server-provided trait. The available list, default chart type, default metric, category mode, and evidence defaults are loaded from the current dataset.',
               },
               {
                 field: 'Outcome metric',
@@ -1113,6 +1516,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 field: 'Standard categories',
                 description:
                   'For categorical and multi-label traits, select standard category values prepared for analysis. Raw BacDive values stay available in the table and downloads for checking.',
+              },
+              {
+                field: 'Context axis',
+                description:
+                  'For traits such as ecological context, choose the category axis prepared by the dataset, then select the displayed categories.',
               },
               {
                 field: 'Taxonomy selections',
@@ -1136,6 +1544,10 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 title: 'Submit the query',
                 body: 'Run the analysis to refresh the summary metrics, chart, and assembly preview table.',
               },
+              {
+                title: 'Review and export',
+                body: 'Use the assembly preview to check raw BacDive values, normalized values, taxonomy context, genome size, and selected density metrics before downloading results.',
+              },
             ],
           },
         ],
@@ -1156,6 +1568,11 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                 field: 'Scatter plot or box plot',
                 description:
                   'Numeric traits use scatter plots. Categorical and multi-label traits use box plots with quartiles, whiskers, median, and sample size from the API.',
+              },
+              {
+                field: 'Category status',
+                description:
+                  'For box plots, status rows show category sample size, median, whisker range, outliers, and API status.',
               },
               {
                 field: 'Assembly preview',
@@ -1213,6 +1630,37 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           {
             kind: 'paragraph',
             body: 'Use the table controls and download action to inspect or export the submitted assembly set. Record the selected trait code, chart kind, outcome metric, taxonomy filters, category filters, mapping confidence threshold, and sample size when reporting results.',
+          },
+        ],
+      },
+      {
+        id: 'microbial-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Why do numeric traits use scatter plots but categories use box plots?',
+                body: 'Numeric traits such as growth temperature or pH have numeric midpoints, so each assembly can be plotted against a density metric. Categorical and multi-label traits compare distributions across standard categories.',
+              },
+              {
+                title: 'Why can one assembly appear in more than one category?',
+                body: 'Some traits are multi-label. The same assembly can belong to several categories, but it is counted once within each category.',
+              },
+              {
+                title: 'Why should I keep taxonomy filters in mind?',
+                body: 'Ecological context, host association, and microbial lineage are confounded. Use taxonomy filters for stratified comparisons and sensitivity analysis.',
+              },
+              {
+                title: 'Should I include review-only values?',
+                body: 'Usually keep review-only values off for the main analysis. Turn them on only when checking ambiguous source values or running a sensitivity analysis.',
+              },
+              {
+                title: 'Can these charts prove environmental causation?',
+                body: 'No. The workbench reports descriptive associations in the selected dataset. Treat results as exploratory comparisons that require biological follow-up.',
+              },
+            ],
           },
         ],
       },
@@ -1414,6 +1862,33 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           },
         ],
       },
+      {
+        id: 'temperature-statistics-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Is this report a general rule for all microbes?',
+                body: 'No. It summarizes one exploratory screen with explicit sample-size, effect-size, and FDR criteria.',
+              },
+              {
+                title: 'Why are related ranks listed separately?',
+                body: 'A genus, family, order, class, or phylum can overlap biologically. Treat parent-child taxonomy signals as related evidence, not independent discoveries.',
+              },
+              {
+                title: 'How should I reuse these candidates?',
+                body: 'Open Microbial analysis, select growth temperature and a density metric, then repeat the comparison with the relevant taxonomy filters and recorded sample size.',
+              },
+              {
+                title: 'Why was raw G4 count excluded?',
+                body: 'Raw count can be dominated by genome size. Density per Mb is better for comparing assemblies with different genome lengths.',
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {
@@ -1435,7 +1910,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'Use the interactive or machine-readable API documentation when building a client outside G4ViSTA-Web.',
+            body: 'Use the interactive or machine-readable API documentation when building a script, notebook, or external client outside G4ViSTA-Web.',
           },
           {
             kind: 'api-doc-links',
@@ -1452,6 +1927,33 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
             body: 'The following examples use the same /api/v1 route family used by the web interface for common search, genome, motif, and microbial analysis tasks.',
           },
           ...HELP_API_SAMPLES.map(apiSampleBlock),
+        ],
+      },
+      {
+        id: 'api-service-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'When should I use the API instead of the web page?',
+                body: 'Use the API for reproducible notebooks, batch queries, external pipelines, or when you need to save request JSON with analysis results.',
+              },
+              {
+                title: 'Why do some API requests need POST?',
+                body: 'Complex analysis and download requests include many filters, category selections, and pagination settings, so they are sent as structured JSON bodies.',
+              },
+              {
+                title: 'Why does an endpoint return 422?',
+                body: 'A required parameter or request field is invalid. Check accession values, Taxon IDs, metric names, category IDs, numeric ranges, and sort fields.',
+              },
+              {
+                title: 'How do I match web results with API results?',
+                body: 'Use the same assembly accession, taxon scope, motif type, score range, flank window, gene relation filters, trait code, and outcome metric.',
+              },
+            ],
+          },
         ],
       },
     ],
@@ -1484,6 +1986,33 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           },
         ],
       },
+      {
+        id: 'citation-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'What should I cite for genome metadata?',
+                body: 'Cite NCBI Datasets when using assembly and taxonomy-derived genome metadata from G4ViSTA.',
+              },
+              {
+                title: 'What should I cite for microbial trait analyses?',
+                body: 'Cite BacDive when using microbial strain metadata or Environment-G4 results derived from BacDive traits.',
+              },
+              {
+                title: 'What should I cite for predicted G4 candidates?',
+                body: 'Cite the prediction method references listed here, and describe the G4ViSTA filters used in your analysis.',
+              },
+              {
+                title: 'Do I need to cite exported files separately?',
+                body: 'No separate file citation is required, but include the G4ViSTA route, assembly accessions, filters, and download manifest when reporting reproducible work.',
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {
@@ -1508,6 +2037,56 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
           },
         ],
       },
+      {
+        id: 'contact-before-writing',
+        title: 'Before contacting support',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'For search issues',
+                body: 'Include the exact query, selected taxon or assembly accession, and the page where the issue occurred.',
+              },
+              {
+                title: 'For analysis issues',
+                body: 'Include trait code, outcome metric, taxonomy filters, category filters, evidence level, and whether review-only values were included.',
+              },
+              {
+                title: 'For download issues',
+                body: 'Include the selected source mode, filters, output mode, column mode, and any error message shown on the page.',
+              },
+              {
+                title: 'For browser-display issues',
+                body: 'Include the assembly accession, sequence record, visible region, browser, and approximate time of the problem.',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'contact-qa',
+        title: 'Q&A',
+        blocks: [
+          {
+            kind: 'bullet-list',
+            items: [
+              {
+                title: 'Can support interpret my biological result?',
+                body: 'Support can help with G4ViSTA access, data, and reproducibility details. Biological interpretation should be supported by domain evidence and follow-up analysis.',
+              },
+              {
+                title: 'Should I send screenshots?',
+                body: 'Screenshots are useful when they show the selected filters, accession, taxon, error message, or chart state.',
+              },
+              {
+                title: 'Can I request collaboration?',
+                body: 'Use the Medical AI Center website for collaboration questions and include enough context to identify the G4ViSTA workflow involved.',
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
 ];
@@ -1526,21 +2105,21 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'account_tree',
         title: 'Taxonomy landing page',
-        body: 'Use taxonomy as the entry point for finding taxa, genome assemblies, and predicted quadruplex sequence data.',
+        body: 'Start here when your question begins with an organism, lineage, or NCBI Taxon ID.',
         route: '/taxonomy',
         targetSelector: '[data-help-target="taxonomy-header"]',
       },
       {
         icon: 'search',
         title: 'Search a taxon',
-        body: 'Start typing a name or Taxon ID, then select a matching taxon to open its record.',
+        body: 'Type a scientific name, common name, group name, or Taxon ID, then choose the result with the expected rank and ID.',
         route: '/taxonomy',
         targetSelector: '[data-help-target="taxonomy-search"]',
       },
       {
         icon: 'category',
         title: 'Browse common taxa',
-        body: 'Use common starting taxa to open broad groups and review their available genome assemblies.',
+        body: 'Use broad starting groups when you want to inspect a lineage before choosing individual assemblies.',
         route: '/taxonomy',
         targetSelector: '[data-help-target="taxonomy-browse"]',
       },
@@ -1553,21 +2132,21 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'manage_search',
         title: 'Genome search',
-        body: 'Use the assembly search page to find genomes by accession, assembly name, or organism.',
+        body: 'Use Genome search when you know an assembly accession, assembly name, or organism name.',
         route: '/genome',
         targetSelector: '[data-help-target="genome-search"]',
       },
       {
         icon: 'keyboard_arrow_down',
         title: 'Search assembly records',
-        body: 'Type an assembly accession, assembly name, or organism name, then choose a matching result.',
+        body: 'Search exact accessions for reproducible work, or search organism names to compare available assemblies.',
         route: '/genome',
         targetSelector: '[data-help-target="genome-search-input"]',
       },
       {
         icon: 'bookmark_border',
         title: 'Review recommended assemblies',
-        body: 'Use the recommended assembly table as a fast route into commonly used genome workspaces.',
+        body: 'Recommended rows are quick examples. Record the accession before using results in analysis.',
         route: '/genome',
         targetSelector: '[data-help-target="genome-recommended"]',
       },
@@ -1580,28 +2159,28 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'badge',
         title: 'Confirm assembly context',
-        body: 'The overview section identifies the selected assembly, organism, taxonomy link, and sequence count.',
+        body: 'Check assembly accession, organism, taxonomy link, genome length, and predicted sequence counts before interpreting filters.',
         route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
         targetSelector: '[data-help-target="genome-overview"]',
       },
       {
         icon: 'query_stats',
         title: 'Compare position distributions',
-        body: 'Use the distribution controls to evaluate quadruplex sequence counts around genomic landmarks.',
+        body: 'Use motif type, flank window, tetrad, score, and category controls to understand gene-centered sequence distribution.',
         route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
         targetSelector: '[data-help-target="position-distribution"]',
       },
       {
         icon: 'filter_alt',
         title: 'Filter the G4 Explorer',
-        body: 'Combine accession, motif type, gene context, tetrad, and score filters before submitting.',
+        body: 'Combine sequence record, motif type, gene relation, gene keyword, tetrad, and score filters before applying.',
         route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
         targetSelector: '[data-help-target="g4-explorer-filters"]',
       },
       {
         icon: 'hub',
         title: 'Use the explorer views',
-        body: 'The explorer area keeps table, range chart, genome browser, and current-selection views together.',
+        body: 'Use the table, range chart, genome browser, and current-selection panel together to verify genomic context.',
         route: DEFAULT_GENOME_DETAIL_HELP_ROUTE,
         targetSelector: '[data-help-target="g4-explorer"]',
       },
@@ -1614,21 +2193,21 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'abc',
         title: 'Gene workspace',
-        body: 'Search by feature ID, gene ID, or gene name to find matching annotated features.',
+        body: 'Use Gene search when your question starts from a gene symbol, feature ID, locus tag, or annotation keyword.',
         route: '/gene',
         targetSelector: '[data-help-target="gene-header"]',
       },
       {
         icon: 'search',
         title: 'Submit a gene keyword',
-        body: 'Enter a keyword and press the search button to load matching features.',
+        body: 'Enter a gene keyword and optionally choose a taxon scope to keep broad searches manageable.',
         route: '/gene',
         targetSelector: '[data-help-target="gene-search"]',
       },
       {
         icon: 'ballot',
         title: 'Open a linked record',
-        body: 'Use result links to review gene coordinates, linked G4 windows, and genome context.',
+        body: 'Open result links to inspect gene coordinates, linked G4/i-motif windows, and the containing genome assembly.',
         route: '/gene',
         targetSelector: '[data-help-target="gene-next-actions"]',
       },
@@ -1641,28 +2220,28 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'archive',
         title: 'Download package page',
-        body: 'Use Download to build TSV or ZIP exports from assembly, taxonomy, motif, and gene-relation filters.',
+        body: 'Use Download when you need reusable TSV or ZIP files rather than only interactive inspection.',
         route: '/download',
         targetSelector: '[data-help-target="download-header"]',
       },
       {
         icon: 'inventory_2',
         title: 'Choose source rows',
-        body: 'Search and add assemblies on this page, review assemblies added from taxonomy pages, or use taxon and region filters.',
+        body: 'Choose selected assemblies, taxonomy or region filters, or all matching records after explicit confirmation.',
         route: '/download',
         targetSelector: '[data-help-target="download-assembly-set"]',
       },
       {
         icon: 'tune',
         title: 'Set filters and columns',
-        body: 'Choose motif, gene-relation, score, overlap, sort, output mode, and catalog-backed columns.',
+        body: 'Set motif type, gene context, score, flank windows, overlap thresholds, sort order, output mode, and columns.',
         route: '/download',
         targetSelector: '[data-help-target="download-options"]',
       },
       {
         icon: 'folder_zip',
         title: 'Create the export',
-        body: 'Submit the request when source scope, filters, output mode, and columns are ready.',
+        body: 'Review the request summary, then create a ZIP with manifest files or a single TSV table.',
         route: '/download',
         targetSelector: '[data-help-target="download-create-package"]',
       },
@@ -1675,35 +2254,35 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'biotech',
         title: 'Read the study context',
-        body: 'The header summarizes eligible strains, available correlation methods, and data status.',
+        body: 'The header summarizes current trait availability, chart type, displayed categories, and dataset readiness.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-header"]',
       },
       {
         icon: 'tune',
         title: 'Choose trait and metric',
-        body: 'Select the environment trait, outcome metric, and category scope before running.',
+        body: 'Choose a Server-provided trait and allowed G4 density metric. Numeric traits use scatter plots; grouped traits use box plots.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-condition"]',
       },
       {
         icon: 'travel_explore',
         title: 'Build the strain set',
-        body: 'Search taxonomy groups and add them to combine selected groups as a union.',
+        body: 'Search taxonomy groups and import selected filters when you need a lineage-aware comparison.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-taxonomy"]',
       },
       {
         icon: 'analytics',
         title: 'Submit the analysis',
-        body: 'Submit refreshes the chart, summary metrics, and strain table for the selected setup.',
+        body: 'Run analysis after trait, metric, category, taxonomy, and evidence settings match your question.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-submit"]',
       },
       {
         icon: 'view_quilt',
         title: 'Review the workbench',
-        body: 'Results appear in the workbench area after a run, with charts, summary metrics, and strain rows.',
+        body: 'Use the chart, summary metrics, category status, and assembly preview to check descriptive associations and source values.',
         route: '/research/microbial-environment-g4',
         targetSelector: '[data-help-target="microbial-workbench"]',
       },
@@ -1716,7 +2295,7 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
       {
         icon: 'terminal',
         title: 'G4ViSTA-Server API',
-        body: 'Open the Documentation API Service section for documentation links and sample requests.',
+        body: 'Open the API Service documentation for Swagger, ReDoc, OpenAPI JSON, and sample requests.',
         route: '/documentation',
         targetSelector: null,
       },

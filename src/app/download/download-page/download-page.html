@@ -8,17 +8,13 @@
       <p class="section-kicker">Download data</p>
       <h1 id="download-title" class="g4v-page-title">Quadruplex sequence records</h1>
       <p>
-        Choose the row scope, motif filters, gene-context filters, output format, and export
-        columns for a Server-backed download request.
+        Choose the row scope, motif filters, gene-context filters, output format, and columns to
+        export.
       </p>
     </div>
 
     <div class="header-actions">
-      <a
-        mat-stroked-button
-        routerLink="/documentation"
-        [queryParams]="{ doc: 'download' }"
-      >
+      <a mat-stroked-button routerLink="/documentation" [queryParams]="{ doc: 'download' }">
         <mat-icon>menu_book</mat-icon>
         Documentation
       </a>
@@ -76,7 +72,9 @@
           <mat-radio-button class="scope-card" value="assembly_set">
             <span class="scope-card-copy">
               <strong>Selected assembly set</strong>
-              <small>{{ assemblySet.count() }} assemblies saved from this page or taxonomy pages</small>
+              <small
+                >{{ assemblySet.count() }} assemblies saved from this page or taxonomy pages</small
+              >
             </span>
           </mat-radio-button>
           <mat-radio-button class="scope-card" value="taxon_or_region">
@@ -276,17 +274,34 @@
         </header>
 
         <div class="filter-core">
-          <div class="option-section">
-            <h3>Motif types</h3>
-            <div class="check-grid compact">
-              @for (option of motifTypeOptions; track option.value) {
-                <mat-checkbox
-                  [checked]="isMotifTypeSelected(option.value)"
-                  (change)="toggleMotifType(option.value, $event)"
-                >
-                  {{ option.label }}
-                </mat-checkbox>
-              }
+          <div class="filter-option-grid">
+            <div class="option-section">
+              <h3>Motif types</h3>
+              <div class="check-grid compact">
+                @for (option of motifTypeOptions; track option.value) {
+                  <mat-checkbox
+                    [checked]="isMotifTypeSelected(option.value)"
+                    (change)="toggleMotifType(option.value, $event)"
+                  >
+                    {{ option.label }}
+                  </mat-checkbox>
+                }
+              </div>
+            </div>
+
+            <div class="option-section relation-category-filter">
+              <h3>Gene context categories</h3>
+              <p>Default: inside genes. Select upstream or downstream to include flanking rows.</p>
+              <div class="check-grid">
+                @for (option of relationCategoryOptions; track option.value) {
+                  <mat-checkbox
+                    [checked]="isRelationCategorySelected(option.value)"
+                    (change)="toggleRelationCategory(option.value, $event)"
+                  >
+                    {{ option.label }}
+                  </mat-checkbox>
+                }
+              </div>
             </div>
           </div>
 
@@ -336,20 +351,6 @@
 
           <div class="advanced-filter-body">
             <div class="relation-filter-grid">
-              <div class="option-section">
-                <h3>Gene relation categories</h3>
-                <div class="check-grid">
-                  @for (option of relationCategoryOptions; track option.value) {
-                    <mat-checkbox
-                      [checked]="isRelationCategorySelected(option.value)"
-                      (change)="toggleRelationCategory(option.value, $event)"
-                    >
-                      {{ option.label }}
-                    </mat-checkbox>
-                  }
-                </div>
-              </div>
-
               <div class="option-section">
                 <h3>Flank windows</h3>
                 <p>Use these windows with upstream or downstream relation filters.</p>

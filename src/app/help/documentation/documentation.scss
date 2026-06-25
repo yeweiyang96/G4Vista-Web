@@ -174,7 +174,6 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  aspect-ratio: inherit;
   object-fit: cover;
   background: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
@@ -283,14 +282,12 @@
   border-bottom: 0;
 }
 
-.field-table thead th,
 .field-table tbody th,
 .data-table thead th {
   font-weight: 800;
   color: var(--mat-sys-on-surface);
 }
 
-.field-table thead th:first-child,
 .field-table tbody th {
   width: 34%;
 }

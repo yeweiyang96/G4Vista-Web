@@ -100,7 +100,7 @@ describe('GeneInfoComponent', () => {
           defaultDriver: 'WebWorkerRpcDriver',
         },
         theme: {
-          name: 'G4Vista Light',
+          name: 'G4ViSTA Light',
           mode: 'light',
           palette: {
             primary: { main: '#005cbb' },
@@ -159,7 +159,7 @@ describe('GeneInfoComponent', () => {
     const host = fixture.nativeElement as HTMLElement;
     expect(host.textContent).toContain('G4 sites');
     expect(host.textContent).toContain('i-motif sites');
-    expect(host.textContent).toContain('Total motif sites');
+    expect(host.textContent).toContain('Total predicted sequences');
     expect(host.querySelector('.gene-hero')).not.toBeNull();
     expect(host.querySelectorAll('.gene-summary > div').length).toBe(4);
     expect(host.textContent).toContain('Chromosome 1');

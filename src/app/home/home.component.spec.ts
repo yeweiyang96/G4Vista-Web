@@ -89,7 +89,7 @@ describe('HomeComponent', () => {
     ) as HTMLHeadingElement | null;
     const image = heading?.querySelector('img');
 
-    expect(heading?.getAttribute('aria-label')).toBe('G4Vista');
+    expect(heading?.getAttribute('aria-label')).toBe('G4ViSTA');
     expect(image?.getAttribute('src')).toBe('brand/g4vista-wordmark-home.png');
     expect(image?.getAttribute('alt')).toBe('');
     expect(image?.getAttribute('width')).toBe('1400');

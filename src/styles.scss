@@ -29,13 +29,7 @@ body {
   font-family:
     Roboto, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
   color: var(--mat-sys-on-surface);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--mat-sys-primary) 5%, transparent),
-      transparent 260px
-    ),
-    var(--mat-sys-surface);
+  background: var(--g4v-page-bg);
 }
 
 html,
@@ -81,8 +75,26 @@ a {
   --g4v-starting-plant: light-dark(#16815f, #8bd8b5);
   --g4v-starting-bacteria: light-dark(#5b32bd, #d0bcff);
   --g4v-starting-research: light-dark(#b42358, #ff8ab4);
-  --g4v-accent-soft: color-mix(in srgb, var(--g4v-g4) 10%, var(--mat-sys-surface));
-  --g4v-page-bg: color-mix(in srgb, var(--mat-sys-surface) 94%, var(--mat-sys-primary) 6%);
+  --g4v-page-bg: light-dark(#f7f9fb, #111417);
+  --g4v-surface-bg: light-dark(#ffffff, #171b20);
+  --g4v-surface-muted: light-dark(#f4f7fa, #1b2026);
+  --g4v-surface-strong: light-dark(#eef3f7, #20262d);
+  --g4v-accent-soft: color-mix(in srgb, var(--g4v-g4) 10%, var(--g4v-surface-bg));
+
+  --mat-sys-surface: var(--g4v-page-bg);
+  --mat-sys-surface-container-lowest: var(--g4v-surface-bg);
+  --mat-sys-surface-container-low: var(--g4v-surface-muted);
+  --mat-sys-surface-container: var(--g4v-surface-strong);
+  --mat-sys-surface-container-high: color-mix(
+    in srgb,
+    var(--g4v-surface-strong) 88%,
+    var(--mat-sys-on-surface) 12%
+  );
+  --mat-sys-surface-container-highest: color-mix(
+    in srgb,
+    var(--g4v-surface-strong) 82%,
+    var(--mat-sys-on-surface) 18%
+  );
 }
 
 .g4v-page {

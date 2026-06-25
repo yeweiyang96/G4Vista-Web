@@ -371,10 +371,10 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text).toContain('Microbial environment associations');
     expect(text).toContain('Ecological context');
     expect(text).toContain('Gene-overlapping G4 density');
-    expect(text).toContain('Server healthy');
-    expect(text).toContain('API connected');
-    expect(text).not.toContain('Data-only');
-    expect(text).not.toContain('Server-backed API');
+    expect(text).toContain('Ready');
+    expect(text).toContain('Curated dataset');
+    expect(text).toContain('traits available');
+    expect(text).toContain('loaded from the current dataset');
     expect(text).toContain('Ecological context distribution screen.');
     expect(fixture.nativeElement.querySelector('.subtitle')).toBeNull();
     expect(fixture.nativeElement.querySelector('.source-line')).toBeNull();

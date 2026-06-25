@@ -200,6 +200,19 @@ describe('DownloadPage', () => {
     expect(component.canCreateDownload()).toBeTrue();
   });
 
+  it('renders relation category filters as visible multi-select options', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    const relationFilter = host.querySelector('.filter-core .relation-category-filter');
+
+    expect(relationFilter).not.toBeNull();
+    expect(relationFilter?.textContent).toContain('Gene context categories');
+    expect(relationFilter?.querySelectorAll('mat-checkbox').length).toBe(3);
+    expect(relationFilter?.textContent).toContain('Inside genes');
+    expect(relationFilter?.textContent).toContain('Upstream of genes');
+    expect(relationFilter?.textContent).toContain('Downstream of genes');
+    expect(component.selectedRelationCategories()).toEqual(['gene_inside']);
+  });
+
   it('defaults relation category filters to inside genes', () => {
     assemblySet.addItems([
       {

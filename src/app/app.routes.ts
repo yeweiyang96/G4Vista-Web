@@ -4,7 +4,7 @@ import { HomeComponent } from './home/home.component';
 const JBROWSE_BASE_URL = '/api/jbrowse';
 
 export const routes: Routes = [
-  { path: '', title: 'G4Vista', component: HomeComponent },
+  { path: '', title: 'G4ViSTA', component: HomeComponent },
   {
     path: 'taxonomy',
     title: 'Taxonomy',
@@ -81,7 +81,7 @@ export const routes: Routes = [
   },
   {
     path: 'documentation',
-    title: 'G4Vista Documentation',
+    title: 'G4ViSTA Documentation',
     loadComponent: () =>
       import('./help/documentation/documentation').then((m) => m.DocumentationComponent),
   },

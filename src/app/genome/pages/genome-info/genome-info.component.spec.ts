@@ -455,7 +455,7 @@ describe('GenomeInfoComponent', () => {
           defaultDriver: 'WebWorkerRpcDriver',
         },
         theme: {
-          name: 'G4Vista Light',
+          name: 'G4ViSTA Light',
           mode: 'light',
           palette: {
             primary: { main: '#311b92' },
@@ -1366,7 +1366,7 @@ describe('GenomeInfoComponent', () => {
           defaultDriver: 'WebWorkerRpcDriver',
         },
         theme: {
-          name: 'G4Vista Light',
+          name: 'G4ViSTA Light',
           mode: 'light',
           palette: {
             primary: { main: '#311b92' },

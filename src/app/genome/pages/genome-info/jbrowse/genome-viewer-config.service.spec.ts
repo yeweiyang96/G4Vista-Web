@@ -48,7 +48,7 @@ describe('GenomeViewerConfigService', () => {
       defaultDriver: 'WebWorkerRpcDriver',
     });
     expect(config.configuration.theme).toEqual({
-      name: 'G4Vista Light',
+      name: 'G4ViSTA Light',
       mode: 'light',
       components: {
         MuiPaper: {
@@ -88,7 +88,7 @@ describe('GenomeViewerConfigService', () => {
     });
     expect(config.configuration.extraThemes).toEqual({
       g4vistaLight: {
-        name: 'G4Vista Light',
+        name: 'G4ViSTA Light',
         mode: 'light',
         components: {
           MuiPaper: {
@@ -127,7 +127,7 @@ describe('GenomeViewerConfigService', () => {
         },
       },
       g4vistaDark: {
-        name: 'G4Vista Dark',
+        name: 'G4ViSTA Dark',
         mode: 'dark',
         components: {
           MuiPaper: {
@@ -299,7 +299,7 @@ describe('GenomeViewerConfigService', () => {
     });
 
     expect(config.configuration.theme).toEqual({
-      name: 'G4Vista Dark',
+      name: 'G4ViSTA Dark',
       mode: 'dark',
       components: {
         MuiPaper: {

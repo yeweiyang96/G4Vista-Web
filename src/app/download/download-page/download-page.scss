@@ -10,7 +10,6 @@
   margin: 0;
 }
 
-.download-header,
 .download-error,
 .builder-panel,
 .request-dock {
@@ -24,7 +23,8 @@
   gap: 24px;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 28px;
+  padding: 4px 0 22px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .header-copy {
@@ -258,6 +258,7 @@
 }
 
 .filter-core,
+.filter-option-grid,
 .field-grid,
 .relation-filter-grid,
 .format-grid {
@@ -270,9 +271,13 @@
 }
 
 .field-grid.two-columns,
-.relation-filter-grid,
+.filter-option-grid,
 .format-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.relation-filter-grid {
+  grid-template-columns: 1fr;
 }
 
 .option-section {
@@ -457,6 +462,7 @@ mat-form-field {
 
   .download-workbench,
   .field-grid.three-columns,
+  .filter-option-grid,
   .relation-filter-grid,
   .format-grid,
   .scope-options {
@@ -474,7 +480,6 @@ mat-form-field {
     padding-block: 18px 36px;
   }
 
-  .download-header,
   .builder-panel,
   .request-dock {
     padding: 18px;
