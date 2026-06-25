@@ -6,6 +6,7 @@ import { G4Service, G4Type } from '../../../services/g4.service';
 
 interface GenomeRangeChartPrivateApi {
   renderChart: (...args: readonly unknown[]) => Promise<void>;
+  hideVegaTooltip: () => void;
   buildVegaSpec: (...args: readonly unknown[]) => {
     data: {
       transform?: {
@@ -345,6 +346,25 @@ describe('GenomeRangeChartComponent', () => {
     expect(spec.marks[0]?.encode?.hover?.fill).toEqual({ value: '#f59e0b' });
     expect(spec.marks[0]?.encode?.hover?.stroke).toEqual({ value: '#7c2d12' });
     expect(spec.marks[0]?.encode?.hover?.strokeWidth).toEqual({ value: 1.2 });
+  });
+
+  it('hides the active Vega tooltip before chart navigation', async () => {
+    const { fixture } = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    const tooltipElement = document.createElement('div');
+    tooltipElement.id = 'vg-tooltip-element';
+    tooltipElement.classList.add('vg-tooltip', 'visible', 'light-theme');
+    document.body.appendChild(tooltipElement);
+
+    try {
+      privateApi(component).hideVegaTooltip();
+
+      expect(tooltipElement.classList.contains('visible')).toBeFalse();
+      expect(tooltipElement.classList.contains('light-theme')).toBeFalse();
+    } finally {
+      tooltipElement.remove();
+    }
   });
 
   it('anchors the x scale at the selected viewport start', async () => {

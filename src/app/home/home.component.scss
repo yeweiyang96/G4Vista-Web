@@ -35,6 +35,11 @@
   object-position: left center;
 }
 
+.highlight {
+  color: var(--mat-sys-primary);
+  font-weight: 700;
+}
+
 .home-copy p {
   max-width: 760px;
   margin: 0;
@@ -237,7 +242,11 @@
   width: 72px;
   height: 72px;
   color: var(--workflow-color);
-  background: color-mix(in srgb, var(--workflow-color) 10%, var(--mat-sys-surface-container-lowest));
+  background: color-mix(
+    in srgb,
+    var(--workflow-color) 10%,
+    var(--mat-sys-surface-container-lowest)
+  );
   border: 1px solid color-mix(in srgb, var(--workflow-color) 28%, var(--mat-sys-outline-variant));
   border-radius: 50%;
 }
@@ -307,8 +316,13 @@
   display: grid;
   place-items: center;
   color: var(--starting-color);
-  background: color-mix(in srgb, var(--starting-color) 10%, var(--mat-sys-surface-container-lowest));
-  border-right: 1px solid color-mix(in srgb, var(--starting-color) 25%, var(--mat-sys-outline-variant));
+  background: color-mix(
+    in srgb,
+    var(--starting-color) 10%,
+    var(--mat-sys-surface-container-lowest)
+  );
+  border-right: 1px solid
+    color-mix(in srgb, var(--starting-color) 25%, var(--mat-sys-outline-variant));
 }
 
 .starting-icon mat-icon {

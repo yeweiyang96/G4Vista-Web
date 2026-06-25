@@ -81,7 +81,7 @@ const GITHUB_ICON = `
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  readonly title = 'G4Vista';
+  readonly title = 'G4ViSTA';
   readonly year = new Date().getFullYear();
   readonly sections = [
     { name: 'Genome', route: '/genome', icon: 'biotech' },

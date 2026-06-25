@@ -134,7 +134,6 @@ describe('MicrobialEnvironmentG4Service', () => {
       scatter_points: [],
       regression_line: [],
       numeric_bins: [],
-      analysis_results: [],
       table_preview: [],
       preview_total: 0,
       download_filename: 'numeric.csv',

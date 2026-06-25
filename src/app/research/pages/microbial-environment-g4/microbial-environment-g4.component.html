@@ -3,8 +3,6 @@
     <div class="header-copy">
       <p class="eyebrow">Environment-G4</p>
       <h1 class="g4v-page-title">Microbial environment associations</h1>
-      <p class="subtitle">{{ studySummary() }}</p>
-      <p class="source-line">{{ sourceLabel() }}</p>
       <a
         mat-stroked-button
         class="page-doc-link"
@@ -34,8 +32,8 @@
       </div>
       <div class="capability-card capability-ready">
         <mat-icon>verified</mat-icon>
-        <strong>Data-only</strong>
-        <span>Server-backed API</span>
+        <strong>Server healthy</strong>
+        <span>API connected</span>
       </div>
     </div>
   </section>
@@ -105,7 +103,7 @@
               <div class="setup-step-heading">
                 <span class="setup-step-number">2</span>
                 <div>
-                  <h3>Canonical categories</h3>
+                  <h3>Standard categories</h3>
                   <p>Choose displayed box-plot categories; membership is counted once per assembly per category.</p>
                 </div>
               </div>
@@ -124,7 +122,7 @@
                 </mat-select>
               </mat-form-field>
 
-              <div class="category-checklist" aria-label="Displayed canonical categories">
+              <div class="category-checklist" aria-label="Displayed standard categories">
                 @for (category of categoryOptions(); track category.category_id) {
                   <mat-checkbox
                     [checked]="categoryChecked(category)"
@@ -265,24 +263,48 @@
             </section>
           </section>
 
-          <section class="setup-step-card">
-            <div class="setup-step-heading">
-              <span class="setup-step-number">{{ chartKind() === 'boxplot' ? 4 : 3 }}</span>
-              <div>
-                <h3>Evidence controls</h3>
-                <p>Default filters use mapped values suitable for analysis.</p>
+          @if (showEvidenceControls()) {
+            <section class="setup-step-card">
+              <div class="setup-step-heading">
+                <span class="setup-step-number">{{ chartKind() === 'boxplot' ? 4 : 3 }}</span>
+                <div>
+                  <h3>Evidence controls</h3>
+                  <p>
+                    Use this for traits that group BacDive text into standard categories, such as
+                    oxygen tolerance or ecological context. Numeric traits do not use this filter.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Minimum mapping confidence rank</mat-label>
-              <input matInput type="number" min="0" max="3" formControlName="minMappingConfidenceRank" />
-            </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Evidence level</mat-label>
+                <mat-select formControlName="minMappingConfidenceRank">
+                  @for (option of mappingEvidenceLevelOptions; track option.rank) {
+                    <mat-option [value]="option.rank">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint>Stricter levels keep only clearer category assignments.</mat-hint>
+              </mat-form-field>
 
-            <mat-checkbox formControlName="includeReviewValues">
-              Include values marked for review
-            </mat-checkbox>
-          </section>
+              <a
+                mat-button
+                class="evidence-doc-link"
+                routerLink="/documentation"
+                [queryParams]="{ doc: 'microbial-environment' }"
+                fragment="microbial-mapping-evidence"
+              >
+                <mat-icon>menu_book</mat-icon>
+                How evidence levels are assigned
+              </a>
+
+              <div class="evidence-review-control">
+                <mat-checkbox formControlName="includeReviewValues">
+                  Include review-only values
+                </mat-checkbox>
+                <p>Off keeps values flagged for manual review out of the analysis.</p>
+              </div>
+            </section>
+          }
         </div>
 
         <div class="rail-footer-actions" data-help-target="microbial-submit">
@@ -320,15 +342,6 @@
                   <small>{{ metric.hint }}</small>
                 </div>
               </div>
-            }
-          </section>
-
-          <section class="query-status" aria-label="Submitted Environment-G4 query status">
-            @for (row of submittedStatusRows(); track row.label) {
-              <dl>
-                <dt>{{ row.label }}</dt>
-                <dd>{{ row.value }}</dd>
-              </dl>
             }
           </section>
 
@@ -397,55 +410,11 @@
             </section>
           }
 
-          @if (analysisResultRows().length) {
-            <section class="results-panel status-panel" aria-label="Environment-G4 statistical summary">
-              <div class="panel-heading">
-                <div>
-                  <h2>Statistical summary</h2>
-                  <p>Displayed only when the Server returns analysis result fields for the submitted query.</p>
-                </div>
-              </div>
-
-              <div class="compact-table-shell">
-                <table class="compact-result-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Predictor</th>
-                      <th scope="col">Group</th>
-                      <th scope="col">Assemblies</th>
-                      <th scope="col">Estimate</th>
-                      <th scope="col">Effect size</th>
-                      <th scope="col">p-value</th>
-                      <th scope="col">CI</th>
-                      <th scope="col">Taxonomy control</th>
-                      <th scope="col">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of analysisResultRows(); track row.key) {
-                      <tr>
-                        <th scope="row">{{ row.predictor }}</th>
-                        <td>{{ row.groupValue }}</td>
-                        <td>{{ row.nAssemblies }}</td>
-                        <td>{{ row.estimate }}</td>
-                        <td>{{ row.effectSize }}</td>
-                        <td>{{ row.pValue }}</td>
-                        <td>{{ row.confidenceInterval }}</td>
-                        <td>{{ row.taxonomyControlStrategy }}</td>
-                        <td>{{ row.status }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          }
-
           <section class="results-panel" data-help-target="microbial-table">
             <div class="panel-heading">
               <div>
                 <h2>Assembly preview ({{ previewTotal() | number }})</h2>
-                <p>Raw BacDive values are kept in the table and downloads for provenance review.</p>
+                <p>Raw BacDive values are kept in the table and downloads for checking source values.</p>
               </div>
             </div>
 

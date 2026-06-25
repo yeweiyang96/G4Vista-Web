@@ -67,10 +67,7 @@
                     <p class="doc-paragraph">{{ block.body }}</p>
                   }
                   @case ('image') {
-                    <figure
-                      class="article-figure"
-                      [style.aspect-ratio]="block.aspectRatio"
-                    >
+                    <figure class="article-figure" [style.aspect-ratio]="block.aspectRatio">
                       <img
                         [src]="block.src"
                         [alt]="block.alt"
@@ -129,7 +126,9 @@
                     <div class="data-table-shell">
                       <table class="data-table">
                         <caption>
-                          {{ block.caption }}
+                          {{
+                            block.caption
+                          }}
                         </caption>
                         <thead>
                           <tr>
@@ -216,14 +215,14 @@
                               <mat-icon aria-hidden="true">language</mat-icon>
                               Website
                             </a>
-                            <a
+                            <!-- <a
                               [href]="reference.citationUrl"
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               <mat-icon aria-hidden="true">format_quote</mat-icon>
                               Citation
-                            </a>
+                            </a> -->
                           </div>
                         </article>
                       }

@@ -258,6 +258,70 @@ describe('G4Service', () => {
     });
   });
 
+  it('defaults table downloads to inside gene relation filters', () => {
+    service
+      .downloadG4Table({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'g4',
+        seqid: 'NC_000001.1',
+        sort: 'start',
+        order: 'asc',
+        tetrads: [],
+        columns: ['gene_relation:insideOf_gene_g4', 'start'],
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne('/api/v1/download/');
+
+    expect(request.request.body).toEqual(
+      jasmine.objectContaining({
+        columns: ['gene_ids', 'gene_names', 'gene_biotypes', 'relation_categories', 'start'],
+        filters: jasmine.objectContaining({
+          relation_categories: ['gene_inside'],
+          flank_windows: [],
+        }),
+      }),
+    );
+
+    request.flush(new Blob(['test']), {
+      headers: {
+        'Content-Disposition': 'attachment; filename="g4vista.tsv"',
+      },
+    });
+  });
+
+  it('preserves selected table relation category and flank window for downloads', () => {
+    service
+      .downloadG4Table({
+        assemblyAccession: 'GCF_000021765.1',
+        g4Type: 'g4',
+        seqid: 'NC_000001.1',
+        sort: 'start',
+        order: 'asc',
+        tetrads: [],
+        selectedPosition: 'insideOf_genes_upstream_1k_g4',
+        columns: ['seqid', 'start'],
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne('/api/v1/download/');
+
+    expect(request.request.body).toEqual(
+      jasmine.objectContaining({
+        filters: jasmine.objectContaining({
+          relation_categories: ['gene_upstream'],
+          flank_windows: [1000],
+        }),
+      }),
+    );
+
+    request.flush(new Blob(['test']), {
+      headers: {
+        'Content-Disposition': 'attachment; filename="g4vista.tsv"',
+      },
+    });
+  });
+
   it('creates downloads through the shared download API', () => {
     const responseSpy = jasmine.createSpy();
     const blob = new Blob(['test']);
@@ -386,16 +450,12 @@ describe('G4Service', () => {
     });
   });
 
-  it('builds position statistics requests with current query params only', () => {
+  it('builds position statistics requests with supported query params', () => {
     service
       .getPositionStatistics({
         assemblyAccession: 'GCF_000021765.1',
         windows: [1000],
         g4Type: 'g4',
-        tetrads: [2, 4],
-        minScore: 12,
-        maxScore: 40,
-        includeGeneBiotypeBreakdown: true,
       })
       .subscribe();
 
@@ -428,7 +488,6 @@ describe('G4Service', () => {
         assemblyAccession: 'GCF_000021765.1',
         windows: [1000],
         g4Type: 'g4',
-        tetrads: [],
       })
       .subscribe((response) => {
         expect(response.quality.warnings).toEqual([]);

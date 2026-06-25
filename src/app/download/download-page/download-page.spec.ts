@@ -12,7 +12,18 @@ const COLUMN_CATALOG: DownloadColumnCatalog = {
   schema_version: 'quadruplex-sequence-v1',
   index_table: 'quadruplex_sequence_download_index',
   default_columns: ['assembly_accession', 'quadruplex_type', 'start'],
-  all_columns: ['assembly_accession', 'quadruplex_type', 'start', 'sequence'],
+  all_columns: [
+    'assembly_accession',
+    'quadruplex_type',
+    'start',
+    'sequence',
+    'gene_ids',
+    'gene_names',
+    'gene_biotypes',
+    'relation_categories',
+    'feature_types',
+    'feature_ids',
+  ],
   columns: [
     {
       id: 'assembly_accession',
@@ -57,6 +68,74 @@ const COLUMN_CATALOG: DownloadColumnCatalog = {
       exportable: true,
       source_table: 'quadruplex_sequence_download_index',
       source_field: 'sequence',
+    },
+    {
+      id: 'gene_ids',
+      label: 'Gene IDs',
+      type: 'string',
+      category: 'gene relation',
+      description: 'Gene identifiers related to the quadruplex sequence.',
+      default_visible: false,
+      exportable: true,
+      source_table: 'quadruplex_sequence_download_index',
+      source_field: 'gene_ids',
+    },
+    {
+      id: 'gene_names',
+      label: 'Gene names',
+      type: 'string',
+      category: 'gene relation',
+      description: 'Gene names aligned by position with gene_ids.',
+      default_visible: false,
+      exportable: true,
+      source_table: 'quadruplex_sequence_download_index',
+      source_field: 'gene_names',
+    },
+    {
+      id: 'gene_biotypes',
+      label: 'Gene biotypes',
+      type: 'string',
+      category: 'gene relation',
+      description: 'Gene biotypes aligned by position with gene_ids.',
+      default_visible: false,
+      exportable: true,
+      source_table: 'quadruplex_sequence_download_index',
+      source_field: 'gene_biotypes',
+    },
+    {
+      id: 'relation_categories',
+      label: 'Relation categories',
+      type: 'string',
+      category: 'gene relation',
+      description: 'Relation categories aligned by position with gene_ids.',
+      default_visible: false,
+      exportable: true,
+      source_table: 'quadruplex_sequence_download_index',
+      source_field: 'relation_categories',
+    },
+    {
+      id: 'feature_types',
+      label: 'Feature types',
+      type: 'string',
+      category: 'feature relation',
+      description:
+        'Gene-aligned feature type values; positions match gene_ids, gene_names, gene_biotypes, relation_categories, and feature_ids.',
+      default_visible: false,
+      exportable: true,
+      source_table: 'quadruplex_sequence_download_index',
+      source_field: 'feature_types',
+    },
+    {
+      id: 'feature_ids',
+      label: 'Feature IDs',
+      type: 'string',
+      category: 'feature relation',
+      description:
+        'Gene-aligned feature identifiers; positions match gene_ids, gene_names, gene_biotypes, relation_categories, and feature_types.',
+      default_visible: false,
+      exportable: true,
+      source_table: 'quadruplex_sequence_download_index',
+      source_field: 'feature_ids',
     },
   ],
 };
@@ -119,6 +198,53 @@ describe('DownloadPage', () => {
     expect(host.textContent).toContain('GCF_1');
     expect(host.textContent).toContain('Test organism');
     expect(component.canCreateDownload()).toBeTrue();
+  });
+
+  it('defaults relation category filters to inside genes', () => {
+    assemblySet.addItems([
+      {
+        assembly_accession: 'GCF_1',
+        organism_name: 'Test organism',
+        asm_name: 'ASM_TEST',
+        source_taxon_id: null,
+        source_taxon_name: null,
+      },
+    ]);
+
+    component.createDownload();
+
+    expect(downloadService.createDownload).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        filters: jasmine.objectContaining({
+          relation_categories: ['gene_inside'],
+        }),
+      }),
+    );
+  });
+
+  it('keeps at least one relation category selected', () => {
+    expect(component.selectedRelationCategories()).toEqual(['gene_inside']);
+
+    component.toggleRelationCategory('gene_inside', {
+      checked: false,
+    } as Parameters<DownloadPage['toggleRelationCategory']>[1]);
+
+    expect(component.selectedRelationCategories()).toEqual(['gene_inside']);
+
+    component.toggleRelationCategory('gene_upstream', {
+      checked: true,
+    } as Parameters<DownloadPage['toggleRelationCategory']>[1]);
+    component.toggleRelationCategory('gene_inside', {
+      checked: false,
+    } as Parameters<DownloadPage['toggleRelationCategory']>[1]);
+
+    expect(component.selectedRelationCategories()).toEqual(['gene_upstream']);
+
+    component.toggleRelationCategory('gene_upstream', {
+      checked: false,
+    } as Parameters<DownloadPage['toggleRelationCategory']>[1]);
+
+    expect(component.selectedRelationCategories()).toEqual(['gene_inside']);
   });
 
   it('adds a searched assembly to the shared download set', () => {

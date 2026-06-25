@@ -54,8 +54,22 @@ describe('DocumentationComponent', () => {
     await fixture.whenStable();
   }
 
-  it('renders the taxonomy article with section-based contents', async () => {
+  it('renders the help home article by default', async () => {
     const fixture = await createDocumentation({});
+    const component = fixture.componentInstance;
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(component.selectedDocumentationId()).toBe('home');
+    expect(host.querySelector('.page-index')?.textContent).toContain('Home');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('Welcome to G4ViSTA');
+    expect(host.querySelector('.doc-content')?.textContent).toContain(
+      'G4ViSTA is a cross-species platform for exploring the genomic landscape of G-quadruplexes',
+    );
+    expect(host.querySelector('.content-index')?.textContent).toContain('Overview');
+  });
+
+  it('renders the taxonomy article with section-based contents', async () => {
+    const fixture = await createDocumentation({ doc: 'taxonomy' });
     const component = fixture.componentInstance;
     const host = fixture.nativeElement as HTMLElement;
     const pageIndexText = host.querySelector('.page-index')?.textContent ?? '';
@@ -108,6 +122,15 @@ describe('DocumentationComponent', () => {
     expect(component.selectedDocumentationId()).toBe('microbial-environment');
     expect(host.querySelector('.doc-content')?.textContent).toContain('Microbial analysis');
     expect(host.querySelector('.doc-content')?.textContent).toContain('Purpose of the analysis');
+    expect(host.querySelector('.doc-content')?.textContent).toContain(
+      'Evidence levels for grouped traits',
+    );
+    expect(host.querySelector('.doc-content')?.textContent).toContain(
+      'Clear match to a standard category',
+    );
+    expect(host.querySelector('.content-index')?.textContent).toContain(
+      'Evidence levels for grouped traits',
+    );
     expect(host.querySelector('.index-link-active')?.textContent).toContain('Microbial analysis');
   });
 
@@ -118,7 +141,9 @@ describe('DocumentationComponent', () => {
 
     expect(component.selectedDocumentationId()).toBe('citation');
     expect(host.querySelector('.doc-content')?.textContent).toContain('NCBI Datasets');
-    expect(host.querySelector('.doc-content')?.textContent).toContain('QGRS Mapper');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('qgrs-cpp');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('QGRS-Conserve');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('QGRS-H Predictor');
     expect(host.querySelector('.content-index')?.textContent).toContain('Data resources');
 
     await setQueryParams(fixture, { doc: 'contact' });

@@ -80,6 +80,8 @@ const DENSITY_UNIT_OPTIONS: readonly DensityUnitOption[] = [
   { label: '1kb', bp: 1_000 },
 ];
 const FALLBACK_CHART_WIDTH = 960;
+const VEGA_TOOLTIP_ELEMENT_ID = 'vg-tooltip-element';
+const VEGA_TOOLTIP_VISIBLE_CLASSES = ['visible', 'light-theme', 'dark-theme'] as const;
 
 @Component({
   selector: 'app-genome-range-chart',
@@ -372,12 +374,26 @@ export class GenomeRangeChartComponent {
       if (!datum) {
         return;
       }
+      this.hideVegaTooltip();
       this.pointFocus.emit({
         seqid: this.seqid(),
         start: datum.start,
         end: datum.end,
         center: Math.round((datum.start + datum.end) / 2),
       });
+    });
+  }
+
+  private hideVegaTooltip(): void {
+    const tooltipElements = this.documentRef?.querySelectorAll<HTMLElement>(
+      `#${VEGA_TOOLTIP_ELEMENT_ID}`,
+    );
+    if (!tooltipElements) {
+      return;
+    }
+
+    tooltipElements.forEach((tooltipElement: HTMLElement) => {
+      tooltipElement.classList.remove(...VEGA_TOOLTIP_VISIBLE_CLASSES);
     });
   }
 

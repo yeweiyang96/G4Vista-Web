@@ -11,6 +11,7 @@ export type HelpDocumentationSectionId = 'api-service' | 'citation' | 'contact';
 export type HelpWorkflowDocumentationId = Exclude<HelpWorkflowId, 'server-api'>;
 export type HelpDocumentationId =
   | HelpWorkflowDocumentationId
+  | 'home'
   | 'temperature-statistics'
   | 'api-service'
   | 'citation'
@@ -357,38 +358,67 @@ const BACDIVE_REFERENCE: HelpReference = {
   citationUrl: 'https://bacdive.dsmz.de/about',
 };
 
-const QGRS_MAPPER_REFERENCE: HelpReference = {
-  anchorId: 'citation-qgrs-mapper',
-  title: 'QGRS Mapper',
+const QGRS_CPP_REFERENCE: HelpReference = {
+  anchorId: 'citation-qgrs-cpp',
+  title: 'qgrs-cpp',
   citation:
-    "Kikin O, D'Antonio L, Bagga PS. QGRS Mapper: a web-based server for predicting G-quadruplexes in nucleotide sequences. Nucleic Acids Research 34(Web Server issue):W676-W682 (2006).",
-  websiteUrl: 'https://bioinformatics.ramapo.edu/QGRS/index.php',
-  citationUrl: 'https://bioinformatics.ramapo.edu/QGRS/index.php',
+    'freezer333. qgrs-cpp: C++ implementation of QGRS mapping algorithm. GitHub. https://github.com/freezer333/qgrs-cpp',
+  websiteUrl: 'https://github.com/freezer333/qgrs-cpp',
+  citationUrl: 'https://github.com/freezer333/qgrs-cpp',
+};
+
+const QGRS_CONSERVE_REFERENCE: HelpReference = {
+  anchorId: 'citation-qgrs-conserve',
+  title: 'QGRS-Conserve',
+  citation:
+    'Frees S, Menendez C, Crum M, Bagga PS. QGRS-Conserve: a computational method for discovering evolutionarily conserved G-quadruplex motifs. Human Genomics 8, 8 (2014). https://doi.org/10.1186/1479-7364-8-8',
+  websiteUrl: 'https://link.springer.com/article/10.1186/1479-7364-8-8',
+  citationUrl: 'https://doi.org/10.1186/1479-7364-8-8',
+};
+
+const QGRS_H_PREDICTOR_REFERENCE: HelpReference = {
+  anchorId: 'citation-qgrs-h-predictor',
+  title: 'QGRS-H Predictor',
+  citation:
+    'Menendez C, Frees S, Bagga PS. QGRS-H Predictor: a web server for predicting homologous quadruplex forming G-rich sequence motifs in nucleotide sequences. Nucleic Acids Research 40(W1):W96-W103 (2012). https://doi.org/10.1093/nar/gks422',
+  websiteUrl: 'https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gks422',
+  citationUrl: 'https://doi.org/10.1093/nar/gks422',
 };
 
 export const HELP_REFERENCES: readonly HelpReference[] = [
   NCBI_DATASETS_REFERENCE,
   BACDIVE_REFERENCE,
-  QGRS_MAPPER_REFERENCE,
+  QGRS_CPP_REFERENCE,
+  QGRS_CONSERVE_REFERENCE,
+  QGRS_H_PREDICTOR_REFERENCE,
 ];
 
 export const HELP_CONTACT: HelpContact = {
   anchorId: HELP_CONTACT_SECTION_ID,
   title: 'Medical AI Center',
-  body: 'For questions about G4Vista access, data, or collaboration, contact the Medical AI Center through the official website.',
+  body: 'For questions about G4ViSTA access, data, or collaboration, contact the Medical AI Center through the official website.',
   websiteLabel: 'Open Medical AI Center',
   websiteUrl: 'https://bioinfo.med.niigata-u.ac.jp/',
   licenseNote:
-    'G4Vista code is licensed under an MIT-style License. Documentation is licensed under CC BY 4.0.',
+    'G4ViSTA code is licensed under an MIT-style License. Documentation is licensed under CC BY 4.0.',
 };
 
 export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = [
+  {
+    id: 'home',
+    title: 'Welcome to G4ViSTA',
+    eyebrow: '',
+    summary:
+      'G4ViSTA is a cross-species platform for exploring the genomic landscape of G-quadruplexes across diverse organisms. It provides interactive visualization and statistical analysis tools for examining G4 density, genomic distribution patterns, and their associations with taxonomic, genomic, and environmental features. By integrating G4 prediction, comparative genomics, and cross-species correlation analysis, G4ViSTA enables researchers to investigate how G4-forming sequences vary across evolutionary lineages and how these patterns may relate to genome organization, environmental adaptation, and species diversity.',
+    action: null,
+    sections: [],
+  },
   {
     id: 'taxonomy',
     title: 'Taxonomy',
     eyebrow: 'Guide',
     summary:
-      'The Taxonomy page is the starting point for finding organisms or broader biological groups and moving from a taxon to the genome assemblies available in G4Vista.',
+      'The Taxonomy page is the starting point for finding organisms or broader biological groups and moving from a taxon to the genome assemblies available in G4ViSTA.',
     action: {
       kind: 'route',
       label: 'Open taxonomy',
@@ -402,7 +432,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'The simple search accepts scientific names, common names, broader lineage names, and NCBI Taxon IDs. When the user starts typing, G4Vista shows matching taxa so the intended organism or lineage can be selected before opening a record.',
+            body: 'The simple search accepts scientific names, common names, broader lineage names, and NCBI Taxon IDs. When the user starts typing, G4ViSTA shows matching taxa so the intended organism or lineage can be selected before opening a record.',
           },
           articleImage(
             'taxonomy.png',
@@ -679,7 +709,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 field: 'Assembly accession',
                 description:
-                  'The accession used by G4Vista routes, API endpoints, and exported files.',
+                  'The accession used by G4ViSTA routes, API endpoints, and exported files.',
               },
               {
                 field: 'Organism and taxonomy',
@@ -828,7 +858,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 field: 'Feature ID',
                 description:
-                  'Use when working from a genome annotation file or another G4Vista result row.',
+                  'Use when working from a genome annotation file or another G4ViSTA result row.',
               },
               {
                 field: 'Product keyword',
@@ -1046,7 +1076,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'The workbench is designed for exploratory comparison of microbial environmental trait values and G4Vista density metrics. Numeric traits render as scatter plots; categorical and multi-label traits render as Server-prepared box plot summaries over canonical categories.',
+            body: 'The workbench is designed for exploratory comparison of microbial environmental trait values and G4ViSTA density metrics. Numeric traits render as scatter plots; categorical and multi-label traits render as box plot summaries over standard categories.',
           },
           articleImage(
             'microbial-environment.png',
@@ -1080,9 +1110,9 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                   'Choose one of the public density metrics allowed for the selected trait, such as genome-wide, gene-overlapping, upstream, downstream, or intergenic G4 density per Mb.',
               },
               {
-                field: 'Canonical categories',
+                field: 'Standard categories',
                 description:
-                  'For categorical and multi-label traits, select canonical category values prepared by the Server. Raw BacDive values are reserved for provenance tables and downloads.',
+                  'For categorical and multi-label traits, select standard category values prepared for analysis. Raw BacDive values stay available in the table and downloads for checking.',
               },
               {
                 field: 'Taxonomy selections',
@@ -1100,7 +1130,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               },
               {
                 title: 'Choose categories when applicable',
-                body: 'For categorical traits, use the checklist of canonical categories. Category membership is multi-label, not mutually exclusive unless marked by the data contract.',
+                body: 'For categorical traits, use the checklist of standard categories. A single assembly may belong to more than one category unless the data contract marks that trait as single-select.',
               },
               {
                 title: 'Submit the query',
@@ -1120,7 +1150,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
               {
                 field: 'Summary',
                 description:
-                  'Reports assembly counts, read-model row counts, chart type, and the selected public density metric.',
+                  'Reports assembly counts, result row counts, chart type, and the selected public density metric.',
               },
               {
                 field: 'Scatter plot or box plot',
@@ -1133,6 +1163,46 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
                   'Lists assembly accessions, organism names, selected trait values or categories, density metrics, genome size, taxonomy context, and raw values where available.',
               },
             ],
+          },
+        ],
+      },
+      {
+        id: 'microbial-mapping-evidence',
+        title: 'Evidence levels for grouped traits',
+        blocks: [
+          {
+            kind: 'paragraph',
+            body: 'Evidence levels are shown only for BacDive traits that must be grouped from text into standard categories, such as oxygen tolerance or ecological context. They are not used for numeric traits such as growth temperature or pH. For grouped traits, G4ViSTA keeps the original BacDive text, assigns it to a standard category when the match is clear enough, and lets you choose how strict that assignment must be before it appears in the chart.',
+          },
+          {
+            kind: 'field-table',
+            rows: [
+              {
+                field: 'High evidence',
+                description:
+                  'Clear match to a standard category, such as an exact oxygen label, a clear soil or water source, or Homo sapiens as the host.',
+              },
+              {
+                field: 'Medium evidence',
+                description:
+                  'Reasonable broader match, such as animal or plant host association, air, food, industrial sample terms, or common-name host rules.',
+              },
+              {
+                field: 'Low evidence',
+                description:
+                  'Weak but retained match. Useful for checking source data, but usually not the best default for stricter comparisons.',
+              },
+              {
+                field: 'Review-only',
+                description:
+                  'Ambiguous, conflicting, unknown, or marked for manual review. Included in analysis only when Include review-only values is turned on.',
+              },
+            ],
+          },
+          {
+            kind: 'note',
+            title: 'Source values',
+            body: 'The table and downloads keep the original BacDive values, the cleaned values, and the rule used for grouping so results can be checked later.',
           },
         ],
       },
@@ -1351,7 +1421,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
     title: 'API Service',
     eyebrow: 'Reference',
     summary:
-      'G4Vista-Web calls same-origin FastAPI endpoints under /api/v1. The API can also be used directly from scripts, notebooks, and external clients.',
+      'G4ViSTA-Web calls same-origin FastAPI endpoints under /api/v1. The API can also be used directly from scripts, notebooks, and external clients.',
     action: {
       kind: 'external',
       label: 'Open Swagger UI',
@@ -1365,7 +1435,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'paragraph',
-            body: 'Use the interactive or machine-readable API documentation when building a client outside G4Vista-Web.',
+            body: 'Use the interactive or machine-readable API documentation when building a client outside G4ViSTA-Web.',
           },
           {
             kind: 'api-doc-links',
@@ -1410,7 +1480,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
         blocks: [
           {
             kind: 'citation-list',
-            references: [QGRS_MAPPER_REFERENCE],
+            references: [QGRS_CPP_REFERENCE, QGRS_CONSERVE_REFERENCE, QGRS_H_PREDICTOR_REFERENCE],
           },
         ],
       },
@@ -1421,7 +1491,7 @@ export const HELP_DOCUMENTATION_ARTICLES: readonly HelpDocumentationArticle[] = 
     title: 'Contact',
     eyebrow: 'Support',
     summary:
-      'Use the Medical AI Center website for questions about G4Vista access, data, or collaboration.',
+      'Use the Medical AI Center website for questions about G4ViSTA access, data, or collaboration.',
     action: null,
     sections: [
       {
@@ -1645,7 +1715,7 @@ export const HELP_TOURS: Readonly<Record<HelpWorkflowId, HelpTourDefinition>> = 
     steps: [
       {
         icon: 'terminal',
-        title: 'G4Vista-Server API',
+        title: 'G4ViSTA-Server API',
         body: 'Open the Documentation API Service section for documentation links and sample requests.',
         route: '/documentation',
         targetSelector: null,

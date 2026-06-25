@@ -47,28 +47,28 @@ describe('MicrobialEnvironmentG4Component', () => {
         default_outcome_metric: 'g4_density_per_mb',
         category_selection_mode: 'none',
         default_context_axis: null,
-        min_default_mapping_confidence_rank: 1,
+        min_default_mapping_confidence_rank: 0,
         requires_taxonomy_controls: true,
       },
     ],
     outcome_metrics: [
       {
         metric: 'g4_density_per_mb',
-        display_name: 'G4 density',
+        display_name: 'Genome-wide quadruplex density',
         unit: 'sequences/Mb',
-        description: 'Genome-wide quadruplex sequence density.',
+        description: 'Genome-wide quadruplex density.',
       },
       {
         metric: 'gene_quadruplex_density_per_mb',
-        display_name: 'Gene-overlapping G4 density',
+        display_name: 'Gene-overlapping quadruplex density',
         unit: 'sequences/Mb',
-        description: 'Quadruplex sequence density in annotated gene intervals.',
+        description: 'Quadruplex density in annotated gene intervals.',
       },
       {
         metric: 'upstream_quadruplex_density_per_mb',
-        display_name: 'Upstream G4 density',
+        display_name: 'Upstream quadruplex density',
         unit: 'sequences/Mb',
-        description: 'Quadruplex sequence density in upstream gene flanks.',
+        description: 'Quadruplex density in upstream gene flanks.',
       },
     ],
     context_axes: [
@@ -154,28 +154,6 @@ describe('MicrobialEnvironmentG4Component', () => {
     ],
     regression_line: [],
     numeric_bins: [],
-    analysis_results: [
-      {
-        run_id: 'run',
-        result_id: 'ols-growth-temperature',
-        trait_code: 'growth_temperature',
-        outcome_metric: 'g4_density_per_mb',
-        context_axis: null,
-        category_id: null,
-        predictor: 'numeric_midpoint',
-        group_value: null,
-        n_assemblies: 6,
-        estimate: 0.12,
-        effect_size: 0.34,
-        p_value: 0.045,
-        ci_low: 0.01,
-        ci_high: 0.23,
-        taxonomy_control_strategy: 'none',
-        filter_hash: 'hash',
-        status: 'ok',
-        result_json: '{}',
-      },
-    ],
     table_preview: [],
     preview_total: 6,
     download_filename: 'numeric.csv',
@@ -294,6 +272,74 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(component.submittedQuery()).toEqual(request);
   });
 
+  it('renames Server-provided outcome metric labels to G4 density', () => {
+    expect(component.outcomeMetricOptions().map((metric) => metric.display_name)).toEqual([
+      'Genome-wide G4 density',
+      'Gene-overlapping G4 density',
+      'Upstream G4 density',
+    ]);
+    expect(component.selectedOutcomeMetricOption()?.description).toBe(
+      'G4 density in annotated gene intervals.',
+    );
+  });
+
+  it('renders readable mapping evidence controls without changing request fields', () => {
+    component.form.controls.minMappingConfidenceRank.setValue(2);
+    component.form.controls.includeReviewValues.setValue(true);
+
+    component.runAnalysis();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    const request = service.queryCategoryBoxplot.calls.mostRecent()
+      .args[0] as EnvironmentCategoryBoxplotRequest;
+
+    expect(component.mappingEvidenceLevelOptions.map((option) => option.label)).toEqual([
+      'Low evidence or better',
+      'Medium evidence or better',
+      'High evidence only',
+    ]);
+    expect(text).toContain(
+      'Use this for traits that group BacDive text into standard categories, such as oxygen tolerance or ecological context.',
+    );
+    expect(text).toContain('Evidence level');
+    expect(text).toContain('Stricter levels keep only clearer category assignments.');
+    expect(text).toContain('Medium evidence or better');
+    expect(text).toContain('How evidence levels are assigned');
+    expect(text).toContain('Include review-only values');
+    expect(text).toContain('Off keeps values flagged for manual review out of the analysis.');
+    const evidenceLink = fixture.nativeElement.querySelector(
+      '.evidence-doc-link',
+    ) as HTMLAnchorElement | null;
+    expect(evidenceLink?.getAttribute('href')).toContain('doc=microbial-environment');
+    expect(evidenceLink?.getAttribute('href')).toContain('microbial-mapping-evidence');
+    expect(request.min_mapping_confidence_rank).toBe(2);
+    expect(request.include_review_values).toBeTrue();
+  });
+
+  it('hides mapping evidence controls for numeric traits without a default cutoff', () => {
+    component.selectTrait('growth_temperature');
+    fixture.detectChanges();
+
+    let text = fixture.nativeElement.textContent as string;
+
+    expect(component.showEvidenceControls()).toBeFalse();
+    expect(text).not.toContain('Evidence controls');
+    expect(text).not.toContain('Evidence level');
+    expect(text).not.toContain('How evidence levels are assigned');
+
+    component.runAnalysis();
+    fixture.detectChanges();
+    text = fixture.nativeElement.textContent as string;
+    const request = service.queryNumericScatter.calls.mostRecent()
+      .args[0] as EnvironmentNumericScatterRequest;
+
+    expect(text).not.toContain('Evidence controls');
+    expect(text).not.toContain('Review-only values');
+    expect(request.min_mapping_confidence_rank).toBe(0);
+    expect(request.include_review_values).toBeFalse();
+  });
+
   it('uses new route query parameters for deep-linked analyses', () => {
     fixture.destroy();
     service.queryNumericScatter.calls.reset();
@@ -325,31 +371,37 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(text).toContain('Microbial environment associations');
     expect(text).toContain('Ecological context');
     expect(text).toContain('Gene-overlapping G4 density');
-    expect(text).toContain('Associations are descriptive');
+    expect(text).toContain('Server healthy');
+    expect(text).toContain('API connected');
+    expect(text).not.toContain('Data-only');
+    expect(text).not.toContain('Server-backed API');
     expect(text).toContain('Ecological context distribution screen.');
-    expect(text).toContain('Filter hash');
-    expect(text).toContain('hash');
-    expect(text).toContain('build-2026-06-21');
+    expect(fixture.nativeElement.querySelector('.subtitle')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.source-line')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.query-status')).toBeNull();
     expect(text).toContain('Category status');
     expect(text).toContain('Soil');
     expect(text).toContain('Ok');
     expect(text).not.toContain('optimum');
   });
 
-  it('renders Server analysis result fields for numeric traits without inventing R2', () => {
+  it('does not render statistical summary fields for numeric traits', () => {
     component.selectTrait('growth_temperature');
     component.runAnalysis();
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('Statistical summary');
-    expect(text).toContain('numeric_midpoint');
-    expect(text).toContain('0.045');
+    expect(text).not.toContain('Statistical summary');
+    expect(text).not.toContain('Slope / difference');
+    expect(text).not.toContain('Standardized effect');
+    expect(text).not.toContain('Raw p-value');
+    expect(text).not.toContain('Confidence interval');
+    expect(text).not.toContain('numeric_midpoint');
     expect(text).not.toContain('R2');
   });
 
-  it('uses boxplot endpoint and canonical categories for categorical traits', () => {
+  it('uses boxplot endpoint and standard categories for categorical traits', () => {
     component.selectTrait('ecological_context');
     component.runAnalysis();
 

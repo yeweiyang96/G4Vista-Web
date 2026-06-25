@@ -159,27 +159,6 @@ export interface EnvironmentQuerySummary {
   description: string;
 }
 
-export interface EnvironmentAnalysisResult {
-  run_id: string;
-  result_id: string;
-  trait_code: EnvironmentTraitCode;
-  outcome_metric: EnvironmentOutcomeMetric;
-  context_axis: string | null;
-  category_id: string | null;
-  predictor: string;
-  group_value: string | null;
-  n_assemblies: number;
-  estimate: number | null;
-  effect_size: number | null;
-  p_value: number | null;
-  ci_low: number | null;
-  ci_high: number | null;
-  taxonomy_control_strategy: string;
-  filter_hash: string;
-  status: string;
-  result_json: string;
-}
-
 export interface EnvironmentSeriesPoint {
   series_kind: string;
   x_value: number | null;
@@ -234,7 +213,6 @@ export interface EnvironmentNumericScatterResponse {
   scatter_points: EnvironmentNumericScatterPoint[];
   regression_line: EnvironmentSeriesPoint[];
   numeric_bins: EnvironmentSeriesPoint[];
-  analysis_results: EnvironmentAnalysisResult[];
   table_preview: EnvironmentNumericTableRow[];
   preview_total: number;
   download_filename: string;

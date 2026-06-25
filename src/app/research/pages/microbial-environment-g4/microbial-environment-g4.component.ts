@@ -63,27 +63,9 @@ interface SummaryMetric {
   readonly icon: string;
 }
 
-interface SubmittedStatusRow {
-  readonly label: string;
-  readonly value: string;
-}
-
 interface TableSortState {
   readonly active: string;
   readonly direction: EnvironmentSortOrder;
-}
-
-interface AnalysisResultRow {
-  readonly key: string;
-  readonly predictor: string;
-  readonly groupValue: string;
-  readonly nAssemblies: string;
-  readonly estimate: string;
-  readonly effectSize: string;
-  readonly pValue: string;
-  readonly confidenceInterval: string;
-  readonly taxonomyControlStrategy: string;
-  readonly status: string;
 }
 
 interface CategoryStatusRow {
@@ -101,6 +83,13 @@ type EnvironmentTaxonomyRankSelection = 'all' | EnvironmentTaxonomyRank;
 interface TaxonomyRankUiOption {
   readonly rank: EnvironmentTaxonomyRankSelection;
   readonly display_label: string;
+}
+
+type MappingEvidenceRank = 0 | 1 | 2 | 3;
+
+interface MappingEvidenceLevelOption {
+  readonly rank: MappingEvidenceRank;
+  readonly label: string;
 }
 
 interface RouteInitialization {
@@ -166,6 +155,11 @@ const INITIAL_DOWNLOAD_MODE: EnvironmentDownloadMode = 'csv';
 const VEGA_CHART_PADDING: VegaChartPadding = { left: 70, right: 24, top: 16, bottom: 54 };
 const VEGA_CHART_HEIGHT = 360;
 const MINIMUM_VEGA_PLOT_WIDTH = 320;
+const MAPPING_EVIDENCE_LEVEL_OPTIONS: readonly MappingEvidenceLevelOption[] = [
+  { rank: 1, label: 'Low evidence or better' },
+  { rank: 2, label: 'Medium evidence or better' },
+  { rank: 3, label: 'High evidence only' },
+];
 const ENVIRONMENT_OUTCOME_METRICS: readonly EnvironmentOutcomeMetric[] = [
   'g4_density_per_mb',
   'gene_quadruplex_density_per_mb',
@@ -182,6 +176,50 @@ const ENVIRONMENT_TAXONOMY_RANKS: readonly EnvironmentTaxonomyRank[] = [
   'genus',
   'species',
 ];
+const OUTCOME_METRIC_DENSITY_PATTERN = /quadruplex(?: sequence)? density/gi;
+
+function normalizeOutcomeMetricText(value: string): string {
+  return value.replace(OUTCOME_METRIC_DENSITY_PATTERN, 'G4 density');
+}
+
+function normalizeOutcomeMetricOption(
+  option: EnvironmentOutcomeMetricOption,
+): EnvironmentOutcomeMetricOption {
+  return {
+    ...option,
+    display_name: normalizeOutcomeMetricText(option.display_name),
+    description: normalizeOutcomeMetricText(option.description),
+  };
+}
+
+function normalizeEnvironmentOptions(
+  options: EnvironmentOptionsResponse,
+): EnvironmentOptionsResponse {
+  return {
+    ...options,
+    outcome_metrics: options.outcome_metrics.map(normalizeOutcomeMetricOption),
+  };
+}
+
+function isMappingEvidenceRank(value: number): value is MappingEvidenceRank {
+  return Number.isInteger(value) && value >= 0 && value <= 3;
+}
+
+function mappingEvidenceRankFromNumber(value: number): MappingEvidenceRank {
+  if (isMappingEvidenceRank(value)) {
+    return value;
+  }
+  throw new Error(`Unsupported Environment-G4 mapping evidence rank: ${String(value)}.`);
+}
+
+function traitUsesMappingEvidenceControls(trait: EnvironmentTraitOption): boolean {
+  const valueKind = trait.value_kind.toLowerCase();
+  return (
+    valueKind.includes('categorical') ||
+    valueKind.includes('multi_label') ||
+    trait.min_default_mapping_confidence_rank > 0
+  );
+}
 
 function isEnvironmentOutcomeMetric(value: string): value is EnvironmentOutcomeMetric {
   return ENVIRONMENT_OUTCOME_METRICS.includes(value as EnvironmentOutcomeMetric);
@@ -305,13 +343,6 @@ function formatStatusLabel(value: string): string {
     .join(' ');
 }
 
-function confidenceIntervalLabel(low: number | null, high: number | null): string {
-  if (low === null && high === null) {
-    return 'NA';
-  }
-  return `${formatNumber(low)}..${formatNumber(high)}`;
-}
-
 function metricValue(row: EnvironmentTableRow, metric: EnvironmentOutcomeMetric): number | null {
   return row[metric];
 }
@@ -412,11 +443,12 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     taxonomyKeyword: new FormControl('', { nonNullable: true }),
     numericMin: new FormControl('', { nonNullable: true }),
     numericMax: new FormControl('', { nonNullable: true }),
-    minMappingConfidenceRank: new FormControl(0, { nonNullable: true }),
+    minMappingConfidenceRank: new FormControl<MappingEvidenceRank>(0, { nonNullable: true }),
     includeReviewValues: new FormControl(false, { nonNullable: true }),
   });
 
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+  readonly mappingEvidenceLevelOptions = MAPPING_EVIDENCE_LEVEL_OPTIONS;
   readonly tablePageIndex = this.pageIndex.asReadonly();
   readonly tablePageSize = this.pageSize.asReadonly();
   readonly tableSortState = this.sortStateSignal.asReadonly();
@@ -438,6 +470,10 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   readonly chartKind = computed<EnvironmentChartKind>(
     () => this.selectedTrait()?.default_chart_kind ?? 'scatter',
   );
+  readonly showEvidenceControls = computed(() => {
+    const trait = this.selectedTrait();
+    return trait ? traitUsesMappingEvidenceControls(trait) : false;
+  });
   readonly contextAxisOptions = computed(() => {
     const options = this.options();
     if (!options) {
@@ -481,13 +517,6 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     return response ? [...response.table_preview] : [];
   });
   readonly previewTotal = computed(() => this.result()?.preview_total ?? 0);
-  readonly sourceLabel = computed(() => {
-    const options = this.options();
-    if (!options) {
-      return 'Loading source metadata';
-    }
-    return `Build ${options.build_id} · ${options.source_dataset_version}`;
-  });
   readonly canRun = computed(
     () => Boolean(this.options()) && !this.loadingOptions() && !this.loadingQuery(),
   );
@@ -495,7 +524,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     const trait = this.selectedTrait();
     const metric = this.selectedOutcomeMetricOption();
     const traitLabel = trait?.display_name ?? 'environmental trait';
-    const metricLabel = metric?.display_name ?? 'quadruplex sequence density';
+    const metricLabel = metric?.display_name ?? 'G4 density';
     return `Compare BacDive-derived ${traitLabel} with ${metricLabel}. Associations are descriptive and taxonomy-aware.`;
   });
   readonly summaryMetrics = computed<SummaryMetric[]>(() => {
@@ -547,65 +576,6 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       outliers: COUNT_FORMATTER.format(row.outlier_count),
       status: formatStatusLabel(row.status),
     }));
-  });
-  readonly analysisResultRows = computed<readonly AnalysisResultRow[]>(() => {
-    const response = this.result();
-    if (!response || !isNumericResponse(response)) {
-      return [];
-    }
-    return response.analysis_results.map((row) => ({
-      key: row.result_id,
-      predictor: row.predictor,
-      groupValue: row.group_value ?? 'All assemblies',
-      nAssemblies: COUNT_FORMATTER.format(row.n_assemblies),
-      estimate: formatNumber(row.estimate),
-      effectSize: formatNumber(row.effect_size),
-      pValue: formatNumber(row.p_value),
-      confidenceInterval: confidenceIntervalLabel(row.ci_low, row.ci_high),
-      taxonomyControlStrategy: formatStatusLabel(row.taxonomy_control_strategy),
-      status: formatStatusLabel(row.status),
-    }));
-  });
-  readonly submittedStatusRows = computed<readonly SubmittedStatusRow[]>(() => {
-    const response = this.result();
-    const query = this.submittedQuery();
-    if (!response || !query) {
-      return [];
-    }
-    return [
-      {
-        label: 'Filter hash',
-        value: response.summary.filter_hash,
-      },
-      {
-        label: 'Build',
-        value: response.summary.build_id,
-      },
-      {
-        label: 'Source dataset',
-        value: response.summary.source_dataset_version,
-      },
-      {
-        label: 'Taxonomy scope',
-        value: this.taxonomyScopeLabel(query.taxonomy_filters),
-      },
-      {
-        label: 'Mapping confidence rank',
-        value: `${query.min_mapping_confidence_rank}+`,
-      },
-      {
-        label: 'Review values',
-        value: query.include_review_values ? 'Included' : 'Excluded',
-      },
-      {
-        label: 'Category filters',
-        value: `${query.category_filters.length} active`,
-      },
-      {
-        label: 'Table sort',
-        value: `${query.sort_field} ${query.sort_order}`,
-      },
-    ];
   });
   readonly tableColumns = computed<MtxGridColumn<EnvironmentTableRow>[]>(() => {
     const metric = this.selectedOutcomeMetricSignal();
@@ -1038,7 +1008,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.selectedCategoryIdsSignal.set(defaultSelectedCategoryIds(categories ?? []));
 
     this.form.controls.minMappingConfidenceRank.setValue(
-      trait?.min_default_mapping_confidence_rank ?? 0,
+      mappingEvidenceRankFromNumber(trait?.min_default_mapping_confidence_rank ?? 0),
     );
     this.taxonomyCandidates.set([]);
     this.selectedTaxonomyCandidateKeysSignal.set([]);
@@ -1225,8 +1195,9 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       )
       .subscribe({
         next: (options) => {
-          this.options.set(options);
-          this.applyInitialRouteState(options);
+          const normalizedOptions = normalizeEnvironmentOptions(options);
+          this.options.set(normalizedOptions);
+          this.applyInitialRouteState(normalizedOptions);
         },
         error: (error: unknown) => this.handleError(error),
       });

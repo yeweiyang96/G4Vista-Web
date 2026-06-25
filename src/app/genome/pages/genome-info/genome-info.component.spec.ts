@@ -417,24 +417,17 @@ describe('GenomeInfoComponent', () => {
                 precedence_rank: 1,
                 merged_interval_length_bp: 1000,
                 length_mb: 0.001,
-                motifs: {
+                quadruplex_types: {
                   g4: {
                     count: 2,
+                    denominator_bp: 1000,
+                    denominator_mode: 'gene',
                     density_per_mb: 2000,
-                    expected_vs_genome: 1,
-                    fold_vs_genome: 2,
-                    fold_vs_other: 3,
-                    fold_vs_non_feature: 3,
                     min_score: 10,
                     q1_score: 15,
                     median_score: 20,
                     p75_score: 40,
                     max_score: 50,
-                    min_tetrads: 2,
-                    q1_tetrads: 2,
-                    median_tetrads: 3,
-                    p75_tetrads: 4,
-                    max_tetrads: 5,
                     min_length: 20,
                     q1_length: 22,
                     median_length: 24,
@@ -442,16 +435,9 @@ describe('GenomeInfoComponent', () => {
                     max_length: 40,
                   },
                 },
-                asymmetry: {
-                  g4_fraction: 2 / 3,
-                  i_motif_fraction: 1 / 3,
-                  fraction_delta: 1 / 3,
-                  count_delta: 1,
-                  density_ratio_g4_over_i_motif: 2,
-                },
               },
             ],
-            gene_biotype_breakdown: [],
+            biotype_categories: [],
           },
         ],
       }),
@@ -664,10 +650,6 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         windows: [1000],
         g4Type: 'g4',
-        tetrads: [],
-        minScore: undefined,
-        maxScore: undefined,
-        includeGeneBiotypeBreakdown: true,
       }),
     );
 
@@ -712,17 +694,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [1000],
-        g4Type: 'g4',
-        tetrads: [3],
-        minScore: 12,
-        maxScore: 40,
-        includeGeneBiotypeBreakdown: true,
-      }),
-    );
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     g4Service.getPositionDistribution.calls.reset();
     g4Service.getPositionStatistics.calls.reset();
@@ -732,17 +704,7 @@ describe('GenomeInfoComponent', () => {
     fixture.detectChanges();
 
     expect(g4Service.getPositionDistribution).not.toHaveBeenCalled();
-    expect(g4Service.getPositionStatistics).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        assemblyAccession: 'GCF_1',
-        windows: [1000],
-        g4Type: 'g4',
-        tetrads: [],
-        minScore: undefined,
-        maxScore: undefined,
-        includeGeneBiotypeBreakdown: true,
-      }),
-    );
+    expect(g4Service.getPositionStatistics).not.toHaveBeenCalled();
 
     g4Service.getPositionDistribution.calls.reset();
     g4Service.getPositionStatistics.calls.reset();
@@ -772,8 +734,6 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         windows: [500],
         g4Type: 'g4',
-        tetrads: [],
-        includeGeneBiotypeBreakdown: true,
       }),
     );
     expect(component.positionDistributionFlankWindowLabel()).toBe('500 bp');
@@ -797,8 +757,6 @@ describe('GenomeInfoComponent', () => {
         assemblyAccession: 'GCF_1',
         windows: [500],
         g4Type: 'i-motif',
-        tetrads: [],
-        includeGeneBiotypeBreakdown: true,
       }),
     );
   });
@@ -1564,5 +1522,30 @@ describe('GenomeInfoComponent', () => {
       binSize: 100,
     });
     expect(viewerState.region()).toBe('chr2:5000..5500');
+  });
+
+  it('focuses a clicked table sequence in the genome browser tab', async () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const selectedSequence = {
+      ...chr2BrowsePage.g4s[0],
+      start: 500,
+      end: 520,
+    };
+
+    component.setResultsTabIndex(1);
+    component.navigateToG4(selectedSequence);
+
+    expect(component.resultsTabIndex()).toBe(2);
+    expect(component.chartSeqid()).toBe('chr2');
+    expect(component.chartViewport()).toEqual({
+      start: 400,
+      end: 620,
+      binSize: 100,
+    });
+    expect(viewerState.region()).toBe('chr2:400..620');
   });
 });

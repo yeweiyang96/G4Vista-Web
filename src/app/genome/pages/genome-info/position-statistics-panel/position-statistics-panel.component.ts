@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   G4PositionCategoryStats,
-  G4PositionMotifStats,
   G4PositionStatisticsBiotypeCategory,
   G4PositionStatisticsCategory,
-  G4PositionStatisticsGeneBiotypeBreakdown,
-  G4PositionStatisticsGeneBiotypeCategory,
   G4PositionStatisticsResponse,
   G4PositionStatisticsWindow,
   G4Type,
@@ -47,7 +45,7 @@ interface GeneBiotypeDensityRow {
 interface PositionStrengthRow {
   id: string;
   category: PositionStatisticsCategoryView;
-  stats: G4PositionMotifStats;
+  stats: G4PositionCategoryStats;
 }
 
 type StrengthBoxPlotKey = 'score' | 'length';
@@ -71,23 +69,16 @@ const GENE_CONTEXT_CATEGORY_KEYS: readonly GeneContextCategoryKey[] = [
   'gene_downstream',
 ];
 
-const EMPTY_MOTIF_STATS: G4PositionMotifStats = {
+const EMPTY_CATEGORY_STATS: G4PositionCategoryStats = {
   count: 0,
+  denominator_bp: 0,
+  denominator_mode: null,
   density_per_mb: null,
-  expected_vs_genome: null,
-  fold_vs_genome: null,
-  fold_vs_other: null,
-  fold_vs_non_feature: null,
   min_score: null,
   q1_score: null,
   median_score: null,
   p75_score: null,
   max_score: null,
-  min_tetrads: null,
-  q1_tetrads: null,
-  median_tetrads: null,
-  p75_tetrads: null,
-  max_tetrads: null,
   min_length: null,
   q1_length: null,
   median_length: null,
@@ -103,106 +94,11 @@ function formatLengthMb(value: number): string {
   return LENGTH_MB_FORMATTER.format(value);
 }
 
-function motifStatsForType(
-  source: Pick<G4PositionStatisticsCategory, 'motifs' | 'quadruplex_types'>,
+function categoryStatsForType(
+  source: Pick<G4PositionStatisticsCategory, 'quadruplex_types'>,
   g4Type: G4Type,
-): G4PositionMotifStats {
-  const legacyStats = source.motifs?.[g4Type];
-  if (legacyStats) {
-    return legacyStats;
-  }
-
-  const categoryStats = source.quadruplex_types?.[g4Type];
-  if (!categoryStats) {
-    return EMPTY_MOTIF_STATS;
-  }
-
-  return motifStatsFromCategoryStats(categoryStats);
-}
-
-function biotypeRowKey(row: G4PositionStatisticsGeneBiotypeBreakdown): string {
-  return canonicalGeneBiotype(row.bio_type || row.display_label);
-}
-
-function biotypeRowLabel(row: G4PositionStatisticsGeneBiotypeBreakdown): string {
-  const canonicalValue = biotypeRowKey(row);
-  if (canonicalValue === 'other') {
-    return 'Other';
-  }
-  return row.display_label.trim() || canonicalValue;
-}
-
-function categoryByKey(
-  categories: readonly G4PositionStatisticsGeneBiotypeCategory[],
-  key: GeneContextCategoryKey,
-): G4PositionStatisticsGeneBiotypeCategory | null {
-  return categories.find((category) => category.key === key) ?? null;
-}
-
-function emptyBiotypeCategory(
-  key: GeneContextCategoryKey,
-): G4PositionStatisticsGeneBiotypeCategory {
-  const displayText = categoryDisplayText({
-    key,
-    label: key,
-    description: '',
-  });
-  return {
-    key,
-    label: displayText.displayLabel,
-    description: displayText.displayDescription,
-    precedence_rank: GENE_CONTEXT_CATEGORY_KEYS.indexOf(key) + 1,
-    display_label: displayText.displayLabel,
-    display_description: displayText.displayDescription,
-    category_group: 'gene_context',
-    is_default_chart_category: true,
-    display_order: GENE_CONTEXT_CATEGORY_KEYS.indexOf(key) + 1,
-    count: 0,
-    merged_interval_length_bp: 0,
-    length_mb: 0,
-    motifs: {},
-  };
-}
-
-function biotypeDensityCell(
-  categories: readonly G4PositionStatisticsGeneBiotypeCategory[],
-  key: GeneContextCategoryKey,
-  g4Type: G4Type,
-): GeneBiotypeDensityCell {
-  const category = categoryByKey(categories, key) ?? emptyBiotypeCategory(key);
-  const displayText = categoryDisplayText(category);
-  const stats = motifStatsForType(category, g4Type);
-  return {
-    key,
-    label: displayText.displayLabel,
-    color: positionCategoryColor(key),
-    count: stats.count,
-    lengthMb: category.length_mb,
-    densityPerMb: stats.density_per_mb,
-  };
-}
-
-function biotypeDensityRow(
-  row: G4PositionStatisticsGeneBiotypeBreakdown,
-  g4Type: G4Type,
-): GeneBiotypeDensityRow {
-  const key = biotypeRowKey(row);
-  return {
-    key,
-    label: biotypeRowLabel(row),
-    totalCount: row.total_count,
-    cells: GENE_CONTEXT_CATEGORY_KEYS.map((categoryKey) =>
-      biotypeDensityCell(row.categories, categoryKey, g4Type),
-    ),
-  };
-}
-
-function motifStatsFromCategoryStats(stats: G4PositionCategoryStats): G4PositionMotifStats {
-  return {
-    ...EMPTY_MOTIF_STATS,
-    count: stats.count,
-    density_per_mb: stats.density_per_mb,
-  };
+): G4PositionCategoryStats {
+  return source.quadruplex_types?.[g4Type] ?? EMPTY_CATEGORY_STATS;
 }
 
 function biotypeCategoryLabel(biotype: string): string {
@@ -271,11 +167,6 @@ function biotypeDensityRowsForWindow(
   window: G4PositionStatisticsWindow,
   g4Type: G4Type,
 ): readonly GeneBiotypeDensityRow[] {
-  const legacyRows = window.gene_biotype_breakdown ?? [];
-  if (legacyRows.length > 0) {
-    return legacyRows.map((row) => biotypeDensityRow(row, g4Type));
-  }
-
   return groupedBiotypeCategories(window.biotype_categories ?? []).map((group) =>
     biotypeCategoryDensityRow(group.biotype, group.categories, g4Type),
   );
@@ -296,10 +187,16 @@ function compareBiotypeDensityRows(
 }
 
 function completeBoxPlotValues(
-  stats: G4PositionMotifStats,
+  stats: G4PositionCategoryStats,
   metric: StrengthBoxPlotKey,
 ): [number, number, number, number, number] | null {
-  const values: [number | null, number | null, number | null, number | null, number | null] =
+  const values: [
+    number | null | undefined,
+    number | null | undefined,
+    number | null | undefined,
+    number | null | undefined,
+    number | null | undefined,
+  ] =
     metric === 'score'
       ? [stats.min_score, stats.q1_score, stats.median_score, stats.p75_score, stats.max_score]
       : [
@@ -312,11 +209,11 @@ function completeBoxPlotValues(
   const [minValue, q1Value, medianValue, p75Value, maxValue] = values;
 
   if (
-    minValue === null ||
-    q1Value === null ||
-    medianValue === null ||
-    p75Value === null ||
-    maxValue === null
+    minValue == null ||
+    q1Value == null ||
+    medianValue == null ||
+    p75Value == null ||
+    maxValue == null
   ) {
     return null;
   }
@@ -325,7 +222,12 @@ function completeBoxPlotValues(
 
 @Component({
   selector: 'app-position-statistics-panel',
-  imports: [MatExpansionModule, MatProgressSpinnerModule, StrengthBoxPlotVegaComponent],
+  imports: [
+    MatExpansionModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    StrengthBoxPlotVegaComponent,
+  ],
   templateUrl: './position-statistics-panel.component.html',
   styleUrl: './position-statistics-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -373,7 +275,7 @@ export class PositionStatisticsPanelComponent {
     this.statisticsRows().map((category) => ({
       id: category.key,
       category,
-      stats: this.motifStats(category),
+      stats: this.categoryStats(category),
     })),
   );
   readonly strengthBoxPlots = computed<readonly StrengthBoxPlotView[]>(() =>
@@ -384,13 +286,16 @@ export class PositionStatisticsPanelComponent {
       ] as const
     ).map((metric) => this.createStrengthBoxPlot(metric.key, metric.title)),
   );
+  readonly hasStrengthBoxPlotData = computed(() =>
+    this.strengthBoxPlots().some((plot) => plot.rows.length > 0),
+  );
   readonly hasBiotypeDensity = computed(() => this.biotypeDensityRows().length > 0);
   readonly hasStatistics = computed(
     () => this.hasBiotypeDensity() || this.statisticsRows().length > 0,
   );
 
-  motifStats(category: PositionStatisticsCategoryView): G4PositionMotifStats {
-    return motifStatsForType(category, this.g4Type());
+  categoryStats(category: PositionStatisticsCategoryView): G4PositionCategoryStats {
+    return categoryStatsForType(category, this.g4Type());
   }
 
   private createStrengthBoxPlot(key: StrengthBoxPlotKey, title: string): StrengthBoxPlotView {

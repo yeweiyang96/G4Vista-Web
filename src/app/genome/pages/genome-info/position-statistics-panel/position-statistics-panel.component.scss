@@ -34,6 +34,10 @@
   color: var(--mat-sys-on-surface);
 }
 
+.gene-biotype-density-label::before {
+  content: '\2192 ';
+}
+
 .position-statistics-panel h3 {
   font: var(--mat-sys-title-large);
   font-weight: 700;
@@ -178,6 +182,20 @@
 .density-table-accordion,
 .additional-biotypes {
   display: block;
+}
+
+.expandable-panel-title {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.panel-open-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  font-size: 20px;
+  color: var(--g4v-g4);
 }
 
 .warnings p {

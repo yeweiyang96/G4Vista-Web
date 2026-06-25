@@ -4,9 +4,17 @@
       <h1 class="home-wordmark" aria-label="G4Vista">
         <img src="brand/g4vista-wordmark-home.png" width="1400" height="245" alt="" />
       </h1>
-      <p>Search predicted G-quadruplex (G4) and i-motif sites across genomes</p>
+      <p>
+        Cross-Species <span class="highlight">G-quadruplex </span>
+        <span class="highlight">Vi</span>sualization and <span class="highlight">St</span>atistical
+        <span class="highlight">A</span>nalysis
+      </p>
 
-      <form class="home-search-panel" aria-label="Global search" (submit)="submitHeroSearch($event)">
+      <form
+        class="home-search-panel"
+        aria-label="Global search"
+        (submit)="submitHeroSearch($event)"
+      >
         <mat-button-toggle-group
           class="home-search-targets"
           [formControl]="heroTargetControl"

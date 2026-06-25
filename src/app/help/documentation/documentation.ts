@@ -68,7 +68,7 @@ function documentationIdFromParamMap(params: ParamMap): HelpDocumentationId {
     return documentationIdFromWorkflowId(topic);
   }
 
-  return 'taxonomy';
+  return 'home';
 }
 
 function articleAnchors(article: HelpDocumentationArticle): readonly HelpArticleAnchor[] {

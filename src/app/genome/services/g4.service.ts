@@ -304,38 +304,6 @@ export interface G4PositionStatisticsFilters {
   quadruplex_type: G4Type | null;
 }
 
-export interface G4PositionMotifStats {
-  count: number;
-  density_per_mb: number | null;
-  expected_vs_genome: number | null;
-  fold_vs_genome: number | null;
-  fold_vs_other?: number | null;
-  fold_vs_non_feature: number | null;
-  min_score: number | null;
-  q1_score: number | null;
-  median_score: number | null;
-  p75_score: number | null;
-  max_score: number | null;
-  min_tetrads: number | null;
-  q1_tetrads: number | null;
-  median_tetrads: number | null;
-  p75_tetrads: number | null;
-  max_tetrads: number | null;
-  min_length: number | null;
-  q1_length: number | null;
-  median_length: number | null;
-  p75_length: number | null;
-  max_length: number | null;
-}
-
-export interface G4PositionAsymmetry {
-  g4_fraction: number | null;
-  i_motif_fraction: number | null;
-  fraction_delta: number | null;
-  count_delta: number;
-  density_ratio_g4_over_i_motif: number | null;
-}
-
 export interface G4PositionStatisticsCategory {
   key: string;
   label: string;
@@ -348,25 +316,7 @@ export interface G4PositionStatisticsCategory {
   display_order?: number;
   merged_interval_length_bp?: number;
   length_mb?: number;
-  motifs?: Partial<Record<G4Type, G4PositionMotifStats>>;
-  asymmetry?: G4PositionAsymmetry;
   quadruplex_types?: Partial<Record<G4Type, G4PositionCategoryStats>>;
-}
-
-export interface G4PositionStatisticsGeneBiotypeCategory {
-  key: string;
-  label: string;
-  description: string;
-  precedence_rank: number;
-  display_label?: string;
-  display_description?: string;
-  category_group?: 'gene_context' | 'background';
-  is_default_chart_category?: boolean;
-  display_order?: number;
-  count: number;
-  merged_interval_length_bp: number;
-  length_mb: number;
-  motifs: Partial<Record<G4Type, G4PositionMotifStats>>;
 }
 
 export interface G4PositionCategoryStats {
@@ -374,6 +324,16 @@ export interface G4PositionCategoryStats {
   denominator_bp: number;
   denominator_mode: string | null;
   density_per_mb: number | null;
+  min_score?: number | null;
+  q1_score?: number | null;
+  median_score?: number | null;
+  p75_score?: number | null;
+  max_score?: number | null;
+  min_length?: number | null;
+  q1_length?: number | null;
+  median_length?: number | null;
+  p75_length?: number | null;
+  max_length?: number | null;
 }
 
 export interface G4PositionStatisticsBiotypeCategory {
@@ -382,18 +342,10 @@ export interface G4PositionStatisticsBiotypeCategory {
   quadruplex_types: Partial<Record<G4Type, G4PositionCategoryStats>>;
 }
 
-export interface G4PositionStatisticsGeneBiotypeBreakdown {
-  bio_type: string;
-  display_label: string;
-  total_count: number;
-  categories: G4PositionStatisticsGeneBiotypeCategory[];
-}
-
 export interface G4PositionStatisticsWindow {
   window_bp: number;
   categories: G4PositionStatisticsCategory[];
   biotype_categories?: G4PositionStatisticsBiotypeCategory[];
-  gene_biotype_breakdown?: G4PositionStatisticsGeneBiotypeBreakdown[];
 }
 
 export interface G4PositionStatisticsResponse {
@@ -405,8 +357,7 @@ export interface G4PositionStatisticsResponse {
   quality: G4PositionDistributionQuality;
 }
 
-interface G4PositionStatisticsApiResponse
-  extends Omit<G4PositionStatisticsResponse, 'quality'> {
+interface G4PositionStatisticsApiResponse extends Omit<G4PositionStatisticsResponse, 'quality'> {
   quality?: G4PositionDistributionQuality;
 }
 
@@ -420,10 +371,6 @@ export interface G4PositionStatisticsRequest {
   assemblyAccession: string;
   windows?: number[];
   g4Type?: G4Type;
-  tetrads: number[];
-  minScore?: number;
-  maxScore?: number;
-  includeGeneBiotypeBreakdown?: boolean;
 }
 
 export interface G4GeneSearchRequest {
@@ -776,7 +723,9 @@ function relationPositionFromCategory(category: string, g4Type: G4Type): G4GeneP
   return null;
 }
 
-function relationHitsFromItem(item: G4PageItem): Partial<Record<G4GenePosition, G4GeneRelationHit[]>> {
+function relationHitsFromItem(
+  item: G4PageItem,
+): Partial<Record<G4GenePosition, G4GeneRelationHit[]>> {
   const relationCategories = splitRelationText(item.relation_categories);
   const featureIds = splitRelationText(item.feature_ids || item.gene_ids);
   const geneNames = splitRelationText(item.gene_names);
@@ -819,27 +768,29 @@ function relationItemForStart(start: number, items: readonly G4PageItem[]): G4Ge
   const positions = items
     .filter((item) => item.start === start)
     .map(relationHitsFromItem)
-    .reduce<Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>(
-      mergeGeneRelationPositions,
-      {},
-    );
+    .reduce<Partial<Record<G4GenePosition, G4GeneRelationHit[]>>>(mergeGeneRelationPositions, {});
   return { start, positions };
 }
 
-function mapDownloadColumn(column: G4DownloadColumn): string | null {
+const GENE_RELATION_DOWNLOAD_COLUMNS: readonly string[] = [
+  'gene_ids',
+  'gene_names',
+  'gene_biotypes',
+  'relation_categories',
+];
+
+function mapDownloadColumn(column: G4DownloadColumn): readonly string[] {
   if (column === 'seqid') {
-    return 'region_id';
+    return ['region_id'];
   }
   if (column.startsWith('gene_relation:')) {
-    return null;
+    return GENE_RELATION_DOWNLOAD_COLUMNS;
   }
-  return column;
+  return [column];
 }
 
 function mapDownloadColumns(columns: readonly G4DownloadColumn[]): readonly string[] | 'default' {
-  const mappedColumns = Array.from(
-    new Set(columns.map(mapDownloadColumn).filter((column): column is string => column !== null)),
-  );
+  const mappedColumns = Array.from(new Set(columns.flatMap(mapDownloadColumn)));
   return mappedColumns.length ? mappedColumns : 'default';
 }
 
@@ -857,7 +808,7 @@ function createDownloadApiRequest(request: G4DownloadRequest): G4DownloadApiRequ
       quadruplex_types: [request.g4Type],
       gene_ids: [],
       gene_search_term: geneSearchTerm,
-      relation_categories: relationFilter ? [relationFilter.relationCategory] : [],
+      relation_categories: [relationFilter?.relationCategory ?? 'gene_inside'],
       flank_windows: relationFilter?.flankWindow === undefined ? [] : [relationFilter.flankWindow],
       min_overlap_bp: null,
       min_overlap_fraction: null,

@@ -77,6 +77,7 @@ const RELATION_CATEGORY_OPTIONS: readonly Option<DownloadGeneRelationCategory>[]
   { value: 'gene_upstream', label: 'Upstream of genes' },
   { value: 'gene_downstream', label: 'Downstream of genes' },
 ];
+const DEFAULT_RELATION_CATEGORIES: readonly DownloadGeneRelationCategory[] = ['gene_inside'];
 const FLANK_WINDOW_OPTIONS: readonly Option<number>[] = [
   { value: 0, label: '0 bp' },
   { value: 100, label: '100 bp' },
@@ -302,7 +303,9 @@ export class DownloadPage {
   readonly dataScopeModeOptions = DATA_SCOPE_MODE_OPTIONS;
   readonly downloadModeOptions = DOWNLOAD_MODE_OPTIONS;
   readonly selectedMotifTypes = signal<readonly DownloadQuadruplexType[]>(['g4', 'i-motif']);
-  readonly selectedRelationCategories = signal<readonly DownloadGeneRelationCategory[]>([]);
+  readonly selectedRelationCategories = signal<readonly DownloadGeneRelationCategory[]>([
+    ...DEFAULT_RELATION_CATEGORIES,
+  ]);
   readonly selectedFlankWindows = signal<readonly number[]>([]);
   readonly selectedColumnIds = signal<readonly string[]>([]);
   readonly dataScopeMode = signal<DataScopeMode>('assembly_set');
@@ -571,8 +574,13 @@ export class DownloadPage {
   }
 
   toggleRelationCategory(value: DownloadGeneRelationCategory, event: MatCheckboxChange): void {
+    const nextCategories = this.toggledValues(
+      this.selectedRelationCategories(),
+      value,
+      event.checked,
+    );
     this.selectedRelationCategories.set(
-      this.toggledValues(this.selectedRelationCategories(), value, event.checked),
+      nextCategories.length ? nextCategories : [...DEFAULT_RELATION_CATEGORIES],
     );
   }
 

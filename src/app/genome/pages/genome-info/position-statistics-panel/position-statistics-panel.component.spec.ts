@@ -2,9 +2,8 @@ import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   EMPTY_G4_POSITION_STATISTICS,
-  G4PositionMotifStats,
-  G4PositionStatisticsGeneBiotypeBreakdown,
-  G4PositionStatisticsGeneBiotypeCategory,
+  G4PositionCategoryStats,
+  G4PositionStatisticsBiotypeCategory,
   G4PositionStatisticsResponse,
 } from '../../../services/g4.service';
 import {
@@ -24,99 +23,85 @@ class StrengthBoxPlotStubComponent {
 }
 
 describe('PositionStatisticsPanelComponent', () => {
-  const geneStats: G4PositionMotifStats = {
+  const geneStats: G4PositionCategoryStats = {
     count: 2,
+    denominator_bp: 1000,
+    denominator_mode: 'gene',
     density_per_mb: 2000,
-    expected_vs_genome: 1,
-    fold_vs_genome: 2,
-    fold_vs_other: 3,
-    fold_vs_non_feature: 3,
     min_score: 10,
     q1_score: 14,
     median_score: 20,
     p75_score: 30,
     max_score: 40,
-    min_tetrads: 2,
-    q1_tetrads: 2,
-    median_tetrads: 3,
-    p75_tetrads: 4,
-    max_tetrads: 5,
     min_length: 18,
     q1_length: 20,
     median_length: 24,
     p75_length: 32,
     max_length: 38,
   };
-  const upstreamStats: G4PositionMotifStats = {
+  const upstreamStats: G4PositionCategoryStats = {
     ...geneStats,
     count: 1,
+    denominator_mode: 'flank',
     density_per_mb: 1000,
     median_score: 16,
     p75_score: 18,
     median_length: 20,
     p75_length: 22,
   };
-  const downstreamStats: G4PositionMotifStats = {
+  const downstreamStats: G4PositionCategoryStats = {
     ...geneStats,
     count: 1,
+    denominator_bp: 2000,
+    denominator_mode: 'flank',
     density_per_mb: 500,
     median_score: 18,
     p75_score: 19,
     median_length: 22,
     p75_length: 24,
   };
+  const highCountGeneStats: G4PositionCategoryStats = {
+    ...geneStats,
+    count: 4,
+    density_per_mb: 4000,
+  };
+  const lowCountGeneStats: G4PositionCategoryStats = {
+    ...geneStats,
+    count: 0,
+    density_per_mb: 0,
+  };
 
   function biotypeCategory(
+    biotype: string,
     key: 'gene_inside' | 'gene_upstream' | 'gene_downstream',
-    count: number,
-    lengthMb: number,
-    stats: G4PositionMotifStats,
-  ): G4PositionStatisticsGeneBiotypeCategory {
-    const displayLabels = {
-      gene_inside: 'In genes',
-      gene_upstream: 'Upstream flank',
-      gene_downstream: 'Downstream flank',
-    } as const;
+    stats: G4PositionCategoryStats,
+  ): G4PositionStatisticsBiotypeCategory {
     return {
-      key,
-      label: key,
-      description: key,
-      precedence_rank: key === 'gene_inside' ? 1 : key === 'gene_upstream' ? 2 : 3,
-      display_label: displayLabels[key],
-      display_description: displayLabels[key],
-      category_group: 'gene_context',
-      is_default_chart_category: true,
-      display_order: key === 'gene_inside' ? 1 : key === 'gene_upstream' ? 2 : 3,
-      count,
-      merged_interval_length_bp: lengthMb * 1_000_000,
-      length_mb: lengthMb,
-      motifs: { g4: { ...stats, count } },
+      biotype,
+      category: key,
+      quadruplex_types: { g4: stats },
     };
   }
 
-  function biotypeRow(
+  function biotypeCategories(
     bioType: string,
-    displayLabel: string,
-    totalCount: number,
-    categories: readonly G4PositionStatisticsGeneBiotypeCategory[],
-  ): G4PositionStatisticsGeneBiotypeBreakdown {
-    return {
-      bio_type: bioType,
-      display_label: displayLabel,
-      total_count: totalCount,
-      categories: [...categories],
-    };
+    categories: readonly [
+      'gene_inside' | 'gene_upstream' | 'gene_downstream',
+      G4PositionCategoryStats,
+    ][],
+  ): readonly G4PositionStatisticsBiotypeCategory[] {
+    return categories.map(([category, stats]) => biotypeCategory(bioType, category, stats));
   }
 
-  const extraBiotypeRows: readonly G4PositionStatisticsGeneBiotypeBreakdown[] = Array.from(
+  const extraBiotypeRows: readonly G4PositionStatisticsBiotypeCategory[] = Array.from(
     { length: 12 },
     (_value, index) =>
-      biotypeRow(`extra_${index + 1}`, `extra_${index + 1}`, 2, [
-        biotypeCategory('gene_inside', 2, 0.001, geneStats),
-        biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
-        biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+      biotypeCategories(`extra_${index + 1}`, [
+        ['gene_inside', geneStats],
+        ['gene_upstream', upstreamStats],
+        ['gene_downstream', downstreamStats],
       ]),
-  );
+  ).flat();
   const statistics: G4PositionStatisticsResponse = {
     ...EMPTY_G4_POSITION_STATISTICS,
     assembly_accession: 'GCF_1',
@@ -142,14 +127,7 @@ describe('PositionStatisticsPanelComponent', () => {
             display_order: 1,
             merged_interval_length_bp: 1000,
             length_mb: 0.001,
-            motifs: { g4: geneStats },
-            asymmetry: {
-              g4_fraction: null,
-              i_motif_fraction: null,
-              fraction_delta: null,
-              count_delta: 0,
-              density_ratio_g4_over_i_motif: null,
-            },
+            quadruplex_types: { g4: geneStats },
           },
           {
             key: 'gene_upstream',
@@ -163,14 +141,7 @@ describe('PositionStatisticsPanelComponent', () => {
             display_order: 2,
             merged_interval_length_bp: 1000,
             length_mb: 0.001,
-            motifs: { g4: upstreamStats },
-            asymmetry: {
-              g4_fraction: null,
-              i_motif_fraction: null,
-              fraction_delta: null,
-              count_delta: 0,
-              density_ratio_g4_over_i_motif: null,
-            },
+            quadruplex_types: { g4: upstreamStats },
           },
           {
             key: 'gene_downstream',
@@ -184,14 +155,7 @@ describe('PositionStatisticsPanelComponent', () => {
             display_order: 3,
             merged_interval_length_bp: 2000,
             length_mb: 0.002,
-            motifs: { g4: downstreamStats },
-            asymmetry: {
-              g4_fraction: null,
-              i_motif_fraction: null,
-              fraction_delta: null,
-              count_delta: 0,
-              density_ratio_g4_over_i_motif: null,
-            },
+            quadruplex_types: { g4: downstreamStats },
           },
           {
             key: 'other',
@@ -205,28 +169,64 @@ describe('PositionStatisticsPanelComponent', () => {
             display_order: 4,
             merged_interval_length_bp: 1000,
             length_mb: 0.001,
-            motifs: { g4: geneStats },
-            asymmetry: {
-              g4_fraction: null,
-              i_motif_fraction: null,
-              fraction_delta: null,
-              count_delta: 0,
-              density_ratio_g4_over_i_motif: null,
+            quadruplex_types: { g4: geneStats },
+          },
+        ],
+        biotype_categories: [
+          ...biotypeCategories('protein_coding', [
+            ['gene_inside', highCountGeneStats],
+            ['gene_upstream', upstreamStats],
+            ['gene_downstream', downstreamStats],
+          ]),
+          ...biotypeCategories('other', [
+            ['gene_inside', lowCountGeneStats],
+            ['gene_upstream', upstreamStats],
+            ['gene_downstream', downstreamStats],
+          ]),
+          ...extraBiotypeRows,
+        ],
+      },
+    ],
+  };
+  const statisticsWithoutStrengthQuantiles: G4PositionStatisticsResponse = {
+    ...EMPTY_G4_POSITION_STATISTICS,
+    assembly_accession: 'GCF_1',
+    genome_length_bp: 10_000,
+    genome_length_mb: 0.01,
+    filters: {
+      windows: [1000],
+      quadruplex_type: 'g4',
+    },
+    windows: [
+      {
+        window_bp: 1000,
+        categories: [
+          {
+            key: 'gene_inside',
+            label: 'Gene inside',
+            quadruplex_types: {
+              g4: {
+                count: 2,
+                denominator_bp: 1000,
+                denominator_mode: 'gene',
+                density_per_mb: 2000,
+              },
             },
           },
         ],
-        gene_biotype_breakdown: [
-          biotypeRow('protein_coding', 'protein_coding', 4, [
-            biotypeCategory('gene_inside', 2, 0.001, geneStats),
-            biotypeCategory('gene_upstream', 1, 0.001, upstreamStats),
-            biotypeCategory('gene_downstream', 1, 0.002, downstreamStats),
-          ]),
-          biotypeRow('other', 'Unspecified gene biotype', 1, [
-            biotypeCategory('gene_inside', 1, 0.001, geneStats),
-            biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
-            biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
-          ]),
-          ...extraBiotypeRows,
+        biotype_categories: [
+          {
+            biotype: 'protein_coding',
+            category: 'gene_inside',
+            quadruplex_types: {
+              g4: {
+                count: 2,
+                denominator_bp: 1000,
+                denominator_mode: 'gene',
+                density_per_mb: 2000,
+              },
+            },
+          },
         ],
       },
     ],
@@ -268,6 +268,20 @@ describe('PositionStatisticsPanelComponent', () => {
     ) as HTMLElement | null;
     if (!header) {
       throw new Error('Density table expansion header was not rendered.');
+    }
+
+    header.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  async function expandStrengthDistributions(): Promise<void> {
+    const header = fixture.nativeElement.querySelector(
+      '.statistics-details mat-expansion-panel-header',
+    ) as HTMLElement | null;
+    if (!header) {
+      throw new Error('Score and length distributions expansion header was not rendered.');
     }
 
     header.click();
@@ -323,21 +337,21 @@ describe('PositionStatisticsPanelComponent', () => {
       windows: [
         {
           ...statistics.windows[0],
-          gene_biotype_breakdown: [
-            biotypeRow('low_count', 'low_count', 1, [
-              biotypeCategory('gene_inside', 1, 0.001, geneStats),
-              biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
-              biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+          biotype_categories: [
+            ...biotypeCategories('low_count', [
+              ['gene_inside', { ...geneStats, count: 1 }],
+              ['gene_upstream', { ...upstreamStats, count: 0 }],
+              ['gene_downstream', { ...downstreamStats, count: 0 }],
             ]),
-            biotypeRow('high_count', 'high_count', 9, [
-              biotypeCategory('gene_inside', 9, 0.001, geneStats),
-              biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
-              biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+            ...biotypeCategories('high_count', [
+              ['gene_inside', { ...geneStats, count: 9 }],
+              ['gene_upstream', { ...upstreamStats, count: 0 }],
+              ['gene_downstream', { ...downstreamStats, count: 0 }],
             ]),
-            biotypeRow('mid_count', 'mid_count', 5, [
-              biotypeCategory('gene_inside', 5, 0.001, geneStats),
-              biotypeCategory('gene_upstream', 0, 0.001, upstreamStats),
-              biotypeCategory('gene_downstream', 0, 0.001, downstreamStats),
+            ...biotypeCategories('mid_count', [
+              ['gene_inside', { ...geneStats, count: 5 }],
+              ['gene_upstream', { ...upstreamStats, count: 0 }],
+              ['gene_downstream', { ...downstreamStats, count: 0 }],
             ]),
           ],
         },
@@ -379,16 +393,31 @@ describe('PositionStatisticsPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.boxplot-stub')).toBeNull();
     expect(fixture.nativeElement.querySelector('.mat-expansion-panel.mat-expanded')).toBeNull();
 
-    const header = fixture.nativeElement.querySelector(
-      '.statistics-details mat-expansion-panel-header',
-    ) as HTMLElement;
-    header.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await expandStrengthDistributions();
 
     const text = renderedText();
     expect(text).toContain('G-score distribution');
     expect(text).toContain('Length distribution');
+  });
+
+  it('shows a single state when current position statistics omit strength quantiles', async () => {
+    const component = fixture.componentInstance;
+
+    fixture.componentRef.setInput('statistics', statisticsWithoutStrengthQuantiles);
+    fixture.componentRef.setInput('selectedCategoryKeys', ['gene_inside']);
+    fixture.detectChanges();
+
+    expect(component.hasStrengthBoxPlotData()).toBeFalse();
+
+    await expandStrengthDistributions();
+
+    const text = renderedText();
+    expect(text).toContain(
+      'No score or length distribution data are available for the selected motif type.',
+    );
+    expect(text).not.toContain('No G-score distribution box plot data.');
+    expect(text).not.toContain('No Length distribution box plot data.');
+    expect(fixture.nativeElement.querySelector('.boxplot-stub')).toBeNull();
   });
 
   it('keeps the density table independent from selected overview categories', () => {

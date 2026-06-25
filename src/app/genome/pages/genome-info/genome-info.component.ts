@@ -175,8 +175,8 @@ function isG4GenePosition(value: unknown): value is G4GenePosition {
     typeof value === 'string' && G4_GENE_POSITION_OPTIONS.some((option) => option.value === value)
   );
 }
-const CHART_FOCUS_HALF_WINDOW_BP = 5000;
 const CHART_POINT_FOCUS_BIN_SIZE_BP = 100;
+const TABLE_SEQUENCE_FOCUS_FLANK_BP = 100;
 const TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP = 100;
 const GENE_SEARCH_FOCUS_HALF_WINDOW_BP = 1000;
 const GENE_SEARCH_BIN_SIZE_BP = 100;
@@ -361,15 +361,6 @@ function normalizedChartRange(
 function defaultBinSizeForLength(seqidLength: number): number {
   const normalizedLength = normalizedSeqidLength(seqidLength);
   return Math.max(1, Math.ceil(normalizedLength / CHART_TARGET_BUCKETS));
-}
-
-function focusWindowAroundCenter(
-  center: number,
-  seqidLength: number,
-  halfWindowBp = CHART_FOCUS_HALF_WINDOW_BP,
-): { start: number; end: number } {
-  const normalizedLength = normalizedSeqidLength(seqidLength);
-  return normalizedChartRange(center - halfWindowBp, center + halfWindowBp, normalizedLength);
 }
 
 @Component({
@@ -835,10 +826,6 @@ export class GenomeInfoComponent {
         assemblyAccession: this.assemblyAccession(),
         windows: [this.positionDistributionFlankWindow()],
         g4Type: this.positionDistributionG4Type(),
-        tetrads: this.positionDistributionFilters().tetrads,
-        minScore: this.positionDistributionFilters().minScore,
-        maxScore: this.positionDistributionFilters().maxScore,
-        includeGeneBiotypeBreakdown: true,
       };
     },
     stream: ({ params }) => {
@@ -1500,14 +1487,18 @@ export class GenomeInfoComponent {
     }
 
     const seqidLength = this.seqidLengthFor(normalizedTarget.seqid);
-    const center = Math.round((normalizedTarget.start + normalizedTarget.end) / 2);
-    const focusedRange = focusWindowAroundCenter(center, seqidLength);
+    const focusedRange = normalizedChartRange(
+      normalizedTarget.start - TABLE_SEQUENCE_FOCUS_FLANK_BP,
+      normalizedTarget.end + TABLE_SEQUENCE_FOCUS_FLANK_BP,
+      seqidLength,
+    );
     this.updateChartViewport(normalizedTarget.seqid, {
       start: focusedRange.start,
       end: focusedRange.end,
       binSize: TABLE_SEQUENCE_FOCUS_BIN_SIZE_BP,
     });
     this.navigateViewerToRange(normalizedTarget.seqid, focusedRange.start, focusedRange.end);
+    this.resultsTabIndex.set(RESULTS_GENOME_BROWSER_TAB_INDEX);
   }
 
   applyChartViewport(viewport: G4ChartViewport): void {

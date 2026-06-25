@@ -2,7 +2,7 @@
   <header class="statistics-header">
     <div>
       <span class="eyebrow">Position statistics</span>
-      <h2>Gene biotype density</h2>
+      <h2 class="gene-biotype-density-label">Gene biotype density</h2>
     </div>
     <p>
       {{ motifTypeLabel() }} site density within annotated gene biotypes. Other groups missing,
@@ -23,7 +23,10 @@
         <mat-accordion class="density-table-accordion" displayMode="flat">
           <mat-expansion-panel>
             <mat-expansion-panel-header>
-              <mat-panel-title>Density table</mat-panel-title>
+              <mat-panel-title class="expandable-panel-title">
+                <mat-icon class="panel-open-icon" aria-hidden="true">unfold_more</mat-icon>
+                <span>Density table</span>
+              </mat-panel-title>
               <mat-panel-description>
                 Sites per megabase for gene bodies and selected gene flanks.
               </mat-panel-description>
@@ -136,20 +139,31 @@
     <mat-accordion class="statistics-details" displayMode="flat">
       <mat-expansion-panel>
         <mat-expansion-panel-header>
-          <mat-panel-title>Score and length distributions</mat-panel-title>
+          <mat-panel-title class="expandable-panel-title">
+            <mat-icon class="panel-open-icon" aria-hidden="true">unfold_more</mat-icon>
+            <span>Score and length distributions</span>
+          </mat-panel-title>
           <mat-panel-description>G-score and motif length by category</mat-panel-description>
         </mat-expansion-panel-header>
 
         <ng-template matExpansionPanelContent>
-          <div class="strength-stack" aria-label="Motif score and length distributions">
-            @for (plot of strengthBoxPlots(); track plot.key) {
-              <app-strength-box-plot-vega
-                [title]="plot.title"
-                [rows]="plot.rows"
-                [tooltip]="boxPlotTooltip"
-              />
-            }
-          </div>
+          @if (hasStrengthBoxPlotData()) {
+            <div class="strength-stack" aria-label="Motif score and length distributions">
+              @for (plot of strengthBoxPlots(); track plot.key) {
+                @if (plot.rows.length > 0) {
+                  <app-strength-box-plot-vega
+                    [title]="plot.title"
+                    [rows]="plot.rows"
+                    [tooltip]="boxPlotTooltip"
+                  />
+                }
+              }
+            </div>
+          } @else {
+            <p class="state" role="status">
+              No score or length distribution data are available for the selected motif type.
+            </p>
+          }
         </ng-template>
       </mat-expansion-panel>
     </mat-accordion>
