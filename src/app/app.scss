@@ -24,29 +24,36 @@
 
 .selected {
   color: var(--mat-sys-primary);
-  background: transparent;
 }
 
 .navbar-control,
 .navbar-icon-button {
   padding: 0;
-  appearance: none;
   color: inherit;
   text-decoration: none;
+  appearance: none;
   cursor: pointer;
   background: transparent;
   border: 0;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .navbar-control {
+  box-sizing: border-box;
   display: inline-flex;
   gap: 6px;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
+  min-height: 42px;
   padding: 0 12px;
   font: var(--mat-sys-label-large);
-  font-weight: 600;
+  font-weight: 500;
+  border-radius: var(--g4v-radius);
 }
 
 .navbar-icon-button {
@@ -62,20 +69,26 @@
 .navbar-icon-button:hover,
 .navbar-icon-button:focus-visible {
   color: var(--mat-sys-primary);
-  background: color-mix(in srgb, var(--mat-sys-primary) 7%, transparent);
   outline: none;
+  background: color-mix(in srgb, var(--mat-sys-primary) 8%, transparent);
 }
 
 .navbar-control:focus-visible,
 .navbar-icon-button:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--mat-sys-primary);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--mat-sys-primary) 16%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
 }
 
 .brand-button {
   min-width: max-content;
+  min-height: 52px;
+  padding: 0 14px 0 10px;
   font: var(--mat-sys-headline-small);
   font-weight: 700;
+  color: var(--mat-sys-primary);
   letter-spacing: 0;
+  border-radius: var(--g4v-radius-large);
 }
 
 .navbar-primary {
@@ -90,10 +103,22 @@
 .navbar-link {
   position: relative;
   min-width: 0;
-  min-height: 72px;
+  min-height: 44px;
   overflow: hidden;
+  color: var(--mat-sys-on-surface);
   white-space: nowrap;
-  border-radius: 0;
+}
+
+.navbar-items {
+  min-height: 56px;
+  padding: 0 14px;
+}
+
+.navbar-items.selected,
+.navbar-link.selected {
+  color: var(--mat-sys-primary);
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
 }
 
 .navbar-label {
@@ -106,12 +131,13 @@
 .navbar-items.selected::after,
 .navbar-link.selected::after {
   position: absolute;
-  right: 12px;
-  bottom: 0;
-  left: 12px;
-  height: 3px;
+  right: 14px;
+  bottom: 6px;
+  left: 14px;
+  height: 2px;
   content: '';
   background: var(--mat-sys-primary);
+  border-radius: 999px;
 }
 
 .nav-icon,

@@ -1,6 +1,7 @@
 .environment-page {
   display: grid;
   gap: 14px;
+
   --g4v-page-max: 1480px;
 }
 
@@ -207,9 +208,9 @@
 
 .setup-step-number {
   display: grid;
+  place-items: center;
   width: 26px;
   height: 26px;
-  place-items: center;
   font: var(--mat-sys-label-large);
   font-weight: 800;
   color: var(--mat-sys-on-primary);
@@ -240,8 +241,8 @@
   max-height: 280px;
   padding: 2px 4px 2px 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 .category-checklist mat-checkbox {
@@ -307,11 +308,11 @@
   max-height: 286px;
   padding-right: 4px;
   overflow-y: auto;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
-.candidate-actions {
+.bulk-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -365,13 +366,13 @@
   th,
   td {
     padding: 8px 10px;
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
     text-align: left;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
   }
 
   thead th {
-    color: var(--mat-sys-on-surface-variant);
     font-weight: 600;
+    color: var(--mat-sys-on-surface-variant);
   }
 }
 

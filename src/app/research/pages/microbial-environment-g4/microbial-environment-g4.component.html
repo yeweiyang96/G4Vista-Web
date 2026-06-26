@@ -128,6 +128,27 @@
                 </mat-select>
               </mat-form-field>
 
+              <div class="bulk-actions" aria-label="Standard category bulk actions">
+                <button
+                  mat-button
+                  type="button"
+                  (click)="selectAllCategories()"
+                  [disabled]="!categoryOptions().length"
+                >
+                  <mat-icon>select_all</mat-icon>
+                  Select all
+                </button>
+                <button
+                  mat-button
+                  type="button"
+                  (click)="clearAllCategories()"
+                  [disabled]="!selectedCategoryIds().length"
+                >
+                  <mat-icon>deselect</mat-icon>
+                  Clear all
+                </button>
+              </div>
+
               <div class="category-checklist" aria-label="Displayed standard categories">
                 @for (category of categoryOptions(); track category.category_id) {
                   <mat-checkbox
@@ -186,19 +207,19 @@
             </div>
 
             @if (taxonomyCandidates().length) {
-              <div class="candidate-actions" aria-label="Taxonomy candidate bulk actions">
-                <button mat-button type="button" (click)="selectVisibleTaxonomyCandidates()">
-                  <mat-icon>done_all</mat-icon>
-                  Select visible
+              <div class="bulk-actions" aria-label="Taxonomy candidate bulk actions">
+                <button mat-button type="button" (click)="selectAllTaxonomyCandidates()">
+                  <mat-icon>select_all</mat-icon>
+                  Select all
                 </button>
                 <button
                   mat-button
                   type="button"
-                  (click)="clearCheckedTaxonomyCandidates()"
+                  (click)="clearAllTaxonomyCandidates()"
                   [disabled]="!selectedTaxonomyCandidateKeys().length"
                 >
-                  <mat-icon>check_box_outline_blank</mat-icon>
-                  Clear checked
+                  <mat-icon>deselect</mat-icon>
+                  Clear all
                 </button>
                 <button
                   mat-flat-button

@@ -1,7 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import {
   EnvironmentCategoryBoxplotResponse,
   EnvironmentCategoryBoxplotRequest,
@@ -12,10 +13,27 @@ import {
 } from '../../services/microbial-environment-g4.service';
 import { MicrobialEnvironmentG4Component } from './microbial-environment-g4.component';
 
+interface DialogOpenData {
+  readonly title?: string;
+  readonly message?: string;
+}
+
+interface DialogOpenConfig {
+  readonly data?: DialogOpenData;
+  readonly role?: string;
+  readonly ariaLabel?: string;
+}
+
+interface ComponentWithNoticeDialog {
+  noticeDialog: MatDialog;
+}
+
 describe('MicrobialEnvironmentG4Component', () => {
   let fixture: ComponentFixture<MicrobialEnvironmentG4Component>;
   let component: MicrobialEnvironmentG4Component;
   let service: jasmine.SpyObj<MicrobialEnvironmentG4Service>;
+  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialogRef: jasmine.SpyObj<MatDialogRef<unknown>>;
   let routeQueryParamMap: ParamMap;
 
   const options: EnvironmentOptionsResponse = {
@@ -76,7 +94,7 @@ describe('MicrobialEnvironmentG4Component', () => {
         trait_code: 'ecological_context',
         context_axis: 'environment',
         display_label: 'Environment',
-        category_count: 2,
+        category_count: 3,
         is_default_context_axis: true,
       },
     ],
@@ -102,6 +120,17 @@ describe('MicrobialEnvironmentG4Component', () => {
         sort_order: 2,
         is_default_visible: true,
         eligible_assembly_count: 5,
+      },
+      {
+        trait_code: 'ecological_context',
+        context_axis: 'environment',
+        category_id: 'marine',
+        canonical_value: 'marine',
+        display_label: 'Marine',
+        parent_category_id: null,
+        sort_order: 3,
+        is_default_visible: false,
+        eligible_assembly_count: 4,
       },
     ],
     taxonomy_ranks: [
@@ -215,6 +244,13 @@ describe('MicrobialEnvironmentG4Component', () => {
       'queryCategoryBoxplot',
       'downloadResults',
     ]);
+    dialogRef = jasmine.createSpyObj<MatDialogRef<unknown>>('MatDialogRef', [
+      'afterClosed',
+      'close',
+    ]);
+    dialogRef.afterClosed.and.returnValue(EMPTY);
+    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog.open.and.returnValue(dialogRef);
     service.getOptions.and.returnValue(of(options));
     service.searchTaxonomy.and.returnValue(
       of({
@@ -250,6 +286,7 @@ describe('MicrobialEnvironmentG4Component', () => {
 
     fixture = TestBed.createComponent(MicrobialEnvironmentG4Component);
     component = fixture.componentInstance;
+    (component as unknown as ComponentWithNoticeDialog).noticeDialog = dialog;
     fixture.detectChanges();
   });
 
@@ -415,6 +452,25 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(request.category_filters).toEqual([]);
   });
 
+  it('selects and clears displayed standard categories in bulk', () => {
+    component.selectTrait('ecological_context');
+
+    expect(component.selectedCategoryIds()).toEqual(['soil', 'host_associated']);
+
+    component.selectAllCategories();
+    expect(component.selectedCategoryIds()).toEqual(['soil', 'host_associated', 'marine']);
+
+    component.clearAllCategories();
+    expect(component.selectedCategoryIds()).toEqual([]);
+
+    component.selectAllCategories();
+    component.runAnalysis();
+
+    const request = service.queryCategoryBoxplot.calls.mostRecent()
+      .args[0] as EnvironmentCategoryBoxplotRequest;
+    expect(request.display_category_ids).toEqual(['soil', 'host_associated', 'marine']);
+  });
+
   it('searches taxonomy with current trait code, chart kind, and context axis', () => {
     component.selectTrait('ecological_context');
     component.form.controls.taxonomyRank.setValue('genus');
@@ -441,13 +497,28 @@ describe('MicrobialEnvironmentG4Component', () => {
     expect(component.errorMessage()).toContain('Choose a specific microbial taxonomy rank');
   });
 
+  it('opens a dialog notice when taxonomy search has no term', () => {
+    component.form.controls.taxonomyRank.setValue('genus');
+    component.form.controls.taxonomyKeyword.setValue('');
+
+    component.findTaxonomy();
+
+    const dialogConfig = dialog.open.calls.mostRecent().args[1] as DialogOpenConfig;
+    expect(service.searchTaxonomy).not.toHaveBeenCalled();
+    expect(component.errorMessage()).toBe('Enter a taxonomy term before searching.');
+    expect(dialogConfig.data?.title).toBe('Action needed');
+    expect(dialogConfig.data?.message).toBe('Enter a taxonomy term before searching.');
+    expect(dialogConfig.role).toBe('alertdialog');
+    expect(dialogConfig.ariaLabel).toBe('Environment-G4 notice');
+  });
+
   it('imports checked visible taxonomy candidates into the submitted taxonomy filters', () => {
     component.selectTrait('ecological_context');
     component.form.controls.taxonomyRank.setValue('genus');
     component.form.controls.taxonomyKeyword.setValue('Bac');
     component.findTaxonomy();
 
-    component.selectVisibleTaxonomyCandidates();
+    component.selectAllTaxonomyCandidates();
     component.importCheckedTaxonomyCandidates();
     component.runAnalysis();
 

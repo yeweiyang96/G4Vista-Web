@@ -20,6 +20,12 @@ import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -92,6 +98,11 @@ interface MappingEvidenceLevelOption {
   readonly label: string;
 }
 
+interface EnvironmentNoticeDialogData {
+  readonly title: string;
+  readonly message: string;
+}
+
 interface RouteInitialization {
   readonly traitCode: string | null;
   readonly outcomeMetric: EnvironmentOutcomeMetric | null;
@@ -155,6 +166,8 @@ const INITIAL_DOWNLOAD_MODE: EnvironmentDownloadMode = 'csv';
 const VEGA_CHART_PADDING: VegaChartPadding = { left: 70, right: 24, top: 16, bottom: 54 };
 const VEGA_CHART_HEIGHT = 360;
 const MINIMUM_VEGA_PLOT_WIDTH = 320;
+const ENVIRONMENT_NOTICE_DIALOG_WIDTH = '420px';
+const ENVIRONMENT_NOTICE_DIALOG_MAX_WIDTH = 'calc(100vw - 32px)';
 const MAPPING_EVIDENCE_LEVEL_OPTIONS: readonly MappingEvidenceLevelOption[] = [
   { rank: 1, label: 'Low evidence or better' },
   { rank: 2, label: 'Medium evidence or better' },
@@ -372,11 +385,51 @@ function defaultSelectedCategoryIds(categories: readonly EnvironmentCategoryOpti
 }
 
 @Component({
+  selector: 'app-microbial-environment-notice-dialog',
+  imports: [MatButtonModule, MatDialogModule, MatIconModule],
+  template: `
+    <h2 mat-dialog-title class="notice-dialog-title">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      {{ data.title }}
+    </h2>
+    <mat-dialog-content>
+      <p class="notice-dialog-message">{{ data.message }}</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-flat-button type="button" mat-dialog-close>OK</button>
+    </mat-dialog-actions>
+  `,
+  styles: [
+    `
+      .notice-dialog-title {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .notice-dialog-title mat-icon {
+        color: var(--mat-sys-primary);
+      }
+
+      .notice-dialog-message {
+        margin: 0;
+        color: var(--mat-sys-on-surface);
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class MicrobialEnvironmentNoticeDialogComponent {
+  readonly data = inject(MAT_DIALOG_DATA) as EnvironmentNoticeDialogData;
+}
+
+@Component({
   selector: 'app-microbial-environment-g4',
   imports: [
     MatButtonModule,
     MatCheckboxModule,
     MatChipsModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -400,6 +453,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
+  private readonly noticeDialog = inject(MatDialog);
   private readonly uiThemeService = inject(UiThemeService);
   private readonly routeInitialization = routeInitializationFromParamMap(
     this.route.snapshot.queryParamMap,
@@ -416,6 +470,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
   private readonly sortStateSignal = signal<TableSortState>(INITIAL_TABLE_SORT);
 
   private chartCleanup: (() => void) | null = null;
+  private noticeDialogRef: MatDialogRef<MicrobialEnvironmentNoticeDialogComponent> | null = null;
   private taxonomyRequestVersion = 0;
   private queryRequestVersion = 0;
   private hasAppliedRouteInitialization = false;
@@ -696,6 +751,7 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
 
   ngOnDestroy(): void {
     this.clearChart();
+    this.noticeDialogRef?.close();
   }
 
   reloadOptions(): void {
@@ -737,6 +793,18 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
       selectedIds.delete(category.category_id);
     }
     this.selectedCategoryIdsSignal.set([...selectedIds]);
+    this.clearSubmittedResult();
+  }
+
+  selectAllCategories(): void {
+    this.selectedCategoryIdsSignal.set(
+      this.categoryOptions().map((category) => category.category_id),
+    );
+    this.clearSubmittedResult();
+  }
+
+  clearAllCategories(): void {
+    this.selectedCategoryIdsSignal.set([]);
     this.clearSubmittedResult();
   }
 
@@ -835,13 +903,13 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     this.selectedTaxonomyCandidateKeysSignal.set([...selectedKeys]);
   }
 
-  selectVisibleTaxonomyCandidates(): void {
+  selectAllTaxonomyCandidates(): void {
     this.selectedTaxonomyCandidateKeysSignal.set(
       this.taxonomyCandidates().map((candidate) => this.taxonomyKey(candidate)),
     );
   }
 
-  clearCheckedTaxonomyCandidates(): void {
+  clearAllTaxonomyCandidates(): void {
     this.selectedTaxonomyCandidateKeysSignal.set([]);
   }
 
@@ -1633,11 +1701,27 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
 
   private handleError(error: unknown): void {
     const message = extractErrorMessage(error);
-    this.errorMessage.set(message);
     this.showNotice(message);
   }
 
   private showNotice(message: string): void {
     this.errorMessage.set(message);
+    this.noticeDialogRef?.close();
+    const dialogRef = this.noticeDialog.open(MicrobialEnvironmentNoticeDialogComponent, {
+      data: { title: 'Action needed', message },
+      role: 'alertdialog',
+      width: ENVIRONMENT_NOTICE_DIALOG_WIDTH,
+      maxWidth: ENVIRONMENT_NOTICE_DIALOG_MAX_WIDTH,
+      ariaLabel: 'Environment-G4 notice',
+    });
+    this.noticeDialogRef = dialogRef;
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.noticeDialogRef === dialogRef) {
+          this.noticeDialogRef = null;
+        }
+      });
   }
 }
