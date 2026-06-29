@@ -64,6 +64,14 @@ const BROWSE_TAXA: readonly BrowseTaxon[] = [
     accentClass: 'browse-card-plant',
   },
   {
+    name: 'Metazoa',
+    taxonId: 33208,
+    rank: 'kingdom',
+    description: 'Animal lineages and their available genome assemblies.',
+    icon: 'pets',
+    accentClass: 'browse-card-metazoa',
+  },
+  {
     name: 'Bacteria',
     taxonId: 2,
     rank: 'superkingdom',
