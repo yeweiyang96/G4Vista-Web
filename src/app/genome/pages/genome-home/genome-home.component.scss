@@ -13,8 +13,8 @@
   margin: 0;
   font: var(--mat-sys-display-small);
   font-weight: 800;
-  letter-spacing: 0;
   color: var(--mat-sys-on-surface);
+  letter-spacing: 0;
 }
 
 .page-heading p {
@@ -86,8 +86,8 @@
 .recommended-table {
   width: 100%;
   min-width: 884px;
-  border-collapse: collapse;
   table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .recommended-table th,
@@ -121,8 +121,8 @@
 
 .recommended-table th {
   overflow: hidden;
-  font: var(--mat-sys-label-medium);
   text-overflow: ellipsis;
+  font: var(--mat-sys-label-medium);
   color: var(--mat-sys-on-surface);
 }
 
@@ -133,9 +133,9 @@
 }
 
 .recommended-table a {
-  min-height: 34px;
   width: 138px;
   min-width: 138px;
+  min-height: 34px;
   padding: 0 12px;
   white-space: nowrap;
 }
@@ -149,11 +149,6 @@
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
-}
-
-.browse-link {
-  justify-self: start;
-  color: var(--mat-sys-primary);
 }
 
 .support-column {
@@ -211,12 +206,12 @@
   height: 32px;
   padding: 6px;
   margin-top: 1px;
+  overflow: hidden;
   font-size: 20px;
   line-height: 20px;
   color: var(--mat-sys-on-primary-container);
   background: var(--mat-sys-primary-container);
   border-radius: var(--g4v-radius);
-  overflow: hidden;
 }
 
 .next-step strong,

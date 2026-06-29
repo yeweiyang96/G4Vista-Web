@@ -142,6 +142,11 @@ interface VegaChartPadding {
   readonly bottom: number;
 }
 
+interface VegaChartSize {
+  readonly plotWidth: number;
+  readonly viewWidth: number;
+}
+
 interface VegaThemeColors {
   readonly axisText: string;
   readonly axisLine: string;
@@ -1352,15 +1357,16 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     if (!element || !response) {
       return;
     }
-    const width = this.vegaPlotWidth(element);
+    const chartSize = this.vegaChartSize(element);
     const spec = isNumericResponse(response)
-      ? this.numericScatterSpec(response, width)
-      : this.categoryBoxplotSpec(response, width);
+      ? this.numericScatterSpec(response, chartSize.plotWidth)
+      : this.categoryBoxplotSpec(response, chartSize.plotWidth);
     if (spec === null) {
       this.clearChart();
       return;
     }
     this.clearChart();
+    element.style.minWidth = `${chartSize.viewWidth}px`;
     try {
       const { default: embed } = await import('vega-embed');
       const chart = await embed(element, spec, {
@@ -1676,10 +1682,14 @@ export class MicrobialEnvironmentG4Component implements AfterViewInit, OnDestroy
     }
   }
 
-  private vegaPlotWidth(element: HTMLDivElement): number {
+  private vegaChartSize(element: HTMLDivElement): VegaChartSize {
     const parentWidth = element.parentElement?.clientWidth ?? element.clientWidth;
     const horizontalPadding = VEGA_CHART_PADDING.left + VEGA_CHART_PADDING.right;
-    return Math.max(parentWidth - horizontalPadding, MINIMUM_VEGA_PLOT_WIDTH);
+    const plotWidth = Math.max(parentWidth - horizontalPadding, MINIMUM_VEGA_PLOT_WIDTH);
+    return {
+      plotWidth,
+      viewWidth: plotWidth + horizontalPadding,
+    };
   }
 
   private taxonomyKey(selection: EnvironmentTaxonomyFilter): string {

@@ -121,6 +121,11 @@
   padding: 18px;
 }
 
+.workbench-content,
+.plot-panel {
+  min-width: 0;
+}
+
 .summary-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
@@ -439,10 +444,15 @@
   background: var(--mat-sys-error-container);
 }
 
-.chart-frame,
+.chart-frame {
+  min-height: 430px;
+  overflow: auto hidden;
+  scrollbar-gutter: stable;
+}
+
 .vega-host {
   min-height: 430px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 :host ::ng-deep .strain-grid {

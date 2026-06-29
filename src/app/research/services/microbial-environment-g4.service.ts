@@ -6,6 +6,7 @@ export type EnvironmentTraitCode =
   | 'growth_temperature'
   | 'growth_pH'
   | 'oxygen_tolerance'
+  | 'spore_formation'
   | 'halophily_salt'
   | 'ecological_context';
 export type EnvironmentChartKind = 'scatter' | 'boxplot';
