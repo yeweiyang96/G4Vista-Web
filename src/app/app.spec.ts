@@ -71,13 +71,13 @@ describe('App', () => {
     const footer = footerElement(fixture);
     const footerText = footer?.textContent ?? '';
     const medicalAiCenter = footer?.querySelector(
-      'a[href="https://bioinfo.med.niigata-u.ac.jp/"]',
+      'a[href="https://bioinfo.med.niigata-u.ac.jp/?lang=en"]',
     ) as HTMLAnchorElement | null;
 
     expect(footer).not.toBeNull();
     expect(footerText).toContain('G4ViSTA');
     expect(footerText).toContain('Predicted G4 and i-motif sequence exploration');
-    expect(footerText).toContain('Medical AI Center');
+    expect(footerText).toContain('Medical AI Center, Niigata University School of Medicine');
     expect(footerText).toContain('MIT-style License');
     expect(footerText).toContain('CC BY 4.0');
     expect(footerText).not.toContain('Workflows');

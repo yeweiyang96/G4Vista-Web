@@ -56,8 +56,8 @@ const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
   { name: 'Documentation', route: '/documentation', icon: 'menu_book' },
 ];
 const MEDICAL_AI_CENTER_LINK: FooterExternalLink = {
-  label: 'Medical AI Center',
-  url: 'https://bioinfo.med.niigata-u.ac.jp/',
+  label: 'Medical AI Center, Niigata University School of Medicine',
+  url: 'https://bioinfo.med.niigata-u.ac.jp/?lang=en',
 };
 
 function shouldShowFooter(url: string): boolean {
