@@ -1,7 +1,13 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import {
+  ActivatedRoute,
+  ParamMap,
+  Router,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { GenomeSearch, GenomeSearchService } from '../../../services/genome-search.service';
 
 import { SearchBarComponent } from './search-bar.component';
@@ -10,6 +16,7 @@ describe('SearchBarComponent', () => {
   let component: SearchBarComponent;
   let fixture: ComponentFixture<SearchBarComponent>;
   let genomeSearchService: jasmine.SpyObj<GenomeSearchService>;
+  let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
   const bacillusAssembly: GenomeSearch = {
     asm_name: 'ASM188410v1',
@@ -26,12 +33,19 @@ describe('SearchBarComponent', () => {
       'searchGenome',
     ]);
     genomeSearchService.searchGenome.and.returnValue(of([bacillusAssembly]));
+    queryParamMapSubject = new BehaviorSubject<ParamMap>(convertToParamMap({}));
 
     await TestBed.configureTestingModule({
       imports: [SearchBarComponent],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: queryParamMapSubject.asObservable(),
+          },
+        },
         { provide: GenomeSearchService, useValue: genomeSearchService },
       ],
     }).compileComponents();
@@ -66,6 +80,32 @@ describe('SearchBarComponent', () => {
     fixture.detectChanges();
 
     expect(genomeSearchService.searchGenome).toHaveBeenCalledWith('bacillus');
+  });
+
+  it('uses current openable E. coli example assembly', () => {
+    const exampleAccessions = component.options.map((option) => option.assembly_accession);
+    const exampleText = component.options
+      .map(
+        (option) => `${option.asm_name ?? ''} ${option.assembly_accession} ${option.organism_name}`,
+      )
+      .join(' ');
+
+    expect(exampleAccessions).toContain('GCA_003697165.2');
+    expect(exampleText).toContain('ASM369716v2');
+    expect(exampleText).not.toContain('GCF_000005845.2');
+    expect(exampleText).not.toContain('ASM584v2');
+  });
+
+  it('preloads genome search from the query param', async () => {
+    queryParamMapSubject.next(convertToParamMap({ query: 'Arabidopsis thaliana' }));
+    await fixture.whenStable();
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 350);
+    });
+    fixture.detectChanges();
+
+    expect(component.searchControl.value).toBe('Arabidopsis thaliana');
+    expect(genomeSearchService.searchGenome).toHaveBeenCalledWith('arabidopsis thaliana');
   });
 
   it('opens the selected autocomplete assembly directly', () => {

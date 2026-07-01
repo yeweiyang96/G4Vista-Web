@@ -52,7 +52,7 @@ describe('HomeComponent', () => {
     component.submitHeroSearch(new Event('submit'));
 
     expect(navigateSpy).toHaveBeenCalledWith(['/genome'], {
-      queryParams: {},
+      queryParams: { query: 'GCF_000001735.4' },
     });
 
     navigateSpy.calls.reset();
@@ -81,6 +81,24 @@ describe('HomeComponent', () => {
       'Gene',
       'Taxonomy',
     ]);
+  });
+
+  it('enables the homepage search button when the user types', async () => {
+    const input = fixture.nativeElement.querySelector(
+      'input[aria-label="Search G4ViSTA"]',
+    ) as HTMLInputElement | null;
+    const button = fixture.nativeElement.querySelector(
+      'button.search-action',
+    ) as HTMLButtonElement | null;
+
+    expect(input).not.toBeNull();
+    expect(button?.disabled).toBeTrue();
+
+    input!.value = 'GCF_000001735.4';
+    input!.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(button?.disabled).toBeFalse();
   });
 
   it('renders the homepage word mark with an accessible heading name', () => {

@@ -197,10 +197,10 @@ export const HELP_REFERENCES: readonly HelpReference[] = [
 
 export const HELP_CONTACT: HelpContact = {
   anchorId: HELP_CONTACT_SECTION_ID,
-  title: 'Medical AI Center',
-  body: 'For questions about G4ViSTA access, data, or collaboration, contact the Medical AI Center through the official website.',
+  title: 'Medical AI Center, Niigata University School of Medicine',
+  body: 'For questions about G4ViSTA access, data, or collaboration, contact the Medical AI Center, Niigata University School of Medicine through the official website.',
   websiteLabel: 'Open Medical AI Center',
-  websiteUrl: 'https://bioinfo.med.niigata-u.ac.jp/',
+  websiteUrl: 'https://bioinfo.med.niigata-u.ac.jp/?lang=en',
   licenseNote:
     'G4ViSTA code is licensed under an MIT-style License. Documentation is licensed under CC BY 4.0.',
 };

@@ -463,7 +463,11 @@ app-jbrowse-host {
   height: 20px;
 }
 
-:host ::ng-deep .genome-page .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+:host
+  ::ng-deep
+  .genome-page
+  .mat-button-toggle-appearance-standard
+  .mat-button-toggle-label-content {
   padding: 0 22px;
   line-height: 36px;
 }

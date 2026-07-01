@@ -163,8 +163,12 @@ describe('DocumentationComponent', () => {
 
     expect(component.selectedDocumentationId()).toBe('contact');
     expect(host.querySelector('.doc-content')?.textContent).toContain('Medical AI Center');
+    expect(host.querySelector('.doc-content')?.textContent).toContain('Niigata University');
     expect(host.querySelector('.doc-content')?.textContent).toContain('MIT-style License');
     expect(host.querySelector('.content-index')?.textContent).toContain('Medical AI Center');
+    expect(host.querySelector('.contact-actions a')?.getAttribute('href')).toBe(
+      'https://bioinfo.med.niigata-u.ac.jp/?lang=en',
+    );
   });
 
   it('configures and documents the download route', async () => {

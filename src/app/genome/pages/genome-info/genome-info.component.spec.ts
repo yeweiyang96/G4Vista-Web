@@ -792,7 +792,7 @@ describe('GenomeInfoComponent', () => {
     expect(component.accessionIdOptions().map((option) => option.value)).toEqual(['chr1']);
     expect(component.accessionIdOptions()[0].label).toBe('Main chromosome');
 
-    component.clearAccessionFilter();
+    component.onAccessionFilterInput({ target: { value: '' } } as unknown as Event);
     fixture.detectChanges();
 
     expect(component.accessionFilter()).toBe('');

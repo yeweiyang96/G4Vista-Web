@@ -1218,12 +1218,6 @@ export class GenomeInfoComponent {
     this.accessionFilter.set(value);
   }
 
-  clearAccessionFilter(event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.accessionFilter.set('');
-  }
-
   selectG4Type(type: unknown): void {
     if (!isG4Type(type)) {
       return;

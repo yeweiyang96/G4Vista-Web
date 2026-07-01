@@ -3,14 +3,24 @@ import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Observable, of, startWith, switchMap } from 'rxjs';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import {
+  debounceTime,
+  defer,
+  distinctUntilChanged,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { GenomeSearch, GenomeSearchService } from '../../../services/genome-search.service';
 
 const EXAMPLE_DATA: GenomeSearch[] = [
@@ -21,9 +31,9 @@ const EXAMPLE_DATA: GenomeSearch[] = [
   },
   { asm_name: 'GRCh38.p14', assembly_accession: 'GCF_000001405.40', organism_name: 'Homo sapiens' },
   {
-    asm_name: 'ASM584v2',
-    assembly_accession: 'GCF_000005845.2',
-    organism_name: 'Escherichia coli K-12',
+    asm_name: 'ASM369716v2',
+    assembly_accession: 'GCA_003697165.2',
+    organism_name: 'Escherichia coli DSM 30083 = JCM 1649 = ATCC 11775',
   },
 ];
 
@@ -39,6 +49,10 @@ function taxonomyContextLabel(match: GenomeSearch): string | null {
   }
   const rank = compactGenomeContext(match.matched_taxonomy_rank);
   return rank ? `${rank}: ${taxonomyName}` : taxonomyName;
+}
+
+function queryFromParamMap(params: ParamMap): string {
+  return (params.get('query') ?? '').trim();
 }
 
 @Component({
@@ -58,20 +72,36 @@ function taxonomyContextLabel(match: GenomeSearch): string | null {
 })
 export class SearchBarComponent {
   private readonly genomeService = inject(GenomeSearchService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   readonly searchControl = new FormControl<string>('', { nonNullable: true });
   readonly options: readonly GenomeSearch[] = EXAMPLE_DATA;
   readonly autocompleteOpen = signal(false);
-  readonly filter_result$: Observable<GenomeSearch[]> = this.searchControl.valueChanges.pipe(
-    startWith(''),
-    debounceTime(300),
-    distinctUntilChanged(),
-    switchMap((value) => {
-      const query = value.trim();
-      return query ? this._filter(query) : of(Array.from(this.options));
-    }),
+  private readonly routeQuery = toSignal(
+    this.route.queryParamMap.pipe(map((params) => queryFromParamMap(params))),
+    { initialValue: '' },
   );
+  readonly filter_result$: Observable<GenomeSearch[]> = defer(() =>
+    this.searchControl.valueChanges.pipe(
+      startWith(this.searchControl.value),
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap((value) => {
+        const query = value.trim();
+        return query ? this._filter(query) : of(Array.from(this.options));
+      }),
+    ),
+  );
+
+  constructor() {
+    effect(() => {
+      const query = this.routeQuery();
+      if (this.searchControl.value !== query) {
+        this.searchControl.setValue(query);
+      }
+    });
+  }
 
   private _filter(name: string): Observable<GenomeSearch[]> {
     const filterValue = name.toLowerCase();

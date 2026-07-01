@@ -131,33 +131,17 @@
                     (click)="$event.stopPropagation()"
                     (keydown)="$event.stopPropagation()"
                   >
-                    <mat-form-field
-                      appearance="outline"
-                      subscriptSizing="dynamic"
+                    <input
+                      id="accession-filter-input"
                       class="accession-filter-input"
-                    >
-                      <mat-label>Filter sequence records</mat-label>
-                      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-                      <input
-                        matInput
-                        type="search"
-                        autocomplete="off"
-                        spellcheck="false"
-                        [value]="accessionFilter()"
-                        (input)="onAccessionFilterInput($event)"
-                      />
-                      @if (accessionFilter()) {
-                        <button
-                          mat-icon-button
-                          matSuffix
-                          type="button"
-                          aria-label="Clear accession filter"
-                          (click)="clearAccessionFilter($event)"
-                        >
-                          <mat-icon>close</mat-icon>
-                        </button>
-                      }
-                    </mat-form-field>
+                      type="search"
+                      aria-label="Filter sequence records"
+                      autocomplete="off"
+                      placeholder="Filter sequence records"
+                      spellcheck="false"
+                      [value]="accessionFilter()"
+                      (input)="onAccessionFilterInput($event)"
+                    />
                   </div>
                   @for (option of accessionIdOptions(); track option.value) {
                     <mat-option [value]="option.value">

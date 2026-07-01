@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,7 @@ import {
   GenomeSearchService,
 } from '../genome/services/genome-search.service';
 import { formatCompactCount, formatGenomeLength } from '../genome/utils/overview-format';
+import { map, startWith } from 'rxjs';
 
 type HomeSearchTarget = 'genome' | 'taxonomy' | 'gene';
 
@@ -93,7 +94,7 @@ function homeSearchNavigation(
   }
 
   if (target === 'genome') {
-    return { commands: ['/genome'], queryParams: {} };
+    return { commands: ['/genome'], queryParams: { query } };
   }
 
   if (target === 'taxonomy') {
@@ -158,6 +159,14 @@ export class HomeComponent {
 
   readonly heroSearchControl = new FormControl('', { nonNullable: true });
   readonly heroTargetControl = new FormControl<HomeSearchTarget>('genome', { nonNullable: true });
+  readonly heroSearchQuery = toSignal(
+    this.heroSearchControl.valueChanges.pipe(
+      startWith(this.heroSearchControl.value),
+      map((value) => value.trim()),
+    ),
+    { initialValue: this.heroSearchControl.value.trim() },
+  );
+  readonly canSubmitHeroSearch = computed(() => this.heroSearchQuery().length > 0);
   readonly databaseStatusResource = rxResource({
     stream: () => this.genomeSearchService.getDatabaseStatus(),
   });
@@ -269,10 +278,6 @@ export class HomeComponent {
 
   formatExactCount(value: number): string {
     return COUNT_FORMATTER.format(value);
-  }
-
-  canSubmitHeroSearch(): boolean {
-    return this.heroSearchControl.value.trim().length > 0;
   }
 
   submitHeroSearch(event: Event): void {
